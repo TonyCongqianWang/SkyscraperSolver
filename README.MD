@@ -1,6 +1,6 @@
 ### Solver for the Skyscraper puzzle game
 
-Made during the Rush01 of the C Piscine in 42 Heilbronn. Compile and use as following;
+Made during the second weekend of the C Piscine in 42 Heilbronn as a solution for the task Rush01. Compile and use as following;
 
 ```
 cc -Wall -Wextra -Werror -o rush-01 *.c
@@ -8,3 +8,5 @@ cc -Wall -Wextra -Werror -o rush-01 *.c
 ```
 
 Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) left (t->b) right (t->b).
+
+You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp) .
