@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:21:21 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:22:10 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -63,4 +63,21 @@ int	init_puzzle_from_str(t_puzzle *puzzle, char *str)
 		counter++;
 	}
 	return (1);
+}
+
+void	add_constr_values(t_puzzle *puzzle, int vals[], int size)
+{
+	int		idx;
+	int		pair_idx;
+
+	idx = 0;
+	while (idx < 4 * size)
+	{
+		pair_idx = idx - (idx / 8) * size;
+		if ((idx / 4) % 2 == 0)
+			puzzle->constraint_pairs[pair_idx].fwd_val = vals[idx];
+		else
+			puzzle->constraint_pairs[pair_idx - size].bwd_val = vals[idx];
+		idx++;
+	}
 }
