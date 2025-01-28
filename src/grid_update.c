@@ -6,17 +6,17 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 17:54:32 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:19:41 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "grid_update.h"
 #include "cell_bitmaps.h"
 
-int		try_set_grid_val(t_puzzle *grid, int cell_idx, int val)
+int	try_set_grid_val(t_puzzle *grid, int cell_idx, int val)
 {
 	t_node_state	old_state;
-	
+
 	if (!is_valid_value(&grid->node_state, cell_idx, val))
 	{
 		return (0);
@@ -56,10 +56,10 @@ int	check_constraints(t_puzzle *puzzle, int insert_idx)
 	{
 		abs_idx = puzzle->grid_constr_map[insert_idx][rel_idx];
 		set_active_constraint(puzzle, abs_idx);
-		if(!check_active_constr(puzzle))
+		if (!check_active_constr(puzzle))
 			return (0);
 		reverse_constr_direction(&puzzle->constr_state);
-		if(!check_active_constr(puzzle))
+		if (!check_active_constr(puzzle))
 			return (0);
 		rel_idx++;
 	}

@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:00:32 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:21:21 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,8 +47,8 @@ int	init_puzzle_from_str(t_puzzle *puzzle, char *str)
 	int		val;
 
 	size = parse_puzzle_size_from_string(str);
-	if(!size)
-		return 0;
+	if (!size)
+		return (0);
 	init_puzzle(puzzle, size);
 	counter = 0;
 	while (counter < 4 * size)

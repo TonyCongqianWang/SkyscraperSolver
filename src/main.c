@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:01:40 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:20:13 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 
 int	main(int argc, char **argv)
 {
-	t_puzzle puzzle;
+	t_puzzle	puzzle;
 
 	if (argc != 2)
 	{

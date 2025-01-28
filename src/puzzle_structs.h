@@ -6,12 +6,12 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 17:50:55 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:20:59 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef R01_STRUCTS_H
-# define R01_STRUCTS_H
+#ifndef PUZZLE_STRUCTS_H
+# define PUZZLE_STRUCTS_H
 # define MAX_N_CONSTR_PAIRS 18
 # define MAX_CELL_COUNT 81
 # define MAX_SIZE 9

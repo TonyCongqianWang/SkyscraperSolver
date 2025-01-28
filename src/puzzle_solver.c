@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 17:59:48 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:20:46 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 	num_valid = 0;
 	while (grid_val <= puzzle->size)
 	{
-		if(try_set_grid_val(puzzle, idx, grid_val))
+		if (try_set_grid_val(puzzle, idx, grid_val))
 			num_valid++;
 		else
 			set_value_invalid(&puzzle->node_state, idx, grid_val);

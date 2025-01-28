@@ -6,12 +6,12 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 17:58:56 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:20:38 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef R01_PUZZLE_INIT_H
-# define R01_PUZZLE_INIT_H
+#ifndef PUZZLE_INIT_H
+# define PUZZLE_INIT_H
 # include "puzzle_structs.h"
 
 void	init_puzzle(t_puzzle *puzzle, int size);

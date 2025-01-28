@@ -6,13 +6,13 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:00:48 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:18:57 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "constraint_checking.h"
 
-int check_active_constr(t_puzzle *puzzle)
+int	check_active_constr(t_puzzle *puzzle)
 {
 	int					sub_idx;
 	int					grid_idx;

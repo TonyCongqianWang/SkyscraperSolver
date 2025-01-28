@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 17:58:50 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:20:29 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,7 @@ void	init_constraints(t_puzzle *puzzle, int idx, int size)
 	}
 }
 
-void    init_state_fields(t_puzzle *puzzle, int size)
+void	init_state_fields(t_puzzle *puzzle, int size)
 {
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
