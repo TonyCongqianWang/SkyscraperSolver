@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:50:06 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:50:36 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,18 +35,32 @@ int	check_active_constr(t_puzzle *puzzle)
 			return (0);
 		if (constr->fwd_ub < constr->cur_c_pair.fwd_val)
 			return (0);
-		if (constr->bwd_lb > constr->cur_c_pair.bwd_val)
-			return (0);
 		if (constr->bwd_ub < constr->cur_c_pair.bwd_val)
 			return (0);
 	}
 	return (1);
 }
 
+void	set_active_constraint(t_puzzle *puzzle, int constr_idx)
+{
+	puzzle->constr_state.max_height = 0;
+	puzzle->constr_state.n_seen = 0;
+	puzzle->constr_state.n_unset = 0;
+	puzzle->constr_state.is_reverse = 0;
+	puzzle->constr_state.fwd_lb = 1;
+	puzzle->constr_state.bwd_lb = 1;
+	puzzle->constr_state.fwd_ub = puzzle->size;
+	puzzle->constr_state.bwd_ub = puzzle->size;
+	puzzle->constr_state.cur_c_pair = puzzle->constraint_pairs[constr_idx];
+}
+
 void	reverse_constr_direction(t_constraint_state *constr)
 {
 	int		swap;
 
+	constr->max_height = 0;
+	constr->n_seen = 0;
+	constr->n_unset = 0;
 	constr->is_reverse = !(constr->is_reverse);
 	swap = constr->bwd_lb;
 	constr->bwd_lb = constr->fwd_lb;
@@ -85,8 +99,8 @@ void	update_constr_bounds(t_constraint_state *constr)
 		constr->fwd_lb = new_lb;
 	lhs_ub = constr->n_seen + constr->n_unset;
 	rhs_ub = size - constr->max_height;
-	if (lhs_ub + rhs_ub < constr->fwd_lb)
-		constr->fwd_lb = lhs_ub + rhs_ub;
+	if (lhs_ub + rhs_ub < constr->fwd_ub)
+		constr->fwd_ub = lhs_ub + rhs_ub;
 	if (size + 1 - constr->n_seen < constr->bwd_ub)
 		constr->bwd_ub = size + 1 - constr->n_seen;
 }

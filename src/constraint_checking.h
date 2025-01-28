@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:47 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:19:07 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:47:21 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,5 +18,6 @@ int		check_active_constr(t_puzzle *puzzle);
 void	reverse_constr_direction(t_constraint_state *constr);
 void	insert_val(t_constraint_state *constr, int val);
 void	update_constr_bounds(t_constraint_state *constr);
+void	set_active_constraint(t_puzzle *puzzle, int constr_idx);
 
 #endif

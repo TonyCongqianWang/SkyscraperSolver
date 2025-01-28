@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:20:59 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:52:41 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,6 +36,7 @@ typedef struct s_constraint_pair
 
 typedef struct s_constraint_state
 {
+	int					size;
 	t_constraint_pair	cur_c_pair;
 	int					is_reverse;
 	int					fwd_lb;

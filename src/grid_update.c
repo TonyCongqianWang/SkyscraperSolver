@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 19:22:06 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:56:23 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,17 +64,4 @@ int	check_constraints(t_puzzle *puzzle, int insert_idx)
 		rel_idx++;
 	}
 	return (1);
-}
-
-void	set_active_constraint(t_puzzle *puzzle, int constr_idx)
-{
-	puzzle->constr_state.is_reverse = 0;
-	puzzle->constr_state.max_height = 0;
-	puzzle->constr_state.n_seen = 0;
-	puzzle->constr_state.n_unset = 0;
-	puzzle->constr_state.fwd_lb = 0;
-	puzzle->constr_state.bwd_lb = 0;
-	puzzle->constr_state.fwd_ub = puzzle->size;
-	puzzle->constr_state.bwd_ub = puzzle->size;
-	puzzle->constr_state.cur_c_pair = puzzle->constraint_pairs[constr_idx];
 }

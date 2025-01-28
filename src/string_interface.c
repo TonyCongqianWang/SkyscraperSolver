@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 20:22:10 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:55:43 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,24 +43,26 @@ int	parse_puzzle_size_from_string(char *str)
 int	init_puzzle_from_str(t_puzzle *puzzle, char *str)
 {
 	int		size;
-	int		counter;
+	int		word_idx;
 	int		val;
+	int		pair_idx;
 
 	size = parse_puzzle_size_from_string(str);
 	if (!size)
 		return (0);
 	init_puzzle(puzzle, size);
-	counter = 0;
-	while (counter < 4 * size)
+	word_idx = 0;
+	while (word_idx < 4 * size)
 	{
-		val = str[2 * counter] - '0';
+		val = str[2 * word_idx] - '0';
 		if (val > size)
 			return (0);
-		if ((counter / 4) % 2 == 0)
-			puzzle->constraint_pairs[counter].fwd_val = val;
+		pair_idx = word_idx - (word_idx / size / 2) * size;
+		if ((word_idx / size) % 2 == 0)
+			puzzle->constraint_pairs[pair_idx].fwd_val = val;
 		else
-			puzzle->constraint_pairs[counter].bwd_val = val;
-		counter++;
+			puzzle->constraint_pairs[pair_idx - size].bwd_val = val;
+		word_idx++;
 	}
 	return (1);
 }
@@ -73,8 +75,8 @@ void	add_constr_values(t_puzzle *puzzle, int vals[], int size)
 	idx = 0;
 	while (idx < 4 * size)
 	{
-		pair_idx = idx - (idx / 8) * size;
-		if ((idx / 4) % 2 == 0)
+		pair_idx = idx - (idx / size / 2) * size;
+		if ((idx / size) % 2 == 0)
 			puzzle->constraint_pairs[pair_idx].fwd_val = vals[idx];
 		else
 			puzzle->constraint_pairs[pair_idx - size].bwd_val = vals[idx];

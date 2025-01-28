@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 19:22:29 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 20:51:55 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,10 +34,13 @@ int	tree_search(t_puzzle *puzzle, int depths)
 	old_state = puzzle->node_state;
 	while (grid_val <= puzzle->size)
 	{
-		set_grid_val(puzzle, grid_idx, grid_val);
-		if (tree_search(puzzle, depths - 1))
-			return (1);
-		puzzle->node_state = old_state;
+		if (is_valid_value(&puzzle->node_state, grid_idx, grid_val))
+		{
+			set_grid_val(puzzle, grid_idx, grid_val);
+			if (tree_search(puzzle, depths - 1))
+				return (1);
+			puzzle->node_state = old_state;
+		}
 		grid_val++;
 	}
 	unset_grid_val(puzzle, grid_idx);
