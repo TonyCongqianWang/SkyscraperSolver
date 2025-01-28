@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:18:57 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 18:50:06 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,10 @@ int	check_active_constr(t_puzzle *puzzle)
 	sub_idx = 0;
 	while (sub_idx < size)
 	{
-		grid_idx = constr->cur_c_pair.grid_indeces[sub_idx];
+		if (constr->is_reverse)
+			grid_idx = constr->cur_c_pair.grid_indeces[size - sub_idx - 1];
+		else
+			grid_idx = constr->cur_c_pair.grid_indeces[sub_idx];
 		insert_val(constr, puzzle->grid_vals[grid_idx]);
 		update_constr_bounds(constr);
 		sub_idx++;
