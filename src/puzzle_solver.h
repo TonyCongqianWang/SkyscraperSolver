@@ -1,0 +1,22 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   puzzle_solver.h                                    :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/25 11:55:46 by towang            #+#    #+#             */
+/*   Updated: 2025/01/28 17:44:18 by towang           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#ifndef PUZZLE_SOLVER_H
+# define PUZZLE_SOLVER_H
+# include "puzzle_structs.h"
+
+int		solve_puzzle(t_puzzle *puzzle);
+int		tree_search(t_puzzle *puzzle, int depths);
+int		score_search_cell_candidate(t_puzzle *puzzle, int idx);
+int		get_next_tree_search_cell(t_puzzle *puzzle);
+
+#endif
