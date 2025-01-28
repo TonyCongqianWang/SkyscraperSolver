@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:49:43 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 19:22:29 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,15 +28,15 @@ int	tree_search(t_puzzle *puzzle, int depths)
 	if (puzzle->node_state.is_complete || depths == 0)
 		return (!puzzle->node_state.is_invalid);
 	grid_idx = get_next_tree_search_cell(puzzle);
+	if (grid_idx < 0)
+		return (0);
 	grid_val = 1;
 	old_state = puzzle->node_state;
 	while (grid_val <= puzzle->size)
 	{
-		if (try_set_grid_val(puzzle, grid_idx, grid_val))
-		{
-			if (tree_search(puzzle, depths - 1))
-				return (1);
-		}
+		set_grid_val(puzzle, grid_idx, grid_val);
+		if (tree_search(puzzle, depths - 1))
+			return (1);
 		puzzle->node_state = old_state;
 		grid_val++;
 	}
@@ -53,13 +53,13 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 	num_valid = 0;
 	while (grid_val <= puzzle->size)
 	{
-		if (try_set_grid_val(puzzle, idx, grid_val))
+		if (try_grid_val(puzzle, idx, grid_val))
 			num_valid++;
 		else
 			set_value_invalid(&puzzle->node_state, idx, grid_val);
 		grid_val++;
 	}
-	return (10 * puzzle->size - num_valid);
+	return (puzzle->size - num_valid);
 }
 
 int	get_next_tree_search_cell(t_puzzle *puzzle)
@@ -77,7 +77,11 @@ int	get_next_tree_search_cell(t_puzzle *puzzle)
 		if (puzzle->grid_vals[idx] == 0)
 		{
 			score = score_search_cell_candidate(puzzle, idx);
-			if (score > best_score)
+			if (score >= puzzle->size)
+			{
+				return (-1);
+			}
+			else if (score > best_score)
 			{
 				best_idx = idx;
 				best_score = score;

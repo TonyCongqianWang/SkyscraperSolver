@@ -6,16 +6,17 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:19:41 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/28 19:22:06 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "grid_update.h"
 #include "cell_bitmaps.h"
 
-int	try_set_grid_val(t_puzzle *grid, int cell_idx, int val)
+int	try_grid_val(t_puzzle *grid, int cell_idx, int val)
 {
 	t_node_state	old_state;
+	int				success;
 
 	if (!is_valid_value(&grid->node_state, cell_idx, val))
 	{
@@ -23,20 +24,19 @@ int	try_set_grid_val(t_puzzle *grid, int cell_idx, int val)
 	}
 	old_state = grid->node_state;
 	set_grid_val(grid, cell_idx, val);
-	update_bitmaps(&grid->node_state, cell_idx, val);
-	if (!check_constraints(grid, cell_idx))
-	{
-		grid->node_state = old_state;
-		unset_grid_val(grid, cell_idx);
-		return (0);
-	}
-	return (1);
+	success = check_constraints(grid, cell_idx);
+	if (!success)
+		set_value_invalid(&old_state, cell_idx, val);
+	grid->node_state = old_state;
+	unset_grid_val(grid, cell_idx);
+	return (success);
 }
 
 void	set_grid_val(t_puzzle *grid, int cell_idx, int val)
 {
 	grid->grid_vals[cell_idx] = val;
 	grid->node_state.total_unset_count--;
+	update_bitmaps(&grid->node_state, cell_idx, val);
 	if (grid->node_state.total_unset_count == 0)
 		grid->node_state.is_complete = 1;
 }
