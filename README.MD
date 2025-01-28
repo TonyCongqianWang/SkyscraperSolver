@@ -1,9 +1,9 @@
 ### Solver for the Skyscraper puzzle game
 
-Made during the second weekend of the C Piscine in 42 Heilbronn as a solution for the task Rush01. Compile and use as following;
+Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 
 ```
-cc -Wall -Wextra -Werror -o rush-01 *.c
+cc -Wall -Wextra -Werror -o rush-01 src/*.c
 ./rush-01 "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
 ./rush-01 "5 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
