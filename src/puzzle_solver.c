@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   puzzle_solver.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 20:59:17 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 18:26:48 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,8 +71,8 @@ int	get_next_tree_search_cell(t_puzzle *puzzle)
 	int		best_score;
 
 	idx = 0;
-	best_idx = -1;
-	best_score = 0;
+	best_idx = 0;
+	best_score = -1;
 	while (idx < puzzle->size * puzzle->size)
 	{
 		if (puzzle->grid_vals[idx] == 0)

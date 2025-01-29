@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   grid_update.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 20:56:23 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 18:29:59 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ int	check_constraints(t_puzzle *puzzle, int insert_idx)
 		set_active_constraint(puzzle, abs_idx);
 		if (!check_active_constr(puzzle))
 			return (0);
-		reverse_constr_direction(&puzzle->constr_state);
+		reverse_constr_direction(puzzle);
 		if (!check_active_constr(puzzle))
 			return (0);
 		rel_idx++;

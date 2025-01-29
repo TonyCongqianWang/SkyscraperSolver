@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 17:03:04 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 18:29:46 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ int	check_active_constr(t_puzzle *puzzle)
 		new_val = puzzle->grid_vals[grid_idx];
 		if(!update_constr_state(puzzle, grid_idx))
 			continue;
-		update_constr_bounds(constr);
 		if (constr->fwd_lb > constr->cur_c_pair.fwd_val)
 			return (0);
 		if (constr->fwd_ub < constr->cur_c_pair.fwd_val)
@@ -47,12 +46,10 @@ int	check_active_constr(t_puzzle *puzzle)
 
 void	set_active_constraint(t_puzzle *puzzle, int constr_idx)
 {
-	puzzle->constr_state.n_seen = 0;
-	puzzle->constr_state.n_unset = 0;
 	puzzle->constr_state.is_reverse = 0;
 	puzzle->constr_state.fwd_lb = 1;
-	puzzle->constr_state.fwd_ub = puzzle->size;
-	puzzle->constr_state.bwd_ub = puzzle->size;
+	puzzle->constr_state.fwd_ub = puzzle->size + 1;
+	puzzle->constr_state.bwd_ub = puzzle->size + 1;
 	puzzle->constr_state.max_height_lb = 1;
 	puzzle->constr_state.max_height_ub = 1;
 	puzzle->constr_state.cur_c_pair = puzzle->constraint_pairs[constr_idx];
@@ -63,12 +60,10 @@ void	reverse_constr_direction(t_puzzle *puzzle)
 	int		swap_bwd;
 	int		swap_fwd;
 
-	puzzle->constr_state.n_seen = 0;
-	puzzle->constr_state.n_unset = 0;
-	puzzle->constr_state.is_reverse = 0;
+	puzzle->constr_state.is_reverse = !(puzzle->constr_state.is_reverse);
 	puzzle->constr_state.fwd_lb = 1;
-	puzzle->constr_state.fwd_ub = puzzle->size;
-	puzzle->constr_state.bwd_ub = puzzle->size;
+	puzzle->constr_state.fwd_ub = puzzle->size + 1;
+	puzzle->constr_state.bwd_ub = puzzle->size + 1;
 	puzzle->constr_state.max_height_lb = 1;
 	puzzle->constr_state.max_height_ub = 1;
 	swap_fwd = puzzle->constr_state.cur_c_pair.fwd_val;
@@ -94,10 +89,10 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 			return (1);
 		new_val_lb = 1;
 		new_val_ub = puzzle->size;
-		while (!is_valid_value(&puzzle->constr_state, grid_idx, new_val_lb) 
+		while (!is_valid_value(&puzzle->node_state, grid_idx, new_val_lb) 
 			&& new_val_lb < puzzle->size)
 			new_val_lb++;
-		while (!is_valid_value(&puzzle->constr_state, grid_idx, new_val_ub) 
+		while (!is_valid_value(&puzzle->node_state, grid_idx, new_val_ub) 
 			&& new_val_ub < puzzle->size)
 			new_val_ub--;
 		if (new_val_lb > constr->max_height_ub)
