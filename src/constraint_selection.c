@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 20:11:07 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 22:43:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,8 @@ void	reset_constraint_bounds(t_puzzle *puzzle)
 {
 	puzzle->constr_state.fwd_lb = 1;
 	puzzle->constr_state.fwd_ub = puzzle->size;
-	puzzle->constr_state.bwd_ub = puzzle->size;
+	puzzle->constr_state.lhs_ub = 0;
+	puzzle->constr_state.bwd_ub = puzzle->size + 1;
 	puzzle->constr_state.max_height_lb = 0;
 	puzzle->constr_state.max_height_ub = 0;
 }

@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:39:18 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 21:07:49 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,7 @@ typedef struct s_constraint_state
 	int					is_reverse;
 	int					fwd_lb;
 	int					fwd_ub;
+	int					lhs_ub;
 	int					bwd_ub;
 	int					max_height_lb;
 	int					max_height_ub;
