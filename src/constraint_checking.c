@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 18:29:46 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 18:32:22 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,6 +85,7 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 		return (0);
 	if (new_val == 0)
 	{
+		return (0);
 		if (constr->max_height_ub == puzzle->size)
 			return (1);
 		new_val_lb = 1;
@@ -93,7 +94,7 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 			&& new_val_lb < puzzle->size)
 			new_val_lb++;
 		while (!is_valid_value(&puzzle->node_state, grid_idx, new_val_ub) 
-			&& new_val_ub < puzzle->size)
+			&& new_val_ub > 0)
 			new_val_ub--;
 		if (new_val_lb > constr->max_height_ub)
 		{
