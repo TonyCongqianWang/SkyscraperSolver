@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:11:26 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:37:18 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,26 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 	return (1);
 }
 
+void	update_constr_bounds_unset(t_constraint_state *constr, int lb, int ub)
+{
+	constr->max_height_ub = constr->size;
+	constr->max_height_lb = constr->size;
+	return;
+	if (lb > constr->max_height_ub)
+	{
+		constr->fwd_lb++;
+		constr->max_height_lb = lb;
+		constr->max_height_ub = ub;
+	}
+	else
+	{
+		if (ub > constr->max_height_ub)
+			constr->max_height_ub = ub;
+		if (lb > constr->max_height_lb)
+			constr->max_height_lb = lb;
+	}
+}
+
 void	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 {
 	if (new_val > constr->max_height_lb)
@@ -81,8 +101,6 @@ void	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 			constr->fwd_lb++;
 		}
 	}
-	else
-		constr->fwd_ub--;
 }
 
 void	find_cell_bounds(t_puzzle *puzzle, int cell_idx, int *lb, int *ub)
@@ -98,22 +116,5 @@ void	find_cell_bounds(t_puzzle *puzzle, int cell_idx, int *lb, int *ub)
 		&& *ub > 0)
 	{
 		(*ub)--;
-	}
-}
-
-void	update_constr_bounds_unset(t_constraint_state *constr, int lb, int ub)
-{
-	if (lb > constr->max_height_ub)
-	{
-		constr->fwd_lb++;
-		constr->max_height_lb = lb;
-		constr->max_height_ub = ub;
-	}
-	else
-	{
-		if (ub > constr->max_height_ub)
-			constr->max_height_ub = ub;
-		if (lb > constr->max_height_lb)
-			constr->max_height_lb = lb;
 	}
 }

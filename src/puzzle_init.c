@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   puzzle_init.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 18:20:29 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:36:26 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,6 +65,7 @@ void	init_state_fields(t_puzzle *puzzle, int size)
 {
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
+	puzzle->constr_state.size = size;
 	puzzle->node_state.size = size;
 	puzzle->node_state.is_complete = 0;
 	puzzle->node_state.total_unset_count = size * size;
