@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 00:08:26 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 00:12:03 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@ void	print_solution_grid(t_puzzle *puzzle)
 	}
 }
 
-void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
+void	print_bmp_grid(t_puzzle *puzzle, int cell_val, int add_nl)
 {
 	int		counter;
 	char	print_val;
@@ -59,6 +59,8 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 		}
 		counter++;
 	}
+	if (add_nl)
+		write(1, "\n", 1);
 }
 
 void	print_score_grid(t_puzzle *puzzle)

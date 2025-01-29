@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 00:08:14 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 00:13:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 int	main(int argc, char **argv)
 {
 	t_puzzle	puzzle;
+	int			cell_val;
 
 	if (argc != 2)
 	{
@@ -34,8 +35,12 @@ int	main(int argc, char **argv)
 		print_error("Could not find solution.");
 		return (0);
 	}
-	print_bmp_grid(&puzzle, puzzle.size);
-	print_message("");
+	cell_val = 0;
+	while (cell_val < puzzle.size)
+	{
+		print_bmp_grid(&puzzle, cell_val, 1);
+		cell_val++;
+	}
 	print_score_grid(&puzzle);
 	print_message("");
 	print_solution_grid(&puzzle);
