@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 18:27:04 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:39:18 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,6 @@ typedef struct s_node_state
 
 typedef struct s_constraint_pair
 {
-	int				size;
 	int				fwd_val;
 	int				bwd_val;
 	int				grid_indeces[MAX_SIZE];

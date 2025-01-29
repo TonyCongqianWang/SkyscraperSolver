@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:37:18 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:39:30 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ int	check_active_constr(t_puzzle *puzzle)
 	t_constraint_state	*constr;
 
 	constr = &puzzle->constr_state;
-	size = constr->cur_c_pair.size;
+	size = constr->size;
 	sub_idx = 0;
 	while (sub_idx < size)
 	{

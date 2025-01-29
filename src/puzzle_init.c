@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:36:26 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:39:46 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ void	init_constraints(t_puzzle *puzzle, int idx, int size)
 			grid_index = idx + sub_index * size;
 		else if (idx < 2 * size)
 			grid_index = (idx % size) * size + sub_index;
-		puzzle->constraint_pairs[idx].size = size;
 		puzzle->constraint_pairs[idx].grid_indeces[sub_index] = grid_index;
 		puzzle->grid_constr_map[grid_index][idx / size] = idx;
 		sub_index++;
