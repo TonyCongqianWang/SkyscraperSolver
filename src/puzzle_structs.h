@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   puzzle_structs.h                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 21:12:03 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 16:40:23 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,9 +41,9 @@ typedef struct s_constraint_state
 	int					is_reverse;
 	int					fwd_lb;
 	int					fwd_ub;
-	int					bwd_lb;
 	int					bwd_ub;
-	int					max_height;
+	int					max_height_lb;
+	int					max_height_ub;
 	int					n_seen;
 	int					n_unset;
 }				t_constraint_state;

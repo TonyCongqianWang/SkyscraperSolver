@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   constraint_checking.h                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:47 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 20:47:21 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 17:03:51 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,9 +15,8 @@
 # include "puzzle_structs.h"
 
 int		check_active_constr(t_puzzle *puzzle);
-void	reverse_constr_direction(t_constraint_state *constr);
-void	insert_val(t_constraint_state *constr, int val);
-void	update_constr_bounds(t_constraint_state *constr);
+void	reverse_constr_direction(t_puzzle *constr);
+int		update_constr_state(t_puzzle *constr, int insert_idx);
 void	set_active_constraint(t_puzzle *puzzle, int constr_idx);
 
 #endif
