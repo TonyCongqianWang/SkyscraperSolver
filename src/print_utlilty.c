@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 00:07:44 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 00:08:26 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,7 +47,7 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 		bitmap = puzzle->node_state.valid_val_bmps[counter];
 		bitmap >>= (cell_val - 1);
 		bitmap &= 1;
-		print_val += '0' + bitmap;
+		print_val = '0' + bitmap;
 		write(1, &print_val, 1);
 		if (counter % puzzle->size != puzzle->size - 1)
 		{
