@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 18:33:10 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 18:34:14 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -120,9 +120,11 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 				constr->max_height_ub = new_val;
 				constr->bwd_ub--;
 				constr->fwd_ub -= new_val - constr->max_height_ub - 1;
-				constr->fwd_lb++;
+				//constr->fwd_lb++;
 			}
 		}
+		else
+			constr->fwd_ub--;
 	}
 	return (1);
 }
