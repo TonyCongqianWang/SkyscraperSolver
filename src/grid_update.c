@@ -6,12 +6,14 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 18:29:59 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/29 19:12:59 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "grid_update.h"
 #include "cell_bitmaps.h"
+#include "constraint_checking.h"
+#include "constraint_selection.h"
 
 int	try_grid_val(t_puzzle *grid, int cell_idx, int val)
 {

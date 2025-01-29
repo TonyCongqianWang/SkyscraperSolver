@@ -1,22 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   grid_update.h                                      :+:      :+:    :+:   */
+/*   constraint_selection.h                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:13:22 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 21:31:47 by towang            #+#    #+#             */
+/*   Updated: 2025/01/29 19:14:52 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GRID_UPDATE_H
-# define GRID_UPDATE_H
+#ifndef CONSTRAINT_SELECTION_H
+# define CONSTRAINT_SELECTION_H
 # include "puzzle_structs.h"
 
-int		try_grid_val(t_puzzle *grid, int cell_idx, int val);
-void	set_grid_val(t_puzzle *grid, int cell_idx, int val);
-void	unset_grid_val(t_puzzle *grid, int cell_idx);
-int		check_constraints(t_puzzle *puzzle, int insert_idx);
+void	set_active_constraint(t_puzzle *puzzle, int constr_idx);
+void	reverse_constr_direction(t_puzzle *constr);
+void	reset_constraint_bounds(t_puzzle *puzzle);
 
 #endif
