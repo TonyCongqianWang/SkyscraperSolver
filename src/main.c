@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:56:18 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 21:09:26 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,9 +51,12 @@ void	partial_solve_and_print_bmps(t_puzzle *puzzle, int depths)
 	cell_val = 1;
 	while (cell_val <= puzzle->size)
 	{
-		print_bmp_grid(puzzle, cell_val, 1);
+		print_bmp_grid(puzzle, cell_val);
+		print_message("");
 		cell_val++;
 	}
+	print_bound_grid(&puzzle->node_state, 0);
+	print_bound_grid(&puzzle->node_state, 1);
 	print_score_grid(puzzle);
 	print_message("");
 	print_solution_grid(puzzle);
