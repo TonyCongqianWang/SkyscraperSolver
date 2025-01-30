@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 23:29:42 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 12:06:43 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,10 +53,8 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 	{
 		if (constr->max_height_lb == puzzle->size)
 			return (1);
-		new_val_lb = 0;
+		new_val_lb = 1;
 		new_val_ub = puzzle->size;
-		if (constr->max_height_ub == puzzle->size)
-			new_val_lb = puzzle->size;
 		find_cell_bounds(puzzle, grid_idx, &new_val_lb, &new_val_ub);
 		update_constr_bounds_unset(constr, new_val_lb, new_val_ub);
 		return (1);
@@ -116,12 +114,13 @@ int	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 
 void	find_cell_bounds(t_puzzle *puzzle, int cell_idx, int *lb, int *ub)
 {
+	return;
 	while (*lb < puzzle->size
 		&& !is_valid_value(&puzzle->node_state, cell_idx, *lb))
 	{
 		(*lb)++;
 	}
-	while (*ub > 0
+	while (*ub > 1
 		&& !is_valid_value(&puzzle->node_state, cell_idx, *ub))
 	{
 		(*ub)--;
