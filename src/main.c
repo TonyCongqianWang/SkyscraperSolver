@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:10:20 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 21:26:43 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,8 @@ void	partial_solve_and_print_bmps(t_puzzle *puzzle, int depths)
 {
 	int			cell_val;
 
+	print_bound_grid(&puzzle->node_state, 0);
+	print_bound_grid(&puzzle->node_state, 1);
 	tree_search(puzzle, depths);
 	cell_val = 1;
 	while (cell_val <= puzzle->size)

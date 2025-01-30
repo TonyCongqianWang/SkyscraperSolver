@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   puzzle_init.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:39:46 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 21:21:54 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "puzzle_init.h"
+#include "cell_bounds.h"
 
 void	init_puzzle(t_puzzle *puzzle, int size)
 {
@@ -36,6 +37,7 @@ void	init_grid_and_bmps(t_puzzle *puzzle, int size)
 	{
 		puzzle->grid_vals[idx] = 0;
 		puzzle->node_state.valid_val_bmps[idx] = 0xffff;
+		update_cell_bounds(&puzzle->node_state, idx);
 		sub_idx = 0;
 		idx++;
 	}
