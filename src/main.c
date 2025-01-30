@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:03:49 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 18:48:49 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "print_utility.h"
+#include "print_grid.h"
 #include "puzzle_structs.h"
 #include "puzzle_solver.h"
 #include "string_interface.h"
