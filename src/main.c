@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:34:57 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 22:47:05 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,7 @@ int	main(int argc, char **argv)
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	partial_solve_and_print_bmps(&puzzle, 1);
+	partial_solve_and_print_bmps(&puzzle, 3);
 	if (!solve_puzzle(&puzzle))
 	{
 		print_error("Could not find solution.");
@@ -48,6 +48,7 @@ void	partial_solve_and_print_bmps(t_puzzle *puzzle, int depths)
 	int			cell_val;
 
 	tree_search(puzzle, depths);
+	print_value("Next_idx", get_next_tree_search_cell(puzzle));
 	cell_val = 1;
 	while (cell_val <= puzzle->size)
 	{

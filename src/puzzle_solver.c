@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:11:28 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 23:01:41 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,14 +49,22 @@ int	tree_search(t_puzzle *puzzle, int depths)
 
 int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 {
-	int				num_valid;
+	int		num_valid;
+	int		x_edge_dist;
+	int		y_edge_dist;
 
 	if (puzzle->grid_vals[idx] != 0)
 	{
 		return (-puzzle->size);
 	}
 	num_valid = get_cell_num_valids(&puzzle->node_state, idx);
-	return (puzzle->size - num_valid);
+	x_edge_dist = idx % puzzle->size;
+	if (x_edge_dist > puzzle->size > 2)
+		x_edge_dist = puzzle->size - x_edge_dist;
+	y_edge_dist = idx / puzzle->size;
+	if (y_edge_dist > puzzle->size > 2)
+		y_edge_dist = puzzle->size - y_edge_dist;
+	return (4 * puzzle->size - 2 * num_valid - y_edge_dist - x_edge_dist);
 }
 
 int	get_next_tree_search_cell(t_puzzle *puzzle)
