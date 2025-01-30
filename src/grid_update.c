@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:45:23 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 22:21:45 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,20 +18,26 @@
 
 void	tighten_grid_cell_bounds(t_puzzle *puzzle)
 {
-	int			loop_idx;
 	int			cell_idx;
-	int			continue_loop;
+	int			reiterate;
+	int			set_count;
 
-	loop_idx = 0;
-	continue_loop = puzzle->node_state.total_unset_count < puzzle->size;
-	while (loop_idx < puzzle->size * puzzle->size || continue_loop)
+	set_count = puzzle->size * puzzle->size;
+	set_count -= puzzle->node_state.total_unset_count;
+	reiterate = 1;
+	while (reiterate)
 	{
-		cell_idx = loop_idx % (puzzle->size * puzzle->size);
-		if (puzzle->grid_vals[cell_idx] == 0)
+		cell_idx = 0;
+		reiterate = 0;
+		while (cell_idx < puzzle->size * puzzle->size)
 		{
-			continue_loop &= tighten_single_cell_bounds(puzzle, cell_idx);
+			if (puzzle->grid_vals[cell_idx] == 0)
+			{
+				reiterate |= tighten_single_cell_bounds(puzzle, cell_idx);
+			}
+			cell_idx++;
 		}
-		loop_idx++;
+		reiterate &= (set_count < puzzle->size);
 	}
 }
 
