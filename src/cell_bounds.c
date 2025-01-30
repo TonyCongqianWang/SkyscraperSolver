@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 19:48:43 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:37:29 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 22:32:04 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,8 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 		}
 		cell_val++;
 	}
-	update_cell_bounds(node_state, idx);
+	if (success)
+		update_cell_bounds(node_state, idx);
 	set_cell_num_valids(node_state, idx, num_valid);
 	return (success);
 }
