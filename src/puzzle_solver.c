@@ -6,13 +6,14 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:07:50 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:40:41 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "puzzle_solver.h"
 #include "grid_update.h"
 #include "cell_bitmaps.h"
+#include "cell_bounds.h"
 
 int	solve_puzzle(t_puzzle *puzzle)
 {
@@ -48,19 +49,13 @@ int	tree_search(t_puzzle *puzzle, int depths)
 
 int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 {
-	int				grid_val;
 	int				num_valid;
 
-	grid_val = 1;
-	num_valid = 0;
-	while (grid_val <= puzzle->size)
+	if (puzzle->grid_vals[idx] == 0)
 	{
-		if (try_grid_val(puzzle, idx, grid_val))
-			num_valid++;
-		else
-			set_value_invalid(&puzzle->node_state, idx, grid_val);
-		grid_val++;
+		return (-puzzle->size);
 	}
+	num_valid = get_cell_num_valids(&puzzle->node_state, idx);
 	return (puzzle->size - num_valid);
 }
 
@@ -72,24 +67,21 @@ int	get_next_tree_search_cell(t_puzzle *puzzle)
 	int		best_idx;
 	int		best_score;
 
-	loop_idx = 0;
+	grid_idx = 0;
 	best_idx = 0;
 	best_score = -1;
-	while (loop_idx < 2 * puzzle->size * puzzle->size)
+	tighten_grid_cell_bounds(puzzle);
+	while (grid_idx < puzzle->size * puzzle->size)
 	{
-		grid_idx = loop_idx % (puzzle->size * puzzle->size);
-		if (puzzle->grid_vals[grid_idx] == 0)
+		score = score_search_cell_candidate(puzzle, grid_idx);
+		if (score > best_score)
 		{
-			score = score_search_cell_candidate(puzzle, grid_idx);
-			if (score > best_score)
-			{
-				best_idx = grid_idx;
-				best_score = score;
-			}
-			if (score >= puzzle->size)
-				return (best_idx);
+			best_idx = grid_idx;
+			best_score = score;
 		}
-		loop_idx++;
+		if (score >= puzzle->size)
+			return (best_idx);
+		grid_idx++;
 	}
 	return (best_idx);
 }

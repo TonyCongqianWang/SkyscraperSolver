@@ -3,27 +3,43 @@
 /*                                                        :::      ::::::::   */
 /*   grid_update.c                                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 19:12:59 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:34:56 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "grid_update.h"
 #include "cell_bitmaps.h"
+#include "cell_bounds.h"
 #include "constraint_checking.h"
 #include "constraint_selection.h"
 
-int	try_grid_val(t_puzzle *grid, int cell_idx, int val)
+void	tighten_grid_cell_bounds(t_puzzle *puzzle)
+{
+	int			loop_idx;
+	int			cell_idx;
+	int			continue_loop;
+
+	loop_idx = 0;
+	continue_loop = puzzle->node_state.total_unset_count < puzzle->size;
+	while (loop_idx < puzzle->size * puzzle->size || continue_loop)
+	{
+		cell_idx = loop_idx % (puzzle->size * puzzle->size);
+		if (puzzle->grid_vals[cell_idx] == 0)
+		{
+			continue_loop &= tighten_single_cell_bounds(puzzle, cell_idx);
+		}
+		loop_idx++;
+	}
+}
+
+int	check_grid_val_violations(t_puzzle *grid, int cell_idx, int val)
 {
 	t_node_state	old_state;
 	int				success;
 
-	if (!is_valid_value(&grid->node_state, cell_idx, val))
-	{
-		return (0);
-	}
 	old_state = grid->node_state;
 	set_grid_val(grid, cell_idx, val);
 	success = check_constraints(grid, cell_idx);
@@ -31,7 +47,7 @@ int	try_grid_val(t_puzzle *grid, int cell_idx, int val)
 		set_value_invalid(&old_state, cell_idx, val);
 	grid->node_state = old_state;
 	unset_grid_val(grid, cell_idx);
-	return (success);
+	return (!success);
 }
 
 void	set_grid_val(t_puzzle *grid, int cell_idx, int val)
