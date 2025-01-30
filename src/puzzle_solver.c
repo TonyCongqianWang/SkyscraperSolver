@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 23:18:42 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 23:45:12 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -84,7 +84,7 @@ int	get_next_tree_search_cell(t_puzzle *puzzle)
 			best_idx = grid_idx;
 			best_score = score;
 		}
-		if (score >= puzzle->size)
+		if (score >= 10 * puzzle->size)
 			return (best_idx);
 		grid_idx++;
 	}

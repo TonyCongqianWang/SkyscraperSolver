@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 22:47:05 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 23:44:25 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include "puzzle_solver.h"
 #include "string_interface.h"
 
-void	partial_solve_and_print_bmps(t_puzzle *puzzle, int depths);
+void	partial_solve_and_print_debug(t_puzzle puzzle, int depths);
 
 int	main(int argc, char **argv)
 {
@@ -32,7 +32,7 @@ int	main(int argc, char **argv)
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	partial_solve_and_print_bmps(&puzzle, 3);
+	partial_solve_and_print_debug(puzzle, 1);
 	if (!solve_puzzle(&puzzle))
 	{
 		print_error("Could not find solution.");
@@ -43,24 +43,24 @@ int	main(int argc, char **argv)
 	return (0);
 }
 
-void	partial_solve_and_print_bmps(t_puzzle *puzzle, int depths)
+void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 {
 	int			cell_val;
 
-	tree_search(puzzle, depths);
-	print_value("Next_idx", get_next_tree_search_cell(puzzle));
+	tree_search(&puzzle, depths);
+	print_value("Next_idx", get_next_tree_search_cell(&puzzle));
 	cell_val = 1;
-	while (cell_val <= puzzle->size)
+	while (cell_val <= puzzle.size)
 	{
-		print_bmp_grid(puzzle, cell_val);
+		print_bmp_grid(&puzzle, cell_val);
 		print_message("");
 		cell_val++;
 	}
-	print_bound_grid(&puzzle->node_state, 0);
+	print_bound_grid(&puzzle.node_state, 0);
 	print_message("");
-	print_bound_grid(&puzzle->node_state, 1);
+	print_bound_grid(&puzzle.node_state, 1);
 	print_message("");
-	print_score_grid(puzzle);
+	print_score_grid(&puzzle);
 	print_message("");
-	print_solution_grid(puzzle);
+	print_solution_grid(&puzzle);
 }
