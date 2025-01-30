@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 17:59:02 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 18:04:44 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,7 +117,6 @@ int	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 
 void	find_cell_bounds(t_puzzle *puzzle, int cell_idx, int *lb, int *ub)
 {
-	return;
 	while (*lb < puzzle->size
 		&& !is_valid_value(&puzzle->node_state, cell_idx, *lb))
 	{
