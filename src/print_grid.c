@@ -6,13 +6,14 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:48:20 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:53:24 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include <unistd.h>
 #include "print_grid.h"
 #include "cell_bitmaps.h"
+#include "cell_bounds.h"
 
 void	print_solution_grid(t_puzzle *puzzle)
 {
@@ -81,6 +82,17 @@ void	print_score_grid(t_puzzle *puzzle)
 			print_val -= is_valid_value(node_state, cell_idx, cell_val) != 0;
 			cell_val++;
 		}
+		write(1, &print_val, 1);
+		if (cell_idx % puzzle->size != puzzle->size - 1)
+			write(1, " ", 1);
+		else
+			write(1, "\n", 1);
+		cell_idx++;
+	}
+	while (cell_idx < puzzle->size * puzzle->size)
+	{
+		print_val = '0' + puzzle->size;
+		print_val -= get_cell_num_valids(node_state, cell_idx);
 		write(1, &print_val, 1);
 		if (cell_idx % puzzle->size != puzzle->size - 1)
 			write(1, " ", 1);
