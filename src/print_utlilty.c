@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:58:45 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 19:03:56 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,10 +47,10 @@ void	print_error(const char *str)
 	write(2, "\n", 1);
 }
 
-void    put_number(unsigned long long nbr)
+void	put_number(unsigned long long nbr)
 {
 	char	val;
-	
+
 	val = '0';
 	if (nbr > 10)
 		put_number(nbr / 10);
