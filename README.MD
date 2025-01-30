@@ -10,12 +10,16 @@ cc -Wall -Wextra -Werror -o rush-01 src/*.c
 ./rush-01 "4 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 2"
 ./rush-01 "4 2 3 2 2 1 4 1 3 3 2 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 2"
 ./rush-01 "4 2 3 2 2 1 4 1 3 3 2 4 2 2 3 3 4 2 3 2 1 2 3 2 4 3 1 2"
+./rush-01 "4 2 3 2 2 2 4 2 3 3 2 3 2 2 3 3 3 2 3 2 4 2 3 2 4 3 2 2"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 3 3 4 2 2 1 4 2 3 3 1 2 5 4 2 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 4 4 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 4 4 3 2 3 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 1 3 4 3 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
 ./rush-01 "2 3 4 3 1 2 3 2 3 2 3 4 4 3 2 4 2 3 3 2 2 2 4 2 2 3 1 2 5 4 2 3"
+./rush-01 "2 3 4 3 4 2 3 2 3 2 3 4 3 3 2 4 2 3 2 2 2 2 4 2 2 3 3 2 5 4 2 3"
+./rush-01 "2 3 4 3 1 2 3 2 3 2 3 4 4 3 2 4 2 3 1 2 2 2 4 2 2 3 3 2 5 4 2 3"
+./rush-01 "3 2 2 3 2 3 3 3 2 3 4 2 2 3 2 2 3 4 2 4 3 3 1 3 2 4 3 4 1 3 3 2 2 2 3 3"
 ./rush-01 "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 2 2 3 3"
 ./rush-01 "1 4 3 3 4 3 3 2 2 4 2 3 2 1 3 2 3 3 1 4 5 2 3 2 3 2 4 2 2 2 3 4 3 1 3 5"
 ./rush-01 "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 5 2 3 3"
@@ -23,4 +27,18 @@ cc -Wall -Wextra -Werror -o rush-01 src/*.c
 
 Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) left (t->b) right (t->b).
 
-You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp) .
+You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
+
+## Changes
+
+# v00
+Submitted version for the piscine. Unfortunatly there was still a typo inside which caused invalid grids to be generated. In v00-fix this is fixed.
+
+# v01
+No algorithmic changes but lots of refactoring was done to clean up a few files and functions that got messy due to the projects time rectrictions as well as norminette.
+
+# v02
+Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration.
+
+# v03
+Added arrays to keep track of cell bounds to allow more effecient calculations. Refactored node selecton procedure to be more readable and maintainable. Constraint tightening now has the possibility to be iterated during early nodes to make use of cell bounds. Node selection now allows cell and value to be selected independently. Even though v03 is significantly slower on both 9x9 instances that v01 solved. It can solve many instances a lot faster.
