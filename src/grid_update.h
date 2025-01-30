@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:17:04 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:46:14 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,5 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle);
 int		check_grid_val_violations(t_puzzle *grid, int cell_idx, int val);
 void	set_grid_val(t_puzzle *grid, int cell_idx, int val);
 void	unset_grid_val(t_puzzle *grid, int cell_idx);
-int		check_constraints(t_puzzle *puzzle, int insert_idx);
 
 #endif

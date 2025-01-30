@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:40:41 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:47:36 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -61,7 +61,6 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 
 int	get_next_tree_search_cell(t_puzzle *puzzle)
 {
-	int		loop_idx;
 	int		score;
 	int		grid_idx;
 	int		best_idx;

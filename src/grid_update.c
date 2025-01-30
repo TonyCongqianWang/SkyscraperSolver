@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:34:56 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:45:23 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,24 +62,4 @@ void	set_grid_val(t_puzzle *grid, int cell_idx, int val)
 void	unset_grid_val(t_puzzle *grid, int cell_idx)
 {
 	grid->grid_vals[cell_idx] = 0;
-}
-
-int	check_constraints(t_puzzle *puzzle, int insert_idx)
-{
-	int					rel_idx;
-	int					abs_idx;
-
-	rel_idx = 0;
-	while (rel_idx < 2)
-	{
-		abs_idx = puzzle->grid_constr_map[insert_idx][rel_idx];
-		set_active_constraint(puzzle, abs_idx);
-		if (!check_active_constr(puzzle))
-			return (0);
-		reverse_constr_direction(puzzle);
-		if (!check_active_constr(puzzle))
-			return (0);
-		rel_idx++;
-	}
-	return (1);
 }

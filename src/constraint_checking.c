@@ -3,16 +3,37 @@
 /*                                                        :::      ::::::::   */
 /*   constraint_checking.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:04:44 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 20:47:14 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "constraint_checking.h"
 #include "constraint_selection.h"
 #include "cell_bitmaps.h"
+#include "cell_bounds.h"
+
+int	check_constraints(t_puzzle *puzzle, int insert_idx)
+{
+	int					rel_idx;
+	int					abs_idx;
+
+	rel_idx = 0;
+	while (rel_idx < 2)
+	{
+		abs_idx = puzzle->grid_constr_map[insert_idx][rel_idx];
+		set_active_constraint(puzzle, abs_idx);
+		if (!check_active_constr(puzzle))
+			return (0);
+		reverse_constr_direction(puzzle);
+		if (!check_active_constr(puzzle))
+			return (0);
+		rel_idx++;
+	}
+	return (1);
+}
 
 int	check_active_constr(t_puzzle *puzzle)
 {
@@ -43,8 +64,8 @@ int	check_active_constr(t_puzzle *puzzle)
 int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 {
 	int					new_val;
-	int					new_val_lb;
-	int					new_val_ub;
+	short				val_lb;
+	short				val_ub;
 	t_constraint_state	*constr;
 
 	constr = &puzzle->constr_state;
@@ -53,10 +74,8 @@ int	update_constr_state(t_puzzle *puzzle, int grid_idx)
 	{
 		if (constr->max_height_lb == puzzle->size)
 			return (1);
-		new_val_lb = 1;
-		new_val_ub = puzzle->size;
-		find_cell_bounds(puzzle, grid_idx, &new_val_lb, &new_val_ub);
-		update_constr_bounds_unset(constr, new_val_lb, new_val_ub);
+		get_cell_bounds(&puzzle->node_state, grid_idx, &val_lb, &val_ub);
+		update_constr_bounds_unset(constr, val_lb, val_ub);
 		return (1);
 	}
 	else
@@ -113,18 +132,4 @@ int	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 	constr->fwd_ub = constr->lhs_ub;
 	constr->fwd_ub += constr->size - constr->max_height_lb;
 	return (1);
-}
-
-void	find_cell_bounds(t_puzzle *puzzle, int cell_idx, int *lb, int *ub)
-{
-	while (*lb < puzzle->size
-		&& !is_valid_value(&puzzle->node_state, cell_idx, *lb))
-	{
-		(*lb)++;
-	}
-	while (*ub > 1
-		&& !is_valid_value(&puzzle->node_state, cell_idx, *ub))
-	{
-		(*ub)--;
-	}
 }
