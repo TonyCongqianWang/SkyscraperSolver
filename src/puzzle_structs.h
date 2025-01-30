@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 21:07:49 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 17:45:08 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ typedef struct s_constraint_state
 	int					bwd_ub;
 	int					max_height_lb;
 	int					max_height_ub;
+	int					max_height_bwd;
 }				t_constraint_state;
 
 typedef struct s_puzzle

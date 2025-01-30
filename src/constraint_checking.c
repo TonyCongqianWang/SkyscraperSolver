@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 21:31:51 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 12:06:43 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 17:59:02 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -72,10 +72,9 @@ void	update_constr_bounds_unset(t_constraint_state *constr, int lb, int ub)
 		constr->lhs_ub++;
 		if (lb > constr->max_height_ub)
 		{
-			constr->bwd_ub--;
 			constr->max_height_lb = lb;
 			constr->max_height_ub = ub;
-			if (constr->max_height_ub < constr->size)
+			if (ub != constr->size)
 				constr->fwd_lb++;
 		}
 		else
@@ -99,12 +98,16 @@ int	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
 	if (new_val > constr->max_height_lb)
 	{
 		constr->lhs_ub++;
-		constr->bwd_ub--;
 		constr->max_height_lb = new_val;
-		if (new_val > constr->max_height_ub)
+		if (new_val > constr->max_height_bwd)
 		{
-			constr->fwd_lb++;
-			constr->max_height_ub = new_val;
+			constr->bwd_ub--;
+			constr->max_height_bwd = new_val;
+			if (new_val > constr->max_height_ub)
+			{
+				constr->fwd_lb++;
+				constr->max_height_ub = new_val;
+			}
 		}
 	}
 	constr->fwd_ub = constr->lhs_ub;

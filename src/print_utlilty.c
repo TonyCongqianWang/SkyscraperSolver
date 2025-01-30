@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 11:15:16 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 18:03:44 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,9 +38,9 @@ void	print_solution_grid(t_puzzle *puzzle)
 
 void	print_bmp_grid(t_puzzle *puzzle, int cell_val, int add_nl)
 {
-	int		cell_idx;
-	char	print_val;
-	t_node_state *node_state;
+	int				cell_idx;
+	char			print_val;
+	t_node_state	*node_state;
 
 	cell_idx = 0;
 	node_state = &puzzle->node_state;
@@ -65,10 +65,10 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val, int add_nl)
 
 void	print_score_grid(t_puzzle *puzzle)
 {
-	int		cell_idx;
-	char	cell_val;
-	char	print_val;
-	t_node_state *node_state;
+	int				cell_idx;
+	char			cell_val;
+	char			print_val;
+	t_node_state	*node_state;
 
 	cell_idx = 0;
 	node_state = &puzzle->node_state;
