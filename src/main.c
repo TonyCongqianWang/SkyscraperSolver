@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:48:49 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 18:56:18 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ int	main(int argc, char **argv)
 		return (0);
 	}
 	print_solution_grid(&puzzle);
+	print_value("Nodes visited", puzzle.nodes_visited);
 	return (0);
 }
 

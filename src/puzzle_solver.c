@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   puzzle_solver.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: towang <towang@student.42heilbronn.de>     +#+  +:+       +#+        */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/29 18:26:48 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 19:00:08 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ int	tree_search(t_puzzle *puzzle, int depths)
 
 	if (puzzle->node_state.is_complete || depths == 0)
 		return (!puzzle->node_state.is_invalid);
+	puzzle->nodes_visited++;
 	grid_idx = get_next_tree_search_cell(puzzle);
 	grid_val = 1;
 	old_state = puzzle->node_state;

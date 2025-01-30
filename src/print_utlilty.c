@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 18:48:39 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 18:58:45 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,18 @@ void	print_message(const char *str)
 	write(1, "\n", 1);
 }
 
+void	print_value(const char *descr, unsigned long long value)
+{
+	while (*descr)
+	{
+		write(1, descr, 1);
+		descr++;
+	}
+	write(1, ": ", 2);
+	put_number(value);
+	write(1, "\n", 1);
+}
+
 void	print_error(const char *str)
 {
 	write(2, "Error: ", 7);
@@ -33,4 +45,15 @@ void	print_error(const char *str)
 		str++;
 	}
 	write(2, "\n", 1);
+}
+
+void    put_number(unsigned long long nbr)
+{
+	char	val;
+	
+	val = '0';
+	if (nbr > 10)
+		put_number(nbr / 10);
+	val += nbr % 10;
+	write(1, &val, 1);
 }
