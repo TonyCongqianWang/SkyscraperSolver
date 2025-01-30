@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:00:08 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 19:07:50 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,28 +66,30 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 
 int	get_next_tree_search_cell(t_puzzle *puzzle)
 {
-	int		idx;
+	int		loop_idx;
 	int		score;
+	int		grid_idx;
 	int		best_idx;
 	int		best_score;
 
-	idx = 0;
+	loop_idx = 0;
 	best_idx = 0;
 	best_score = -1;
-	while (idx < puzzle->size * puzzle->size)
+	while (loop_idx < 2 * puzzle->size * puzzle->size)
 	{
-		if (puzzle->grid_vals[idx] == 0)
+		grid_idx = loop_idx % (puzzle->size * puzzle->size);
+		if (puzzle->grid_vals[grid_idx] == 0)
 		{
-			score = score_search_cell_candidate(puzzle, idx);
+			score = score_search_cell_candidate(puzzle, grid_idx);
 			if (score > best_score)
 			{
-				best_idx = idx;
+				best_idx = grid_idx;
 				best_score = score;
 			}
 			if (score >= puzzle->size)
 				return (best_idx);
 		}
-		idx++;
+		loop_idx++;
 	}
 	return (best_idx);
 }
