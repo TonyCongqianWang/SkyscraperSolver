@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:09:49 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 21:12:45 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,6 +66,7 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 void	print_score_grid(t_puzzle *puzzle)
 {
 	int				cell_idx;
+	int				cell_score;
 	char			print_val;
 	t_node_state	*node_state;
 
@@ -73,8 +74,10 @@ void	print_score_grid(t_puzzle *puzzle)
 	cell_idx = 0;
 	while (cell_idx < puzzle->size * puzzle->size)
 	{
-		print_val = '0';
-		print_val += score_search_cell_candidate(puzzle, cell_idx);
+		cell_score = score_search_cell_candidate(puzzle, cell_idx);
+		if (cell_score < 0)
+			cell_score = 'x' - '0';
+		print_val = '0' + cell_score;
 		write(1, &print_val, 1);
 		if (cell_idx % puzzle->size != puzzle->size - 1)
 			write(1, " ", 1);

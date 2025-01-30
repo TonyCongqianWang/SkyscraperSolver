@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:47:36 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 21:11:28 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,7 +51,7 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 {
 	int				num_valid;
 
-	if (puzzle->grid_vals[idx] == 0)
+	if (puzzle->grid_vals[idx] != 0)
 	{
 		return (-puzzle->size);
 	}
