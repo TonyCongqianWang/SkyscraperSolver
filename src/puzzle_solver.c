@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 23:01:41 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 23:02:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,10 +59,10 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 	}
 	num_valid = get_cell_num_valids(&puzzle->node_state, idx);
 	x_edge_dist = idx % puzzle->size;
-	if (x_edge_dist > puzzle->size > 2)
+	if (x_edge_dist > puzzle->size / 2)
 		x_edge_dist = puzzle->size - x_edge_dist;
 	y_edge_dist = idx / puzzle->size;
-	if (y_edge_dist > puzzle->size > 2)
+	if (y_edge_dist > puzzle->size / 2)
 		y_edge_dist = puzzle->size - y_edge_dist;
 	return (4 * puzzle->size - 2 * num_valid - y_edge_dist - x_edge_dist);
 }
