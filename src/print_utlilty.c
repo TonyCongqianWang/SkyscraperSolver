@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:36 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:03:56 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/31 00:28:31 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void	put_number(unsigned long long nbr)
 	char	val;
 
 	val = '0';
-	if (nbr > 10)
+	if (nbr >= 10)
 		put_number(nbr / 10);
 	val += nbr % 10;
 	write(1, &val, 1);

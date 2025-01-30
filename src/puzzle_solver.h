@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:46 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 19:19:39 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/31 00:29:51 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 int		solve_puzzle(t_puzzle *puzzle);
 int		tree_search(t_puzzle *puzzle, int depths);
 int		score_search_cell_candidate(t_puzzle *puzzle, int idx);
+int		get_next_tree_node(t_puzzle *puzzle, short *cell_lb, short *cell_ub);
 int		get_next_tree_search_cell(t_puzzle *puzzle);
 
 #endif
