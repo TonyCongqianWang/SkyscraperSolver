@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 23:44:25 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/31 00:38:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,10 +32,10 @@ int	main(int argc, char **argv)
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	partial_solve_and_print_debug(puzzle, 1);
 	if (!solve_puzzle(&puzzle))
 	{
 		print_error("Could not find solution.");
+		print_value("Nodes visited", puzzle.nodes_visited);
 		return (0);
 	}
 	print_solution_grid(&puzzle);
