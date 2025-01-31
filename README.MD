@@ -25,7 +25,7 @@ Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) le
 
 You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
 
-## Instances
+### Instances
 
 Some more example inputs of different sizes:
 ```
