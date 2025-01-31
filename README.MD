@@ -31,7 +31,7 @@ You can find puzzles that you can play yourself [here](https://www.puzzle-skyscr
 
 ## Changes
 
-### v00 /v00-fix
+### v00 / v00-fix
 Submitted version for the piscine. Unfortunatly there was still a typo inside which caused invalid grids to be generated. In v00-fix this is fixed. This version also has no additional utilities and outputs the format exactly as specified in the projects subject.
 
 ### v01
