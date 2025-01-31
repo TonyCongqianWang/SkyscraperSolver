@@ -31,14 +31,14 @@ You can find puzzles that you can play yourself [here](https://www.puzzle-skyscr
 
 ## Changes
 
-### v00
-Submitted version for the piscine. Unfortunatly there was still a typo inside which caused invalid grids to be generated. In v00-fix this is fixed.
+### v00 /v00-fix
+Submitted version for the piscine. Unfortunatly there was still a typo inside which caused invalid grids to be generated. In v00-fix this is fixed. This version also has no additional utilities and outputs the format exactly as specified in the projects subject.
 
 ### v01
 No algorithmic changes but lots of refactoring was done to clean up a few files and functions that got messy due to the projects time rectrictions as well as norminette.
 
 ### v02
-Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration.
+Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration. Different print utilities were added to allow for easier understanding and debugging.
 
 ### v03
 Added arrays to keep track of cell bounds to allow more effecient calculations. Refactored node selecton procedure to be more readable and maintainable. Constraint tightening now has the possibility to be iterated during early nodes to make use of cell bounds. Node selection now allows cell and value to be selected independently. Even though v03 is significantly slower on both 9x9 instances that v01 solved. It can solve many instances a lot faster.
