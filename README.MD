@@ -7,6 +7,7 @@ cc -Wall -Wextra -Werror -o rush-01 src/*.c
 ./rush-01 "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
 ```
 
+Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) left (t->b) right (t->b).
 Solutions (if found) are printed like this:
 
 ```
@@ -20,8 +21,6 @@ Solutions (if found) are printed like this:
 5 6 1 7 8 2 9 4 3
 7 3 2 8 6 9 5 1 4
 ```
-
-Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) left (t->b) right (t->b).
 
 You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
 
