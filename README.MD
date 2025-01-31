@@ -1,4 +1,4 @@
-### Solver for the Skyscraper puzzle game
+# Solver for the Skyscraper puzzle game
 
 Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 
@@ -31,14 +31,14 @@ You can find puzzles that you can play yourself [here](https://www.puzzle-skyscr
 
 ## Changes
 
-# v00
+### v00
 Submitted version for the piscine. Unfortunatly there was still a typo inside which caused invalid grids to be generated. In v00-fix this is fixed.
 
-# v01
+### v01
 No algorithmic changes but lots of refactoring was done to clean up a few files and functions that got messy due to the projects time rectrictions as well as norminette.
 
-# v02
+### v02
 Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration.
 
-# v03
+### v03
 Added arrays to keep track of cell bounds to allow more effecient calculations. Refactored node selecton procedure to be more readable and maintainable. Constraint tightening now has the possibility to be iterated during early nodes to make use of cell bounds. Node selection now allows cell and value to be selected independently. Even though v03 is significantly slower on both 9x9 instances that v01 solved. It can solve many instances a lot faster.
