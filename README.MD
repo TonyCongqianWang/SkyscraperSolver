@@ -1,6 +1,6 @@
 # Solver for the Skyscraper puzzle game
 
-Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. Compilation and usage like this:
+Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. Compilation and usage like this (assuming cc is your C compiler):
 
 ```
 cc -Wall -Wextra -Werror -o rush-01 src/*.c
