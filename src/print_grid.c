@@ -67,9 +67,7 @@ void	print_score_grid(t_puzzle *puzzle)
 {
 	int				cell_idx;
 	char			print_val;
-	t_node_state	*node_state;
 
-	node_state = &puzzle->node_state;
 	cell_idx = 0;
 	while (cell_idx < puzzle->size * puzzle->size)
 	{
