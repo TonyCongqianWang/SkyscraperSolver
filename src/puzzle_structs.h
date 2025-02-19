@@ -40,12 +40,11 @@ typedef struct s_constraint_state
 	t_constraint_pair	cur_c_pair;
 	int					is_reverse;
 	int					fwd_lb;
-	int					fwd_ub;
 	int					lhs_ub;
 	int					bwd_ub;
 	int					max_height_lb;
 	int					max_height_ub;
-	int					max_height_bwd;
+	int					max_height_seen;
 }				t_constraint_state;
 
 typedef struct s_puzzle

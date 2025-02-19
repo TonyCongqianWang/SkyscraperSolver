@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   constraint_checking.h                              :+:      :+:    :+:   */
+/*   constraint_update.h                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,12 +10,12 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CONSTRAINT_CHECKING_H
-# define CONSTRAINT_CHECKING_H
+#ifndef CONSTRAINT_UPDATE_H
+# define CONSTRAINT_UPDATE_H
 # include "puzzle_structs.h"
 
-int		check_constraints(t_puzzle *puzzle, int insert_idx);
-int		check_active_constr(t_puzzle *puzzle);
-int		check_constr_state_violations(t_constraint_state* constr);
+int		update_constr_state(t_puzzle* puzzle, int cell_idx);
+int		update_constr_state_new_val(t_constraint_state* constr, int new_val);
+int		update_constr_state_unset(t_constraint_state* constr, int lb, int ub);
 
 #endif

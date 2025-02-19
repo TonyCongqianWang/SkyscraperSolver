@@ -12,8 +12,7 @@
 
 #include "constraint_checking.h"
 #include "constraint_selection.h"
-#include "cell_bitmaps.h"
-#include "cell_bounds.h"
+#include "constraint_update.h"
 
 int	check_constraints(t_puzzle *puzzle, int insert_idx)
 {
@@ -47,89 +46,26 @@ int	check_active_constr(t_puzzle *puzzle)
 	sub_idx = 0;
 	while (sub_idx < size && constr->max_height_lb < size)
 	{
-		if (constr->is_reverse)
-			grid_idx = constr->cur_c_pair.grid_indeces[size - sub_idx - 1];
-		else
-			grid_idx = constr->cur_c_pair.grid_indeces[sub_idx];
 		sub_idx++;
+		if (constr->is_reverse)
+			grid_idx = constr->cur_c_pair.grid_indeces[size - sub_idx];
+		else
+			grid_idx = constr->cur_c_pair.grid_indeces[sub_idx - 1];
 		update_constr_state(puzzle, grid_idx);
-		if (constr->fwd_lb > constr->cur_c_pair.fwd_val
-			|| constr->fwd_ub < constr->cur_c_pair.fwd_val
-			|| constr->bwd_ub < constr->cur_c_pair.bwd_val)
+		if (sub_idx > constr->max_height_lb)
+			constr->max_height_lb = sub_idx;
+		if (check_constr_state_violations(&puzzle->constr_state))
 			return (0);
 	}
 	return (1);
 }
 
-int	update_constr_state(t_puzzle *puzzle, int grid_idx)
+int	check_constr_state_violations(t_constraint_state *constr)
 {
-	int					new_val;
-	short				val_lb;
-	short				val_ub;
-	t_constraint_state	*constr;
+	int		fwd_ub;
 
-	constr = &puzzle->constr_state;
-	new_val = puzzle->grid_vals[grid_idx];
-	if (new_val == 0)
-	{
-		if (constr->max_height_lb == puzzle->size)
-			return (1);
-		get_cell_bounds(&puzzle->node_state, grid_idx, &val_lb, &val_ub);
-		update_constr_bounds_unset(constr, val_lb, val_ub);
-		return (1);
-	}
-	else
-	{
-		return (update_constr_bounds_new_val(constr, new_val));
-	}
-}
-
-void	update_constr_bounds_unset(t_constraint_state *constr, int lb, int ub)
-{
-	if (ub > constr->max_height_lb)
-	{
-		constr->lhs_ub++;
-		if (lb > constr->max_height_ub)
-		{
-			constr->max_height_lb = lb;
-			constr->max_height_ub = ub;
-			if (ub != constr->size)
-				constr->fwd_lb++;
-		}
-		else
-		{
-			if (ub > constr->max_height_ub)
-				constr->max_height_ub = ub;
-			if (lb > constr->max_height_lb)
-				constr->max_height_lb = lb;
-		}
-	}
-}
-
-int	update_constr_bounds_new_val(t_constraint_state	*constr, int new_val)
-{
-	if (new_val == constr->size)
-	{
-		constr->max_height_lb = constr->size;
-		constr->fwd_ub = constr->lhs_ub + 1;
-		return (0);
-	}
-	if (new_val > constr->max_height_lb)
-	{
-		constr->lhs_ub++;
-		constr->max_height_lb = new_val;
-		if (new_val > constr->max_height_bwd)
-		{
-			constr->bwd_ub--;
-			constr->max_height_bwd = new_val;
-			if (new_val > constr->max_height_ub)
-			{
-				constr->fwd_lb++;
-				constr->max_height_ub = new_val;
-			}
-		}
-	}
-	constr->fwd_ub = constr->lhs_ub;
-	constr->fwd_ub += constr->size - constr->max_height_lb;
-	return (1);
+	fwd_ub = constr->lhs_ub + constr->size - constr->max_height_lb;
+	return (constr->fwd_lb > constr->cur_c_pair.fwd_val
+		|| fwd_ub < constr->cur_c_pair.fwd_val
+		|| constr->bwd_ub < constr->cur_c_pair.bwd_val);
 }
