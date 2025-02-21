@@ -17,6 +17,12 @@
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 
+typedef struct s_node_transition
+{
+	int					cell_idx;
+	char				cell_val;
+}				t_node_transition;
+
 typedef struct s_node_state
 {
 	int					size;

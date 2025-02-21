@@ -12,6 +12,7 @@
 
 #include "puzzle_structs.h"
 #include "cell_bitmaps.h"
+#include "cell_bounds.h"
 
 int	is_valid_value(t_node_state *state, int cell_idx, int val)
 {
@@ -25,7 +26,12 @@ int	is_valid_value(t_node_state *state, int cell_idx, int val)
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
+	int	num_valid;
+
 	state->valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
+	update_cell_bounds(state, cell_idx);
+	num_valid = get_cell_num_valids(state, cell_idx);
+	set_cell_num_valids(state, cell_idx, num_valid - 1);
 }
 
 void	update_bitmaps(t_node_state *state, int cell_idx, int val)

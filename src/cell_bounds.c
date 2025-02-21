@@ -38,7 +38,6 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 		}
 		cell_val++;
 	}
-	update_cell_bounds(node_state, idx);
 	set_cell_num_valids(node_state, idx, num_valid);
 	return (success);
 }

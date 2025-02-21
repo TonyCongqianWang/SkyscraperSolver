@@ -17,7 +17,7 @@
 int		solve_puzzle(t_puzzle *puzzle);
 int		tree_search(t_puzzle *puzzle, int depths);
 int		score_search_cell_candidate(t_puzzle *puzzle, int idx);
-int		get_next_tree_node(t_puzzle *puzzle, short *cell_lb, short *cell_ub);
+int		try_get_next_transition(t_puzzle* puzzle, t_node_transition* next);
 int		get_next_tree_search_cell(t_puzzle *puzzle);
 
 #endif
