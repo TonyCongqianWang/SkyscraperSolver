@@ -19,13 +19,11 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 {
 	short			cell_val;
 	short			cell_ub;
-	short			num_valid;
 	int				success;
 	t_node_state	*node_state;
 
 	node_state = &puzzle->node_state;
 	get_cell_bounds(node_state, idx, &cell_val, &cell_ub);
-	num_valid = 0;
 	success = 0;
 	while (cell_val <= cell_ub)
 	{
@@ -36,8 +34,6 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 				set_value_invalid(node_state, idx, cell_val);
 				success = 1;
 			}
-			else
-				num_valid++;
 		}
 		cell_val++;
 	}
