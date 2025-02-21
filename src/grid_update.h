@@ -16,7 +16,6 @@
 
 void	tighten_grid_cell_bounds(t_puzzle *puzzle);
 int		check_grid_val_violations(t_puzzle *grid, int cell_idx, int val);
-void	register_invalid_val(t_node_state* state, int cell_idx, int val);
 void	set_grid_val(t_puzzle *grid, int cell_idx, int val);
 void	unset_grid_val(t_puzzle *grid, int cell_idx);
 

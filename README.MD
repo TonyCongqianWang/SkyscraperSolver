@@ -3,7 +3,7 @@
 Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. Compilation and usage like this (assuming cc is your C compiler):
 
 ```
-cc -Wall -Wextra -Werror -o rush-01 src/*.c
+cc -Wall -Wextra -Werror -O2 -o rush-01 src/*.c
 ./rush-01 "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
 ```
 

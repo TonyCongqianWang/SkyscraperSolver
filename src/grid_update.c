@@ -48,15 +48,10 @@ int	check_grid_val_violations(t_puzzle *grid, int cell_idx, int val)
 
 	old_state = grid->node_state;
 	set_grid_val(grid, cell_idx, val);
-	success = check_constraints(grid, cell_idx);		
+	success = check_constraints(grid, cell_idx);
 	grid->node_state = old_state;
 	unset_grid_val(grid, cell_idx);
 	return (!success);
-}
-
-void	register_invalid_val(t_node_state* state, int cell_idx, int val)
-{
-	set_value_invalid(state, cell_idx, val);
 }
 
 void	set_grid_val(t_puzzle *grid, int cell_idx, int val)

@@ -16,10 +16,10 @@
 
 int	update_constr_state(t_puzzle *puzzle, int abs_idx)
 {
-	int									new_val;
-	short								val_lb;
-	short								val_ub;
 	t_constraint_state	*constr;
+	int					new_val;
+	short				val_lb;
+	short				val_ub;
 
 	constr = &puzzle->constr_state;
 	new_val = puzzle->grid_vals[abs_idx];
@@ -31,9 +31,7 @@ int	update_constr_state(t_puzzle *puzzle, int abs_idx)
 		return (update_constr_state_unset(constr, val_lb, val_ub));
 	}
 	else
-	{
 		return (update_constr_state_new_val(constr, new_val));
-	}
 }
 
 int	update_constr_state_unset(t_constraint_state *constr, int lb, int ub)

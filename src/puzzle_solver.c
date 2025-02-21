@@ -22,22 +22,22 @@ int	solve_puzzle(t_puzzle *puzzle)
 
 int	tree_search(t_puzzle *puzzle, int depths)
 {
-	t_node_state			old_state;
-	t_node_transition	transition;
+	t_node_state		old_state;
+	t_node_transition	next;
 
 	if (puzzle->node_state.is_complete || depths == 0)
 		return (!puzzle->node_state.is_invalid);
 	puzzle->nodes_visited++;
 	tighten_grid_cell_bounds(puzzle);
 	old_state = puzzle->node_state;
-	while (try_get_next_transition(puzzle, &transition))
+	while (try_get_next_transition(puzzle, &next))
 	{
-		set_grid_val(puzzle, transition.cell_idx, transition.cell_val);
+		set_grid_val(puzzle, next.cell_idx, next.cell_val);
 		if (tree_search(puzzle, depths - 1))
 			return (1);
-		register_invalid_val(&old_state, transition.cell_idx, transition.cell_val);
+		set_value_invalid(&old_state, next.cell_idx, next.cell_val);
 		puzzle->node_state = old_state;
-		unset_grid_val(puzzle, transition.cell_idx);
+		unset_grid_val(puzzle, next.cell_idx);
 	}
 	return (0);
 }
@@ -64,7 +64,7 @@ int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
 		- y_edge_dist - x_edge_dist + cell_ub);
 }
 
-int	try_get_next_transition(t_puzzle *puzzle, t_node_transition* next)
+int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 {
 	int		cell_idx;
 	short	cell_lb;
@@ -74,8 +74,6 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition* next)
 		return (0);
 	cell_idx = get_next_tree_search_cell(puzzle);
 	get_cell_bounds(&puzzle->node_state, cell_idx, &cell_lb, &cell_ub);
-	if (cell_ub < cell_lb)
-		return (0);
 	next->cell_idx = cell_idx;
 	next->cell_val = cell_ub;
 	return (1);
