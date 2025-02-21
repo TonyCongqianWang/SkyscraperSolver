@@ -13,8 +13,7 @@
 #include "puzzle_solver.h"
 #include "grid_update.h"
 #include "cell_bitmaps.h"
-#include "cell_bounds.h"
-#include "grid_valid_value_counts.h"
+#include "transition_scoring.h"
 
 int	solve_puzzle(t_puzzle *puzzle)
 {
@@ -43,62 +42,45 @@ int	tree_search(t_puzzle *puzzle, int depths)
 	return (0);
 }
 
-int	score_search_cell_candidate(t_puzzle *puzzle, int idx)
+int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next)
 {
-	int		num_valid;
-	int		x_edge_dist;
-	int		y_edge_dist;
-	short	cell_lb;
-	short	cell_ub;
+	t_node_transition	cur;
+	int					cell_val;
 
-	if (puzzle->grid_vals[idx] != 0)
-		return (-10 * puzzle->size);
-	num_valid = get_cell_num_valids(&puzzle->node_state, idx);
-	x_edge_dist = idx % puzzle->size;
-	if (x_edge_dist > puzzle->size / 2)
-		x_edge_dist = puzzle->size - x_edge_dist;
-	y_edge_dist = idx / puzzle->size;
-	if (y_edge_dist > puzzle->size / 2)
-		y_edge_dist = puzzle->size - y_edge_dist;
-	get_cell_bounds(&puzzle->node_state, idx, &cell_lb, &cell_ub);
-	return (10 * puzzle->size - 8 * num_valid
-		- y_edge_dist - x_edge_dist + cell_ub);
+	next->score = -1;
+	cur.cell_idx = idx;
+	cell_val = puzzle->size;
+	while (cell_val > 0)
+	{
+		cell_val--;
+		if (!is_valid_value(&puzzle->node_state, idx, cell_val + 1))
+			continue ;
+		cur.cell_val = cell_val + 1;
+		score_transition_constrs(&puzzle->node_state, &cur);
+		if (cur.score > next->score)
+			(*next) = cur;
+	}
+	return (next->cell_val);
 }
 
 int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 {
-	int		cell_idx;
-	short	cell_lb;
-	short	cell_ub;
+	t_node_transition	candidate;
+	int					cell_idx;
 
 	if (puzzle->node_state.is_invalid)
 		return (0);
-	cell_idx = get_next_tree_search_cell(puzzle);
-	get_cell_bounds(&puzzle->node_state, cell_idx, &cell_lb, &cell_ub);
-	next->cell_idx = cell_idx;
-	next->cell_val = cell_ub;
-	return (1);
-}
-
-int	get_next_tree_search_cell(t_puzzle *puzzle)
-{
-	int		score;
-	int		grid_idx;
-	int		best_idx;
-	int		best_score;
-
-	grid_idx = 0;
-	best_idx = 0;
-	best_score = -1;
-	while (grid_idx < puzzle->size * puzzle->size)
+	next->score = -1;
+	cell_idx = 0;
+	while (cell_idx < puzzle->size * puzzle->size)
 	{
-		score = score_search_cell_candidate(puzzle, grid_idx);
-		if (score > best_score)
-		{
-			best_idx = grid_idx;
-			best_score = score;
-		}
-		grid_idx++;
+		cell_idx++;
+		if (puzzle->grid_vals[cell_idx - 1] != 0)
+			continue ;
+		set_best_transition_val(puzzle, cell_idx - 1, &candidate);
+		score_transition_full(&puzzle->node_state, &candidate);
+		if (candidate.score > next->score)
+			*next = candidate;
 	}
-	return (best_idx);
+	return (1);
 }

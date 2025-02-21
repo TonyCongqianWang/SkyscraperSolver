@@ -14,10 +14,9 @@
 # define PUZZLE_SOLVER_H
 # include "puzzle_structs.h"
 
-int		solve_puzzle(t_puzzle *puzzle);
-int		tree_search(t_puzzle *puzzle, int depths);
-int		score_search_cell_candidate(t_puzzle *puzzle, int idx);
-int		try_get_next_transition(t_puzzle *puzzle, t_node_transition *next);
-int		get_next_tree_search_cell(t_puzzle *puzzle);
+int	solve_puzzle(t_puzzle *puzzle);
+int	tree_search(t_puzzle *puzzle, int depths);
+int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next);
+int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next);
 
 #endif

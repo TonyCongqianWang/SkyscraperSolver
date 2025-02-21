@@ -23,6 +23,10 @@ typedef struct s_node_transition
 {
 	int					cell_idx;
 	char				cell_val;
+	int					num_valids_col;
+	int					num_valids_row;
+	int					num_valids_cell;
+	double				score;
 }				t_node_transition;
 
 typedef struct s_node_state

@@ -48,7 +48,6 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 	int			cell_val;
 
 	tree_search(&puzzle, depths);
-	print_value("Next_idx", get_next_tree_search_cell(&puzzle));
 	cell_val = 1;
 	while (cell_val <= puzzle.size)
 	{
@@ -60,7 +59,6 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 	print_message("");
 	print_bound_grid(&puzzle.node_state, 1);
 	print_message("");
-	print_score_grid(&puzzle);
 	print_message("");
 	print_solution_grid(&puzzle);
 }

@@ -15,7 +15,8 @@
 # include "puzzle_structs.h"
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val);
-int		get_constr_num_valids(t_node_state *state, int cell_idx, int val);
+int		get_col_num_valids(t_node_state *state, int cell_idx, int val);
+int		get_row_num_valids(t_node_state *state, int cell_idx, int val);
 void	decrement_cell_num_valids(t_node_state *state, int idx);
 int		get_cell_num_valids(t_node_state *state, int idx);
 

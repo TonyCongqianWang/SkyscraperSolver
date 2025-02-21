@@ -63,32 +63,6 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 	}
 }
 
-void	print_score_grid(t_puzzle *puzzle)
-{
-	int				cell_idx;
-	char			print_val;
-
-	cell_idx = 0;
-	while (cell_idx < puzzle->size * puzzle->size)
-	{
-		print_val = score_search_cell_candidate(puzzle, cell_idx) / 10;
-		if (print_val < 0)
-			print_val = '+';
-		else if (print_val > 26 + 9)
-			print_val += 'A' - 10;
-		else if (print_val > 9)
-			print_val += 'a' - 10;
-		else
-			print_val += '0';
-		write(1, &print_val, 1);
-		if (cell_idx % puzzle->size != puzzle->size - 1)
-			write(1, " ", 1);
-		else
-			write(1, "\n", 1);
-		cell_idx++;
-	}
-}
-
 void	print_bound_grid(t_node_state *node_state, int is_ub)
 {
 	int				cell_idx;

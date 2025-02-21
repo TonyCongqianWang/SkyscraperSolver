@@ -36,7 +36,6 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 	}
 }
 
-
 void	update_bitmaps(t_node_state *state, int cell_idx, int val)
 {
 	int		counter;
