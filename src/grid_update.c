@@ -29,7 +29,8 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle)
 	{
 		cell_idx = 0;
 		reiterate = 0;
-		while (cell_idx < puzzle->size * puzzle->size)
+		while (cell_idx < puzzle->size * puzzle->size
+			&& !puzzle->node_state.is_invalid)
 		{
 			if (puzzle->grid_vals[cell_idx] == 0)
 			{
@@ -41,29 +42,29 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle)
 	}
 }
 
-int	check_grid_val_violations(t_puzzle *grid, int cell_idx, int val)
+int	check_grid_val_violations(t_puzzle *puzzle, int cell_idx, int val)
 {
 	t_node_state	old_state;
 	int				success;
 
-	old_state = grid->node_state;
-	set_grid_val(grid, cell_idx, val);
-	success = check_constraints(grid, cell_idx);
-	grid->node_state = old_state;
-	unset_grid_val(grid, cell_idx);
+	old_state = puzzle->node_state;
+	set_grid_val(puzzle, cell_idx, val);
+	success = check_constraints(puzzle, cell_idx);
+	puzzle->node_state = old_state;
+	unset_grid_val(puzzle, cell_idx);
 	return (!success);
 }
 
-void	set_grid_val(t_puzzle *grid, int cell_idx, int val)
+void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val)
 {
-	grid->grid_vals[cell_idx] = val;
-	grid->node_state.total_unset_count--;
-	update_bitmaps(&grid->node_state, cell_idx, val);
-	if (grid->node_state.total_unset_count == 0)
-		grid->node_state.is_complete = 1;
+	puzzle->grid_vals[cell_idx] = val;
+	puzzle->node_state.total_unset_count--;
+	update_bitmaps(&puzzle->node_state, cell_idx, val);
+	if (puzzle->node_state.total_unset_count == 0)
+		puzzle->node_state.is_complete = 1;
 }
 
-void	unset_grid_val(t_puzzle *grid, int cell_idx)
+void	unset_grid_val(t_puzzle *puzzle, int cell_idx)
 {
-	grid->grid_vals[cell_idx] = 0;
+	puzzle->grid_vals[cell_idx] = 0;
 }

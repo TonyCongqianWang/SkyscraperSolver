@@ -16,6 +16,7 @@
 
 int		is_valid_value(t_node_state *state, int cell_idx, int val);
 void	set_value_invalid(t_node_state *state, int cell_idx, int val);
+void	decrement_constr_num_valid(t_node_state *state, int cell_idx, int val);
 void	update_bitmaps(t_node_state *state, int cell_idx, int val);
 
 #endif

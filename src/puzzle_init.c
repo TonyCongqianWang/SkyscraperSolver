@@ -22,7 +22,7 @@ void	init_puzzle(t_puzzle *puzzle, int size)
 	idx = 0;
 	while (idx < 2 * size)
 	{
-		init_constraints(puzzle, idx, size);
+		init_constraint(puzzle, idx, size);
 		idx++;
 	}
 }
@@ -42,7 +42,7 @@ void	init_grid_and_bmps(t_puzzle *puzzle, int size)
 	}
 }
 
-void	init_constraints(t_puzzle *puzzle, int idx, int size)
+void	init_constraint(t_puzzle *puzzle, int idx, int size)
 {
 	int		sub_index;
 	int		grid_index;
@@ -55,6 +55,7 @@ void	init_constraints(t_puzzle *puzzle, int idx, int size)
 			grid_index = idx + sub_index * size;
 		else if (idx < 2 * size)
 			grid_index = (idx % size) * size + sub_index;
+		puzzle->node_state.num_valid_cells_for_val[idx][sub_index] = size;
 		puzzle->constraint_pairs[idx].grid_indeces[sub_index] = grid_index;
 		puzzle->grid_constr_map[grid_index][idx / size] = idx;
 		sub_index++;
@@ -66,6 +67,7 @@ void	init_state_fields(t_puzzle *puzzle, int size)
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
 	puzzle->constr_state.size = size;
+	puzzle->node_state.puzzle = puzzle;
 	puzzle->node_state.size = size;
 	puzzle->node_state.is_complete = 0;
 	puzzle->node_state.total_unset_count = size * size;
