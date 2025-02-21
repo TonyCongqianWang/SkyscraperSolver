@@ -14,6 +14,7 @@
 #include "grid_update.h"
 #include "cell_bitmaps.h"
 #include "cell_bounds.h"
+#include "grid_valid_value_counts.h"
 
 int	solve_puzzle(t_puzzle *puzzle)
 {

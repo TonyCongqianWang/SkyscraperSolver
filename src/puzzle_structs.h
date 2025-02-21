@@ -33,7 +33,8 @@ typedef struct s_node_state
 	int					is_invalid;
 	int					total_unset_count;
 	short				valid_val_bmps[MAX_CELL_COUNT];
-	short				cell_bounds[MAX_CELL_COUNT];
+	char				cell_bounds[MAX_CELL_COUNT];
+	char				num_valid_vals_for_cell[MAX_CELL_COUNT];
 	char				num_valid_cells_for_val[MAX_N_CONSTR_PAIRS][MAX_SIZE];
 }				t_node_state;
 

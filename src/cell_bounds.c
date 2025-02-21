@@ -42,8 +42,8 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 
 void	update_cell_bounds(t_node_state *state, int idx)
 {
-	short	lb;
-	short	ub;
+	char	lb;
+	char	ub;
 
 	lb = 1;
 	while (lb < state->size
@@ -59,8 +59,7 @@ void	update_cell_bounds(t_node_state *state, int idx)
 	}
 	lb &= 0x0F;
 	ub = (ub & 0x0F) << 4;
-	state->cell_bounds[idx] &= ~(0xFF);
-	state->cell_bounds[idx] |= lb;
+	state->cell_bounds[idx] = lb;
 	state->cell_bounds[idx] |= ub;
 }
 
@@ -69,20 +68,4 @@ void	get_cell_bounds(t_node_state *state, int idx, short *lb, short *ub)
 	*lb = state->cell_bounds[idx] & 0x0F;
 	*ub = state->cell_bounds[idx] & 0xF0;
 	*ub >>= 4;
-}
-
-void	set_cell_num_valids(t_node_state *state, int idx, short n_valids)
-{
-	n_valids = (n_valids << 8) & 0xF00;
-	state->cell_bounds[idx] &= ~0xF00;
-	state->cell_bounds[idx] |= n_valids;
-}
-
-int	get_cell_num_valids(t_node_state *state, int idx)
-{
-	int		res;
-
-	res = state->cell_bounds[idx] & 0xF00;
-	res >>= 8;
-	return (res);
 }
