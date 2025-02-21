@@ -14,12 +14,12 @@
 #include "cell_bitmaps.h"
 #include "cell_bounds.h"
 
-int	update_constr_state(t_puzzle* puzzle, int abs_idx)
+int	update_constr_state(t_puzzle *puzzle, int abs_idx)
 {
-	int					new_val;
-	short				val_lb;
-	short				val_ub;
-	t_constraint_state* constr;
+	int									new_val;
+	short								val_lb;
+	short								val_ub;
+	t_constraint_state	*constr;
 
 	constr = &puzzle->constr_state;
 	new_val = puzzle->grid_vals[abs_idx];
@@ -36,7 +36,7 @@ int	update_constr_state(t_puzzle* puzzle, int abs_idx)
 	}
 }
 
-int	update_constr_state_unset(t_constraint_state* constr, int lb, int ub)
+int	update_constr_state_unset(t_constraint_state *constr, int lb, int ub)
 {
 	if (ub > constr->max_height_lb)
 	{
@@ -59,7 +59,7 @@ int	update_constr_state_unset(t_constraint_state* constr, int lb, int ub)
 	return (1);
 }
 
-int	update_constr_state_new_val(t_constraint_state* constr, int new_val)
+int	update_constr_state_new_val(t_constraint_state *constr, int new_val)
 {
 	if (new_val == constr->size)
 	{
