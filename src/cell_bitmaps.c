@@ -28,10 +28,15 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
 	int	num_valid;
 
-	state->valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
-	update_cell_bounds(state, cell_idx);
-	num_valid = get_cell_num_valids(state, cell_idx);
-	set_cell_num_valids(state, cell_idx, num_valid - 1);
+	if (is_valid_value(state, cell_idx, val))
+	{
+		state->valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
+		update_cell_bounds(state, cell_idx);
+		num_valid = get_cell_num_valids(state, cell_idx);
+		set_cell_num_valids(state, cell_idx, num_valid - 1);
+		if (num_valid == 1)
+			state->is_invalid = 1;
+	}
 }
 
 void	update_bitmaps(t_node_state *state, int cell_idx, int val)
@@ -39,7 +44,7 @@ void	update_bitmaps(t_node_state *state, int cell_idx, int val)
 	int		counter;
 	int		update_idx;
 
-	counter = 0;
+	counter = 1;
 	while (counter < state->size)
 	{
 		update_idx = (cell_idx + counter * state->size);
@@ -47,7 +52,7 @@ void	update_bitmaps(t_node_state *state, int cell_idx, int val)
 		set_value_invalid(state, update_idx, val);
 		counter++;
 	}
-	counter = 0;
+	counter = 1;
 	while (counter < state->size)
 	{
 		update_idx = (cell_idx / state->size) * state->size;

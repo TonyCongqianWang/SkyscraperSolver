@@ -32,13 +32,15 @@ int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
 		if (is_valid_value(node_state, idx, cell_val))
 		{
 			if (check_grid_val_violations(puzzle, idx, cell_val))
+			{
+				register_invalid_val(node_state, idx, cell_val);
 				success = 1;
+			}
 			else
 				num_valid++;
 		}
 		cell_val++;
 	}
-	set_cell_num_valids(node_state, idx, num_valid);
 	return (success);
 }
 
