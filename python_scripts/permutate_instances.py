@@ -45,7 +45,7 @@ def shift_numbers_two_cycles(line, shift_amount):
         return line.replace(numbers_str, shifted_numbers_str)
     return line
 
-def process_file(filename):
+def process_file(filename, size):
     """Processes a file, reversing numbers and appending to a new file."""
     try:
         with open(filename, 'r') as f:
@@ -54,11 +54,11 @@ def process_file(filename):
         print(f"Error: File '{filename}' not found.")
         return
 
-    shifted_lines1 = [shift_numbers(line, 14) for line in lines]
-    shifted_lines2 = [shift_numbers_two_cycles(line, 14) for line in lines]
-    shifted_lines3 = [shift_numbers_two_cycles(line, 14) for line in shifted_lines1]
+    shifted_lines1 = [shift_numbers(line, 2 * size) for line in lines]
+    shifted_lines2 = [shift_numbers_two_cycles(line, 2 * size) for line in lines]
+    shifted_lines3 = [shift_numbers_two_cycles(line, 2 * size) for line in shifted_lines1]
 
-    output_filename = filename + ".reversed"  # Create a new output filename
+    output_filename = filename + ".permutated"  # Create a new output filename
     try:
         with open(output_filename, 'w') as outfile:
             for original_line, shifted_line1, shifted_line2, shifted_line3 in zip(lines, shifted_lines1, shifted_lines2, shifted_lines3):
@@ -78,9 +78,10 @@ def process_file(filename):
         print(f"An error occurred while writing to the file: {e}")
 
 if __name__ == "__main__":
-    if len(sys.argv) > 1:  # Check if a filename argument is provided
+    if len(sys.argv) > 2:  # Check if a filename argument is provided
         filename = sys.argv[1]
-        process_file(filename)
+        size = int(sys.argv[2])
+        process_file(filename, size)
     else:
         print("Error: Please provide a filename as a command-line argument.")
         print("Usage: python reverse_numbers.py <filename>")
