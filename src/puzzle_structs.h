@@ -49,7 +49,7 @@ typedef struct s_constraint_pair
 	int				grid_indeces[MAX_SIZE];
 }				t_constraint_pair;
 
-typedef struct s_constraint_state
+typedef struct s_constraint_bounds
 {
 	int					size;
 	t_constraint_pair	cur_c_pair;
@@ -60,7 +60,7 @@ typedef struct s_constraint_state
 	int					max_height_lb;
 	int					max_height_ub;
 	int					max_height_seen;
-}				t_constraint_state;
+}				t_constraint_bounds;
 
 typedef struct s_puzzle
 {
@@ -70,7 +70,7 @@ typedef struct s_puzzle
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
 	char					grid_vals[MAX_CELL_COUNT];
 	t_node_state			node_state;
-	t_constraint_state		constr_state;
+	t_constraint_bounds		constr_bounds;
 }				t_puzzle;
 
 #endif

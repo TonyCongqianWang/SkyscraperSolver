@@ -13,7 +13,7 @@
 #include "puzzle_structs.h"
 #include "cell_bitmaps.h"
 #include "cell_bounds.h"
-#include "grid_valid_value_counts.h"
+#include "grid_availability.h"
 
 int	is_valid_value(t_node_state *state, int cell_idx, int val)
 {

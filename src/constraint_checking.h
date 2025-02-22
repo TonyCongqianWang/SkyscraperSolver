@@ -16,6 +16,6 @@
 
 int		check_constraints(t_puzzle *puzzle, int insert_idx);
 int		check_active_constr(t_puzzle *puzzle);
-int		check_constr_state_violations(t_constraint_state *constr);
+int		check_constr_bounds_violations(t_constraint_bounds *constr);
 
 #endif

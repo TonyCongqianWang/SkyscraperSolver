@@ -39,28 +39,28 @@ int	check_active_constr(t_puzzle *puzzle)
 	int					sub_idx;
 	int					grid_idx;
 	int					size;
-	t_constraint_state	*constr;
+	t_constraint_bounds	*bounds;
 
-	constr = &puzzle->constr_state;
-	size = constr->size;
+	bounds = &puzzle->constr_bounds;
+	size = bounds->size;
 	sub_idx = 0;
-	while (sub_idx < size && constr->max_height_lb < size)
+	while (sub_idx < size && bounds->max_height_lb < size)
 	{
 		sub_idx++;
-		if (constr->is_reverse)
-			grid_idx = constr->cur_c_pair.grid_indeces[size - sub_idx];
+		if (bounds->is_reverse)
+			grid_idx = bounds->cur_c_pair.grid_indeces[size - sub_idx];
 		else
-			grid_idx = constr->cur_c_pair.grid_indeces[sub_idx - 1];
-		update_constr_state(puzzle, grid_idx);
-		if (sub_idx > constr->max_height_lb)
-			constr->max_height_lb = sub_idx;
-		if (check_constr_state_violations(&puzzle->constr_state))
+			grid_idx = bounds->cur_c_pair.grid_indeces[sub_idx - 1];
+		update_constr_bounds(puzzle, grid_idx);
+		if (sub_idx > bounds->max_height_lb)
+			bounds->max_height_lb = sub_idx;
+		if (check_constr_bounds_violations(bounds))
 			return (0);
 	}
 	return (1);
 }
 
-int	check_constr_state_violations(t_constraint_state *constr)
+int	check_constr_bounds_violations(t_constraint_bounds *constr)
 {
 	int		fwd_ub;
 

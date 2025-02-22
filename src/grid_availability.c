@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   grid_valid_value_counts.c                          :+:      :+:    :+:   */
+/*   grid_availability.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "grid_valid_value_counts.h"
+#include "grid_availability.h"
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 {

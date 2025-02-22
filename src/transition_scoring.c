@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "transition_scoring.h"
-#include "grid_valid_value_counts.h"
+#include "grid_availability.h"
 
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {

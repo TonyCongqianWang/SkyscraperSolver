@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   grid_valid_value_counts.h                          :+:      :+:    :+:   */
+/*   grid_availability.h                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GRID_VALID_VALUE_COUNTS_H
-# define GRID_VALID_VALUE_COUNTS_H
+#ifndef GRID_AVAILABILITY_H
+# define GRID_AVAILABILITY_H
 # include "puzzle_structs.h"
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val);

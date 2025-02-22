@@ -66,7 +66,7 @@ void	init_state_fields(t_puzzle *puzzle, int size)
 {
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
-	puzzle->constr_state.size = size;
+	puzzle->constr_bounds.size = size;
 	puzzle->node_state.puzzle = puzzle;
 	puzzle->node_state.size = size;
 	puzzle->node_state.is_complete = 0;

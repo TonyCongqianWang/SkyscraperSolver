@@ -14,8 +14,8 @@
 # define CONSTRAINT_UPDATE_H
 # include "puzzle_structs.h"
 
-int		update_constr_state(t_puzzle *puzzle, int cell_idx);
-int		update_constr_state_new_val(t_constraint_state *constr, int new_val);
-int		update_constr_state_unset(t_constraint_state *constr, int lb, int ub);
+int	update_constr_bounds(t_puzzle *puzzle, int cell_idx);
+int	update_constr_bounds_unset(t_constraint_bounds *constr, int lb, int ub);
+int	update_constr_bounds_new_val(t_constraint_bounds *constr, int new_val);
 
 #endif
