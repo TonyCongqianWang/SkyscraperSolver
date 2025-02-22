@@ -35,9 +35,9 @@ void	init_grid_and_bmps(t_puzzle *puzzle, int size)
 	while (idx < size * size)
 	{
 		puzzle->grid_vals[idx] = 0;
-		puzzle->node_state.valid_val_bmps[idx] = 0xffff;
+		puzzle->node_state.grid.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(&puzzle->node_state, idx);
-		puzzle->node_state.num_valid_vals_for_cell[idx] = size;
+		puzzle->node_state.grid.num_cell_vals[idx] = size;
 		idx++;
 	}
 }
@@ -55,7 +55,7 @@ void	init_constraint(t_puzzle *puzzle, int idx, int size)
 			grid_index = idx + sub_index * size;
 		else if (idx < 2 * size)
 			grid_index = (idx % size) * size + sub_index;
-		puzzle->node_state.num_valid_cells_for_val[idx][sub_index] = size;
+		puzzle->node_state.constrs.num_val_positions[idx][sub_index] = size;
 		puzzle->constraint_pairs[idx].grid_indeces[sub_index] = grid_index;
 		puzzle->grid_constr_map[grid_index][idx / size] = idx;
 		sub_index++;

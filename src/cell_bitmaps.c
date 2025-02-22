@@ -21,7 +21,7 @@ int	is_valid_value(t_node_state *state, int cell_idx, int val)
 	short	bitmap;
 
 	bitmask = 1 << (val - 1);
-	bitmap = state->valid_val_bmps[cell_idx];
+	bitmap = state->grid.valid_val_bmps[cell_idx];
 	return (bitmask & bitmap);
 }
 
@@ -29,7 +29,7 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
 	if (is_valid_value(state, cell_idx, val))
 	{
-		state->valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
+		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);
 		decrement_constr_num_valids(state, cell_idx, val);

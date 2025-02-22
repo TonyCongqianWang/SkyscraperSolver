@@ -21,13 +21,25 @@ typedef struct s_puzzle	t_puzzle;
 
 typedef struct s_node_transition
 {
-	int					cell_idx;
-	char				cell_val;
-	int					num_valids_col;
-	int					num_valids_row;
-	int					num_valids_cell;
-	double				score;
+	int			cell_idx;
+	char		cell_val;
+	int			num_valids_col;
+	int			num_valids_row;
+	int			num_valids_cell;
+	double		score;
 }				t_node_transition;
+
+typedef struct s_grid_state
+{
+	short		valid_val_bmps[MAX_CELL_COUNT];
+	char		cell_bounds[MAX_CELL_COUNT];
+	char		num_cell_vals[MAX_CELL_COUNT];
+}				t_grid_state;
+
+typedef struct s_constrs_state
+{
+	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
+}				t_constrs_state;
 
 typedef struct s_node_state
 {
@@ -36,10 +48,8 @@ typedef struct s_node_state
 	int					is_complete;
 	int					is_invalid;
 	int					total_unset_count;
-	short				valid_val_bmps[MAX_CELL_COUNT];
-	char				cell_bounds[MAX_CELL_COUNT];
-	char				num_valid_vals_for_cell[MAX_CELL_COUNT];
-	char				num_valid_cells_for_val[MAX_N_CONSTR_PAIRS][MAX_SIZE];
+	t_grid_state		grid;
+	t_constrs_state		constrs;
 }				t_node_state;
 
 typedef struct s_constraint_pair

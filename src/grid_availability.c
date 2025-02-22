@@ -19,9 +19,9 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 	int		constr_idx;
 
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
-	num_valids_col = --state->num_valid_cells_for_val[constr_idx][val - 1];
+	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
-	num_valids_row = --state->num_valid_cells_for_val[constr_idx][val - 1];
+	num_valids_row = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	if (num_valids_col == 0 || num_valids_row == 0)
 		state->is_invalid = 1;
 }
@@ -31,7 +31,7 @@ int	get_col_num_valids(t_node_state *state, int cell_idx, int val)
 	int		constr_idx;
 
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
-	return (state->num_valid_cells_for_val[constr_idx][val - 1]);
+	return (state->constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
@@ -39,19 +39,19 @@ int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
 	int		constr_idx;
 
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
-	return (state->num_valid_cells_for_val[constr_idx][val - 1]);
+	return (state->constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 void	decrement_cell_num_valids(t_node_state *state, int idx)
 {
 	int		num_valids_cell;
 
-	num_valids_cell = --state->num_valid_vals_for_cell[idx];
+	num_valids_cell = --(state->grid.num_cell_vals[idx]);
 	if (num_valids_cell == 0)
 		state->is_invalid = 1;
 }
 
 int	get_cell_num_valids(t_node_state *state, int idx)
 {
-	return (state->num_valid_vals_for_cell[idx]);
+	return (state->grid.num_cell_vals[idx]);
 }
