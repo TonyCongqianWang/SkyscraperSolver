@@ -60,8 +60,8 @@ Submitted version for the piscine. Unfortunatly there was still a typo inside wh
 ### v01
 No algorithmic changes but lots of refactoring was done to clean up a few files and functions that got messy due to the projects time rectrictions as well as norminette.
 
-### v02
-Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration. Different print utilities were added to allow for easier understanding and debugging.
+### v02 / v02a / v02b
+Constraint calculation was changed to be more effecient and now takes lower and upper bounds of unset cells into consideration. Different print utilities were added to allow for easier understanding and debugging. In v02b debug prints are removed from main to reduce noisy outputs.
 
 ### v03
 Added arrays to keep track of cell bounds to allow more effecient calculations. Refactored node selecton procedure to be more readable and maintainable. Constraint tightening now has the possibility to be iterated during early nodes to make use of cell bounds. Node selection now allows cell and value to be selected independently. Even though v03 is significantly slower on both 9x9 instances that v01 solved. It can solve many instances a lot faster.
