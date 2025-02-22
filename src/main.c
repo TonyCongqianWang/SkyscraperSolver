@@ -32,7 +32,6 @@ int	main(int argc, char **argv)
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	partial_solve_and_print_bmps(&puzzle, 1);
 	if (!solve_puzzle(&puzzle))
 	{
 		print_error("Could not find solution.");
