@@ -70,6 +70,8 @@ void	init_state_fields(t_puzzle *puzzle, int size)
 	puzzle->node_state.puzzle = puzzle;
 	puzzle->node_state.size = size;
 	puzzle->node_state.is_complete = 0;
+	puzzle->node_state.last_set_idx = -1;
+	puzzle->node_state.min_availability = size;
 	puzzle->node_state.total_unset_count = size * size;
 	if (size == 0)
 		puzzle->node_state.is_invalid = 1;

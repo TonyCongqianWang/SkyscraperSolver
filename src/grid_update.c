@@ -59,6 +59,7 @@ void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val)
 {
 	puzzle->grid_vals[cell_idx] = val;
 	puzzle->node_state.total_unset_count--;
+	puzzle->node_state.last_set_idx = cell_idx;
 	update_bitmaps(&puzzle->node_state, cell_idx, val);
 	if (puzzle->node_state.total_unset_count == 0)
 		puzzle->node_state.is_complete = 1;

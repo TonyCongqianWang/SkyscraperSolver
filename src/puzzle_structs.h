@@ -45,9 +45,11 @@ typedef struct s_node_state
 {
 	t_puzzle			*puzzle;
 	int					size;
+	int					last_set_idx;
 	int					is_complete;
 	int					is_invalid;
 	int					total_unset_count;
+	int					min_availability;
 	t_grid_state		grid;
 	t_constrs_state		constrs;
 }				t_node_state;
