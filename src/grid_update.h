@@ -14,9 +14,7 @@
 # define GRID_UPDATE_H
 # include "puzzle_structs.h"
 
-void	tighten_grid_cell_bounds(t_puzzle *puzzle);
-int		check_grid_val_violations(t_puzzle *grid, int cell_idx, int val);
-void	set_grid_val(t_puzzle *grid, int cell_idx, int val);
+void	set_grid_val(t_puzzle *grid, int cell_idx, int val, int check);
 void	unset_grid_val(t_puzzle *grid, int cell_idx);
 
 #endif

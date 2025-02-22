@@ -14,7 +14,6 @@
 # define CELL_BOUNDS_H
 # include "puzzle_structs.h"
 
-int		tighten_single_cell_bounds(t_puzzle *puzzle, int idx);
 void	update_cell_bounds(t_node_state *state, int idx);
 void	get_cell_bounds(t_node_state *state, int idx, short *lb, short *ub);
 

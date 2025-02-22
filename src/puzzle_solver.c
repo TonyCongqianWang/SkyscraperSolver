@@ -14,26 +14,29 @@
 #include "grid_update.h"
 #include "cell_bitmaps.h"
 #include "transition_scoring.h"
+#include "shallow_search.h"
 
 int	solve_puzzle(t_puzzle *puzzle)
 {
 	return (tree_search(puzzle, -1));
 }
 
-int	tree_search(t_puzzle *puzzle, int depths)
+int	tree_search(t_puzzle *puzzle, int depth)
 {
 	t_node_state		old_state;
 	t_node_transition	next;
 
-	if (puzzle->node_state.is_complete || depths == 0)
-		return (!puzzle->node_state.is_invalid);
 	puzzle->nodes_visited++;
-	tighten_grid_cell_bounds(puzzle);
+	if (depth == 0
+		|| puzzle->node_state.is_complete
+		|| puzzle->node_state.is_invalid)
+		return (!puzzle->node_state.is_invalid);
+	tighten_grid_cell_bounds(puzzle, 0);
 	old_state = puzzle->node_state;
 	while (try_get_next_transition(puzzle, &next))
 	{
-		set_grid_val(puzzle, next.cell_idx, next.cell_val);
-		if (tree_search(puzzle, depths - 1))
+		set_grid_val(puzzle, next.cell_idx, next.cell_val, 1);
+		if (tree_search(puzzle, depth - 1))
 			return (1);
 		set_value_invalid(&old_state, next.cell_idx, next.cell_val);
 		puzzle->node_state = old_state;

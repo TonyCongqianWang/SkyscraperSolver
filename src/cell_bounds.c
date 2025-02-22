@@ -15,31 +15,6 @@
 #include "grid_update.h"
 #include "constraint_checking.h"
 
-int	tighten_single_cell_bounds(t_puzzle *puzzle, int idx)
-{
-	short			cell_val;
-	short			cell_ub;
-	int				success;
-	t_node_state	*node_state;
-
-	node_state = &puzzle->node_state;
-	get_cell_bounds(node_state, idx, &cell_val, &cell_ub);
-	success = 0;
-	while (cell_val <= cell_ub)
-	{
-		if (is_valid_value(node_state, idx, cell_val))
-		{
-			if (check_grid_val_violations(puzzle, idx, cell_val))
-			{
-				set_value_invalid(node_state, idx, cell_val);
-				success = 1;
-			}
-		}
-		cell_val++;
-	}
-	return (success);
-}
-
 void	update_cell_bounds(t_node_state *state, int idx)
 {
 	char	lb;

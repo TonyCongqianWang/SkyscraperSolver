@@ -12,50 +12,9 @@
 
 #include "grid_update.h"
 #include "cell_bitmaps.h"
-#include "cell_bounds.h"
 #include "constraint_checking.h"
-#include "constraint_selection.h"
 
-void	tighten_grid_cell_bounds(t_puzzle *puzzle)
-{
-	int			cell_idx;
-	int			reiterate;
-	int			set_count;
-
-	set_count = puzzle->size * puzzle->size;
-	set_count -= puzzle->node_state.total_unset_count;
-	reiterate = 1;
-	while (reiterate)
-	{
-		cell_idx = 0;
-		reiterate = 0;
-		while (cell_idx < puzzle->size * puzzle->size
-			&& !puzzle->node_state.is_invalid)
-		{
-			if (puzzle->grid_vals[cell_idx] == 0)
-			{
-				reiterate |= tighten_single_cell_bounds(puzzle, cell_idx);
-			}
-			cell_idx++;
-		}
-		reiterate &= (set_count < puzzle->size);
-	}
-}
-
-int	check_grid_val_violations(t_puzzle *puzzle, int cell_idx, int val)
-{
-	t_node_state	old_state;
-	int				success;
-
-	old_state = puzzle->node_state;
-	set_grid_val(puzzle, cell_idx, val);
-	success = check_constraints(puzzle, cell_idx);
-	puzzle->node_state = old_state;
-	unset_grid_val(puzzle, cell_idx);
-	return (!success);
-}
-
-void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val)
+void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val, int check)
 {
 	puzzle->grid_vals[cell_idx] = val;
 	puzzle->node_state.total_unset_count--;
@@ -63,6 +22,8 @@ void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val)
 	update_bitmaps(&puzzle->node_state, cell_idx, val);
 	if (puzzle->node_state.total_unset_count == 0)
 		puzzle->node_state.is_complete = 1;
+	if (check)
+		puzzle->node_state.is_invalid |= !check_constraints(puzzle, cell_idx);
 }
 
 void	unset_grid_val(t_puzzle *puzzle, int cell_idx)
