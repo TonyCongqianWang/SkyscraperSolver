@@ -65,3 +65,10 @@ Constraint calculation was changed to be more effecient and now takes lower and 
 
 ### v03
 Added arrays to keep track of cell bounds to allow more effecient calculations. Refactored node selecton procedure to be more readable and maintainable. Constraint tightening now has the possibility to be iterated during early nodes to make use of cell bounds. Node selection now allows cell and value to be selected independently. Even though v03 is significantly slower on both 9x9 instances that v01 solved. It can solve many instances a lot faster.
+
+### v04
+Added scripts to generate instances and for benchmarking. Refactored and improved constraint bound calculation slightly. Improved update of bounds / availability when marking values invalid. Added consideration of availability of values across columns / rows to the node selection heuristic.
+
+## Future
+- Adding support for wildcard constraints and input if grid values to support the solving of any instances that can be found on the internet.
+- Gamify the solution process and train an RL agent to make the decisions: Possibly reimplementation in Python.

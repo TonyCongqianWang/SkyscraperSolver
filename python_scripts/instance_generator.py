@@ -41,7 +41,7 @@ def generate_latin_square_numpy(size, seed=None):
     final_square += np.ones(final_square.shape, dtype=int)
     return final_square
 
-def randomize_cells(square, seed=None):
+def randomize_cells(square, seed=None, max_defects=3):
     """
     Randomly selects 'm' cells in the square and changes their values to random numbers within the range(1, dimension+1).
 
@@ -61,7 +61,7 @@ def randomize_cells(square, seed=None):
     new_square = square.copy()  # Create a copy to avoid modifying the original array
 
     # Determine the number of cells to change randomly
-    m = np.random.randint(1, 3)  # Randomly select m between 1 and the total number of cells
+    m = np.random.randint(1, max_defects)  # Randomly select m between 1 and the total number of cells
 
     # Generate random indices for the cells to change
     indices = np.random.choice(square.size, size=m, replace=False)
@@ -151,7 +151,7 @@ if __name__ == "__main__":
 
     for _ in range(count):
       latin_square = generate_latin_square_numpy(size)
-      latin_square = randomize_cells(latin_square)
+      latin_square = randomize_cells(latin_square, max_defects=5)
       row_visibility, col_visibility = count_visible_numbers_both_sides(latin_square)
     
       formatted_output = [str(a) for (a, b) in col_visibility] + [str(b) for (a, b) in col_visibility]
