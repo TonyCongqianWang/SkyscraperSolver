@@ -34,7 +34,7 @@ void	init_grid_and_bmps(t_puzzle *puzzle, int size)
 	idx = 0;
 	while (idx < size * size)
 	{
-		puzzle->grid_vals[idx] = 0;
+		puzzle->node_state.grid.vals[idx] = 0;
 		puzzle->node_state.grid.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(&puzzle->node_state, idx);
 		puzzle->node_state.grid.num_cell_vals[idx] = size;

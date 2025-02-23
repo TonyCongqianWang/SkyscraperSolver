@@ -31,6 +31,7 @@ typedef struct s_node_transition
 
 typedef struct s_grid_state
 {
+	char		vals[MAX_CELL_COUNT];
 	short		valid_val_bmps[MAX_CELL_COUNT];
 	char		cell_bounds[MAX_CELL_COUNT];
 	char		num_cell_vals[MAX_CELL_COUNT];
@@ -80,7 +81,6 @@ typedef struct s_puzzle
 	int						nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
-	char					grid_vals[MAX_CELL_COUNT];
 	t_node_state			node_state;
 	t_constraint_bounds		constr_bounds;
 }				t_puzzle;

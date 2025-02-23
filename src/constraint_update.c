@@ -22,7 +22,7 @@ int	update_constr_bounds(t_puzzle *puzzle, int abs_idx)
 	short				val_ub;
 
 	constr = &puzzle->constr_bounds;
-	new_val = puzzle->grid_vals[abs_idx];
+	new_val = puzzle->node_state.grid.vals[abs_idx];
 	if (new_val == 0)
 	{
 		if (constr->max_height_lb == puzzle->size)

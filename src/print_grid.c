@@ -24,7 +24,7 @@ void	print_solution_grid(t_puzzle *puzzle)
 	counter = 0;
 	while (counter < puzzle->size * puzzle->size)
 	{
-		val = '0' + puzzle->grid_vals[counter];
+		val = '0' + puzzle->node_state.grid.vals[counter];
 		write(1, &val, 1);
 		if (counter % puzzle->size != puzzle->size - 1)
 		{

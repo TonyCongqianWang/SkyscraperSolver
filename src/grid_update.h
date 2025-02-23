@@ -14,7 +14,7 @@
 # define GRID_UPDATE_H
 # include "puzzle_structs.h"
 
-void	set_grid_val(t_puzzle *grid, int cell_idx, int val, int check);
-void	unset_grid_val(t_puzzle *grid, int cell_idx);
+void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val, int check);
+int		is_cell_empty(t_puzzle *puzzle, int cell_idx);
 
 #endif

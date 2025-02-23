@@ -40,7 +40,6 @@ int	tree_search(t_puzzle *puzzle, int depth)
 			return (1);
 		set_value_invalid(&old_state, next.cell_idx, next.cell_val);
 		puzzle->node_state = old_state;
-		unset_grid_val(puzzle, next.cell_idx);
 	}
 	return (0);
 }
@@ -77,13 +76,14 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	cell_idx = 0;
 	while (cell_idx < puzzle->size * puzzle->size)
 	{
+		if (is_cell_empty(puzzle, cell_idx))
+		{
+			set_best_transition_val(puzzle, cell_idx, &candidate);
+			score_transition_full(&puzzle->node_state, &candidate);
+			if (candidate.score > next->score)
+				*next = candidate;
+		}
 		cell_idx++;
-		if (puzzle->grid_vals[cell_idx - 1] != 0)
-			continue ;
-		set_best_transition_val(puzzle, cell_idx - 1, &candidate);
-		score_transition_full(&puzzle->node_state, &candidate);
-		if (candidate.score > next->score)
-			*next = candidate;
 	}
 	return (1);
 }
