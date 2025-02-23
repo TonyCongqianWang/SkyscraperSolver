@@ -28,7 +28,7 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle, int depth)
 		while (cell_idx < puzzle->size * puzzle->size
 			&& !puzzle->node_state.is_invalid)
 		{
-			if (is_cell_empty(puzzle, cell_idx))
+			if (is_cell_empty(&puzzle->node_state, cell_idx))
 				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
 			cell_idx++;
 		}
@@ -36,14 +36,13 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle, int depth)
 	}
 }
 
-int	is_reiterate_allowed(t_node_state* state)
+int	is_reiterate_allowed(t_node_state *state)
 {
 	int			set_count;
 
 	set_count = state->size * state->size - state->num_unset;
 	return (set_count < state->num_unset / 2 && !state->is_sub_state);
 }
-
 
 int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
 {
@@ -77,7 +76,7 @@ int	check_val_validity(t_puzzle *puzzle, int cell_idx, int val, int depth)
 
 	old_state = puzzle->node_state;
 	puzzle->node_state.is_sub_state = 1;
-	set_grid_val(puzzle, cell_idx, val, 1);
+	set_grid_val(&puzzle->node_state, cell_idx, val, 1);
 	is_valid = tree_search(puzzle, depth);
 	puzzle->node_state = old_state;
 	return (is_valid);

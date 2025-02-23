@@ -47,6 +47,7 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 {
 	int			cell_val;
 
+	puzzle.node_state.puzzle = &puzzle;
 	tree_search(&puzzle, depths);
 	cell_val = 1;
 	while (cell_val <= puzzle.size)
@@ -59,6 +60,8 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 	print_message("");
 	print_bound_grid(&puzzle.node_state, 1);
 	print_message("");
-	print_message("");
 	print_solution_grid(&puzzle);
+	print_value("Unset", puzzle.node_state.num_unset);
+	print_value("Nodes visited", puzzle.nodes_visited);
+	print_message("");
 }

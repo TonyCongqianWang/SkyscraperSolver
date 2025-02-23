@@ -12,6 +12,7 @@
 
 #include "grid_availability.h"
 #include "grid_update.h"
+#include "cell_bounds.h"
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 {
@@ -46,12 +47,18 @@ int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
 void	decrement_cell_num_valids(t_node_state *state, int idx)
 {
 	int		num_valids_cell;
+	short	cell_lb;
+	short	cell_ub;
 
 	num_valids_cell = --(state->grid.num_cell_vals[idx]);
 	if (num_valids_cell == 0)
 		state->is_invalid = 1;
-	else if (num_valids_cell == 1)
+	else if (num_valids_cell == 1
+		&& is_cell_empty(state, idx)
+		&& !state->is_invalid)
 	{
+		get_cell_bounds(state, idx, &cell_lb, &cell_ub);
+		set_grid_val(state, idx, cell_lb, 1);
 	}
 }
 
