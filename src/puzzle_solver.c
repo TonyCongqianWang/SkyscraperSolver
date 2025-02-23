@@ -12,7 +12,6 @@
 
 #include "puzzle_solver.h"
 #include "grid_update.h"
-#include "cell_bitmaps.h"
 #include "transition_scoring.h"
 #include "shallow_search.h"
 
@@ -35,7 +34,7 @@ int	tree_search(t_puzzle *puzzle, int depth)
 	old_state = puzzle->node_state;
 	while (try_get_next_transition(puzzle, &next))
 	{
-		set_grid_val(puzzle, next.cell_idx, next.cell_val, 1);
+		set_grid_val(puzzle, next.cell_idx, next.cell_val, 0);
 		if (tree_search(puzzle, depth - 1))
 			return (1);
 		set_value_invalid(&old_state, next.cell_idx, next.cell_val);

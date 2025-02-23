@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "constraint_update.h"
-#include "cell_bitmaps.h"
 #include "cell_bounds.h"
 
 int	update_constr_bounds(t_puzzle *puzzle, int abs_idx)

@@ -12,7 +12,6 @@
 
 #include <unistd.h>
 #include "print_utility.h"
-#include "cell_bitmaps.h"
 
 void	print_message(const char *str)
 {

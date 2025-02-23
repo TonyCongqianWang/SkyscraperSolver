@@ -12,7 +12,6 @@
 
 #include "shallow_search.h"
 #include "grid_update.h"
-#include "cell_bitmaps.h"
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
@@ -33,8 +32,18 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle, int depth)
 				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
 			cell_idx++;
 		}
+		reiterate &= is_reiterate_allowed(&puzzle->node_state);
 	}
 }
+
+int	is_reiterate_allowed(t_node_state* state)
+{
+	int			set_count;
+
+	set_count = state->size * state->size - state->num_unset;
+	return (set_count < state->num_unset / 2 && !state->is_sub_state);
+}
+
 
 int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
 {

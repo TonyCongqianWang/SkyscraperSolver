@@ -16,5 +16,8 @@
 
 void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val, int check);
 int		is_cell_empty(t_puzzle *puzzle, int cell_idx);
+int		is_valid_value(t_node_state* state, int cell_idx, int val);
+void	set_value_invalid(t_node_state* state, int cell_idx, int val);
+void	update_bitmaps(t_node_state* state, int cell_idx, int val);
 
 #endif

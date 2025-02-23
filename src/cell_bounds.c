@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "cell_bounds.h"
-#include "cell_bitmaps.h"
 #include "grid_update.h"
 #include "constraint_checking.h"
 

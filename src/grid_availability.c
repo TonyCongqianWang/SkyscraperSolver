@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "grid_availability.h"
+#include "grid_update.h"
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 {
@@ -49,6 +50,9 @@ void	decrement_cell_num_valids(t_node_state *state, int idx)
 	num_valids_cell = --(state->grid.num_cell_vals[idx]);
 	if (num_valids_cell == 0)
 		state->is_invalid = 1;
+	else if (num_valids_cell == 1)
+	{
+	}
 }
 
 int	get_cell_num_valids(t_node_state *state, int idx)
