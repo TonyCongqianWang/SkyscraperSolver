@@ -34,10 +34,10 @@ void	init_grid_and_bmps(t_puzzle *puzzle, int size)
 	idx = 0;
 	while (idx < size * size)
 	{
-		puzzle->node_state.grid.vals[idx] = 0;
-		puzzle->node_state.grid.valid_val_bmps[idx] = 0xffff;
-		update_cell_bounds(&puzzle->node_state, idx);
-		puzzle->node_state.grid.num_cell_vals[idx] = size;
+		puzzle->cur_node->grid.vals[idx] = 0;
+		puzzle->cur_node->grid.valid_val_bmps[idx] = 0xffff;
+		update_cell_bounds(puzzle->cur_node, idx);
+		puzzle->cur_node->grid.num_cell_vals[idx] = size;
 		idx++;
 	}
 }
@@ -55,7 +55,7 @@ void	init_constraint(t_puzzle *puzzle, int idx, int size)
 			grid_index = idx + sub_index * size;
 		else if (idx < 2 * size)
 			grid_index = (idx % size) * size + sub_index;
-		puzzle->node_state.constrs.num_val_positions[idx][sub_index] = size;
+		puzzle->cur_node->constrs.num_val_positions[idx][sub_index] = size;
 		puzzle->constraint_pairs[idx].grid_indeces[sub_index] = grid_index;
 		puzzle->grid_constr_map[grid_index][idx / size] = idx;
 		sub_index++;
@@ -67,11 +67,12 @@ void	init_state_fields(t_puzzle *puzzle, int size)
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
-	puzzle->node_state.puzzle = puzzle;
-	puzzle->node_state.size = size;
-	puzzle->node_state.is_complete = 0;
-	puzzle->node_state.is_invalid = 0;
-	puzzle->node_state.is_sub_state = 0;
-	puzzle->node_state.last_set_idx = -1;
-	puzzle->node_state.num_unset = size * size;
+	puzzle->cur_node = &puzzle->stored_node;
+	puzzle->cur_node->puzzle = puzzle;
+	puzzle->cur_node->size = size;
+	puzzle->cur_node->is_complete = 0;
+	puzzle->cur_node->is_invalid = 0;
+	puzzle->cur_node->is_sub_state = 0;
+	puzzle->cur_node->last_set_idx = -1;
+	puzzle->cur_node->num_unset = size * size;
 }

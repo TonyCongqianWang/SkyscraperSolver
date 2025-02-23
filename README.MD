@@ -69,6 +69,9 @@ Added arrays to keep track of cell bounds to allow more efficient calculations. 
 ### v04
 Added scripts to generate instances and for benchmarking. Refactored and improved constraint bound calculation slightly. Improved update of bounds / availability when marking values invalid. Added consideration of availability of values across columns / rows to the node selection heuristic.
 
+### v05
+Solving process now sets cells as soon as only one value remains.
+
 ## Future
 - Adding support for wildcard constraints and input if grid values to support the solving of any instances that can be found on the internet.
 - Gamify the solution process and train an RL agent to make the decisions: Possibly reimplementation in Python.

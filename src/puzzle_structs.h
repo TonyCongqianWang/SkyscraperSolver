@@ -81,7 +81,8 @@ typedef struct s_puzzle
 	int						nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
-	t_node_state			node_state;
+	t_node_state			stored_node;
+	t_node_state			*cur_node;
 	t_constraint_bounds		constr_bounds;
 }				t_puzzle;
 

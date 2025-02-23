@@ -24,7 +24,7 @@ void	print_solution_grid(t_puzzle *puzzle)
 	counter = 0;
 	while (counter < puzzle->size * puzzle->size)
 	{
-		val = '0' + puzzle->node_state.grid.vals[counter];
+		val = '0' + puzzle->cur_node->grid.vals[counter];
 		write(1, &val, 1);
 		if (counter % puzzle->size != puzzle->size - 1)
 		{
@@ -45,7 +45,7 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 	t_node_state	*node_state;
 
 	cell_idx = 0;
-	node_state = &puzzle->node_state;
+	node_state = puzzle->cur_node;
 	while (cell_idx < puzzle->size * puzzle->size)
 	{
 		print_val = '0';
