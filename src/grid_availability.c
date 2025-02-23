@@ -22,10 +22,6 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
 	num_valids_row = --(state->constrs.num_val_positions[constr_idx][val - 1]);
-	if (num_valids_col < state->min_availability)
-		state->min_availability = num_valids_col;
-	if (num_valids_row < state->min_availability)
-		state->min_availability = num_valids_row;
 	if (num_valids_col == 0 || num_valids_row == 0)
 		state->is_invalid = 1;
 }
@@ -51,8 +47,6 @@ void	decrement_cell_num_valids(t_node_state *state, int idx)
 	int		num_valids_cell;
 
 	num_valids_cell = --(state->grid.num_cell_vals[idx]);
-	if (num_valids_cell < state->min_availability)
-		state->min_availability = num_valids_cell;
 	if (num_valids_cell == 0)
 		state->is_invalid = 1;
 }

@@ -22,29 +22,18 @@ void	tighten_grid_cell_bounds(t_puzzle *puzzle, int depth)
 	int			reiterate;
 
 	reiterate = 1;
-	puzzle->node_state.min_availability = puzzle->size;
 	while (reiterate)
 	{
 		cell_idx = 0;
 		reiterate = 0;
 		while (cell_idx < puzzle->size * puzzle->size
-			&& !puzzle->node_state.is_invalid
-			&& puzzle->node_state.min_availability > 1)
+			&& !puzzle->node_state.is_invalid)
 		{
 			if (puzzle->grid_vals[cell_idx] == 0)
 				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
 			cell_idx++;
 		}
-		reiterate &= is_reiterate_allowed(&puzzle->node_state);
 	}
-}
-
-int	is_reiterate_allowed(t_node_state *state)
-{
-	int			set_count;
-
-	set_count = state->size * state->size - state->total_unset_count;
-	return (set_count < state->size && !state->is_sub_state);
 }
 
 int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
@@ -56,8 +45,6 @@ int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
 
 	node_state = &puzzle->node_state;
 	get_cell_bounds(node_state, idx, &cell_val, &cell_ub);
-	if (cell_ub - cell_val < node_state->min_availability)
-		node_state->min_availability = cell_ub - cell_val;
 	success = 0;
 	while (cell_val <= cell_ub)
 	{

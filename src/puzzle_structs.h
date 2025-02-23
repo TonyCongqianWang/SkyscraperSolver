@@ -49,8 +49,7 @@ typedef struct s_node_state
 	int					is_complete;
 	int					is_invalid;
 	int					is_sub_state;
-	int					total_unset_count;
-	int					min_availability;
+	int					num_unset;
 	t_grid_state		grid;
 	t_constrs_state		constrs;
 }				t_node_state;

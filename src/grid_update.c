@@ -17,13 +17,13 @@
 void	set_grid_val(t_puzzle *puzzle, int cell_idx, int val, int check)
 {
 	puzzle->grid_vals[cell_idx] = val;
-	puzzle->node_state.total_unset_count--;
+	puzzle->node_state.num_unset--;
 	puzzle->node_state.last_set_idx = cell_idx;
 	update_bitmaps(&puzzle->node_state, cell_idx, val);
-	if (puzzle->node_state.total_unset_count == 0)
+	if (puzzle->node_state.num_unset == 0)
 		puzzle->node_state.is_complete = 1;
-	if (check)
-		puzzle->node_state.is_invalid |= !check_constraints(puzzle, cell_idx);
+	if (check && !puzzle->node_state.is_invalid)
+		puzzle->node_state.is_invalid = !check_constraints(puzzle, cell_idx);
 }
 
 void	unset_grid_val(t_puzzle *puzzle, int cell_idx)
