@@ -60,6 +60,8 @@ static int	get_valid_transition(t_puzzle* puzzle, t_node_transition* next)
 {
 	int		cell_idx;
 
+	if (puzzle->cur_node->is_complete || puzzle->cur_node->is_invalid)
+		return (0);
 	cell_idx = next->cell_idx;
 	while (cell_idx < puzzle->size * puzzle->size)
 	{
