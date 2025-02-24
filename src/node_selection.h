@@ -1,22 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   shallow_search.h                                   :+:      :+:    :+:   */
+/*   node_selection.h                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:46:14 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 11:55:46 by towang            #+#    #+#             */
+/*   Updated: 2025/01/31 00:29:51 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SHALLOW_SEARCH_H
-# define SHALLOW_SEARCH_H
+#ifndef NODE_SELECTION_H
+# define NODE_SELECTION_H
 # include "puzzle_structs.h"
 
-void	reduce_grid_cell_options(t_puzzle *puzzle, int depth);
-int		tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth);
-int		is_reiterate_allowed(t_node_state *state);
-int		check_val_validity(t_puzzle *grid, int cell_idx, int val, int depth);
+int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next);
+int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next);
 
 #endif

@@ -15,7 +15,7 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-void	tighten_grid_cell_bounds(t_puzzle *puzzle, int depth)
+void	reduce_grid_cell_options(t_puzzle *puzzle, int depth)
 {
 	int			cell_idx;
 	int			reiterate;

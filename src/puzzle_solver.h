@@ -16,7 +16,5 @@
 
 int	solve_puzzle(t_puzzle *puzzle);
 int	tree_search(t_puzzle *puzzle, int depth);
-int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next);
-int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next);
 
 #endif

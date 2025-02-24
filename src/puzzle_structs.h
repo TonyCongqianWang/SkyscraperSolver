@@ -78,7 +78,7 @@ typedef struct s_constraint_bounds
 typedef struct s_puzzle
 {
 	int						size;
-	int						nodes_visited;
+	unsigned long long		nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
 	t_node_state			stored_node;
