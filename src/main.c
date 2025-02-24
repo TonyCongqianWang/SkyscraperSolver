@@ -47,6 +47,7 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 {
 	int			cell_val;
 
+	puzzle.cur_node = &puzzle.stored_node;
 	puzzle.cur_node->puzzle = &puzzle;
 	tree_search(&puzzle, depths);
 	cell_val = 1;
