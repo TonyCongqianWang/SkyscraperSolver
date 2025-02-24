@@ -15,28 +15,7 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-void	reduce_grid_cell_options(t_puzzle *puzzle, int depth)
-{
-	int			cell_idx;
-	int			reiterate;
-
-	reiterate = 1;
-	while (reiterate)
-	{
-		cell_idx = 0;
-		reiterate = 0;
-		while (cell_idx < puzzle->size * puzzle->size
-			&& !puzzle->cur_node->is_invalid)
-		{
-			if (is_cell_empty(puzzle->cur_node, cell_idx))
-				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
-			cell_idx++;
-		}
-		reiterate &= is_reiterate_allowed(puzzle->cur_node);
-	}
-}
-
-int	is_reiterate_allowed(t_node_state *state)
+static int	is_reiterate_allowed(t_node_state *state)
 {
 	int			set_count;
 
@@ -44,7 +23,20 @@ int	is_reiterate_allowed(t_node_state *state)
 	return (set_count < state->num_unset / 2 && !state->is_sub_state);
 }
 
-int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
+static int	check_val_validity(t_puzzle* puzzle, int cell_idx, int val, int depth)
+{
+	t_node_state	old_state;
+	int				is_valid;
+
+	old_state = *(puzzle->cur_node);
+	puzzle->cur_node->is_sub_state = 1;
+	set_grid_val(puzzle->cur_node, cell_idx, val, 1);
+	is_valid = tree_search(puzzle, depth);
+	*(puzzle->cur_node) = old_state;
+	return (is_valid);
+}
+
+static int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
 {
 	short			cell_val;
 	short			cell_ub;
@@ -69,15 +61,24 @@ int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
 	return (success);
 }
 
-int	check_val_validity(t_puzzle *puzzle, int cell_idx, int val, int depth)
+void	reduce_grid_cell_options(t_puzzle* puzzle, int depth)
 {
-	t_node_state	old_state;
-	int				is_valid;
+	int			cell_idx;
+	int			reiterate;
 
-	old_state = *(puzzle->cur_node);
-	puzzle->cur_node->is_sub_state = 1;
-	set_grid_val(puzzle->cur_node, cell_idx, val, 1);
-	is_valid = tree_search(puzzle, depth);
-	*(puzzle->cur_node) = old_state;
-	return (is_valid);
+	reiterate = 1;
+	while (reiterate)
+	{
+		cell_idx = 0;
+		reiterate = 0;
+		while (cell_idx < puzzle->size * puzzle->size
+			&& !puzzle->cur_node->is_invalid)
+		{
+			if (is_cell_empty(puzzle->cur_node, cell_idx))
+				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
+			cell_idx++;
+		}
+		reiterate &= is_reiterate_allowed(puzzle->cur_node);
+	}
 }
+

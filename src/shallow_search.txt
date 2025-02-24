@@ -1,0 +1,101 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   shallow_search.c                                   :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
+/*   Updated: 2025/01/30 23:02:06 by towang           ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "shallow_search.h"
+#include "grid_update.h"
+#include "cell_bounds.h"
+#include "puzzle_solver.h"
+
+static int	is_reiterate_allowed(t_node_state *state)
+{
+	int		set_count;
+
+	set_count = state->size * state->size - state->num_unset;
+	return (set_count < state->num_unset / 2 && !state->is_sub_state);
+}
+
+static int	try_get_cell_val(t_puzzle *puzzle, t_node_transition *next)
+{
+	short	cell_lb;
+	short	cell_ub;
+
+	get_cell_bounds(puzzle->cur_node, next->cell_idx, &cell_lb, &cell_ub);
+	if (next->cell_val < cell_lb)
+		next->cell_val = cell_lb;
+	while (next->cell_val <= cell_ub)
+	{
+		if (is_valid_value(puzzle->cur_node, next->cell_idx, next->cell_val))
+			return (1);
+		next->cell_val++;
+	}
+	return (0);
+}
+
+static int	try_get_transition(t_puzzle *puzzle, t_node_transition *next)
+{
+	if (puzzle->cur_node->is_complete || puzzle->cur_node->is_invalid)
+		return (0);
+	next->cell_val++;
+	while (next->cell_idx < puzzle->size * puzzle->size
+		&& !puzzle->cur_node->is_invalid && !puzzle->cur_node->is_complete)
+	{
+		if (is_cell_empty(puzzle->cur_node, next->cell_idx))
+		{
+			if (try_get_cell_val(puzzle, next))
+				return (1);
+		}
+		next->cell_idx++;
+		next->cell_val = 1;
+	}
+	return (0);
+}
+
+static int	reduce_grid_options(t_puzzle *puzzle, int depth)
+{
+	t_node_state		old_state;
+	t_node_state		*old_storage;
+	t_node_transition	next;
+	int					found_invalid;
+
+	if (depth == 0)
+		return (0);
+	old_state = *(puzzle->cur_node);
+	old_storage = puzzle->cur_node;
+	found_invalid = 0;
+	next.cell_idx = 0;
+	next.cell_val = 1;
+	while (try_get_transition(puzzle, &next))
+	{
+		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);
+		if (!tree_search(puzzle, depth - 1))
+		{
+			puzzle->cur_node = &old_state;
+			set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
+			puzzle->cur_node = old_storage;
+			found_invalid = 1;
+		}
+		*(puzzle->cur_node) = old_state;
+	}
+	return (found_invalid);
+}
+
+void	reduce_grid_cell_options(t_puzzle *puzzle, int depth)
+{
+	int			reiterate;
+
+	reiterate = 1;
+	while (reiterate)
+	{
+		reiterate = reduce_grid_options(puzzle, depth);
+		reiterate &= is_reiterate_allowed(puzzle->cur_node);
+	}
+}

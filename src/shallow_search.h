@@ -15,8 +15,5 @@
 # include "puzzle_structs.h"
 
 void	reduce_grid_cell_options(t_puzzle *puzzle, int depth);
-int		tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth);
-int		is_reiterate_allowed(t_node_state *state);
-int		check_val_validity(t_puzzle *grid, int cell_idx, int val, int depth);
 
 #endif

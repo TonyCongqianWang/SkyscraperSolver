@@ -37,11 +37,8 @@ static int	node_is_valid(t_puzzle *puzzle)
 int	tree_search(t_puzzle *puzzle, int depth)
 {
 	t_node_state		old_state;
-	t_node_state		*old_storage;
 	t_node_transition	next;
 
-	old_state = *(puzzle->cur_node);
-	old_storage = puzzle->cur_node;
 	puzzle->nodes_visited++;
 	if (depth == 0 || has_reached_terminal_state(puzzle))
 		return (node_is_valid(puzzle));
@@ -49,13 +46,12 @@ int	tree_search(t_puzzle *puzzle, int depth)
 	while (!has_reached_terminal_state(puzzle)
 		&& try_get_next_transition(puzzle, &next))
 	{
+		old_state = *(puzzle->cur_node);
 		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);
 		if (tree_search(puzzle, depth - 1))
 			return (1);
-		puzzle->cur_node = &old_state;
-		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
-		puzzle->cur_node = old_storage;
 		*(puzzle->cur_node) = old_state;
+		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
 	return (node_is_valid(puzzle));
 }
