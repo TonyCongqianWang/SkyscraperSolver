@@ -15,7 +15,7 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-static int	is_reiterate_allowed(t_node_state *state)
+static int	is_reiterate_allowed(t_node_state* state)
 {
 	int			set_count;
 
@@ -23,62 +23,78 @@ static int	is_reiterate_allowed(t_node_state *state)
 	return (set_count < state->num_unset / 2 && !state->is_sub_state);
 }
 
-static int	check_val_validity(t_puzzle* puzzle, int cell_idx, int val, int depth)
+static int	check_validity(t_puzzle* puzzle, t_node_transition next, int depth)
 {
 	t_node_state	old_state;
 	int				is_valid;
 
 	old_state = *(puzzle->cur_node);
 	puzzle->cur_node->is_sub_state = 1;
-	set_grid_val(puzzle->cur_node, cell_idx, val, 1);
+	set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 1);
 	is_valid = tree_search(puzzle, depth);
 	*(puzzle->cur_node) = old_state;
 	return (is_valid);
 }
 
-static int	tighten_cell_bounds(t_puzzle *puzzle, int idx, int depth)
+static int	set_valid_val(t_puzzle* puzzle, t_node_transition* next)
 {
 	short			cell_val;
 	short			cell_ub;
-	int				success;
-	t_node_state	*node_state;
 
-	node_state = puzzle->cur_node;
-	get_cell_bounds(node_state, idx, &cell_val, &cell_ub);
-	success = 0;
+	get_cell_bounds(puzzle->cur_node, next->cell_idx, &cell_val, &cell_ub);
+	if (cell_val < next->cell_val)
+		cell_val = next->cell_val;
 	while (cell_val <= cell_ub)
 	{
-		if (is_valid_value(node_state, idx, cell_val))
+		if (is_valid_value(puzzle->cur_node, next->cell_idx, cell_val))
 		{
-			if (!check_val_validity(puzzle, idx, cell_val, depth))
-			{
-				set_value_invalid(node_state, idx, cell_val);
-				success = 1;
-			}
+			next->cell_val = cell_val;
+			return (1);
 		}
 		cell_val++;
 	}
-	return (success);
+	return (0);
+}
+
+static int	get_valid_transition(t_puzzle* puzzle, t_node_transition* next)
+{
+	int		cell_idx;
+
+	cell_idx = next->cell_idx;
+	while (cell_idx < puzzle->size * puzzle->size)
+	{
+		if (is_cell_empty(puzzle->cur_node, cell_idx))
+		{
+			next->cell_idx = cell_idx;
+			if (set_valid_val(puzzle, next))
+				return (1);
+		}
+		cell_idx++;
+		next->cell_val = 1;
+	}
+	return (0);
 }
 
 void	reduce_grid_cell_options(t_puzzle* puzzle, int depth)
 {
-	int			cell_idx;
-	int			reiterate;
+	int					reiterate;
+	t_node_transition	tr;
 
 	reiterate = 1;
 	while (reiterate)
 	{
-		cell_idx = 0;
+		tr.cell_idx = 0;
+		tr.cell_val = 1;
 		reiterate = 0;
-		while (cell_idx < puzzle->size * puzzle->size
-			&& !puzzle->cur_node->is_invalid)
+		while (get_valid_transition(puzzle, &tr))
 		{
-			if (is_cell_empty(puzzle->cur_node, cell_idx))
-				reiterate |= tighten_cell_bounds(puzzle, cell_idx, depth);
-			cell_idx++;
+			if (!check_validity(puzzle, tr, depth))
+			{
+				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
+				reiterate = 1;
+			}
+			tr.cell_val++;
 		}
 		reiterate &= is_reiterate_allowed(puzzle->cur_node);
 	}
 }
-
