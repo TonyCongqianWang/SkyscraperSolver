@@ -14,7 +14,7 @@
 # define NODE_SELECTION_H
 # include "puzzle_structs.h"
 
-int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next);
 int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next);
+int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next);
 
 #endif

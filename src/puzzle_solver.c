@@ -47,7 +47,7 @@ int	tree_search(t_puzzle *puzzle)
 		return (node_is_valid(puzzle->cur_node));
 	prune_node(puzzle);
 	while (!has_reached_terminal_state(puzzle->cur_node)
-		&& try_get_next_transition(puzzle, &next))
+		&& try_get_best_transition(puzzle, &next))
 	{
 		old_state = *(puzzle->cur_node);
 		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);

@@ -14,12 +14,11 @@
 #include "grid_update.h"
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
+#include "node_selection.h"
 
 static int	init_pruning_state(t_puzzle *puzzle);
 static int	keep_pruning(t_node_pruning_state *state);
 static int	check_validity(t_puzzle *puzzle, t_node_transition next);
-static int	set_valid_val(t_puzzle *puzzle, t_node_transition *next);
-static int	get_valid_transition(t_puzzle *puzzle, t_node_transition *next);
 
 void	prune_node(t_puzzle *puzzle)
 {
@@ -31,7 +30,7 @@ void	prune_node(t_puzzle *puzzle)
 	{
 		tr.cell_idx = 0;
 		tr.cell_val = 1;
-		while (get_valid_transition(puzzle, &tr))
+		while (try_get_next_transition(puzzle, &tr))
 		{
 			if (!check_validity(puzzle, tr))
 			{
@@ -90,45 +89,4 @@ static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 	is_valid = tree_search(puzzle);
 	*(puzzle->cur_node) = old_state;
 	return (is_valid);
-}
-
-static int	set_valid_val(t_puzzle *puzzle, t_node_transition *next)
-{
-	short			cell_val;
-	short			cell_ub;
-
-	get_cell_bounds(puzzle->cur_node, next->cell_idx, &cell_val, &cell_ub);
-	if (cell_val < next->cell_val)
-		cell_val = next->cell_val;
-	while (cell_val <= cell_ub)
-	{
-		if (is_valid_value(puzzle->cur_node, next->cell_idx, cell_val))
-		{
-			next->cell_val = cell_val;
-			return (1);
-		}
-		cell_val++;
-	}
-	return (0);
-}
-
-static int	get_valid_transition(t_puzzle *puzzle, t_node_transition *next)
-{
-	int		cell_idx;
-
-	if (puzzle->cur_node->is_complete || puzzle->cur_node->is_invalid)
-		return (0);
-	cell_idx = next->cell_idx;
-	while (cell_idx < puzzle->size * puzzle->size)
-	{
-		if (is_cell_empty(puzzle->cur_node, cell_idx))
-		{
-			next->cell_idx = cell_idx;
-			if (set_valid_val(puzzle, next))
-				return (1);
-		}
-		cell_idx++;
-		next->cell_val = 1;
-	}
-	return (0);
 }
