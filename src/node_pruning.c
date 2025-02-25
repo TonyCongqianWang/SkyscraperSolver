@@ -44,16 +44,24 @@ void	prune_node(t_puzzle *puzzle)
 
 static int	init_pruning_state(t_puzzle *puzzle)
 {
-	const double	max_set_unset_quotient = 0.5;
+	const double	min_unset_quotient = 0.67;
+	double			unset_quotient;
 	t_node_state	*state;
-	int				set_count;
-	int				reiterate;
 
 	state = puzzle->cur_node;
-	puzzle->pruning.max_pruning_depth = 1;
-	set_count = puzzle->size * puzzle->size - state->num_unset;
-	reiterate = (set_count < max_set_unset_quotient * state->num_unset);
-	puzzle->pruning.can_reiterate = reiterate;
+	unset_quotient = state->num_unset;
+	unset_quotient /= puzzle->size * puzzle->size;
+	if (state->sub_node_depth > 0)
+		puzzle->pruning.max_pruning_depth = 1;
+	else if (state->cur_depth == 0)
+		puzzle->pruning.max_pruning_depth = 4 * unset_quotient;
+	else if (state->cur_depth < puzzle->size / 4)
+		puzzle->pruning.max_pruning_depth = 3 * unset_quotient;
+	else
+		puzzle->pruning.max_pruning_depth = 1;
+	if (puzzle->pruning.max_pruning_depth < 1)
+		puzzle->pruning.max_pruning_depth = 1;
+	puzzle->pruning.can_reiterate = unset_quotient > min_unset_quotient;
 	puzzle->pruning.cur_pruning_depth = 0;
 	puzzle->pruning.last_iteration_succeeded = 0;
 	return (1);
@@ -62,7 +70,8 @@ static int	init_pruning_state(t_puzzle *puzzle)
 static int	keep_pruning(t_node_pruning_state *state)
 {
 	if (state->last_iteration_succeeded
-		&& state->can_reiterate)
+		&& state->can_reiterate
+		&& state->cur_pruning_depth < 2)
 	{
 		state->last_iteration_succeeded = 0;
 		return (1);
