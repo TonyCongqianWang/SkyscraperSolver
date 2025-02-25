@@ -16,40 +16,59 @@
 #include "puzzle_solver.h"
 #include "string_interface.h"
 
-void	partial_solve_and_print_debug(t_puzzle puzzle, int depths);
+static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
+static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth);
+static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv);
 
 int	main(int argc, char **argv)
 {
 	t_puzzle	puzzle;
+	int			parsing_retcode;
 
-	if (argc != 2)
+	parsing_retcode = parse_command_line_args(&puzzle, argc, argv);
+	if (parsing_retcode != 0)
+		return (parsing_retcode);
+	(void)&partial_solve_cpy_and_print_debug;
+	solve_puzzle_and_print_result(&puzzle);
+	return (0);
+}
+
+static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
+{
+	if (!solve_puzzle(puzzle, -1))
+	{
+		print_error("Could not find solution.");
+		print_value("Nodes visited", puzzle->nodes_visited);
+		return ;
+	}
+	print_solution_grid(puzzle);
+	print_value("Nodes visited", puzzle->nodes_visited);
+}
+
+static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv)
+{
+	if (argc != 2 && argc != 3)
 	{
 		print_error("Wrong argument count.");
 		return (-1);
 	}
-	if (!init_puzzle_from_str(&puzzle, argv[1]))
+	if (!init_puzzle_from_constr_str(puzzle, argv[1]))
 	{
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	if (!solve_puzzle(&puzzle, -1))
-	{
-		print_error("Could not find solution.");
-		print_value("Nodes visited", puzzle.nodes_visited);
-		return (0);
-	}
-	print_solution_grid(&puzzle);
-	print_value("Nodes visited", puzzle.nodes_visited);
+	if (argc == 3)
+		set_puzzle_grid_to_str_vals(puzzle, argv[2]);
 	return (0);
 }
 
-void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
+static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth)
 {
 	int			cell_val;
 
 	puzzle.cur_node = &puzzle.stored_node;
 	puzzle.cur_node->puzzle = &puzzle;
-	solve_puzzle(&puzzle, depths);
+	solve_puzzle(&puzzle, max_depth);
 	cell_val = 1;
 	while (cell_val <= puzzle.size)
 	{

@@ -14,8 +14,7 @@
 # define STRING_INTERFACE_H
 # include "puzzle_structs.h"
 
-int		init_puzzle_from_str(t_puzzle *puzzle, char *str);
-int		parse_puzzle_size_from_string(char *str);
-void	add_constr_values(t_puzzle *puzzle, int vals[], int size);
+int		init_puzzle_from_constr_str(t_puzzle *puzzle, char *str);
+int		set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str);
 
 #endif

@@ -13,7 +13,28 @@
 #include "string_interface.h"
 #include "puzzle_init.h"
 
-int	parse_puzzle_size_from_string(char *str)
+static int		parse_puzzle_size_from_constr_str(char *str);
+static int		try_add_constr_values(t_puzzle *puzzle, char *str);
+
+int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str)
+{
+	int		size;
+
+	size = parse_puzzle_size_from_constr_str(str);
+	if (!size)
+		return (0);
+	init_puzzle(puzzle, size);
+	return (try_add_constr_values(puzzle, str));
+}
+
+int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
+{
+	(void)puzzle;
+	(void)str;
+	return (1);
+}
+
+static int	parse_puzzle_size_from_constr_str(char *str)
 {
 	int		space_expected;
 	int		counter;
@@ -40,17 +61,14 @@ int	parse_puzzle_size_from_string(char *str)
 	return (counter / 4);
 }
 
-int	init_puzzle_from_str(t_puzzle *puzzle, char *str)
+static int	try_add_constr_values(t_puzzle *puzzle, char *str)
 {
-	int		size;
 	int		word_idx;
-	int		val;
 	int		pair_idx;
+	int		val;
+	int		size;
 
-	size = parse_puzzle_size_from_string(str);
-	if (!size)
-		return (0);
-	init_puzzle(puzzle, size);
+	size = puzzle->size;
 	word_idx = 0;
 	while (word_idx < 4 * size)
 	{
@@ -65,21 +83,4 @@ int	init_puzzle_from_str(t_puzzle *puzzle, char *str)
 		word_idx++;
 	}
 	return (1);
-}
-
-void	add_constr_values(t_puzzle *puzzle, int vals[], int size)
-{
-	int		idx;
-	int		pair_idx;
-
-	idx = 0;
-	while (idx < 4 * size)
-	{
-		pair_idx = idx - (idx / size / 2) * size;
-		if ((idx / size) % 2 == 0)
-			puzzle->constraint_pairs[pair_idx].fwd_val = vals[idx];
-		else
-			puzzle->constraint_pairs[pair_idx - size].bwd_val = vals[idx];
-		idx++;
-	}
 }
