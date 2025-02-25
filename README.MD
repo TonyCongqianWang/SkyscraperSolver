@@ -4,12 +4,17 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. C
 
 ```
 cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
-./skyscraper_solver "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
-.\skyscraper_solver "3 0 0 0 2 4 1 5 2 4 3 0 4 3 0 0 4 0 2 2 0 3 4 3 0 0 0 3 0 0 0 2" "0 0 0 0 0 0 0 1 0 0 8 0 0 2 0 0 0 0 0 5 0 0 0 0 0 0 0 1 0 0 0 0 0 0 5 3 0 0 0 0 0 0 0 2 0 0 1 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0"
+./skyscraper_solver "3 0 0 0 2 4 1 5 2 4 3 0 4 3 0 0 4 0 2 2 0 3 4 3 0 0 0 3 0 0 0 2" "0 0 0 0 0 0 0 1 0 0 8 0 0 2 0 0 0 0 0 5 0 0 0 0 0 0 0 1 0 0 0 0 0 0 5 3 0 0 0 0 0 0 0 2 0 0 1 0 0 0 0 0 6 0 0 0 0 0 0 0 0 0 0 0"
 ./skyscraper_solver "2 3 2 4 3 2 1 5 1 3 2 3 2 4 5 4 2 3 3 2 5 3 3 1 2 4 3 2 1 2 2 5" "0 3 0 0 5 0 0 0 1 0 0 5 0 0 0 0 3 0 6 0 2 0 0 0 0 0 0 1 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 1 4 0 0 0 0 0 1 0 0"
 ```
 
-Accepts grids up to size 9. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
+or on windows:
+
+```
+.\skyscraper_solver "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
+```
+
+Grids up to size 9x9 are accepted. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
 
 Solutions (if found) are printed like this:
 
@@ -58,8 +63,8 @@ Added scripts to generate instances and for benchmarking. Refactored and improve
 ### v05
 Solving process now sets cells as soon as only one value remains.
 
-### v06
-Added support for inputing grid values. Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
+### v06 / v06a
+Added support for inputing grid values and empty constraint values (v06a). Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
 
 ## Future
 - Make the puzzle playable: Formulate solution process as mdp, add GUI and train an AI player with Reinforcement learning.
