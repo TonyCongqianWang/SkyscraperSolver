@@ -156,7 +156,7 @@ if __name__ == "__main__":
     
       formatted_output = [str(a) for (a, b) in col_visibility] + [str(b) for (a, b) in col_visibility]
       formatted_output += [str(a) for (a, b) in row_visibility] + [str(b) for (a, b) in row_visibility]
-      formatted_output = "rush-01 \"" + " ".join(formatted_output) + "\""
+      formatted_output = "skyscraper_solver \"" + " ".join(formatted_output) + "\""
 
       if formatted_output not in formatted_outputs:
         latin_squares.append(latin_square)
