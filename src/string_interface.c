@@ -12,6 +12,7 @@
 
 #include "string_interface.h"
 #include "puzzle_init.h"
+#include "grid_update.h"
 
 static int		parse_puzzle_size_from_constr_str(char *str);
 static int		try_add_constr_values(t_puzzle *puzzle, char *str);
@@ -29,9 +30,24 @@ int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str)
 
 int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
 {
-	(void)puzzle;
-	(void)str;
-	return (1);
+	int		idx;
+	int		new_val;
+
+	idx = 0;
+	while (str[idx] && idx / 2 < puzzle->size * puzzle->size)
+	{
+		if (idx % 2 == 0)
+		{
+			new_val = str[idx] - '0';
+			if (new_val < 0 || new_val > puzzle->size)
+				return (0);
+			puzzle->cur_node->grid.vals[idx / 2] = new_val;
+		}
+		else if (str[idx] != ' ')
+			return (0);
+		idx++;
+	}
+	return (!str[idx] && (idx + 1) == 2 * puzzle->size * puzzle->size);
 }
 
 static int	parse_puzzle_size_from_constr_str(char *str)

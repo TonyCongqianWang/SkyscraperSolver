@@ -17,8 +17,28 @@
 
 int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 {
+	t_node_state	input_state;
+	int				idx;
+	int				input_val;
+
 	if (max_depth >= 0)
 		puzzle->cur_node->max_depth = max_depth;
+	input_state = *(puzzle->cur_node);
+	idx = 0;
+	while (idx < puzzle->size * puzzle->size)
+		puzzle->cur_node->grid.vals[idx++] = 0;
+	idx = 0;
+	while (idx < puzzle->size * puzzle->size)
+	{
+		idx++;
+		input_val = input_state.grid.vals[idx - 1];
+		if (input_val == 0)
+			continue ;
+		if (puzzle->cur_node->grid.vals[idx - 1] == 0)
+			set_grid_val(puzzle->cur_node, idx - 1, input_val, 1);
+		else if (puzzle->cur_node->grid.vals[idx - 1] != input_val)
+			return (0);
+	}
 	return (tree_search(puzzle));
 }
 

@@ -15,6 +15,7 @@
 #include "puzzle_structs.h"
 #include "puzzle_solver.h"
 #include "string_interface.h"
+#include "rule_checking.h"
 
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
 static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth);
@@ -54,11 +55,22 @@ static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv)
 	}
 	if (!init_puzzle_from_constr_str(puzzle, argv[1]))
 	{
-		print_error("Wrong argument format.");
+		print_error("Wrong puzzle constraints format.");
 		return (-2);
 	}
 	if (argc == 3)
-		set_puzzle_grid_to_str_vals(puzzle, argv[2]);
+	{
+		if (!set_puzzle_grid_to_str_vals(puzzle, argv[2]))
+		{
+			print_error("Wrong puzzle grid format.");
+			return (-2);
+		}
+		if (check_rule_violations(puzzle))
+		{
+			print_error("Grid violates puzzle rules.");
+			return (-2);
+		}
+	}
 	return (0);
 }
 
