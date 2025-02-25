@@ -13,12 +13,18 @@
 #include "puzzle_init.h"
 #include "cell_bounds.h"
 
+static void	init_root_node(t_puzzle *puzzle, int size);
+static void	init_node_grid(t_node_state *puzzle, int size);
+static void	init_constraint(t_puzzle *puzzle, int idx, int size);
+
 void	init_puzzle(t_puzzle *puzzle, int size)
 {
 	int		idx;
 
-	init_state_fields(puzzle, size);
-	init_grid_and_bmps(puzzle, size);
+	puzzle->size = size;
+	puzzle->nodes_visited = 0;
+	puzzle->constr_bounds.size = size;
+	init_root_node(puzzle, size);
 	idx = 0;
 	while (idx < 2 * size)
 	{
@@ -27,22 +33,7 @@ void	init_puzzle(t_puzzle *puzzle, int size)
 	}
 }
 
-void	init_grid_and_bmps(t_puzzle *puzzle, int size)
-{
-	int		idx;
-
-	idx = 0;
-	while (idx < size * size)
-	{
-		puzzle->cur_node->grid.vals[idx] = 0;
-		puzzle->cur_node->grid.valid_val_bmps[idx] = 0xffff;
-		update_cell_bounds(puzzle->cur_node, idx);
-		puzzle->cur_node->grid.num_cell_vals[idx] = size;
-		idx++;
-	}
-}
-
-void	init_constraint(t_puzzle *puzzle, int idx, int size)
+static void	init_constraint(t_puzzle *puzzle, int idx, int size)
 {
 	int		sub_index;
 	int		grid_index;
@@ -62,17 +53,32 @@ void	init_constraint(t_puzzle *puzzle, int idx, int size)
 	}
 }
 
-void	init_state_fields(t_puzzle *puzzle, int size)
+static void	init_root_node(t_puzzle *puzzle, int size)
 {
-	puzzle->size = size;
-	puzzle->nodes_visited = 0;
-	puzzle->constr_bounds.size = size;
 	puzzle->cur_node = &puzzle->stored_node;
 	puzzle->cur_node->puzzle = puzzle;
 	puzzle->cur_node->size = size;
 	puzzle->cur_node->is_complete = 0;
 	puzzle->cur_node->is_invalid = 0;
 	puzzle->cur_node->is_sub_state = 0;
+	puzzle->cur_node->cur_depth = 0;
+	puzzle->cur_node->max_depth = size * size;
 	puzzle->cur_node->last_set_idx = -1;
 	puzzle->cur_node->num_unset = size * size;
+	init_node_grid(puzzle->cur_node, size);
+}
+
+static void	init_node_grid(t_node_state *node, int size)
+{
+	int		idx;
+
+	idx = 0;
+	while (idx < size * size)
+	{
+		node->grid.vals[idx] = 0;
+		node->grid.valid_val_bmps[idx] = 0xffff;
+		update_cell_bounds(node, idx);
+		node->grid.num_cell_vals[idx] = size;
+		idx++;
+	}
 }

@@ -14,7 +14,7 @@
 # define PUZZLE_SOLVER_H
 # include "puzzle_structs.h"
 
-int	solve_puzzle(t_puzzle *puzzle);
-int	tree_search(t_puzzle *puzzle, int depth);
+int	solve_puzzle(t_puzzle *puzzle, int max_depth);
+int	tree_search(t_puzzle *puzzle);
 
 #endif

@@ -32,7 +32,7 @@ int	main(int argc, char **argv)
 		print_error("Wrong argument format.");
 		return (-2);
 	}
-	if (!solve_puzzle(&puzzle))
+	if (!solve_puzzle(&puzzle, -1))
 	{
 		print_error("Could not find solution.");
 		print_value("Nodes visited", puzzle.nodes_visited);
@@ -49,7 +49,7 @@ void	partial_solve_and_print_debug(t_puzzle puzzle, int depths)
 
 	puzzle.cur_node = &puzzle.stored_node;
 	puzzle.cur_node->puzzle = &puzzle;
-	tree_search(&puzzle, depths);
+	solve_puzzle(&puzzle, depths);
 	cell_val = 1;
 	while (cell_val <= puzzle.size)
 	{

@@ -15,28 +15,60 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-static int	is_reiterate_allowed(t_node_state *state)
-{
-	int		set_count;
+static int	is_reiterate_allowed(t_node_state *state);
+static int	check_validity(t_puzzle *puzzle, t_node_transition next);
+static int	set_valid_val(t_puzzle *puzzle, t_node_transition *next);
+static int	get_valid_transition(t_puzzle *puzzle, t_node_transition *next);
 
-	set_count = state->size * state->size - state->num_unset;
-	return (set_count < state->num_unset / 2 && !state->is_sub_state);
+void	prune_node(t_puzzle *puzzle)
+{
+	int					reiterate;
+	t_node_transition	tr;
+
+	reiterate = 1;
+	while (reiterate)
+	{
+		tr.cell_idx = 0;
+		tr.cell_val = 1;
+		reiterate = 0;
+		while (get_valid_transition(puzzle, &tr))
+		{
+			if (!check_validity(puzzle, tr))
+			{
+				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
+				reiterate = 1;
+			}
+			tr.cell_val++;
+		}
+		reiterate &= is_reiterate_allowed(puzzle->cur_node);
+	}
 }
 
-static int	check_validity(t_puzzle *puzzle, t_node_transition next, int depth)
+static int	is_reiterate_allowed(t_node_state *state)
+{
+	const double	max_set_unset_quotient = 0.5;
+	int				set_count;
+
+	set_count = state->size * state->size - state->num_unset;
+	return (set_count < max_set_unset_quotient * state->num_unset);
+}
+
+static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 {
 	t_node_state	old_state;
 	int				is_valid;
 
 	old_state = *(puzzle->cur_node);
 	puzzle->cur_node->is_sub_state = 1;
+	puzzle->cur_node->max_depth = 1;
+	puzzle->cur_node->cur_depth++;
 	set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 1);
-	is_valid = tree_search(puzzle, depth);
+	is_valid = tree_search(puzzle);
 	*(puzzle->cur_node) = old_state;
 	return (is_valid);
 }
 
-static int	set_valid_val(t_puzzle *puzzle, t_node_transition* next)
+static int	set_valid_val(t_puzzle *puzzle, t_node_transition *next)
 {
 	short			cell_val;
 	short			cell_ub;
@@ -56,7 +88,7 @@ static int	set_valid_val(t_puzzle *puzzle, t_node_transition* next)
 	return (0);
 }
 
-static int	get_valid_transition(t_puzzle *puzzle, t_node_transition* next)
+static int	get_valid_transition(t_puzzle *puzzle, t_node_transition *next)
 {
 	int		cell_idx;
 
@@ -75,28 +107,4 @@ static int	get_valid_transition(t_puzzle *puzzle, t_node_transition* next)
 		next->cell_val = 1;
 	}
 	return (0);
-}
-
-void	prune_node(t_puzzle *puzzle, int depth)
-{
-	int					reiterate;
-	t_node_transition	tr;
-
-	reiterate = 1;
-	while (reiterate)
-	{
-		tr.cell_idx = 0;
-		tr.cell_val = 1;
-		reiterate = 0;
-		while (get_valid_transition(puzzle, &tr))
-		{
-			if (!check_validity(puzzle, tr, depth))
-			{
-				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
-				reiterate = 1;
-			}
-			tr.cell_val++;
-		}
-		reiterate &= is_reiterate_allowed(puzzle->cur_node);
-	}
 }

@@ -15,43 +15,47 @@
 #include "node_pruning.h"
 #include "node_selection.h"
 
-int	solve_puzzle(t_puzzle *puzzle)
+int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 {
-	return (tree_search(puzzle, -1));
+	if (max_depth >= 0)
+		puzzle->cur_node->max_depth = max_depth;
+	return (tree_search(puzzle));
 }
 
-static int	has_reached_terminal_state(t_puzzle *puzzle)
+static int	has_reached_terminal_state(t_node_state *cur_node)
 {
 	int	is_leaf_node;
 
-	is_leaf_node = puzzle->cur_node->is_complete;
-	is_leaf_node |= puzzle->cur_node->is_invalid;
+	is_leaf_node = (cur_node->cur_depth >= cur_node->max_depth);
+	is_leaf_node |= cur_node->is_complete;
+	is_leaf_node |= cur_node->is_invalid;
 	return (is_leaf_node);
 }
 
-static int	node_is_valid(t_puzzle *puzzle)
+static int	node_is_valid(t_node_state *cur_node)
 {
-	return (!puzzle->cur_node->is_invalid);
+	return (!cur_node->is_invalid);
 }
 
-int	tree_search(t_puzzle *puzzle, int depth)
+int	tree_search(t_puzzle *puzzle)
 {
 	t_node_state		old_state;
 	t_node_transition	next;
 
 	puzzle->nodes_visited++;
-	if (depth == 0 || has_reached_terminal_state(puzzle))
-		return (node_is_valid(puzzle));
-	prune_node(puzzle, 0);
-	while (!has_reached_terminal_state(puzzle)
+	if (has_reached_terminal_state(puzzle->cur_node))
+		return (node_is_valid(puzzle->cur_node));
+	prune_node(puzzle);
+	while (!has_reached_terminal_state(puzzle->cur_node)
 		&& try_get_next_transition(puzzle, &next))
 	{
 		old_state = *(puzzle->cur_node);
 		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);
-		if (tree_search(puzzle, depth - 1))
+		puzzle->cur_node->cur_depth++;
+		if (tree_search(puzzle))
 			return (1);
 		*(puzzle->cur_node) = old_state;
 		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
-	return (node_is_valid(puzzle));
+	return (node_is_valid(puzzle->cur_node));
 }

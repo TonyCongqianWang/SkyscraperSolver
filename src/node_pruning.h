@@ -14,6 +14,6 @@
 # define NODE_PRUNING_H
 # include "puzzle_structs.h"
 
-void	prune_node(t_puzzle *puzzle, int depth);
+void	prune_node(t_puzzle *puzzle);
 
 #endif
