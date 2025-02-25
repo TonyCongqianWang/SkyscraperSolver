@@ -5,9 +5,12 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. C
 ```
 cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
 ./skyscraper_solver "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
+./skyscraper_solver "2 3 2 4 3 2 1 5 1 3 2 3 2 4 5 4 2 3 3 2 5 3 3 1 2 4 3 2 1 2 2 5"\
+"0 3 0 0 5 0 0 0 1 0 0 5 0 0 0 0 3 0 6 0 2 0 0 0 0 0 0 1 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 1 4 0 0 0 0 0 1 0 0"
 ```
 
-Accepts grids up to size 9. Constraints are in order top (l->r) bottom (l->r) left (t->b) right (t->b).
+Accepts grids up to size 9. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
+
 Solutions (if found) are printed like this:
 
 ```
@@ -26,29 +29,12 @@ You can find puzzles that you can play yourself [here](https://www.puzzle-skyscr
 
 ### Instances
 
-Some more example inputs of different sizes:
+Some more example inputs of different sizes (more can be found in the benchmark_scripts or generated automatically using the python script):
 ```
 ./skyscraper_solver "5 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 3"
-./skyscraper_solver "5 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 2"
-./skyscraper_solver "4 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 2"
-./skyscraper_solver "4 2 3 2 2 1 4 1 3 3 2 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 2"
-./skyscraper_solver "4 2 3 2 2 1 4 1 3 3 2 4 2 2 3 3 4 2 3 2 1 2 3 2 4 3 1 2"
-./skyscraper_solver "4 2 3 2 2 2 4 2 3 3 2 3 2 2 3 3 3 2 3 2 4 2 3 2 4 3 2 2"
 ./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 3 3 4 2 2 1 4 2 3 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 4 4 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 4 4 3 2 3 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 4 3 3 2 4 2 3 4 2 2 1 4 2 2 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 1 2 3 2 3 2 3 4 4 3 2 4 2 3 3 2 2 2 4 2 2 3 1 2 5 4 2 3"
-./skyscraper_solver "2 3 4 3 4 2 3 2 3 2 3 4 3 3 2 4 2 3 2 2 2 2 4 2 2 3 3 2 5 4 2 3"
 ./skyscraper_solver "2 3 4 3 1 2 3 2 3 2 3 4 4 3 2 4 2 3 1 2 2 2 4 2 2 3 3 2 5 4 2 3"
-./skyscraper_solver "3 2 2 3 2 3 3 3 2 3 4 2 2 3 2 2 3 4 2 4 3 3 1 3 2 4 3 4 1 3 3 2 2 2 3 3"
-./skyscraper_solver "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 2 2 3 3"
-./skyscraper_solver "1 4 3 3 4 3 3 2 2 4 2 3 2 1 3 2 3 3 1 4 5 2 3 2 3 2 4 2 2 2 3 4 3 1 3 5"
 ./skyscraper_solver "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 5 2 3 3"
-./skyscraper_solver "3 1 2 3 2 3 3 3 2 3 3 2 2 3 5 2 3 3 2 4 3 3 2 3 2 3 3 3 1 4 3 2 4 2 3 2"
-./skyscraper_solver "2 4 2 3 2 2 5 3 2 3 3 2 2 3 1 2 3 3 2 3 3 3 2 2 2 3 3 3 2 4 3 2 4 1 3 2"
-./skyscraper_solver "2 4 2 3 2 2 2 3 2 3 3 2 7 3 1 2 3 3 2 3 3 3 2 2 2 3 3 3 2 4 3 2 4 1 3 2"
 ```
 
 
