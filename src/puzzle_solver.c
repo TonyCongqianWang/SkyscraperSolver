@@ -12,7 +12,7 @@
 
 #include "puzzle_solver.h"
 #include "grid_update.h"
-#include "shallow_search.h"
+#include "node_pruning.h"
 #include "node_selection.h"
 
 int	solve_puzzle(t_puzzle *puzzle)
@@ -42,7 +42,7 @@ int	tree_search(t_puzzle *puzzle, int depth)
 	puzzle->nodes_visited++;
 	if (depth == 0 || has_reached_terminal_state(puzzle))
 		return (node_is_valid(puzzle));
-	reduce_grid_cell_options(puzzle, 0);
+	prune_node(puzzle, 0);
 	while (!has_reached_terminal_state(puzzle)
 		&& try_get_next_transition(puzzle, &next))
 	{

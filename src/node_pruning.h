@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   shallow_search.h                                   :+:      :+:    :+:   */
+/*   node_pruning.h                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,10 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SHALLOW_SEARCH_H
-# define SHALLOW_SEARCH_H
+#ifndef NODE_PRUNING_H
+# define NODE_PRUNING_H
 # include "puzzle_structs.h"
 
-void	reduce_grid_cell_options(t_puzzle *puzzle, int depth);
+void	prune_node(t_puzzle *puzzle, int depth);
 
 #endif

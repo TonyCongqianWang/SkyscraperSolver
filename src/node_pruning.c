@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   shallow_search.c                                   :+:      :+:    :+:   */
+/*   node_pruning.c                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,20 +10,20 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "shallow_search.h"
+#include "node_pruning.h"
 #include "grid_update.h"
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-static int	is_reiterate_allowed(t_node_state* state)
+static int	is_reiterate_allowed(t_node_state *state)
 {
-	int			set_count;
+	int		set_count;
 
 	set_count = state->size * state->size - state->num_unset;
 	return (set_count < state->num_unset / 2 && !state->is_sub_state);
 }
 
-static int	check_validity(t_puzzle* puzzle, t_node_transition next, int depth)
+static int	check_validity(t_puzzle *puzzle, t_node_transition next, int depth)
 {
 	t_node_state	old_state;
 	int				is_valid;
@@ -36,7 +36,7 @@ static int	check_validity(t_puzzle* puzzle, t_node_transition next, int depth)
 	return (is_valid);
 }
 
-static int	set_valid_val(t_puzzle* puzzle, t_node_transition* next)
+static int	set_valid_val(t_puzzle *puzzle, t_node_transition* next)
 {
 	short			cell_val;
 	short			cell_ub;
@@ -56,7 +56,7 @@ static int	set_valid_val(t_puzzle* puzzle, t_node_transition* next)
 	return (0);
 }
 
-static int	get_valid_transition(t_puzzle* puzzle, t_node_transition* next)
+static int	get_valid_transition(t_puzzle *puzzle, t_node_transition* next)
 {
 	int		cell_idx;
 
@@ -77,7 +77,7 @@ static int	get_valid_transition(t_puzzle* puzzle, t_node_transition* next)
 	return (0);
 }
 
-void	reduce_grid_cell_options(t_puzzle* puzzle, int depth)
+void	prune_node(t_puzzle *puzzle, int depth)
 {
 	int					reiterate;
 	t_node_transition	tr;

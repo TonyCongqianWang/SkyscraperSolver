@@ -12,7 +12,7 @@
 
 #include "node_selection.h"
 #include "transition_scoring.h"
-#include "shallow_search.h"
+#include "node_pruning.h"
 #include "grid_update.h"
 
 int	set_best_transition_val(t_puzzle *puzzle, int idx, t_node_transition *next)
