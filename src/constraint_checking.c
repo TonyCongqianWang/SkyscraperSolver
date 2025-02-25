@@ -42,6 +42,9 @@ int	check_active_constr(t_puzzle *puzzle)
 	t_constraint_bounds	*bounds;
 
 	bounds = &puzzle->constr_bounds;
+	if (bounds->cur_c_pair.fwd_val == 0
+		&& bounds->cur_c_pair.bwd_val == 0)
+		return (1);
 	size = bounds->size;
 	sub_idx = 0;
 	while (sub_idx < size && bounds->max_height_lb < size)
@@ -63,9 +66,14 @@ int	check_active_constr(t_puzzle *puzzle)
 int	check_constr_bounds_violations(t_constraint_bounds *constr)
 {
 	int		fwd_ub;
+	int		fwd_violation;
+	int		bwd_violation;
 
 	fwd_ub = constr->lhs_ub + constr->size - constr->max_height_lb;
-	return (constr->fwd_lb > constr->cur_c_pair.fwd_val
-		|| fwd_ub < constr->cur_c_pair.fwd_val
-		|| constr->bwd_ub < constr->cur_c_pair.bwd_val);
+	fwd_violation = (constr->fwd_lb > constr->cur_c_pair.fwd_val);
+	fwd_violation |= (fwd_ub < constr->cur_c_pair.fwd_val);
+	fwd_violation &= (constr->cur_c_pair.fwd_val != 0);
+	bwd_violation = (constr->bwd_ub < constr->cur_c_pair.bwd_val);
+	bwd_violation &= (constr->cur_c_pair.bwd_val != 0);
+	return (fwd_violation || bwd_violation);
 }

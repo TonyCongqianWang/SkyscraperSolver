@@ -61,7 +61,7 @@ static int	parse_puzzle_size_from_constr_str(char *str)
 	{
 		if (space_expected && *str != ' ')
 			return (0);
-		else if (!space_expected && (*str < '1' || *str > '9'))
+		else if (!space_expected && (*str < '0' || *str > '9'))
 			return (0);
 		else if (!space_expected)
 			counter++;

@@ -79,5 +79,6 @@ static int	is_rule_violated(t_puzzle *puzzle, int constr_idx, int reverse)
 		target_val = state.constr_pair.fwd_val;
 	else
 		target_val = state.constr_pair.bwd_val;
-	return (!(state.seen_bmp & 1) && (state.cur_num_visible != target_val));
+	return (!(state.seen_bmp & 1) && (state.cur_num_visible != target_val)
+		&& target_val != 0);
 }
