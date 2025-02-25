@@ -27,7 +27,7 @@ typedef struct s_node_transition
 	int			num_valids_row;
 	int			num_valids_cell;
 	double		score;
-}				t_node_transition;
+}		t_node_transition;
 
 typedef struct s_grid_state
 {
@@ -35,12 +35,12 @@ typedef struct s_grid_state
 	short		valid_val_bmps[MAX_CELL_COUNT];
 	char		cell_bounds[MAX_CELL_COUNT];
 	char		num_cell_vals[MAX_CELL_COUNT];
-}				t_grid_state;
+}		t_grid_state;
 
 typedef struct s_constrs_state
 {
 	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
-}				t_constrs_state;
+}		t_constrs_state;
 
 typedef struct s_node_state
 {
@@ -51,18 +51,18 @@ typedef struct s_node_state
 	int					last_set_idx;
 	int					is_complete;
 	int					is_invalid;
-	int					is_sub_state;
+	int					sub_node_depth;
 	int					num_unset;
 	t_grid_state		grid;
 	t_constrs_state		constrs;
-}				t_node_state;
+}		t_node_state;
 
 typedef struct s_constraint_pair
 {
 	int				fwd_val;
 	int				bwd_val;
 	int				grid_indeces[MAX_SIZE];
-}				t_constraint_pair;
+}		t_constraint_pair;
 
 typedef struct s_constraint_bounds
 {
@@ -75,7 +75,15 @@ typedef struct s_constraint_bounds
 	int					max_height_lb;
 	int					max_height_ub;
 	int					max_height_seen;
-}				t_constraint_bounds;
+}		t_constraint_bounds;
+
+typedef struct s_node_pruning_state
+{
+	int		can_reiterate;
+	int		last_iteration_succeeded;
+	int		cur_pruning_depth;
+	int		max_pruning_depth;
+}		t_node_pruning_state;
 
 typedef struct s_puzzle
 {
@@ -86,6 +94,7 @@ typedef struct s_puzzle
 	t_node_state			stored_node;
 	t_node_state			*cur_node;
 	t_constraint_bounds		constr_bounds;
-}				t_puzzle;
+	t_node_pruning_state	pruning;
+}		t_puzzle;
 
 #endif

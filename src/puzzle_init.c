@@ -13,7 +13,7 @@
 #include "puzzle_init.h"
 #include "cell_bounds.h"
 
-static void	init_root_node(t_puzzle *puzzle, int size);
+static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
 
@@ -24,7 +24,9 @@ void	init_puzzle(t_puzzle *puzzle, int size)
 	puzzle->size = size;
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
-	init_root_node(puzzle, size);
+	puzzle->cur_node = &puzzle->stored_node;
+	puzzle->cur_node->puzzle = puzzle;
+	init_root_node(puzzle->cur_node, size);
 	idx = 0;
 	while (idx < 2 * size)
 	{
@@ -53,19 +55,17 @@ static void	init_constraint(t_puzzle *puzzle, int idx, int size)
 	}
 }
 
-static void	init_root_node(t_puzzle *puzzle, int size)
+static void	init_root_node(t_node_state *root_node, int size)
 {
-	puzzle->cur_node = &puzzle->stored_node;
-	puzzle->cur_node->puzzle = puzzle;
-	puzzle->cur_node->size = size;
-	puzzle->cur_node->is_complete = 0;
-	puzzle->cur_node->is_invalid = 0;
-	puzzle->cur_node->is_sub_state = 0;
-	puzzle->cur_node->cur_depth = 0;
-	puzzle->cur_node->max_depth = size * size;
-	puzzle->cur_node->last_set_idx = -1;
-	puzzle->cur_node->num_unset = size * size;
-	init_node_grid(puzzle->cur_node, size);
+	root_node->size = size;
+	root_node->is_complete = 0;
+	root_node->is_invalid = 0;
+	root_node->sub_node_depth = 0;
+	root_node->cur_depth = 0;
+	root_node->last_set_idx = -1;
+	root_node->max_depth = size * size;
+	root_node->num_unset = size * size;
+	init_node_grid(root_node, size);
 }
 
 static void	init_node_grid(t_node_state *node, int size)
