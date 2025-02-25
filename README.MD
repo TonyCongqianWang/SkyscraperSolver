@@ -72,6 +72,9 @@ Added scripts to generate instances and for benchmarking. Refactored and improve
 ### v05
 Solving process now sets cells as soon as only one value remains.
 
+### v06
+Added support for inputing grid values. Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
+
 ## Future
-- Adding support for wildcard constraints and input if grid values to support the solving of any instances that can be found on the internet.
-- Gamify the solution process and train an RL agent to make the decisions: Possibly reimplementation in Python.
+- Make the puzzle playable: Formulate solution process as mdp, add GUI and train an AI player with Reinforcement learning.
+- Possibly reimplementation in Python or C#.
