@@ -71,10 +71,8 @@ typedef struct s_constraint_bounds
 	int					is_reverse;
 	int					fwd_lb;
 	int					lhs_ub;
-	int					bwd_ub;
 	int					max_height_lb;
 	int					max_height_ub;
-	int					max_height_seen;
 }		t_constraint_bounds;
 
 typedef struct s_node_pruning_state

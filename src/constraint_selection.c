@@ -36,8 +36,6 @@ void	reset_constraint_bounds(t_puzzle *puzzle)
 {
 	puzzle->constr_bounds.fwd_lb = 1;
 	puzzle->constr_bounds.lhs_ub = 0;
-	puzzle->constr_bounds.bwd_ub = puzzle->size + 1;
 	puzzle->constr_bounds.max_height_lb = 0;
 	puzzle->constr_bounds.max_height_ub = 0;
-	puzzle->constr_bounds.max_height_seen = 0;
 }

@@ -74,10 +74,5 @@ int	update_constr_bounds_new_val(t_constraint_bounds *constr, int new_val)
 			constr->max_height_ub = new_val;
 		}
 	}
-	if (new_val > constr->max_height_seen)
-	{
-		constr->bwd_ub--;
-		constr->max_height_seen = new_val;
-	}
 	return (1);
 }
