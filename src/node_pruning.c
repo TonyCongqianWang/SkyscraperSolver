@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "node_pruning.h"
-#include "grid_update.h"
+#include "grid_manipulation.h"
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 #include "node_selection.h"

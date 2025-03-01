@@ -13,7 +13,7 @@
 #include "node_selection.h"
 #include "transition_scoring.h"
 #include "node_pruning.h"
-#include "grid_update.h"
+#include "grid_availability.h"
 #include "cell_bounds.h"
 
 static int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next);

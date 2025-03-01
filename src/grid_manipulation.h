@@ -1,20 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   grid_update.h                                      :+:      :+:    :+:   */
+/*   grid_manipulation.h                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/30 19:48:43 by towang            #+#    #+#             */
-/*   Updated: 2025/01/31 00:17:45 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
+/*   Updated: 2025/01/30 20:46:14 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef GRID_UPDATE_H
-# define GRID_UPDATE_H
+#ifndef GRID_MANIPULATION_H
+# define GRID_MANIPULATION_H
 # include "puzzle_structs.h"
 
-void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val);
-void	decrement_cell_num_valids(t_node_state *state, int idx);
+void	set_grid_val(t_node_state *state, int cell_idx, int val, int check);
+void	set_value_invalid(t_node_state *state, int cell_idx, int val);
 
 #endif

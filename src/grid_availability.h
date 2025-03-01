@@ -14,10 +14,10 @@
 # define GRID_AVAILABILITY_H
 # include "puzzle_structs.h"
 
-void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val);
+int		is_cell_empty(t_node_state *state, int cell_idx);
+int		is_valid_value(t_node_state *state, int cell_idx, int val);
 int		get_col_num_valids(t_node_state *state, int cell_idx, int val);
 int		get_row_num_valids(t_node_state *state, int cell_idx, int val);
-void	decrement_cell_num_valids(t_node_state *state, int idx);
 int		get_cell_num_valids(t_node_state *state, int idx);
 
 #endif

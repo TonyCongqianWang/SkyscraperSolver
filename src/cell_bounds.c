@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "cell_bounds.h"
-#include "grid_update.h"
+#include "grid_availability.h"
 #include "constraint_checking.h"
 
 void	update_cell_bounds(t_node_state *state, int idx)

@@ -12,7 +12,7 @@
 
 #include "string_interface.h"
 #include "puzzle_init.h"
-#include "grid_update.h"
+#include "grid_manipulation.h"
 
 static int		parse_puzzle_size_from_constr_str(char *str);
 static int		try_add_constr_values(t_puzzle *puzzle, char *str);
