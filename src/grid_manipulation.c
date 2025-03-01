@@ -44,17 +44,11 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 	}
 }
 
-static void	update_availability(t_node_state *state, int cell_idx, int val)
+static void	update_column(t_node_state *state, int cell_idx, int val)
 {
 	int		counter;
 	int		update_idx;
 
-	counter = 0;
-	while (counter < state->size - 1)
-	{
-		set_value_invalid(state, cell_idx, ((val + counter) % state->size) + 1);
-		counter++;
-	}
 	counter = 1;
 	while (counter < state->size)
 	{
@@ -63,6 +57,13 @@ static void	update_availability(t_node_state *state, int cell_idx, int val)
 		set_value_invalid(state, update_idx, val);
 		counter++;
 	}
+}
+
+static void	update_row(t_node_state *state, int cell_idx, int val)
+{
+	int		counter;
+	int		update_idx;
+
 	counter = 1;
 	while (counter < state->size)
 	{
@@ -71,4 +72,18 @@ static void	update_availability(t_node_state *state, int cell_idx, int val)
 		set_value_invalid(state, update_idx, val);
 		counter++;
 	}
+}
+
+static void	update_availability(t_node_state *state, int cell_idx, int val)
+{
+	int		counter;
+
+	counter = 0;
+	while (counter < state->size - 1)
+	{
+		set_value_invalid(state, cell_idx, ((val + counter) % state->size) + 1);
+		counter++;
+	}
+	update_column(state, cell_idx, val);
+	update_row(state, cell_idx, val);
 }
