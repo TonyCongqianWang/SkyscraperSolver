@@ -17,7 +17,7 @@
 #include "grid_availability.h"
 #include "constraint_checking.h"
 
-void	update_availability(t_node_state *state, int cell_idx, int val);
+static void	update_availability(t_node_state *state, int cell_idx, int val);
 
 void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 {
@@ -44,11 +44,17 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 	}
 }
 
-void	update_availability(t_node_state *state, int cell_idx, int val)
+static void	update_availability(t_node_state *state, int cell_idx, int val)
 {
 	int		counter;
 	int		update_idx;
 
+	counter = 0;
+	while (counter < state->size - 1)
+	{
+		set_value_invalid(state, cell_idx, ((val + counter) % state->size) + 1);
+		counter++;
+	}
 	counter = 1;
 	while (counter < state->size)
 	{
