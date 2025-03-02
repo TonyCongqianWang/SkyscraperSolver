@@ -33,6 +33,8 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
+	if (state->is_invalid)
+		return ;
 	if (state->grid.vals[cell_idx] == val)
 		state->is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
