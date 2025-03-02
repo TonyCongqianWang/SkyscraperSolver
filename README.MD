@@ -63,8 +63,9 @@ Added scripts to generate instances and for benchmarking. Refactored and improve
 ### v05
 Solving process now sets cells as soon as only one value remains.
 
-### v06 / v06a
-Added support for inputing grid values and empty constraint values (v06a). Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
+### v06 / v06a / v06b
+Added support for inputing grid values (v06) and empty constraint values (v06a). Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
+Added bugfix in v06b and improved benchmarking. Bugfix has a very significant performance impact.
 
 ## Future
 - Make the puzzle playable: Formulate solution process as mdp, add GUI and train an AI player with Reinforcement learning.
