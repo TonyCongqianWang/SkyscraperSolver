@@ -23,6 +23,7 @@ def main(command_name, filename, output_file=None):
         return
 
     elapsed_times = []
+    commands = []
     total_start_time = time.time()
     total_start_dt = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
@@ -50,6 +51,7 @@ def main(command_name, filename, output_file=None):
 
             elapsed_time = end_time - start_time
             elapsed_times.append(elapsed_time)
+            commands.append(" ".join([command_name] + args))
 
             write_output("\n")
             write_output(stdout)
@@ -64,6 +66,11 @@ def main(command_name, filename, output_file=None):
         median_time = statistics.median(elapsed_times)
         max_time = max(elapsed_times)
         total_time = sum(elapsed_times)
+
+        write_output(f"\nSorted Times:\n\n")
+        for command, elapsed_time in sorted(zip(commands, elapsed_times), key=lambda x: x[1]):
+          write_output(f"Command: {command}\n")
+          write_output(f"Elapsed: {format_time(elapsed_time)}\n\n")
 
         write_output(f"\nStart: {total_start_dt}\n")
         write_output(f"End: {total_end_dt}\n")
