@@ -83,5 +83,5 @@ if __name__ == "__main__":
         size = int(sys.argv[2])
         process_file(filename, size)
     else:
-        print("Error: Please provide a filename as a command-line argument.")
-        print("Usage: python reverse_numbers.py <filename>")
+        print("Error: Please provide a filename and square size as a command-line argument.")
+        print("Usage: python permutate_instances.py <filename> <size>")

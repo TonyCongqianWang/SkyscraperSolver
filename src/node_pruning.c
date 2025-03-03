@@ -15,10 +15,12 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 #include "node_selection.h"
+#include "constraint_checking.h"
 
 static int	init_pruning_state(t_puzzle *puzzle);
-static int	keep_pruning(t_node_pruning_state *state);
+static int	keep_pruning(t_puzzle *puzzle);
 static int	check_validity(t_puzzle *puzzle, t_node_transition next);
+static int	check_only_constr(t_puzzle *puzzle, t_node_transition next);
 
 void	prune_node(t_puzzle *puzzle)
 {
@@ -26,7 +28,7 @@ void	prune_node(t_puzzle *puzzle)
 
 	if (!init_pruning_state(puzzle))
 		return ;
-	while (keep_pruning(&puzzle->pruning))
+	while (keep_pruning(puzzle))
 	{
 		tr.cell_idx = 0;
 		tr.cell_val = 1;
@@ -44,42 +46,46 @@ void	prune_node(t_puzzle *puzzle)
 
 static int	init_pruning_state(t_puzzle *puzzle)
 {
-	const double	min_unset_quotient = 0.67;
+	const double	min_unset_quotient_reit = 0.67;
 	double			unset_quotient;
-	t_node_state	*state;
+	t_node_state	*node;
 
-	state = puzzle->cur_node;
-	unset_quotient = state->num_unset;
+	node = puzzle->cur_node;
+	unset_quotient = node->num_unset;
 	unset_quotient /= puzzle->size * puzzle->size;
-	if (state->sub_node_depth > 0)
-		puzzle->pruning.max_pruning_depth = 1;
-	else if (state->cur_depth == 0)
-		puzzle->pruning.max_pruning_depth = 4 * unset_quotient;
-	else if (state->cur_depth < puzzle->size / 4)
-		puzzle->pruning.max_pruning_depth = 3 * unset_quotient;
-	else
-		puzzle->pruning.max_pruning_depth = 1;
-	if (puzzle->pruning.max_pruning_depth < 1)
-		puzzle->pruning.max_pruning_depth = 1;
-	puzzle->pruning.can_reiterate = unset_quotient > min_unset_quotient;
+	puzzle->pruning.max_pruning_depth = 1;
 	puzzle->pruning.cur_pruning_depth = 0;
+	puzzle->pruning.can_reiterate = unset_quotient > min_unset_quotient_reit;
+	if (node->sub_node_depth == 0
+		&& node->cur_depth == 0)
+	{
+		puzzle->pruning.max_pruning_depth = puzzle->size / 2;
+		puzzle->pruning.cur_pruning_depth = -1;
+	}
 	puzzle->pruning.last_iteration_succeeded = 0;
 	return (1);
 }
 
-static int	keep_pruning(t_node_pruning_state *state)
+static int	keep_pruning(t_puzzle *puzzle)
 {
-	if (state->last_iteration_succeeded
-		&& state->can_reiterate
-		&& state->cur_pruning_depth < 2)
+	t_node_pruning_state	*pruning;
+
+	pruning = &puzzle->pruning;
+	if (pruning->cur_pruning_depth <= 0)
 	{
-		state->last_iteration_succeeded = 0;
+		pruning->cur_pruning_depth++;
 		return (1);
 	}
-	else if (state->cur_pruning_depth < state->max_pruning_depth)
+	if (pruning->last_iteration_succeeded && pruning->can_reiterate
+		&& pruning->cur_pruning_depth == 1)
 	{
-		state->last_iteration_succeeded = 0;
-		state->cur_pruning_depth++;
+		pruning->last_iteration_succeeded = 0;
+		return (1);
+	}
+	else if (pruning->cur_pruning_depth < pruning->max_pruning_depth)
+	{
+		pruning->last_iteration_succeeded = 0;
+		pruning->cur_pruning_depth *= 2;
 		return (1);
 	}
 	return (0);
@@ -89,14 +95,30 @@ static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 {
 	t_node_state	old_state;
 	int				is_valid;
+	int				cur_depth;
+	int				pruning_depth;
 
+	cur_depth = puzzle->cur_node->cur_depth;
+	pruning_depth = puzzle->pruning.cur_pruning_depth;
+	if (pruning_depth <= 0)
+		return (check_only_constr(puzzle, next));
 	old_state = *(puzzle->cur_node);
-	puzzle->cur_node->max_depth = puzzle->pruning.cur_pruning_depth;
+	puzzle->cur_node->max_depth = cur_depth + pruning_depth;
 	puzzle->cur_node->cur_depth++;
 	puzzle->cur_node->sub_node_depth++;
 	set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 1);
 	is_valid = tree_search(puzzle);
 	if (!is_valid || !puzzle->cur_node->is_complete)
 		*(puzzle->cur_node) = old_state;
+	return (is_valid);
+}
+
+static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
+{
+	int				is_valid;
+
+	puzzle->cur_node->grid.vals[next.cell_idx] = next.cell_val;
+	is_valid = check_constraints(puzzle, next.cell_idx);
+	puzzle->cur_node->grid.vals[next.cell_idx] = 0;
 	return (is_valid);
 }
