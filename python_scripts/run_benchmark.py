@@ -51,8 +51,11 @@ def main(command_name, filename, output_file=None):
 
             elapsed_time = end_time - start_time
             elapsed_times.append(elapsed_time)
-            commands.append(" ".join([command_name] + [line]))
+            command = " ".join([command_name] + [line])
+            commands.append(command)
 
+            write_output("\n")
+            write_output(f"Command: {command}\n")
             write_output("\n")
             write_output(stdout)
             write_output(stderr)
