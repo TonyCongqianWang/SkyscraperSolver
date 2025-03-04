@@ -30,7 +30,7 @@ Solutions (if found) are printed like this:
 7 3 2 8 6 9 5 1 4
 ```
 
-You can find puzzles that you can play yourself [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
+You can find a solver-inspired playable desktop game on my other [repository](https://github.com/TonyCongqianWang/SkyscraperGame) or play online [here](https://www.puzzle-skyscrapers.com/) and [here](https://www.brainbashers.com/skyscrapers.asp).
 
 ### Instances
 
@@ -66,7 +66,3 @@ Solving process now sets cells as soon as only one value remains.
 ### v06 / v06a / v06b
 Added support for inputing grid values (v06) and empty constraint values (v06a). Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
 Added bugfix in v06b and improved benchmarking. Bugfix has a very significant performance impact.
-
-## Future
-- Make the puzzle playable: Formulate solution process as mdp, add GUI and train an AI player with Reinforcement learning.
-- Possibly reimplementation in Python or C#.
