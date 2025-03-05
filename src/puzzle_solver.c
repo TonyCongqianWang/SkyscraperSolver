@@ -93,5 +93,5 @@ int	tree_search(t_puzzle *puzzle)
 		*(puzzle->cur_node) = old_state;
 		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
-	return (found_solution || node_is_valid(puzzle->cur_node));
+	return (node_is_valid(puzzle->cur_node) || found_solution);
 }
