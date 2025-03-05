@@ -26,6 +26,7 @@ void	prune_node(t_puzzle *puzzle)
 {
 	t_node_transition	tr;
 
+	puzzle->cur_node->is_pruned = 0;
 	if (!init_pruning_state(puzzle))
 		return ;
 	while (keep_pruning(puzzle))
@@ -42,10 +43,12 @@ void	prune_node(t_puzzle *puzzle)
 			tr.cell_val++;
 		}
 	}
+	puzzle->cur_node->is_pruned = 1;
 }
 
 static int	init_pruning_state(t_puzzle *puzzle)
 {
+	const double	min_unset_quotient_prune = 0.35;
 	const double	min_unset_quotient_reit = 0.67;
 	double			unset_quotient;
 	t_node_state	*node;
@@ -53,6 +56,8 @@ static int	init_pruning_state(t_puzzle *puzzle)
 	node = puzzle->cur_node;
 	unset_quotient = node->num_unset;
 	unset_quotient /= puzzle->size * puzzle->size;
+	if (unset_quotient < min_unset_quotient_prune)
+		return (0);
 	puzzle->pruning.max_pruning_depth = 1;
 	puzzle->pruning.cur_pruning_depth = 0;
 	puzzle->pruning.can_reiterate = unset_quotient > min_unset_quotient_reit;

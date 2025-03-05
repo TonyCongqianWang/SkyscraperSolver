@@ -27,6 +27,8 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 	update_availability(state, cell_idx, val);
 	if (state->num_unset == 0)
 		state->is_complete = 1;
+	check |= !state->is_pruned;
+	check |= state->is_complete;
 	if (check && !state->is_invalid)
 		state->is_invalid = !check_constraints(state->puzzle, cell_idx);
 }

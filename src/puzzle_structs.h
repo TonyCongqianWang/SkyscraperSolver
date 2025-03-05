@@ -46,6 +46,7 @@ typedef struct s_node_state
 {
 	t_puzzle			*puzzle;
 	int					size;
+	int					is_pruned;
 	int					cur_depth;
 	int					max_depth;
 	int					last_set_idx;

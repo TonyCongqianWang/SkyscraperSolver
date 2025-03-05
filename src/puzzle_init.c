@@ -62,6 +62,7 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->size = size;
 	root_node->is_complete = 0;
 	root_node->is_invalid = 0;
+	root_node->is_pruned = 0;
 	root_node->sub_node_depth = 0;
 	root_node->cur_depth = 0;
 	root_node->last_set_idx = -1;
