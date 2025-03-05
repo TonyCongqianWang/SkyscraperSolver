@@ -117,6 +117,8 @@ static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 		|| !puzzle->cur_node->is_complete
 		|| puzzle->max_solutions != 1)
 		*(puzzle->cur_node) = old_state;
+	else
+		puzzle->cur_node->sub_node_depth--;
 	return (is_valid);
 }
 
