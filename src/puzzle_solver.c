@@ -54,17 +54,23 @@ static int	has_reached_terminal_state(t_node_state *cur_node)
 
 static int	node_is_valid(t_node_state *cur_node)
 {
+	if (!cur_node->is_invalid && cur_node->is_complete)
+	{
+		cur_node->puzzle->solutions_found++;
+	}
 	return (!cur_node->is_invalid);
 }
 
 int	tree_search(t_puzzle *puzzle)
 {
+	int					found_solution;
 	t_node_state		old_state;
 	t_node_transition	next;
 
 	puzzle->nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (node_is_valid(puzzle->cur_node));
+	found_solution = 0;
 	prune_node(puzzle);
 	while (!has_reached_terminal_state(puzzle->cur_node)
 		&& try_get_best_transition(puzzle, &next))
@@ -73,9 +79,13 @@ int	tree_search(t_puzzle *puzzle)
 		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);
 		puzzle->cur_node->cur_depth++;
 		if (tree_search(puzzle))
-			return (1);
+		{
+			found_solution = 1;
+			if (!puzzle->find_all)
+				return (1);
+		}
 		*(puzzle->cur_node) = old_state;
 		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
-	return (node_is_valid(puzzle->cur_node));
+	return (found_solution || node_is_valid(puzzle->cur_node));
 }

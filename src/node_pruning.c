@@ -108,7 +108,7 @@ static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 	puzzle->cur_node->sub_node_depth++;
 	set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 1);
 	is_valid = tree_search(puzzle);
-	if (!is_valid || !puzzle->cur_node->is_complete)
+	if (!is_valid || !puzzle->cur_node->is_complete || puzzle->find_all)
 		*(puzzle->cur_node) = old_state;
 	return (is_valid);
 }

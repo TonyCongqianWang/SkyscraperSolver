@@ -17,9 +17,13 @@
 #include "string_interface.h"
 #include "rule_checking.h"
 
+#define USAGE_STR "Wrong argument count. Expected use: \
+skyscraper_solver [-a] <constrait_vals> [<grid_vals>]"
+
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
 static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth);
 static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv);
+static int	init_puzzle_from_args(t_puzzle *puzzle, char *constr, char *grid);
 
 int	main(int argc, char **argv)
 {
@@ -36,31 +40,28 @@ int	main(int argc, char **argv)
 
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 {
-	if (!solve_puzzle(puzzle, -1))
+	solve_puzzle(puzzle, -1);
+	if (puzzle->find_all)
 	{
-		print_error("Could not find solution.");
-		print_value("Nodes visited", puzzle->nodes_visited);
-		return ;
+		print_value("Solutions found", puzzle->solutions_found);
 	}
-	print_solution_grid(puzzle);
+	else if (puzzle->cur_node->is_invalid)
+		print_message("Could not find solution.");
+	else
+		print_solution_grid(puzzle);
 	print_value("Nodes visited", puzzle->nodes_visited);
 }
 
-static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv)
+static int	init_puzzle_from_args(t_puzzle *puzzle, char *constr, char *grid)
 {
-	if (argc != 2 && argc != 3)
-	{
-		print_error("Wrong argument count.");
-		return (-1);
-	}
-	if (!init_puzzle_from_constr_str(puzzle, argv[1]))
+	if (!init_puzzle_from_constr_str(puzzle, constr))
 	{
 		print_error("Wrong puzzle constraints format.");
 		return (-2);
 	}
-	if (argc == 3)
+	if (grid)
 	{
-		if (!set_puzzle_grid_to_str_vals(puzzle, argv[2]))
+		if (!set_puzzle_grid_to_str_vals(puzzle, grid))
 		{
 			print_error("Wrong puzzle grid format.");
 			return (-2);
@@ -71,6 +72,33 @@ static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv)
 			return (-2);
 		}
 	}
+	return (0);
+}
+
+static int	parse_command_line_args(t_puzzle *puzzle, int argc, char **argv)
+{
+	int		find_all;
+	int		ret_code;
+	char	*constr;
+	char	*grid;
+
+	find_all = 0;
+	if (argc > 1 && argv[1][0] == '-'
+		&& argv[1][1] == 'a' && argv[1][2] == '\0')
+		find_all = 1;
+	if (argc < 2 + find_all || argc > 3 + find_all)
+	{
+		print_error(USAGE_STR);
+		return (-1);
+	}
+	constr = argv[1 + find_all];
+	grid = (0);
+	if (argc > 1 + find_all)
+		grid = argv[2 + find_all];
+	ret_code = init_puzzle_from_args(puzzle, constr, grid);
+	if (ret_code != 0)
+		return (ret_code);
+	puzzle->find_all = find_all;
 	return (0);
 }
 

@@ -10,7 +10,7 @@ import argparse
 def format_time(seconds):
     return time.strftime("%H:%M:%S", time.gmtime(seconds)) + f".{int(seconds * 100) % 100:02d}"
 
-def main(command_name, filename, output_file=None):
+def main(command_name, filename, output_file=None, options=[]):
     try:
         with open(filename, 'r') as file:
             lines = file.readlines()
@@ -43,7 +43,7 @@ def main(command_name, filename, output_file=None):
             start_dt = datetime.now().strftime(time_format)[:-3]
 
             args = shlex.split(line)
-            process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            process = subprocess.Popen([command_name] + options + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             stdout, stderr = process.communicate()
             end_time = time.time()
@@ -51,7 +51,7 @@ def main(command_name, filename, output_file=None):
 
             elapsed_time = end_time - start_time
             elapsed_times.append(elapsed_time)
-            command = " ".join([command_name] + [line])
+            command = " ".join([command_name] + options + [line])
             commands.append(command)
 
             write_output("\n")
@@ -89,9 +89,10 @@ def main(command_name, filename, output_file=None):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run benchmark for skyscraper_solver.')
     parser.add_argument('filename', help='Input file with command line arguments')
+    parser.add_argument('-f', '--options', nargs='+', default=[], help='Extra arguments for command')
     parser.add_argument('-o', '--output', help='Output file to save results')
     parser.add_argument('-c', '--command', default='skyscraper_solver', help='Command name to run')
 
     args = parser.parse_args()
 
-    main(args.command, args.filename, args.output)
+    main(args.command, args.filename, args.output, args.options)

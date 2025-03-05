@@ -22,6 +22,8 @@ void	init_puzzle(t_puzzle *puzzle, int size)
 	int		idx;
 
 	puzzle->size = size;
+	puzzle->find_all = 0;
+	puzzle->solutions_found = 0;
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
 	puzzle->cur_node = &puzzle->stored_node;
