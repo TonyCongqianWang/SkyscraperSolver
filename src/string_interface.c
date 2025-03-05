@@ -17,14 +17,34 @@
 static int		parse_puzzle_size_from_constr_str(char *str);
 static int		try_add_constr_values(t_puzzle *puzzle, char *str);
 
-int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str)
+static unsigned long long	parse_max_solution(char *str)
 {
-	int		size;
+	unsigned long long	result;
+	char				digit;
 
+	if (!str)
+		return (1);
+	result = 0;
+	while (*str >= '0' && *str <= '9')
+	{
+		digit = *str - '0';
+		result = (10 * result) + digit;
+		str++;
+	}
+	return (result);
+}
+
+int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol)
+{
+	int					size;
+	unsigned long long	max_solutions;
+
+	max_solutions = parse_max_solution(max_sol);
+	puzzle->solutions = (0);
 	size = parse_puzzle_size_from_constr_str(str);
 	if (!size)
 		return (0);
-	init_puzzle(puzzle, size);
+	init_puzzle(puzzle, size, max_solutions);
 	return (try_add_constr_values(puzzle, str));
 }
 

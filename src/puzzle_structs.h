@@ -86,13 +86,14 @@ typedef struct s_node_pruning_state
 typedef struct s_puzzle
 {
 	int						size;
-	int						find_all;
-	unsigned int			solutions_found;
+	unsigned long long		max_solutions;
+	unsigned long long		solutions_found;
 	unsigned long long		nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
 	t_node_state			stored_node;
 	t_node_state			*cur_node;
+	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
 	t_node_pruning_state	pruning;
 }		t_puzzle;

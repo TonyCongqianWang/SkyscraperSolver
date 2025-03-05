@@ -12,18 +12,18 @@
 
 #include "puzzle_init.h"
 #include "cell_bounds.h"
+#include "solution_storage.h"
 
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
 
-void	init_puzzle(t_puzzle *puzzle, int size)
+void	init_puzzle(t_puzzle *puzzle, int size, unsigned long long max_sols)
 {
 	int		idx;
 
 	puzzle->size = size;
-	puzzle->find_all = 0;
-	puzzle->solutions_found = 0;
+	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
 	puzzle->cur_node = &puzzle->stored_node;

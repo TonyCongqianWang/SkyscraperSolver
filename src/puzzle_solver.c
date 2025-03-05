@@ -14,6 +14,7 @@
 #include "grid_manipulation.h"
 #include "node_pruning.h"
 #include "node_selection.h"
+#include "solution_storage.h"
 
 int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 {
@@ -52,12 +53,17 @@ static int	has_reached_terminal_state(t_node_state *cur_node)
 	return (is_leaf_node);
 }
 
+static int	found_enough_solutions(t_puzzle *puzzle)
+{
+	if (puzzle->cur_node->sub_node_depth > 0)
+		return (1);
+	return (puzzle->max_solutions > 0
+		&& puzzle->solutions_found >= puzzle->max_solutions);
+}
+
 static int	node_is_valid(t_node_state *cur_node)
 {
-	if (!cur_node->is_invalid && cur_node->is_complete)
-	{
-		cur_node->puzzle->solutions_found++;
-	}
+	store_node_if_solution(cur_node->puzzle);
 	return (!cur_node->is_invalid);
 }
 
@@ -81,7 +87,7 @@ int	tree_search(t_puzzle *puzzle)
 		if (tree_search(puzzle))
 		{
 			found_solution = 1;
-			if (!puzzle->find_all)
+			if (found_enough_solutions(puzzle))
 				return (1);
 		}
 		*(puzzle->cur_node) = old_state;

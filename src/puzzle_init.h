@@ -14,6 +14,6 @@
 # define PUZZLE_INIT_H
 # include "puzzle_structs.h"
 
-void	init_puzzle(t_puzzle *puzzle, int size);
+void	init_puzzle(t_puzzle *puzzle, int size, unsigned long long max_sols);
 
 #endif

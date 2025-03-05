@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_interface.h                                 :+:      :+:    :+:   */
+/*   argument_parsing.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,11 +10,10 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef STRING_INTERFACE_H
-# define STRING_INTERFACE_H
+#ifndef ARGUMENT_PARSING_H
+# define ARGUMENT_PARSING_H
 # include "puzzle_structs.h"
 
-int		init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol);
-int		set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str);
+int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv);
 
 #endif

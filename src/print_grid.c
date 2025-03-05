@@ -16,7 +16,7 @@
 #include "cell_bounds.h"
 #include "puzzle_solver.h"
 
-void	print_solution_grid(t_puzzle *puzzle)
+void	print_solution_grid(t_puzzle *puzzle, int append_nl)
 {
 	int		counter;
 	char	val;
@@ -36,6 +36,8 @@ void	print_solution_grid(t_puzzle *puzzle)
 		}
 		counter++;
 	}
+	if (append_nl)
+		write(1, "\n", 1);
 }
 
 void	print_bmp_grid(t_puzzle *puzzle, int cell_val)

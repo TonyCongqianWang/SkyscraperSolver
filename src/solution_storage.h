@@ -1,20 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   string_interface.h                                 :+:      :+:    :+:   */
+/*   solution_storage.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:39 by towang            #+#    #+#             */
-/*   Updated: 2025/01/28 20:22:14 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
+/*   Updated: 2025/01/31 00:38:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef STRING_INTERFACE_H
-# define STRING_INTERFACE_H
+#ifndef SOLUTION_STORAGE_H
+# define SOLUTION_STORAGE_H
 # include "puzzle_structs.h"
 
-int		init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol);
-int		set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str);
+void	init_solution_storage(t_puzzle *puzzle, unsigned long long max_sols);
+void	free_solution_storage(t_puzzle *puzzle);
+void	store_node_if_solution(t_puzzle *puzzle);
 
 #endif
