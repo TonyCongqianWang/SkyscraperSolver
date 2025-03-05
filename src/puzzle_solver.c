@@ -61,10 +61,10 @@ static int	found_enough_solutions(t_puzzle *puzzle)
 		&& puzzle->solutions_found >= puzzle->max_solutions);
 }
 
-static int	node_is_valid(t_node_state *cur_node)
+static int	handle_leaf_node(t_puzzle *puzzle)
 {
-	store_node_if_solution(cur_node->puzzle);
-	return (!cur_node->is_invalid);
+	store_node_if_solution(puzzle);
+	return (!puzzle->cur_node->is_invalid);
 }
 
 int	tree_search(t_puzzle *puzzle)
@@ -75,7 +75,7 @@ int	tree_search(t_puzzle *puzzle)
 
 	puzzle->nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
-		return (node_is_valid(puzzle->cur_node));
+		return (handle_leaf_node(puzzle));
 	found_solution = 0;
 	prune_node(puzzle);
 	while (!has_reached_terminal_state(puzzle->cur_node)
@@ -93,5 +93,5 @@ int	tree_search(t_puzzle *puzzle)
 		*(puzzle->cur_node) = old_state;
 		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
-	return (node_is_valid(puzzle->cur_node) || found_solution);
+	return (handle_leaf_node(puzzle) || found_solution);
 }
