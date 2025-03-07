@@ -55,8 +55,6 @@ static int	has_reached_terminal_state(t_node_state *cur_node)
 
 static int	found_enough_solutions(t_puzzle *puzzle)
 {
-	if (puzzle->cur_node->sub_node_depth > 0)
-		return (1);
 	return (puzzle->max_solutions > 0
 		&& puzzle->solutions_found >= puzzle->max_solutions);
 }

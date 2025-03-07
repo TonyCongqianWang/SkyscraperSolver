@@ -52,6 +52,7 @@ static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 			&& solution_idx < puzzle->max_solutions)
 		{
 			append_nl = solution_idx < puzzle->solutions_found - 1;
+			append_nl &= solution_idx < puzzle->max_solutions - 1;
 			puzzle->cur_node = puzzle->solutions + solution_idx;
 			print_solution_grid(puzzle, append_nl);
 			solution_idx++;

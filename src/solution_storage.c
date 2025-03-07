@@ -34,8 +34,7 @@ void	free_solution_storage(t_puzzle *puzzle)
 void	store_node_if_solution(t_puzzle *puzzle)
 {
 	if (!puzzle->cur_node->is_invalid
-		&& puzzle->cur_node->is_complete
-		&& puzzle->cur_node->sub_node_depth == 0)
+		&& puzzle->cur_node->is_complete)
 	{
 		if (puzzle->solutions_found < puzzle->max_solutions)
 			puzzle->solutions[puzzle->solutions_found] = *(puzzle->cur_node);

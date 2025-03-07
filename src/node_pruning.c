@@ -48,7 +48,7 @@ void	prune_node(t_puzzle *puzzle)
 
 static int	init_pruning_state(t_puzzle *puzzle)
 {
-	const double	min_unset_quotient_prune = 0.35;
+	const double	min_unset_quotient_prune = 0.3;
 	const double	min_unset_quotient_reit = 0.67;
 	double			unset_quotient;
 	t_node_state	*node;
@@ -100,26 +100,25 @@ static int	check_validity(t_puzzle *puzzle, t_node_transition next)
 {
 	t_node_state	old_state;
 	int				is_valid;
-	int				cur_depth;
 	int				pruning_depth;
+	int				solution_found;
 
-	cur_depth = puzzle->cur_node->cur_depth;
 	pruning_depth = puzzle->pruning.cur_pruning_depth;
 	if (pruning_depth <= 0)
 		return (check_only_constr(puzzle, next));
 	old_state = *(puzzle->cur_node);
-	puzzle->cur_node->max_depth = cur_depth + pruning_depth;
+	puzzle->cur_node->max_depth = puzzle->cur_node->cur_depth;
+	puzzle->cur_node->max_depth += pruning_depth;
 	puzzle->cur_node->cur_depth++;
 	puzzle->cur_node->sub_node_depth++;
 	set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 1);
 	is_valid = tree_search(puzzle);
-	if (!is_valid
-		|| !puzzle->cur_node->is_complete
-		|| puzzle->max_solutions != 1)
-		*(puzzle->cur_node) = old_state;
-	else
+	solution_found = (is_valid && puzzle->cur_node->is_complete);
+	if (solution_found && puzzle->max_solutions == 1)
 		puzzle->cur_node->sub_node_depth--;
-	return (is_valid);
+	else
+		*(puzzle->cur_node) = old_state;
+	return (is_valid && !(solution_found && puzzle->max_solutions != 1));
 }
 
 static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
