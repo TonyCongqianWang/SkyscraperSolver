@@ -16,6 +16,8 @@ or on windows:
 
 Grids up to size 9x9 are accepted. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
 
+There is one optional flag `-s <n_solutions>` you can use. When specified, instead of stopping after the first solution, the programm will stop until it finds `n_solutions` or until all solutions are found. At the end all solutions are displayed. `n_solutions = 0` is a special case, where no solutions are displayed at the end, but the programm only stop after finding all possible solutions and the number of solutions is displayed. 
+
 Solutions (if found) are printed like this:
 
 ```
@@ -66,3 +68,6 @@ Solving process now sets cells as soon as only one value remains.
 ### v06 / v06a / v06b
 Added support for inputing grid values (v06) and empty constraint values (v06a). Changed program name in readme and benchmark scripts. Refactored and improved node pruning: Sacrificing a bit of speed for easier instances but being faster on harder ones.
 Added bugfix in v06b and improved benchmarking. Bugfix has a very significant performance impact.
+
+### v07
+Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
