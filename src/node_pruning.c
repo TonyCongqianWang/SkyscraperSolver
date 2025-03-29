@@ -46,7 +46,7 @@ void	prune_node(t_puzzle *puzzle)
 static int	init_pruning_state(t_puzzle *puzzle)
 {
 	const double	min_unset_quotient_prune = 0.3;
-	const double	min_unset_quotient_reit = 0.67;
+	const double	min_unset_quotient_reit = 0.75;
 	double			unset_quotient;
 	t_node_state	*node;
 
