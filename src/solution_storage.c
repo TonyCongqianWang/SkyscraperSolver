@@ -33,6 +33,9 @@ void	free_solution_storage(t_puzzle *puzzle)
 
 void	store_node_if_solution(t_puzzle *puzzle)
 {
+	if (puzzle->cur_node->sub_node_depth > 0
+		&& puzzle->max_solutions == 1)
+		return ;
 	if (!puzzle->cur_node->is_invalid
 		&& puzzle->cur_node->is_complete)
 	{
