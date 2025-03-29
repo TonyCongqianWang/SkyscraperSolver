@@ -97,7 +97,6 @@ typedef struct s_puzzle
 	t_node_state			*cur_node;
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
-	t_node_pruning_state	pruning;
 }		t_puzzle;
 
 #endif
