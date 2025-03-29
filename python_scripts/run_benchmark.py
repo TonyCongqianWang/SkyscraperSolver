@@ -44,7 +44,11 @@ def main(command_name, filename, output_file=None, options=""):
 
             args = shlex.split(options)
             args += shlex.split(line)
-            process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            try:
+              process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            except FileNotFoundError:
+              command_name = "./" + command_name
+              process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
             stdout, stderr = process.communicate()
             end_time = time.time()

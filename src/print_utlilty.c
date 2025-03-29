@@ -13,37 +13,44 @@
 #include <unistd.h>
 #include "print_utility.h"
 
+void	put_char(const char ch)
+{
+	if (!write(1, &ch, 1))
+		return ;
+}
+
 void	print_message(const char *str)
 {
 	while (*str)
 	{
-		write(1, str, 1);
+		put_char(*str);
 		str++;
 	}
-	write(1, "\n", 1);
+	put_char('\n');
 }
 
 void	print_value(const char *descr, unsigned long long value)
 {
 	while (*descr)
 	{
-		write(1, descr, 1);
+		put_char(*descr);
 		descr++;
 	}
-	write(1, ": ", 2);
+	put_char(':');
+	put_char(' ');
 	put_number(value);
-	write(1, "\n", 1);
+	put_char('\n');
 }
 
 void	print_error(const char *str)
 {
-	write(2, "Error: ", 7);
+	(void)(write(2, "Error: ", 7) + 1);
 	while (*str)
 	{
-		write(2, str, 1);
+		(void)(write(2, str, 1) + 1);
 		str++;
 	}
-	write(2, "\n", 1);
+	(void)(write(2, "\n", 1) + 1);
 }
 
 void	put_number(unsigned long long nbr)
@@ -54,5 +61,5 @@ void	put_number(unsigned long long nbr)
 	if (nbr >= 10)
 		put_number(nbr / 10);
 	val += nbr % 10;
-	write(1, &val, 1);
+	put_char(val);
 }
