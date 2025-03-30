@@ -83,7 +83,6 @@ typedef struct s_node_pruning_state
 	int		last_iteration_succeeded;
 	int		cur_pruning_depth;
 	int		max_pruning_depth;
-	int		tr_needs_check[MAX_CELL_COUNT][MAX_SIZE];
 }		t_node_pruning_state;
 
 typedef struct s_puzzle

@@ -26,8 +26,6 @@ void	prune_node(t_puzzle *puzzle)
 {
 	t_node_pruning_state	pruning;
 	t_node_transition		tr;
-	int						counter;
-	int						update_idx;
 
 	puzzle->cur_node->cur_prune_nunset = puzzle->cur_node->num_unset + 1;
 	init_pruning_state(puzzle, &pruning);
@@ -37,33 +35,12 @@ void	prune_node(t_puzzle *puzzle)
 		tr.cell_val = 1;
 		while (try_get_next_transition(puzzle, &tr))
 		{
-			tr.cell_val++;
-			if (!pruning.tr_needs_check[tr.cell_idx][tr.cell_val - 2])
-				continue ;
-			pruning.tr_needs_check[tr.cell_idx][tr.cell_val - 2] = 0;
 			if (!check_validity(puzzle, tr, pruning.cur_pruning_depth))
 			{
-				counter = 1;
-				while (counter < puzzle->size)
-				{
-					update_idx = (tr.cell_idx / puzzle->size) * puzzle->size;
-					update_idx += ((tr.cell_idx + counter) % puzzle->size);
-					for (int val = 1; val <= puzzle->size; val++)
-						pruning.tr_needs_check[update_idx][val - 1] = 1;
-					counter++;
-				}
-				counter = 1;
-				while (counter < puzzle->size)
-				{
-					update_idx = (tr.cell_idx + counter * puzzle->size);
-					update_idx %= puzzle->size * puzzle->size;
-					for (int val = 1; val <= puzzle->size; val++)
-						pruning.tr_needs_check[update_idx][val - 1] = 1;
-					counter++;
-				}
-				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val - 1);
+				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
 				pruning.last_iteration_succeeded = 1;
 			}
+			tr.cell_val++;
 		}
 	}
 	puzzle->cur_node->last_prune_nunset = puzzle->cur_node->cur_prune_nunset;
@@ -85,13 +62,6 @@ static int	init_pruning_state(t_puzzle *puzzle, t_node_pruning_state *pruning)
 		return (1);
 	else
 		node->cur_prune_nunset = node->num_unset;
-	for (int idx = 0; idx < puzzle->size * puzzle->size; idx++)
-	{
-		for (int val = 1; val <= puzzle->size; val++)
-		{
-			pruning->tr_needs_check[idx][val - 1] = 1;
-		}
-	}
 	pruning->max_pruning_depth = 1;
 	pruning->cur_pruning_depth = 0;
 	pruning->can_reiterate = unset_quotient > min_unset_quotient_reit;
