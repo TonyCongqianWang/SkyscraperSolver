@@ -31,6 +31,7 @@ int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv)
 	char	*max_solutions;
 	int		set_max_solutions;
 
+	puzzle->solutions = (0);
 	set_max_solutions = has_set_max_solution_flag(argc, argv);
 	if (!is_correct_argument_count(argc, argv))
 		return (-1);
