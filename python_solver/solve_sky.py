@@ -7,7 +7,7 @@ from renderer import render_grid_flat, render_ascii_frame, serialize_to_string
 def main():
     parser = argparse.ArgumentParser(description="Skyscraper Puzzle SMT Solver Engine.")
     parser.add_argument("input", type=str, nargs="+", help="Input properties.")
-    parser.add_argument("-n", "--num_solutions", type=int, default=1, help="Max solutions to track.")
+    parser.add_argument("-s", "--num_solutions", type=int, default=1, help="Max solutions to track.")
     parser.add_argument("-p", "--print_format", type=str, choices=["grid", "string", "all"], default="all")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output destination file path.")
     args = parser.parse_args()
@@ -39,7 +39,7 @@ def main():
     out = f"Total Unique Solutions Found: {found}\n" if args.num_solutions == 0 else ("\n\n".join(buffer) if buffer else "UNSAT.")
     if args.output:
         with open(args.output, "w", encoding="utf-8") as f:
-            f.write(out + "\n")
+            f.write(out + "\n\n")
     else:
         print(out)
 
