@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/30 19:48:43 by towang            #+#    #+#             */
-/*   Updated: 2025/01/31 00:17:45 by towang           ###   ########.fr       */
+/*   Updated: 2026/05/21 01:58:34 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,14 +25,18 @@ static void	set_valid_val_cell(t_node_state *state, int cell_idx)
 
 static void	set_val_in_col(t_node_state *state, int cell_idx, int val)
 {
-	int		counter;
-	int		update_idx;
+	int	counter;
+	int	update_idx;
+	int	max_cells;
 
 	counter = 1;
+	max_cells = state->size * state->size;
+	update_idx = cell_idx;
 	while (counter < state->size)
 	{
-		update_idx = (cell_idx + counter * state->size);
-		update_idx %= state->size * state->size;
+		update_idx += state->size;
+		if (update_idx >= max_cells)
+			update_idx -= max_cells;
 		if (is_cell_empty(state, update_idx)
 			&& is_valid_value(state, update_idx, val))
 			set_grid_val(state, update_idx, val, 1);
@@ -42,26 +46,35 @@ static void	set_val_in_col(t_node_state *state, int cell_idx, int val)
 
 static void	set_val_in_row(t_node_state *state, int cell_idx, int val)
 {
-	int		counter;
-	int		update_idx;
+	int	row_start;
+	int	curr_col;
+	int	col;
 
-	counter = 1;
-	while (counter < state->size)
+	row_start = (cell_idx / state->size) * state->size;
+	curr_col = cell_idx - row_start;
+	col = 0;
+	while (col < curr_col)
 	{
-		update_idx = (cell_idx / state->size) * state->size;
-		update_idx += ((cell_idx + counter) % state->size);
-		if (is_cell_empty(state, update_idx)
-			&& is_valid_value(state, update_idx, val))
-			set_grid_val(state, update_idx, val, 1);
-		counter++;
+		if (is_cell_empty(state, row_start + col)
+			&& is_valid_value(state, row_start + col, val))
+			set_grid_val(state, row_start + col, val, 1);
+		col++;
+	}
+	col = curr_col + 1;
+	while (col < state->size)
+	{
+		if (is_cell_empty(state, row_start + col)
+			&& is_valid_value(state, row_start + col, val))
+			set_grid_val(state, row_start + col, val, 1);
+		col++;
 	}
 }
 
 void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 {
-	int		num_valids_col;
-	int		num_valids_row;
-	int		constr_idx;
+	int	num_valids_col;
+	int	num_valids_row;
+	int	constr_idx;
 
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
 	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
@@ -80,7 +93,7 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 
 void	decrement_cell_num_valids(t_node_state *state, int idx)
 {
-	int		num_valids_cell;
+	int	num_valids_cell;
 
 	num_valids_cell = --(state->grid.num_cell_vals[idx]);
 	if (num_valids_cell == 0)

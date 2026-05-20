@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/31 00:29:27 by towang           ###   ########.fr       */
+/*   Updated: 2026/05/21 02:04:11 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,72 +15,70 @@
 
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {
-	double	cell_score;
-	double	col_score;
-	double	row_score;
-	int		size;
+	double	c_s;
+	double	col_s;
+	double	row_s;
+	int		s1;
 
 	transition_add_num_valids(state, next);
-	size = state->size;
-	cell_score = next->num_valids_cell * (size + 1);
-	col_score = next->num_valids_col * (size + 1);
-	row_score = next->num_valids_row * (size + 1);
+	s1 = state->size + 1;
+	c_s = next->num_valids_cell * s1;
+	col_s = next->num_valids_col * s1;
+	row_s = next->num_valids_row * s1;
 	if (next->num_valids_cell <= next->num_valids_col)
-		cell_score *= (size + 1);
+		c_s *= s1;
 	else
-		col_score *= (size + 1);
+		col_s *= s1;
 	if (next->num_valids_cell <= next->num_valids_col)
-		cell_score *= (size + 1);
+		c_s *= s1;
 	else
-		row_score *= (size + 1);
+		row_s *= s1;
 	if (next->num_valids_col <= next->num_valids_row)
-		col_score *= (size + 1);
+		col_s *= s1;
 	else
-		row_score *= (size + 1);
-	next->score = (size + 1) * (size + 1) * (size + 1) * (size + 1);
-	next->score -= cell_score + col_score + row_score;
+		row_s *= s1;
+	next->score = (double)s1 * s1 * s1 * s1 - (c_s + col_s + row_s);
 	score_cell_distance(state, next);
 }
 
 void	score_cell_distance(t_node_state *state, t_node_transition *next)
 {
-	double	score_component;
-	int		idx;
-	int		x_edge_dist;
-	int		y_edge_dist;
+	int	x;
+	int	y;
+	int	s;
+	int	half;
 
-	idx = next->cell_idx;
-	x_edge_dist = idx % state->size;
-	if (x_edge_dist > state->size / 2)
-		x_edge_dist = state->size - x_edge_dist;
-	y_edge_dist = idx / state->size;
-	if (y_edge_dist > state->size / 2)
-		y_edge_dist = state->size - y_edge_dist;
-	score_component = (state->size + 1) * (state->size + 1);
-	if (x_edge_dist <= y_edge_dist)
-		score_component -= x_edge_dist * (state->size + 1) + y_edge_dist;
+	s = state->size;
+	y = next->cell_idx / s;
+	x = next->cell_idx - y * s;
+	half = s / 2;
+	if (x > half)
+		x = s - x;
+	if (y > half)
+		y = s - y;
+	if (x <= y)
+		next->score += (s + 1) * (s + 1) - (x * (s + 1) + y);
 	else
-		score_component -= y_edge_dist * (state->size + 1) + x_edge_dist;
-	next->score += score_component;
+		next->score += (s + 1) * (s + 1) - (y * (s + 1) + x);
 }
 
 void	score_transition_constrs(t_node_state *state, t_node_transition *next)
 {
-	int		size;
+	int	s;
 
 	transition_add_num_valids(state, next);
-	size = state->size;
-	next->score = (size + 1) * (size + 1);
+	s = state->size;
+	next->score = (s + 1) * (s + 1);
 	if (next->num_valids_col <= next->num_valids_row)
-		next->score -= next->num_valids_col * (size + 1) + next->num_valids_row;
+		next->score -= next->num_valids_col * (s + 1) + next->num_valids_row;
 	else
-		next->score -= next->num_valids_row * (size + 1) + next->num_valids_col;
+		next->score -= next->num_valids_row * (s + 1) + next->num_valids_col;
 }
 
 void	transition_add_num_valids(t_node_state *state, t_node_transition *next)
 {
-	int		idx;
-	int		val;
+	int	idx;
+	int	val;
 
 	idx = next->cell_idx;
 	val = next->cell_val;
