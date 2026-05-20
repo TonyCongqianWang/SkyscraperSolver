@@ -25,22 +25,27 @@ static void	set_valid_val_cell(t_node_state *state, int cell_idx)
 
 static void	set_val_in_col(t_node_state *state, int cell_idx, int val)
 {
-	int	counter;
-	int	update_idx;
-	int	max_cells;
+	int	curr_row;
+	int	col_start;
+	int	row;
 
-	counter = 1;
-	max_cells = state->size * state->size;
-	update_idx = cell_idx;
-	while (counter < state->size)
+	curr_row = cell_idx / state->size;
+	col_start = cell_idx - curr_row * state->size;
+	row = 0;
+	while (row < curr_row)
 	{
-		update_idx += state->size;
-		if (update_idx >= max_cells)
-			update_idx -= max_cells;
-		if (is_cell_empty(state, update_idx)
-			&& is_valid_value(state, update_idx, val))
-			set_grid_val(state, update_idx, val, 1);
-		counter++;
+		if (is_cell_empty(state, col_start + row * state->size)
+			&& is_valid_value(state, col_start + row * state->size, val))
+			set_grid_val(state, col_start + row * state->size, val, 1);
+		row++;
+	}
+	row = curr_row + 1;
+	while (row < state->size)
+	{
+		if (is_cell_empty(state, col_start + row * state->size)
+			&& is_valid_value(state, col_start + row * state->size, val))
+			set_grid_val(state, col_start + row * state->size, val, 1);
+		row++;
 	}
 }
 

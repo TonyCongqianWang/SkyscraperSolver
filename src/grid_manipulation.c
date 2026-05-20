@@ -49,20 +49,23 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 
 static void	update_column(t_node_state *state, int cell_idx, int val)
 {
-	int	counter;
-	int	update_idx;
-	int	max_cells;
+	int	curr_row;
+	int	col_start;
+	int	row;
 
-	counter = 1;
-	max_cells = state->size * state->size;
-	update_idx = cell_idx;
-	while (counter < state->size)
+	curr_row = cell_idx / state->size;
+	col_start = cell_idx - curr_row * state->size;
+	row = 0;
+	while (row < curr_row)
 	{
-		update_idx += state->size;
-		if (update_idx >= max_cells)
-			update_idx -= max_cells;
-		set_value_invalid(state, update_idx, val);
-		counter++;
+		set_value_invalid(state, col_start + row * state->size, val);
+		row++;
+	}
+	row = curr_row + 1;
+	while (row < state->size)
+	{
+		set_value_invalid(state, col_start + row * state->size, val);
+		row++;
 	}
 }
 
