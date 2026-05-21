@@ -62,7 +62,7 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	puzzle->nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return handle_leaf_node(puzzle);
-	//prune_node(puzzle);
+	prune_node(puzzle);
 	while (!check_sol_target(&node_sols, puzzle->cur_node)
 			&& !has_reached_terminal_state(puzzle->cur_node)
 			&& try_get_best_transition(puzzle, &next))
