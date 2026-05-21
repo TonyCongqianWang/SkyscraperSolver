@@ -15,8 +15,8 @@
 # include "puzzle_structs.h"
 
 int	init_sol_info(t_sol_info *info, int min_nunset, int solutions_found);
-int update_sol_info(t_sol_info *n_info, t_sol_info *o_info);
-int check_sol_target(t_sol_info *info, t_node_state *node);
-int update_sol_target(t_sol_info *info, t_node_state *node);
+int	update_sol_info(t_sol_info *n_info, t_sol_info *o_info);
+int	check_sol_target(t_sol_info *info, t_node_state *node);
+int	update_sol_target(t_sol_info *info, t_node_state *node);
 
 #endif

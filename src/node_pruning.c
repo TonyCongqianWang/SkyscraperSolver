@@ -40,7 +40,7 @@ void	prune_node(t_puzzle *puzzle)
 		tr.cell_idx = 0;
 		tr.cell_val = 1;
 		while (!found_enough_solutions(puzzle->cur_node)
-				&& try_get_next_transition(puzzle, &tr))
+			&& try_get_next_transition(puzzle, &tr))
 		{
 			if (!do_l_ahead_dive(puzzle, tr, pruning.cur_pruning_depth))
 			{
