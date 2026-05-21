@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2026/05/21 01:52:10 by towang           ###   ########.fr       */
+/*   Updated: 2025/01/30 23:02:06 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "grid_availability.h"
 #include "grid_update.h"
 #include "cell_bounds.h"
+#include "grid_availability.h"
 #include "constraint_checking.h"
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
@@ -49,58 +50,43 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 
 static void	update_column(t_node_state *state, int cell_idx, int val)
 {
-	int	curr_row;
-	int	col_start;
-	int	row;
+	int		counter;
+	int		update_idx;
 
-	curr_row = cell_idx / state->size;
-	col_start = cell_idx - curr_row * state->size;
-	row = 0;
-	while (row < curr_row)
+	counter = 1;
+	while (counter < state->size)
 	{
-		set_value_invalid(state, col_start + row * state->size, val);
-		row++;
-	}
-	row = curr_row + 1;
-	while (row < state->size)
-	{
-		set_value_invalid(state, col_start + row * state->size, val);
-		row++;
+		update_idx = (cell_idx + counter * state->size);
+		update_idx %= state->size * state->size;
+		set_value_invalid(state, update_idx, val);
+		counter++;
 	}
 }
 
 static void	update_row(t_node_state *state, int cell_idx, int val)
 {
-	int	row_start;
-	int	curr_col;
-	int	col;
+	int		counter;
+	int		update_idx;
 
-	row_start = (cell_idx / state->size) * state->size;
-	curr_col = cell_idx - row_start;
-	col = 0;
-	while (col < curr_col)
+	counter = 1;
+	while (counter < state->size)
 	{
-		set_value_invalid(state, row_start + col, val);
-		col++;
-	}
-	col = curr_col + 1;
-	while (col < state->size)
-	{
-		set_value_invalid(state, row_start + col, val);
-		col++;
+		update_idx = (cell_idx / state->size) * state->size;
+		update_idx += ((cell_idx + counter) % state->size);
+		set_value_invalid(state, update_idx, val);
+		counter++;
 	}
 }
 
 static void	update_availability(t_node_state *state, int cell_idx, int val)
 {
-	int	v;
+	int		counter;
 
-	v = 1;
-	while (v <= state->size)
+	counter = 0;
+	while (counter < state->size - 1)
 	{
-		if (v != val)
-			set_value_invalid(state, state->last_set_idx, v);
-		v++;
+		set_value_invalid(state, cell_idx, ((val + counter) % state->size) + 1);
+		counter++;
 	}
 	update_column(state, cell_idx, val);
 	update_row(state, cell_idx, val);
