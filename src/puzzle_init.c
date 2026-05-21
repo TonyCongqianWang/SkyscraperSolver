@@ -71,6 +71,8 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->target_nunset = 0;
 	root_node->last_prune_nunset = size * size + 1;
 	root_node->cur_prune_nunset = size * size + 1;
+	root_node->progress_counter = 0;
+	root_node->last_prune_prog = 0;
 	root_node->solutions_found = 0;
 	root_node->max_solutions = root_node->puzzle->max_solutions;
 	init_node_grid(root_node, size);

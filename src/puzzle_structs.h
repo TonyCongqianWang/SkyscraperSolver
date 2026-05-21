@@ -55,6 +55,8 @@ typedef struct s_node_state
 	int						sub_node_depth;
 	int						target_nunset;
 	int						num_unset;
+	unsigned long long		progress_counter;
+	unsigned long long		last_prune_prog;
 	unsigned long long		max_solutions;
 	unsigned long long		solutions_found;
 	t_grid_state			grid;

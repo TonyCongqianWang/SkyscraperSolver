@@ -32,6 +32,7 @@ static t_sol_info	handle_leaf_node(t_puzzle *puzzle)
 	t_node_state	*cur_node;
 	t_sol_info		node_sols;
 
+	puzzle->nodes_visited++;
 	cur_node = puzzle->cur_node;
 	if (cur_node->is_invalid)
 		init_sol_info(&node_sols, puzzle->squared_size, 0);
@@ -45,10 +46,12 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
 {
 	t_node_state		*cur_node;
 
+	if (has_reached_terminal_state(puzzle->cur_node))
+		return (handle_leaf_node(puzzle));
 	cur_node = puzzle->cur_node;
 	set_grid_val(cur_node, next.cell_idx, next.cell_val, 0);
 	cur_node->cur_depth++;
-	return tree_search(puzzle);
+	return (tree_search(puzzle));
 }
 
 t_sol_info	tree_search(t_puzzle *puzzle)
@@ -58,15 +61,14 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	t_sol_info			node_sols;
 	t_sol_info			recursive_sols;
 
-	init_sol_info(&node_sols, puzzle->squared_size, 0);
 	puzzle->nodes_visited++;
-	if (has_reached_terminal_state(puzzle->cur_node))
-		return handle_leaf_node(puzzle);
+	init_sol_info(&node_sols, puzzle->squared_size, 0);
 	prune_node(puzzle);
 	while (!check_sol_target(&node_sols, puzzle->cur_node)
-			&& !has_reached_terminal_state(puzzle->cur_node)
-			&& try_get_best_transition(puzzle, &next))
+		&& !has_reached_terminal_state(puzzle->cur_node)
+		&& try_get_best_transition(puzzle, &next))
 	{
+		prune_node(puzzle);
 		old_state = *(puzzle->cur_node);
 		update_sol_target(&node_sols, puzzle->cur_node);
 		recursive_sols = tree_recursion(puzzle, next);

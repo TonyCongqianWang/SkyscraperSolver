@@ -21,6 +21,7 @@ static void	update_availability(t_node_state *state, int cell_idx, int val);
 
 void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 {
+	state->progress_counter += 10;
 	state->grid.vals[cell_idx] = val;
 	check |= (state->num_unset < state->last_prune_nunset);
 	state->num_unset--;
@@ -37,6 +38,7 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
 	if (state->is_invalid)
 		return ;
+	state->progress_counter++;
 	if (state->grid.vals[cell_idx] == val)
 		state->is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
