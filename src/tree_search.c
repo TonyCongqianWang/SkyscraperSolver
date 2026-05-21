@@ -71,10 +71,12 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 		update_sol_target(&node_sols, puzzle->cur_node);
 		recursive_sols = tree_recursion(puzzle, next);
 		*(puzzle->cur_node) = old_state;
-		update_sol_info(&recursive_sols, &node_sols);
-		if (recursive_sols.solutions_found > 0
+		if (update_sol_info(&recursive_sols, &node_sols)
+			|| !check_sol_target(&node_sols, puzzle->cur_node)
 			|| recursive_sols.min_nunset == puzzle->squared_size)
 			set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
 	}
+	recursive_sols = handle_leaf_node(puzzle);
+	update_sol_info(&recursive_sols, &node_sols);
 	return (node_sols);
 }
