@@ -27,10 +27,10 @@ const double	g_min_unset_r_prune = 0.4;
 const double	g_min_unset_r_reit = 0.7;
 const int		g_max_p_depth_shallow = 1;
 const int		g_depth_threshold_0 = 0;
-const int		g_depth_threshold_1 = 1;
+const int		g_depth_threshold_1 = 3;
 const int		g_max_p_depth_deep = 1;
 const int		g_prune_period_shallow = 8;
-const int		g_prune_extra_period_deep = 20;
+const int		g_prune_extra_period_deep = 15;
 
 void	prune_node(t_puzzle *puzzle)
 {
