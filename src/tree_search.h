@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   puzzle_solver.h                                    :+:      :+:    :+:   */
+/*   tree_search.h                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,10 +10,11 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PUZZLE_SOLVER_H
-# define PUZZLE_SOLVER_H
+#ifndef TREE_SEARCH_H
+# define TREE_SEARCH_H
 # include "puzzle_structs.h"
 
-int	solve_puzzle(t_puzzle *puzzle, int max_depth);
+t_sol_info	tree_search(t_puzzle *puzzle);
+t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next);
 
 #endif

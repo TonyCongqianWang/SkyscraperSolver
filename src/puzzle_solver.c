@@ -11,25 +11,21 @@
 /* ************************************************************************** */
 
 #include "puzzle_solver.h"
+#include "tree_search.h"
 #include "grid_manipulation.h"
-#include "node_pruning.h"
-#include "node_selection.h"
-#include "solution_storage.h"
 
-int	solve_puzzle(t_puzzle *puzzle, int max_depth)
+int	insert_initial_grid(t_puzzle *puzzle)
 {
-	t_node_state	input_state;
 	int				idx;
 	int				input_val;
+	t_node_state	input_state;
 
-	if (max_depth >= 0)
-		puzzle->cur_node->max_depth = max_depth;
 	input_state = *(puzzle->cur_node);
 	idx = 0;
-	while (idx < puzzle->size * puzzle->size)
+	while (idx < puzzle->squared_size)
 		puzzle->cur_node->grid.vals[idx++] = 0;
 	idx = 0;
-	while (idx < puzzle->size * puzzle->size)
+	while (idx < puzzle->squared_size)
 	{
 		idx++;
 		input_val = input_state.grid.vals[idx - 1];
@@ -40,56 +36,21 @@ int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 		else if (puzzle->cur_node->grid.vals[idx - 1] != input_val)
 			return (0);
 	}
-	return (tree_search(puzzle));
+	return (1);
 }
 
-static int	has_reached_terminal_state(t_node_state *cur_node)
+int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 {
-	int	is_leaf_node;
+	t_sol_info			node_sols;
 
-	is_leaf_node = (cur_node->cur_depth >= cur_node->max_depth);
-	is_leaf_node |= cur_node->is_complete;
-	is_leaf_node |= cur_node->is_invalid;
-	return (is_leaf_node);
-}
-
-static int	found_enough_solutions(t_puzzle *puzzle)
-{
-	return (puzzle->max_solutions > 0
-		&& puzzle->solutions_found >= puzzle->max_solutions);
-}
-
-static int	handle_leaf_node(t_puzzle *puzzle)
-{
-	store_node_if_solution(puzzle);
-	return (!puzzle->cur_node->is_invalid);
-}
-
-int	tree_search(t_puzzle *puzzle)
-{
-	int					found_solution;
-	t_node_state		old_state;
-	t_node_transition	next;
-
-	puzzle->nodes_visited++;
-	if (has_reached_terminal_state(puzzle->cur_node))
-		return (handle_leaf_node(puzzle));
-	found_solution = 0;
-	prune_node(puzzle);
-	while (!has_reached_terminal_state(puzzle->cur_node)
-		&& try_get_best_transition(puzzle, &next))
+	if (!insert_initial_grid(puzzle))
+		return (0);
+	if (max_depth >= 0)
 	{
-		old_state = *(puzzle->cur_node);
-		set_grid_val(puzzle->cur_node, next.cell_idx, next.cell_val, 0);
-		puzzle->cur_node->cur_depth++;
-		if (tree_search(puzzle))
-		{
-			found_solution = 1;
-			if (found_enough_solutions(puzzle))
-				return (1);
-		}
-		*(puzzle->cur_node) = old_state;
-		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
+		puzzle->cur_node->target_nunset = puzzle->squared_size - max_depth;
+		puzzle->cur_node->max_depth = max_depth;
 	}
-	return (handle_leaf_node(puzzle) || found_solution);
+	node_sols = tree_search(puzzle);
+	puzzle->solutions_found = node_sols.solutions_found;
+	return (puzzle->solutions_found);
 }

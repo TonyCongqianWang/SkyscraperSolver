@@ -52,7 +52,8 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 		if (is_cell_empty(puzzle->cur_node, cell_idx))
 		{
 			set_best_val(puzzle, cell_idx, &candidate);
-			score_transition_full(puzzle->cur_node, &candidate);
+			if (candidate.score > -1)
+				score_transition_full(puzzle->cur_node, &candidate);
 			if (candidate.score > next->score)
 				*next = candidate;
 		}

@@ -36,12 +36,14 @@ def main():
         if args.num_solutions > 0 and found >= args.num_solutions:
             break
 
-    out = f"Total Unique Solutions Found: {found}\n" if args.num_solutions == 0 else ("\n\n".join(buffer) if buffer else "UNSAT.")
     if args.output:
-        with open(args.output, "w", encoding="utf-8") as f:
-            f.write(out + "\n\n")
+        f = open(args.output, "w", encoding="utf-8")
     else:
-        print(out)
+        f = None
+    print(f"Total Unique Solutions Found: {found}\n", file=f)
+    for solution in buffer:
+        print(f"{solution}\n", file=f)
+    f.close() if f else None
 
 if __name__ == "__main__":
     main()

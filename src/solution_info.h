@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   puzzle_solver.h                                    :+:      :+:    :+:   */
+/*   solution_info.h                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,10 +10,13 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PUZZLE_SOLVER_H
-# define PUZZLE_SOLVER_H
+#ifndef SOLUTION_INFO_H
+# define SOLUTION_INFO_H
 # include "puzzle_structs.h"
 
-int	solve_puzzle(t_puzzle *puzzle, int max_depth);
+int	init_sol_info(t_sol_info *info, int min_nunset, int solutions_found);
+int update_sol_info(t_sol_info *n_info, t_sol_info *o_info);
+int check_sol_target(t_sol_info *info, t_node_state *node);
+int update_sol_target(t_sol_info *info, t_node_state *node);
 
 #endif

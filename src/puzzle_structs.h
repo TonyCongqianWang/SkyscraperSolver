@@ -44,21 +44,29 @@ typedef struct s_constrs_state
 
 typedef struct s_node_state
 {
-	t_puzzle			*puzzle;
-	int					size;
-	int					last_prune_nunset;
-	int					cur_prune_nunset;
-	int					cur_depth;
-	int					max_depth;
-	int					last_set_idx;
-	int					is_complete;
-	int					is_invalid;
-	int					sub_node_depth;
-	int					min_nunset;
-	int					num_unset;
-	t_grid_state		grid;
-	t_constrs_state		constrs;
+	int						size;
+	int						last_prune_nunset;
+	int						cur_prune_nunset;
+	int						cur_depth;
+	int						max_depth;
+	int						last_set_idx;
+	int						is_complete;
+	int						is_invalid;
+	int						sub_node_depth;
+	int						target_nunset;
+	int						num_unset;
+	unsigned long long		max_solutions;
+	unsigned long long		solutions_found;
+	t_grid_state			grid;
+	t_constrs_state			constrs;
+	t_puzzle				*puzzle;
 }		t_node_state;
+
+typedef struct s_sol_info
+{
+	int						min_nunset;
+	unsigned long long		solutions_found;
+}		t_sol_info;
 
 typedef struct s_constraint_pair
 {
@@ -95,7 +103,8 @@ typedef struct s_puzzle
 	unsigned long long		nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
-	t_node_state			stored_node;
+	t_node_state			cur_node_storage;
+	t_node_state			sol_node_storage;
 	t_node_state			*cur_node;
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;

@@ -49,7 +49,8 @@ static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 	{
 		solution_idx = 0;
 		while (solution_idx < puzzle->solutions_found
-			&& solution_idx < puzzle->max_solutions)
+			&& (solution_idx < puzzle->max_solutions
+				|| solution_idx == 0))
 		{
 			append_nl = solution_idx < puzzle->solutions_found - 1;
 			append_nl &= solution_idx < puzzle->max_solutions - 1;

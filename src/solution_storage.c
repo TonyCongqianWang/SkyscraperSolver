@@ -13,16 +13,22 @@
 #include "solution_storage.h"
 #include <stdlib.h>
 
+int	found_enough_solutions(t_node_state *node)
+{
+	return (node->max_solutions > 0
+		&& node->solutions_found >= node->max_solutions);
+}
+
 void	init_solution_storage(t_puzzle *puzzle, unsigned long long max_sols)
 {
 	puzzle->solutions_found = 0;
 	puzzle->max_solutions = max_sols;
 	if (max_sols == 1)
-		puzzle->solutions = &puzzle->stored_node;
+		puzzle->solutions = &puzzle->sol_node_storage;
 	else if (max_sols > 1)
 		puzzle->solutions = malloc(sizeof(t_node_state) * max_sols);
 	else
-		puzzle->solutions = (0);
+		puzzle->solutions = &puzzle->sol_node_storage;
 }
 
 void	free_solution_storage(t_puzzle *puzzle)
@@ -33,13 +39,13 @@ void	free_solution_storage(t_puzzle *puzzle)
 
 void	store_node_if_solution(t_puzzle *puzzle)
 {
-	if (puzzle->cur_node->sub_node_depth > 0
-		&& puzzle->max_solutions == 1)
-		return ;
-	if (!puzzle->cur_node->is_invalid
-		&& puzzle->cur_node->is_complete)
+	if (puzzle->cur_node->sub_node_depth == 0
+			&& !puzzle->cur_node->is_invalid
+			&& puzzle->cur_node->is_complete)
 	{
-		if (puzzle->solutions_found < puzzle->max_solutions)
+		if (puzzle->max_solutions <= 1)
+			puzzle->solutions[0] = *(puzzle->cur_node);
+		else if (puzzle->solutions_found < puzzle->max_solutions)
 			puzzle->solutions[puzzle->solutions_found] = *(puzzle->cur_node);
 		puzzle->solutions_found++;
 	}
