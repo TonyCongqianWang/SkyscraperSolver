@@ -54,6 +54,7 @@ typedef struct s_node_state
 	int					is_complete;
 	int					is_invalid;
 	int					sub_node_depth;
+	int					min_nunset;
 	int					num_unset;
 	t_grid_state		grid;
 	t_constrs_state		constrs;
@@ -88,6 +89,7 @@ typedef struct s_node_pruning_state
 typedef struct s_puzzle
 {
 	int						size;
+	int						squared_size;
 	unsigned long long		max_solutions;
 	unsigned long long		solutions_found;
 	unsigned long long		nodes_visited;

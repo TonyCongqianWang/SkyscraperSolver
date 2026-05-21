@@ -23,7 +23,7 @@ void	print_solution_grid(t_puzzle *puzzle, int append_nl)
 	char	val;
 
 	counter = 0;
-	while (counter < puzzle->size * puzzle->size)
+	while (counter < puzzle->squared_size)
 	{
 		val = '0' + puzzle->cur_node->grid.vals[counter];
 		put_char(val);
@@ -49,7 +49,7 @@ void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
 
 	cell_idx = 0;
 	node_state = puzzle->cur_node;
-	while (cell_idx < puzzle->size * puzzle->size)
+	while (cell_idx < puzzle->squared_size)
 	{
 		print_val = '0';
 		print_val += is_valid_value(node_state, cell_idx, cell_val) != 0;

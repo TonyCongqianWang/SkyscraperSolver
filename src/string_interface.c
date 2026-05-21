@@ -54,7 +54,7 @@ int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
 	int		new_val;
 
 	idx = 0;
-	while (str[idx] && idx / 2 < puzzle->size * puzzle->size)
+	while (str[idx] && idx / 2 < puzzle->squared_size)
 	{
 		if (idx % 2 == 0)
 		{
@@ -67,7 +67,7 @@ int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
 			return (0);
 		idx++;
 	}
-	return (!str[idx] && (idx + 1) == 2 * puzzle->size * puzzle->size);
+	return (!str[idx] && (idx + 1) == 2 * puzzle->squared_size);
 }
 
 static int	parse_puzzle_size_from_constr_str(char *str)

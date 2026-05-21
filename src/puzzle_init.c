@@ -23,6 +23,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, unsigned long long max_sols)
 	int		idx;
 
 	puzzle->size = size;
+	puzzle->squared_size = size * size;
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
@@ -67,6 +68,7 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->last_set_idx = -1;
 	root_node->max_depth = size * size;
 	root_node->num_unset = size * size;
+	root_node->min_nunset = size * size;
 	root_node->last_prune_nunset = size * size + 1;
 	root_node->cur_prune_nunset = size * size + 1;
 	init_node_grid(root_node, size);

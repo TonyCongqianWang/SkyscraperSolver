@@ -26,7 +26,7 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	if (puzzle->cur_node->is_complete || puzzle->cur_node->is_invalid)
 		return (0);
 	cell_idx = next->cell_idx;
-	while (cell_idx < puzzle->size * puzzle->size)
+	while (cell_idx < puzzle->squared_size)
 	{
 		if (is_cell_empty(puzzle->cur_node, cell_idx))
 		{
@@ -47,7 +47,7 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 
 	next->score = -1;
 	cell_idx = 0;
-	while (cell_idx < puzzle->size * puzzle->size)
+	while (cell_idx < puzzle->squared_size)
 	{
 		if (is_cell_empty(puzzle->cur_node, cell_idx))
 		{

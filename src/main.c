@@ -65,8 +65,6 @@ static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth)
 {
 	int			cell_val;
 
-	puzzle.cur_node = &puzzle.stored_node;
-	puzzle.cur_node->puzzle = &puzzle;
 	solve_puzzle(&puzzle, max_depth);
 	cell_val = 1;
 	while (cell_val <= puzzle.size)
