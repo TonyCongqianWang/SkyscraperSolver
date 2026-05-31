@@ -33,8 +33,13 @@ def main(command_name, filename, output_file=None, options=""):
         output_f = None
 
     def write_output(data):
-        print(data, end='', file=output_f)
+        sys.stdout.write(data)
+        sys.stdout.flush()
+        if output_f:
+            output_f.write(data)
+            output_f.flush()
 
+    nodes_visited_list = []
     for line in lines:
         line = line.strip()
         time_format = "%H:%M:%S.%f"
@@ -59,6 +64,15 @@ def main(command_name, filename, output_file=None, options=""):
             command = " ".join([command_name] + [options] + [line])
             commands.append(command)
 
+            nodes_visited = 0
+            for line_out in stdout.splitlines():
+                if line_out.startswith("Nodes visited:"):
+                    try:
+                        nodes_visited = int(line_out.split(":")[1].strip())
+                    except ValueError:
+                        pass
+            nodes_visited_list.append(nodes_visited)
+
             write_output("\n")
             write_output(f"Command: {command}\n")
             write_output("\n")
@@ -75,6 +89,11 @@ def main(command_name, filename, output_file=None, options=""):
         max_time = max(elapsed_times)
         total_time = sum(elapsed_times)
 
+        mean_nodes = statistics.mean(nodes_visited_list) if nodes_visited_list else 0
+        median_nodes = statistics.median(nodes_visited_list) if nodes_visited_list else 0
+        max_nodes = max(nodes_visited_list) if nodes_visited_list else 0
+        total_nodes = sum(nodes_visited_list) if nodes_visited_list else 0
+
         write_output(f"\nSorted Times:\n\n")
         for command, elapsed_time in sorted(zip(commands, elapsed_times), key=lambda x: x[1]):
           write_output(f"Command: {command}\n")
@@ -87,6 +106,12 @@ def main(command_name, filename, output_file=None, options=""):
         write_output(f"Median: {format_time(median_time)}\n")
         write_output(f"Max: {format_time(max_time)}\n")
         write_output(f"Total: {format_time(total_time)}\n")
+
+        write_output("\nTotal Nodes Visited Statistics:\n")
+        write_output(f"Mean: {mean_nodes:.2f}\n")
+        write_output(f"Median: {median_nodes:.2f}\n")
+        write_output(f"Max: {max_nodes}\n")
+        write_output(f"Total: {total_nodes}\n")
 
     if output_f:
         output_f.close()
