@@ -56,7 +56,7 @@ static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 	transition_node(puzzle, depth);
 	local_sols = tree_recursion(puzzle, next);
 	*(cur_node) = old_state;
-	return (local_sols.solutions_found >= 0);
+	return (local_sols.solutions_found > 0);
 }
 
 static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
