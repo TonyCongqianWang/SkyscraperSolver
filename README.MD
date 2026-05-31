@@ -71,3 +71,11 @@ Added bugfix in v06b and improved benchmarking. Bugfix has a very significant pe
 
 ### v07
 Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
+
+### v08
+Refactored lookahead node pruning logic and integrated domain-specific type definitions:
+* Refactored skip-pruning logic and fixed edge cases when modifying pruning parameters. Moved the pruning trigger to backtracking failure blocks to propagate invalidations immediately when branches collapse.
+* Dynamically scaled the pruning skip-period based on the ratio of remaining unset cells to automatically decay pruning frequency in deep search nodes.
+* Gated lookahead reiteration on search progress to avoid redundant, expensive lookahead passes.
+* Declared custom typedefs (`t_prune_prog`, `t_sol_count`, `t_node_count`) inside `puzzle_structs.h` to replace raw, unwieldy `unsigned long long` types across the codebase, ensuring full Norminette compliance.
+* Added a thread-safe parallel hyperparameter grid search script in `python_scripts/examples/tune_parameters.py` running 48 evaluations in parallel across 8 CPU cores.
