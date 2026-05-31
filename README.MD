@@ -1,6 +1,11 @@
 # Solver for the Skyscraper puzzle game
 
-Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn. Compilation and usage like this (assuming cc is your C compiler):
+Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
+
+> [!NOTE]
+> This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
+
+Compilation and usage like this (assuming cc is your C compiler):
 
 ```
 cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
