@@ -59,7 +59,6 @@ static void	search_step(t_puzzle *puzzle, t_sol_info *node_sols,
 	t_node_state	old_state;
 	t_sol_info		recursive_sols;
 
-	prune_node(puzzle);
 	old_state = *(puzzle->cur_node);
 	update_sol_target(node_sols, puzzle->cur_node);
 	recursive_sols = tree_recursion(puzzle, next);
@@ -67,7 +66,10 @@ static void	search_step(t_puzzle *puzzle, t_sol_info *node_sols,
 	if (update_sol_info(&recursive_sols, node_sols)
 		|| !check_sol_target(node_sols, puzzle->cur_node)
 		|| recursive_sols.min_nunset == puzzle->squared_size)
+	{
 		set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
+		prune_node(puzzle);
+	}
 }
 
 t_sol_info	tree_search(t_puzzle *puzzle)

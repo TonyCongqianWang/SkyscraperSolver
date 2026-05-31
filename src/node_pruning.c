@@ -66,13 +66,15 @@ static int	skip_pruning(t_puzzle *puzzle)
 	t_node_state		*node;
 
 	node = puzzle->cur_node;
+	if (node->progress_counter == 0)
+		return (0);
 	unset_threshold = node->last_prune_prog;
 	unset_threshold += g_prune_period_shallow;
 	if (node->cur_depth > g_depth_threshold_0)
 		unset_threshold += g_prune_extra_period_deep;
 	if (node->cur_depth > g_depth_threshold_1)
 		unset_threshold += g_prune_extra_period_deep;
-	if (node->progress_counter >= unset_threshold)
+	if (node->progress_counter < unset_threshold)
 		return (1);
 	return (0);
 }
