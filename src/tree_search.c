@@ -32,7 +32,6 @@ static t_sol_info	handle_leaf_node(t_puzzle *puzzle)
 	t_node_state	*cur_node;
 	t_sol_info		node_sols;
 
-	puzzle->nodes_visited++;
 	cur_node = puzzle->cur_node;
 	if (cur_node->is_invalid)
 		init_sol_info(&node_sols, puzzle->squared_size, 0);
