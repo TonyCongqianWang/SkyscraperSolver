@@ -39,7 +39,7 @@ int	main(int argc, char **argv)
 
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 {
-	unsigned long long		solution_idx;
+	t_sol_count				solution_idx;
 	int						append_nl;
 
 	solve_puzzle(puzzle, -1);

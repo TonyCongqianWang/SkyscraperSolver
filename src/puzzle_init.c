@@ -18,7 +18,7 @@ static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
 
-void	init_puzzle(t_puzzle *puzzle, int size, unsigned long long max_sols)
+void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 {
 	int		idx;
 

@@ -23,19 +23,21 @@ static int	skip_pruning(t_puzzle *puzzle);
 static int	init_pruning_state(t_puzzle *puzzle, t_node_pruning_state *pruning);
 static int	keep_pruning(t_node_pruning_state *pruning);
 
-const double	g_min_unset_r_prune = 0.4;
-const double	g_min_unset_r_reit = 0.7;
-const int		g_max_p_depth_shallow = 1;
-const int		g_depth_threshold_0 = 0;
-const int		g_depth_threshold_1 = 3;
-const int		g_max_p_depth_deep = 1;
-const int		g_prune_period_shallow = 16;
-const int		g_prune_extra_period_deep = 20;
+const double		g_min_unset_r_prune = 0.4;
+const double		g_min_unset_r_reit = 0.7;
+const int			g_max_p_depth_shallow = 1;
+const int			g_depth_threshold_0 = 0;
+const int			g_depth_threshold_1 = 3;
+const int			g_max_p_depth_deep = 1;
+const t_prune_prog	g_prune_period_shallow = 16;
+const t_prune_prog	g_prune_extra_period_deep = 30;
+const t_prune_prog	g_prune_reiterate_threshold = 3;
 
 void	prune_node(t_puzzle *puzzle)
 {
 	t_node_pruning_state	pruning;
 	t_node_transition		tr;
+	t_prune_prog			start_prog;
 
 	puzzle->cur_node->cur_prune_nunset = puzzle->cur_node->num_unset + 1;
 	if (skip_pruning(puzzle))
@@ -44,17 +46,17 @@ void	prune_node(t_puzzle *puzzle)
 		return ;
 	while (keep_pruning(&pruning))
 	{
+		start_prog = puzzle->cur_node->progress_counter;
 		tr.cell_idx = 0;
 		tr.cell_val = 1;
 		while (try_get_next_transition(puzzle, &tr))
 		{
 			if (!do_l_ahead_dive(puzzle, tr, pruning.cur_pruning_depth))
-			{
 				set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
-				pruning.last_iteration_succeeded = 1;
-			}
 			tr.cell_val++;
 		}
+		pruning.last_iteration_succeeded = (puzzle->cur_node->progress_counter
+				- start_prog >= g_prune_reiterate_threshold);
 	}
 	puzzle->cur_node->last_prune_nunset = puzzle->cur_node->cur_prune_nunset;
 	puzzle->cur_node->last_prune_prog = puzzle->cur_node->progress_counter;
@@ -62,18 +64,22 @@ void	prune_node(t_puzzle *puzzle)
 
 static int	skip_pruning(t_puzzle *puzzle)
 {
-	unsigned long long	unset_threshold;
-	t_node_state		*node;
+	t_prune_prog	unset_threshold;
+	t_node_state	*node;
+	double			unset_ratio;
+	t_prune_prog	period;
 
 	node = puzzle->cur_node;
 	if (node->progress_counter == 0)
 		return (0);
-	unset_threshold = node->last_prune_prog;
-	unset_threshold += g_prune_period_shallow;
+	unset_ratio = (double)node->num_unset / puzzle->squared_size;
+	period = g_prune_period_shallow;
 	if (node->cur_depth > g_depth_threshold_0)
-		unset_threshold += g_prune_extra_period_deep;
+		period += g_prune_extra_period_deep;
 	if (node->cur_depth > g_depth_threshold_1)
-		unset_threshold += g_prune_extra_period_deep;
+		period += g_prune_extra_period_deep;
+	period = (t_prune_prog)(period / unset_ratio);
+	unset_threshold = node->last_prune_prog + period;
 	if (node->progress_counter < unset_threshold)
 		return (1);
 	return (0);
@@ -81,13 +87,12 @@ static int	skip_pruning(t_puzzle *puzzle)
 
 static int	init_pruning_state(t_puzzle *puzzle, t_node_pruning_state *pruning)
 {
-	double			unset_quotient;
+	double			unset_ratio;
 	t_node_state	*node;
 
 	node = puzzle->cur_node;
-	unset_quotient = node->num_unset;
-	unset_quotient /= puzzle->squared_size;
-	if (unset_quotient < g_min_unset_r_prune)
+	unset_ratio = (double)node->num_unset / puzzle->squared_size;
+	if (unset_ratio < g_min_unset_r_prune)
 		return (0);
 	if (node->cur_prune_nunset <= node->num_unset)
 		return (0);
@@ -95,7 +100,7 @@ static int	init_pruning_state(t_puzzle *puzzle, t_node_pruning_state *pruning)
 		node->cur_prune_nunset = node->num_unset;
 	pruning->cur_pruning_depth = 0;
 	pruning->max_pruning_depth = g_max_p_depth_shallow;
-	pruning->can_reiterate = unset_quotient > g_min_unset_r_reit;
+	pruning->can_reiterate = unset_ratio > g_min_unset_r_reit;
 	if (node->sub_node_depth == 0
 		&& pruning->can_reiterate)
 	{

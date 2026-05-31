@@ -17,6 +17,9 @@
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 
+typedef unsigned long long	t_prune_prog;
+typedef unsigned long long	t_sol_count;
+typedef unsigned long long	t_node_count;
 typedef struct s_puzzle	t_puzzle;
 
 typedef struct s_node_transition
@@ -55,10 +58,10 @@ typedef struct s_node_state
 	int						sub_node_depth;
 	int						target_nunset;
 	int						num_unset;
-	unsigned long long		progress_counter;
-	unsigned long long		last_prune_prog;
-	unsigned long long		max_solutions;
-	unsigned long long		solutions_found;
+	t_prune_prog			progress_counter;
+	t_prune_prog			last_prune_prog;
+	t_sol_count				max_solutions;
+	t_sol_count				solutions_found;
 	t_grid_state			grid;
 	t_constrs_state			constrs;
 	t_puzzle				*puzzle;
@@ -67,7 +70,7 @@ typedef struct s_node_state
 typedef struct s_sol_info
 {
 	int						min_nunset;
-	unsigned long long		solutions_found;
+	t_sol_count				solutions_found;
 }		t_sol_info;
 
 typedef struct s_constraint_pair
@@ -100,9 +103,9 @@ typedef struct s_puzzle
 {
 	int						size;
 	int						squared_size;
-	unsigned long long		max_solutions;
-	unsigned long long		solutions_found;
-	unsigned long long		nodes_visited;
+	t_sol_count				max_solutions;
+	t_sol_count				solutions_found;
+	t_node_count			nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
 	t_node_state			cur_node_storage;

@@ -19,7 +19,7 @@ int	found_enough_solutions(t_node_state *node)
 		&& node->solutions_found >= node->max_solutions);
 }
 
-void	init_solution_storage(t_puzzle *puzzle, unsigned long long max_sols)
+void	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
 {
 	puzzle->solutions_found = 0;
 	puzzle->max_solutions = max_sols;
