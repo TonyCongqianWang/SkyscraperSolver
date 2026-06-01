@@ -7,122 +7,258 @@ import statistics
 import os
 import argparse
 
-def format_time(seconds):
-    return time.strftime("%H:%M:%S", time.gmtime(seconds)) + f".{int(seconds * 100) % 100:02d}"
 
-def main(command_name, filename, output_file=None, options=""):
+def format_time(seconds):
+    return time.strftime("%H:%M:%S", time.gmtime(seconds)) + f".{int(seconds * 1000) % 1000:03d}"
+
+
+def parse_duration(s):
+    """Parse a duration string into total seconds (float).
+
+    Supported formats:  hh:mm:ss  |  mm:ss  |  Xs / Xm / Xh  |  plain number
+    Returns None when s is None.
+    """
+    if s is None:
+        return None
+    s = s.strip()
+
+    # hh:mm:ss or mm:ss via strptime
+    for fmt, multipliers in [
+        ("%H:%M:%S", (3600, 60, 1)),
+        ("%M:%S",    (60, 1)),
+    ]:
+        try:
+            t = datetime.strptime(s, fmt)
+            parts = (t.hour, t.minute, t.second) if len(multipliers) == 3 \
+                    else (t.minute, t.second)
+            return sum(p * m for p, m in zip(parts, multipliers))
+        except ValueError:
+            pass
+
+    # Xs / Xm / Xh shorthand
+    suffixes = {'s': 1, 'm': 60, 'h': 3600}
+    if s and s[-1].lower() in suffixes:
+        try:
+            return float(s[:-1]) * suffixes[s[-1].lower()]
+        except ValueError:
+            pass
+
+    # plain number (seconds)
+    try:
+        return float(s)
+    except ValueError:
+        pass
+
+    raise ValueError(
+        f"Cannot parse duration: {s!r}. "
+        "Use hh:mm:ss, mm:ss, 10m, 90s, 2h, or a plain number of seconds."
+    )
+
+
+def main(command_name, filename, output_file=None, options="",
+         time_limit=None, print_period=None):
     try:
         with open(filename, 'r') as file:
-            lines = file.readlines()
+            raw_lines = file.readlines()
     except FileNotFoundError:
         print(f"File {filename} not found.")
         return
+
+    lines = [l.strip() for l in raw_lines if l.strip()]
+    total = len(lines)
 
     if output_file and os.path.exists(output_file):
         print(f"Error: Output file {output_file} already exists.")
         return
 
-    elapsed_times = []
-    commands = []
-    total_start_time = time.time()
-    total_start_dt = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    # --print-time-period semantics:
+    #   None  -> always print everything (default / current behaviour)
+    #   <= 0  -> silence all instance output; only print final summary to stdout
+    #   > 0   -> print a brief periodic status line; suppress per-instance detail
+    always_print = print_period is None
+    silent_all   = (print_period is not None) and (print_period <= 0)
+    periodic     = (print_period is not None) and (print_period > 0)
+    # Trigger the first periodic print immediately when the first instance finishes
+    last_print_t = time.time() - (print_period if periodic else 0)
 
     if output_file:
         output_f = open(output_file, 'w')
     else:
         output_f = None
 
-    def write_output(data):
-        sys.stdout.write(data)
-        sys.stdout.flush()
+    def fwrite(data):
         if output_f:
             output_f.write(data)
             output_f.flush()
 
+    def stdout_write(data):
+        sys.stdout.write(data)
+        sys.stdout.flush()
+
+    def write_instance(data):
+        """Write to file always; write to stdout only in always_print mode."""
+        fwrite(data)
+        if always_print:
+            stdout_write(data)
+
+    def write_summary(data):
+        """Always write to both file and stdout (final summary)."""
+        fwrite(data)
+        stdout_write(data)
+
+    elapsed_times      = []
+    commands           = []
     nodes_visited_list = []
-    for line in lines:
-        line = line.strip()
+    total_start_time   = time.time()
+    total_start_dt     = datetime.now().strftime("%H:%M:%S.%f")[:-3]
+    time_limit_reached = False
+
+    for idx, line in enumerate(lines, start=1):
+        # Check time limit before starting this instance
+        if time_limit is not None and (time.time() - total_start_time) >= time_limit:
+            time_limit_reached = True
+            break
+
+        # Progress counter — always goes to file; stdout depends on mode
+        progress_line = f"Instance {idx} / {total}\n"
+        fwrite(progress_line)
+        if always_print:
+            stdout_write(progress_line)
+
         time_format = "%H:%M:%S.%f"
-        if line:
-            start_time = time.time()
-            start_dt = datetime.now().strftime(time_format)[:-3]
+        start_time  = time.time()
 
-            args = shlex.split(options)
-            args += shlex.split(line)
-            try:
-              process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-            except FileNotFoundError:
-              command_name = "./" + command_name
-              process = subprocess.Popen([command_name] + args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        args = shlex.split(options) + shlex.split(line)
+        try:
+            process = subprocess.Popen(
+                [command_name] + args,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
+        except FileNotFoundError:
+            command_name = "./" + command_name
+            process = subprocess.Popen(
+                [command_name] + args,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+            )
 
-            stdout, stderr = process.communicate()
-            end_time = time.time()
-            end_dt = datetime.now().strftime(time_format)[:-3]
+        stdout, stderr = process.communicate()
+        elapsed_time = time.time() - start_time
 
-            elapsed_time = end_time - start_time
-            elapsed_times.append(elapsed_time)
-            command = " ".join([command_name] + [options] + [line])
-            commands.append(command)
+        elapsed_times.append(elapsed_time)
+        parts = [command_name]
+        if options:
+            parts.append(options)
+        parts.append(line)
+        command = " ".join(parts)
+        commands.append(command)
 
-            nodes_visited = 0
-            for line_out in stdout.splitlines():
-                if line_out.startswith("Nodes visited:"):
-                    try:
-                        nodes_visited = int(line_out.split(":")[1].strip())
-                    except ValueError:
-                        pass
-            nodes_visited_list.append(nodes_visited)
+        nodes_visited = 0
+        for line_out in stdout.splitlines():
+            if line_out.startswith("Nodes visited:"):
+                try:
+                    nodes_visited = int(line_out.split(":")[1].strip())
+                except ValueError:
+                    pass
+        nodes_visited_list.append(nodes_visited)
 
-            write_output("\n")
-            write_output(f"Command: {command}\n")
-            write_output("\n")
-            write_output(stdout)
-            write_output(stderr)
-            write_output(f"Elapsed: {format_time(elapsed_time)}\n")
+        instance_block = (
+            f"\nCommand: {command}\n"
+            f"\n"
+            f"{stdout}"
+            f"{stderr}"
+            f"Elapsed: {format_time(elapsed_time)}\n"
+        )
+        write_instance(instance_block)
 
-    total_end_time = time.time()
+        # Periodic status line to stdout
+        if periodic:
+            now = time.time()
+            if now - last_print_t >= print_period:
+                last_print_t = now
+                total_elapsed = now - total_start_time
+                stdout_write(
+                    f"[{datetime.now().strftime('%H:%M:%S')}] "
+                    f"Progress: {idx}/{total} instances | "
+                    f"Elapsed: {format_time(total_elapsed)}\n"
+                )
+
     total_end_dt = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
+    # ── Time-limit notification ───────────────────────────────────────────────
+    if time_limit_reached:
+        write_summary(
+            f"\n*** Time limit reached ({format_time(time_limit)}) ***\n"
+            f"Instances solved: {len(elapsed_times)} / {total}\n"
+        )
+
+    # ── Statistics ───────────────────────────────────────────────────────────
     if elapsed_times:
-        mean_time = statistics.mean(elapsed_times)
+        mean_time   = statistics.mean(elapsed_times)
         median_time = statistics.median(elapsed_times)
-        max_time = max(elapsed_times)
-        total_time = sum(elapsed_times)
+        max_time    = max(elapsed_times)
+        total_time  = sum(elapsed_times)
 
-        mean_nodes = statistics.mean(nodes_visited_list) if nodes_visited_list else 0
+        mean_nodes   = statistics.mean(nodes_visited_list)   if nodes_visited_list else 0
         median_nodes = statistics.median(nodes_visited_list) if nodes_visited_list else 0
-        max_nodes = max(nodes_visited_list) if nodes_visited_list else 0
-        total_nodes = sum(nodes_visited_list) if nodes_visited_list else 0
+        max_nodes    = max(nodes_visited_list)               if nodes_visited_list else 0
+        total_nodes  = sum(nodes_visited_list)               if nodes_visited_list else 0
 
-        write_output(f"\nSorted Times:\n\n")
-        for command, elapsed_time in sorted(zip(commands, elapsed_times), key=lambda x: x[1]):
-          write_output(f"Command: {command}\n")
-          write_output(f"Elapsed: {format_time(elapsed_time)}\n\n")
+        write_summary(f"\nSorted Times:\n\n")
+        for cmd, et in sorted(zip(commands, elapsed_times), key=lambda x: x[1]):
+            write_summary(f"Command: {cmd}\n")
+            write_summary(f"Elapsed: {format_time(et)}\n\n")
 
-        write_output(f"\nStart: {total_start_dt}\n")
-        write_output(f"End: {total_end_dt}\n")
-        write_output("\nTotal Time Statistics:\n")
-        write_output(f"Mean: {format_time(mean_time)}\n")
-        write_output(f"Median: {format_time(median_time)}\n")
-        write_output(f"Max: {format_time(max_time)}\n")
-        write_output(f"Total: {format_time(total_time)}\n")
+        write_summary(f"\nStart: {total_start_dt}\n")
+        write_summary(f"End: {total_end_dt}\n")
+        write_summary("\nTotal Time Statistics:\n")
+        write_summary(f"Mean: {format_time(mean_time)}\n")
+        write_summary(f"Median: {format_time(median_time)}\n")
+        write_summary(f"Max: {format_time(max_time)}\n")
+        write_summary(f"Total: {format_time(total_time)}\n")
 
-        write_output("\nTotal Nodes Visited Statistics:\n")
-        write_output(f"Mean: {mean_nodes:.2f}\n")
-        write_output(f"Median: {median_nodes:.2f}\n")
-        write_output(f"Max: {max_nodes}\n")
-        write_output(f"Total: {total_nodes}\n")
+        write_summary("\nTotal Nodes Visited Statistics:\n")
+        write_summary(f"Mean: {mean_nodes:.2f}\n")
+        write_summary(f"Median: {median_nodes:.2f}\n")
+        write_summary(f"Max: {max_nodes}\n")
+        write_summary(f"Total: {total_nodes}\n")
+
+    # ── Trailing time-limit warning ───────────────────────────────────────────
+    if time_limit_reached:
+        write_summary(
+            f"\nNote: Only {len(elapsed_times)}/{total} instances were solved "
+            "due to the time limit. Statistics above may not be representative "
+            "of the full benchmark.\n"
+        )
 
     if output_f:
         output_f.close()
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Run benchmark for skyscraper_solver.')
     parser.add_argument('filename', help='Input file with command line arguments')
     parser.add_argument('-f', '--options', default="", help='Extra arguments for command')
     parser.add_argument('-o', '--output', help='Output file to save results')
-    parser.add_argument('-c', '--command', default='skyscraper_solver', help='Command name to run')
+    parser.add_argument('-c', '--command', default='skyscraper_solver',
+                        help='Command name to run')
+    parser.add_argument('--time-limit', default=None,
+                        help='Stop after this duration (e.g. 10m, 1h30m, 01:30:00). '
+                             'Prints a warning and partial stats when reached.')
+    parser.add_argument('--print-time-period', default=None,
+                        help='How often to print progress to stdout (e.g. 30s, 1m). '
+                             'Instance output is silenced between prints. '
+                             '0 or negative silences everything except the final summary. '
+                             'Omit for continuous real-time output (default). '
+                             'Does not affect output written with -o.')
 
     args = parser.parse_args()
 
-    main(args.command, args.filename, args.output, args.options)
+    try:
+        time_limit   = parse_duration(args.time_limit)
+        print_period = parse_duration(args.print_time_period)
+    except ValueError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    main(args.command, args.filename, args.output, args.options,
+         time_limit=time_limit, print_period=print_period)
