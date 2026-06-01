@@ -21,7 +21,7 @@ or on windows:
 
 Grids up to size 9x9 are accepted. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
 
-There is one optional flag `-s <n_solutions>` you can use. When specified, instead of stopping after the first solution, the programm will stop until it finds `n_solutions` or until all solutions are found. At the end all solutions are displayed. `n_solutions = 0` is a special case, where no solutions are displayed at the end, but the programm only stop after finding all possible solutions and the number of solutions is displayed. 
+There is one optional flag `-s <n_solutions>` you can use. When specified, instead of stopping after the first solution, the programm will stop until it finds `n_solutions` or until all solutions are found. At the end all solutions are displayed. `n_solutions = 0` is a special case, where no solutions are displayed at the end, but the programm only stop after finding all possible solutions and the number of solutions is displayed.
 
 Solutions (if found) are printed like this:
 
@@ -49,6 +49,10 @@ Some more example inputs of different sizes (more can be found in the benchmark_
 ./skyscraper_solver "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 5 2 3 3"
 ```
 
+## Python Z3 Cross-Checking Solver
+A Python-based Skyscraper solver utilizing the Z3 Theorem Prover is located in the [python_solver/](python_solver/) directory. It serves as a high-fidelity mathematical reference model to cross-check the correctness of the C solver's solution counts and cell assignments.
+
+You can run it by installing the Z3 solver dependency (`pip install -r python_solver/requirements.txt`) and executing the solver scripts within the directory for automated verification.
 
 ## Changes
 
