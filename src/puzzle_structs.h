@@ -20,7 +20,7 @@
 typedef unsigned long long	t_prune_prog;
 typedef unsigned long long	t_sol_count;
 typedef unsigned long long	t_node_count;
-typedef struct s_puzzle	t_puzzle;
+typedef struct s_puzzle		t_puzzle;
 
 typedef struct s_node_transition
 {
