@@ -78,6 +78,7 @@ Added bugfix in v06b and improved benchmarking. Bugfix has a very significant pe
 Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
 
 ### v08
+Added Python Z3 Cross-Checking Solver.
 Refactored lookahead node pruning logic and integrated domain-specific type definitions:
 * Refactored skip-pruning logic and fixed edge cases when modifying pruning parameters. Moved the pruning trigger to backtracking failure blocks to propagate invalidations immediately when branches collapse.
 * Dynamically scaled the pruning skip-period based on the ratio of remaining unset cells to automatically decay pruning frequency in deep search nodes.
