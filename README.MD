@@ -5,6 +5,9 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 > [!NOTE]
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
 
+> [!NOTE]
+> Also see [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository for a playable implementation with GUI of the game.
+
 Compilation and usage like this (assuming cc is your C compiler):
 
 ```
@@ -81,6 +84,8 @@ Added bugfix in v06b and improved benchmarking. Bugfix has a very significant pe
 ### v07
 Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
 
+First version being able to solve the size 9 benchmarkset in roughly 5.5 hours on a 2.20GHz Intel Xeon.
+
 ### v08
 Added Python Z3 Cross-Checking Solver.
 Refactored lookahead node pruning logic and integrated domain-specific type definitions:
@@ -89,3 +94,5 @@ Refactored lookahead node pruning logic and integrated domain-specific type defi
 * Gated lookahead reiteration on search progress to avoid redundant, expensive lookahead passes.
 * Declared custom typedefs (`t_prune_prog`, `t_sol_count`, `t_node_count`) inside `puzzle_structs.h` to replace raw, unwieldy `unsigned long long` types across the codebase, ensuring full Norminette compliance.
 * Added a thread-safe parallel hyperparameter grid search script in `python_scripts/examples/tune_parameters.py` running 48 evaluations in parallel across 8 CPU cores.
+
+Solves the size 9 benchmark set in roughly 2.5 hours on a 2.20GHz Intel Xeon.
