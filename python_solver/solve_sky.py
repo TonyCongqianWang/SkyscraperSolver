@@ -64,12 +64,13 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
                 m = solver.model()
                 sol = [[m[grid_vars[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
 
-                if args.print_format == "grid":
-                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
-                elif args.print_format == "string":
-                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
-                elif args.print_format == "all":
-                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                if args.num_solutions != 0:
+                    if args.print_format == "grid":
+                        buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                    elif args.print_format == "string":
+                        buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                    elif args.print_format == "all":
+                        buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
 
                 solver.add(Or([grid_vars[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
                 if args.num_solutions > 0 and found >= args.num_solutions:
