@@ -56,7 +56,7 @@ def parse_duration(s):
 
 
 def main(command_name, filename, output_file=None, options="",
-         time_limit=None, print_period=None):
+         time_limit=None, print_period=None, use_stdin=False):
     try:
         with open(filename, 'r') as file:
             raw_lines = file.readlines()
@@ -113,6 +113,20 @@ def main(command_name, filename, output_file=None, options="",
     total_start_dt     = datetime.now().strftime("%H:%M:%S.%f")[:-3]
     time_limit_reached = False
 
+    interactive_process = None
+    if use_stdin:
+        base_args = shlex.split(options)
+        try:
+            interactive_process = subprocess.Popen(
+                [command_name] + base_args,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+            )
+        except FileNotFoundError:
+            interactive_process = subprocess.Popen(
+                ["./" + command_name] + base_args,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, bufsize=1
+            )
+
     for idx, line in enumerate(lines, start=1):
         # Check time limit before starting this instance
         if time_limit is not None and (time.time() - total_start_time) >= time_limit:
@@ -128,28 +142,54 @@ def main(command_name, filename, output_file=None, options="",
         time_format = "%H:%M:%S.%f"
         start_time  = time.time()
 
-        args = shlex.split(options) + shlex.split(line)
-        try:
-            process = subprocess.Popen(
-                [command_name] + args,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
-        except FileNotFoundError:
-            command_name = "./" + command_name
-            process = subprocess.Popen(
-                [command_name] + args,
-                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
-            )
+        if use_stdin:
+            try:
+                # Ensure the exact raw file string line is forwarded down the pipe
+                interactive_process.stdin.write(line + "\n")
+                interactive_process.stdin.flush()
+            except BrokenPipeError:
+                hidden_error = interactive_process.stderr.read()
+                print(f"\n[CRITICAL] Solver crashed! Hidden Traceback:\n{hidden_error}", file=sys.stderr)
+                break
+            # 2. Wait for the output or EOF
+            out_lines = []
+            while True:
+                out_line = interactive_process.stdout.readline()
+                if not out_line or "--- END_OF_INSTANCE ---" in out_line:
+                    break
+                out_lines.append(out_line)
 
-        stdout, stderr = process.communicate()
+            stdout = "".join(out_lines)
+            stderr = ""
+            command = f"{command_name} {options} <stdin> {line}"
+
+            # 3. Check if the process died while computing this specific instance
+            if interactive_process.poll() is not None:
+                stderr = interactive_process.stderr.read()
+                print(f"\n[CRITICAL] Solver died during execution! Traceback:\n{stderr}", file=sys.stderr)
+                break
+        else:
+            args = shlex.split(options) + shlex.split(line)
+            try:
+                process = subprocess.Popen(
+                    [command_name] + args,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                )
+            except FileNotFoundError:
+                command_name = "./" + command_name
+                process = subprocess.Popen(
+                    [command_name] + args,
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
+                )
+            stdout, stderr = process.communicate()
+            parts = [command_name]
+            if options:
+                parts.append(options)
+            parts.append(line)
+            command = " ".join(parts)
+
         elapsed_time = time.time() - start_time
-
         elapsed_times.append(elapsed_time)
-        parts = [command_name]
-        if options:
-            parts.append(options)
-        parts.append(line)
-        command = " ".join(parts)
         commands.append(command)
 
         nodes_visited = 0
@@ -163,7 +203,7 @@ def main(command_name, filename, output_file=None, options="",
 
         instance_block = (
             f"\nCommand: {command}\n"
-            f"\n"
+            + (f"Input: {line}\n\n" if use_stdin else "\n") +
             f"{stdout}"
             f"{stderr}"
             f"Elapsed: {format_time(elapsed_time)}\n"
@@ -181,6 +221,10 @@ def main(command_name, filename, output_file=None, options="",
                     f"Progress: {idx}/{total} instances | "
                     f"Elapsed: {format_time(total_elapsed)}\n"
                 )
+
+    if interactive_process:
+        interactive_process.stdin.close()
+        interactive_process.terminate()
 
     total_end_dt = datetime.now().strftime("%H:%M:%S.%f")[:-3]
 
@@ -250,6 +294,8 @@ if __name__ == "__main__":
                              '0 or negative silences everything except the final summary. '
                              'Omit for continuous real-time output (default). '
                              'Does not affect output written with -o.')
+    parser.add_argument('--use-stdin', action='store_true',
+                        help='Pass the puzzle input via stdin interactively.')
 
     args = parser.parse_args()
 
@@ -261,4 +307,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main(args.command, args.filename, args.output, args.options,
-         time_limit=time_limit, print_period=print_period)
+         time_limit=time_limit, print_period=print_period, use_stdin=args.use_stdin)

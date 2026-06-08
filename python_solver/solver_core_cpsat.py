@@ -1,10 +1,48 @@
-import random
-from typing import Tuple, List, Dict, Any
+import itertools
+from typing import Tuple, List
 from ortools.sat.python import cp_model
 from models import Puzzle
 
-def create_base_solver(puzzle: Puzzle, randomize: bool = False) -> Tuple[cp_model.CpSolver, cp_model.CpModel, List[List[cp_model.IntVar]]]:
-    """Generates an OR-Tools CP-SAT instance using Lazy Clause Generation."""
+# In-Memory Cache (Persists for the lifespan of the batch script)
+_TUPLE_CACHE = {}
+
+def get_valid_tuples(n: int, clue_start: int, clue_end: int) -> List[Tuple]:
+    """Generates or retrieves all mathematically valid permutations for a row."""
+    cache_key = (n, clue_start, clue_end)
+    if cache_key in _TUPLE_CACHE:
+        return _TUPLE_CACHE[cache_key]
+
+    valid_tuples = []
+    for p in itertools.permutations(range(1, n + 1)):
+        if clue_start > 0:
+            vis = 0
+            m = 0
+            for val in p:
+                if val > m:
+                    vis += 1
+                    m = val
+                    if m == n: break
+            if vis != clue_start:
+                continue
+
+        if clue_end > 0:
+            vis = 0
+            m = 0
+            for val in reversed(p):
+                if val > m:
+                    vis += 1
+                    m = val
+                    if m == n: break
+            if vis != clue_end:
+                continue
+
+        valid_tuples.append(p)
+
+    _TUPLE_CACHE[cache_key] = valid_tuples
+    return valid_tuples
+
+def create_base_solver(puzzle: Puzzle, randomize: bool = False):
+    """Instantiates a highly constrained CP-SAT model using Table Constraints."""
     model = cp_model.CpModel()
     n = puzzle.n
     grid = [[model.NewIntVar(1, n, f"cell_{r}_{c}") for c in range(n)] for r in range(n)]
@@ -13,50 +51,28 @@ def create_base_solver(puzzle: Puzzle, randomize: bool = False) -> Tuple[cp_mode
         model.AddAllDifferent(grid[r])
         model.AddAllDifferent([grid[c][r] for c in range(n)])
 
-    for r in range(n):
-        for c in range(n):
-            if puzzle.grid[r][c] > 0:
-                model.Add(grid[r][c] == puzzle.grid[r][c])
+    for r, c, val in puzzle.get_active_grid_given():
+        model.Add(grid[r][c] == val)
 
-    for idx in range(n):
-        _apply_visibility_cpsat(model, n, grid, puzzle.clues["N"][idx], [(r, idx) for r in range(n)])
-        _apply_visibility_cpsat(model, n, grid, puzzle.clues["S"][idx], [(r, idx) for r in reversed(range(n))])
-        _apply_visibility_cpsat(model, n, grid, puzzle.clues["W"][idx], [(idx, c) for c in range(n)])
-        _apply_visibility_cpsat(model, n, grid, puzzle.clues["E"][idx], [(idx, c) for c in reversed(range(n))])
+    # Apply Extensional Constraints (Tables)
+    for r in range(n):
+        clue_w = puzzle.clues["W"][r]
+        clue_e = puzzle.clues["E"][r]
+        if clue_w > 0 or clue_e > 0:
+            valid_tuples = get_valid_tuples(n, clue_w, clue_e)
+            model.AddAllowedAssignments(grid[r], valid_tuples)
+
+    for c in range(n):
+        clue_n = puzzle.clues["N"][c]
+        clue_s = puzzle.clues["S"][c]
+        if clue_n > 0 or clue_s > 0:
+            valid_tuples = get_valid_tuples(n, clue_n, clue_s)
+            col_vars = [grid[r][c] for r in range(n)]
+            model.AddAllowedAssignments(col_vars, valid_tuples)
 
     solver = cp_model.CpSolver()
     if randomize:
+        import random
         solver.parameters.random_seed = random.randint(1, 1000000)
 
     return solver, model, grid
-
-def _apply_visibility_cpsat(model: cp_model.CpModel, n: int, grid: List[List[cp_model.IntVar]], clue_val: int, coords: list):
-    if clue_val <= 0:
-        return
-
-    # Add structural pruning explicitly (CP-SAT bounds tightening)
-    for i in range(n):
-        r, c = coords[i]
-        model.Add(grid[r][c] <= (n - clue_val + i + 1))
-        if i < (clue_val - 1):
-            model.Add(grid[r][c] != n)
-
-    visibility_flags = []
-    r0, c0 = coords[0]
-    running_max = grid[r0][c0]
-
-    for i in range(1, n):
-        r, c = coords[i]
-        current_cell = grid[r][c]
-
-        is_visible = model.NewBoolVar(f"vis_{r}_{c}")
-        model.Add(current_cell > running_max).OnlyEnforceIf(is_visible)
-        model.Add(current_cell <= running_max).OnlyEnforceIf(is_visible.Not())
-        visibility_flags.append(is_visible)
-
-        next_max = model.NewIntVar(1, n, f"max_{r}_{c}")
-        # CORRECTED: Use AddMaxEquality instead of AddMaxEq
-        model.AddMaxEquality(next_max, [running_max, current_cell])
-        running_max = next_max
-
-    model.Add(sum(visibility_flags) == (clue_val - 1))
