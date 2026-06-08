@@ -2,7 +2,7 @@ import random
 from typing import List, Dict, Tuple
 from z3 import sat, Or, Not
 from models import Puzzle
-from solver_core import create_base_solver, create_base_solver_with_assumptions
+from SkyscraperSolver.python_solver.solver_core_z3 import create_base_solver, create_base_solver_with_assumptions
 
 def generate_random_latin_square(n: int) -> List[List[int]]:
     blank = Puzzle(n, {"N": [0]*n, "S": [0]*n, "E": [0]*n, "W": [0]*n}, [[0]*n for _ in range(n)])
