@@ -3,69 +3,74 @@ import argparse
 import shlex
 from parser import parse_puzzle_input
 from renderer import render_grid_flat, render_ascii_frame, serialize_to_string
+from ortools.sat.python import cp_model
 
-_Z3_SOLVER = None
-_Z3_VARS = None
-_Z3_LITERALS = None
-_Z3_CURRENT_N = None
+class SkyscraperSolutionPrinter(cp_model.CpSolverSolutionCallback):
+    """Unified native callback hook that accumulates solutions up to an arbitrary limit."""
+    def __init__(self, grid_vars, limit=0):
+        super().__init__()
+        self._grid_vars = grid_vars
+        self._limit = limit
+        self.solutions = []
+
+    def on_solution_callback(self):
+        n = len(self._grid_vars)
+        sol = [[self.value(self._grid_vars[r][c]) for c in range(n)] for r in range(n)]
+        self.solutions.append(sol)
+
+        # Force immediate termination of the C++ loop if the threshold limit is met
+        if self._limit > 0 and len(self.solutions) >= self._limit:
+            self.stop_search()
 
 def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
-    global _Z3_SOLVER, _Z3_VARS, _Z3_LITERALS, _Z3_CURRENT_N
-
     found = 0
     buffer = []
 
+    # --- Z3 BACKEND (Direct Constraints) ---
     if args.backend == "z3":
-        from solver_core_z3 import create_base_solver_with_assumptions
+        from solver_core_z3 import create_base_solver
         from z3 import sat, Or
 
-        if _Z3_CURRENT_N != p.n:
-            _Z3_CURRENT_N = p.n
-            _Z3_SOLVER, _Z3_VARS, _Z3_LITERALS = create_base_solver_with_assumptions(p.n)
-
-        assumptions = []
-        for d, idx, val in p.get_active_clues():
-            assumptions.append(_Z3_LITERALS[("edge", d, idx, val)] == True)
-        for r, c, val in p.get_active_grid_given():
-            assumptions.append(_Z3_LITERALS[("grid", r, c, val)] == True)
-
-        _Z3_SOLVER.push()
+        solver, grid_vars = create_base_solver(p, randomize=True)
 
         while True:
-            if _Z3_SOLVER.check(*assumptions) != sat:
+            if solver.check() != sat:
                 break
-            m = _Z3_SOLVER.model()
-            sol = [[m[_Z3_VARS[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
             found += 1
+            m = solver.model()
+            sol = [[m[grid_vars[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
 
-            prefix = f"{puzzle_id} " if puzzle_id else ""
             if args.num_solutions != 0:
                 if args.print_format == "grid":
-                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                    buffer.append(render_grid_flat(sol))
                 elif args.print_format == "string":
-                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                    buffer.append(serialize_to_string(p, sol))
                 elif args.print_format == "all":
-                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                    buffer.append(f"--- Solution #{found} ---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
 
+            solver.add(Or([grid_vars[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
             if args.num_solutions > 0 and found >= args.num_solutions:
                 break
-            _Z3_SOLVER.add(Or([_Z3_VARS[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
 
-        _Z3_SOLVER.pop()
-
+    # --- CP-SAT BACKEND (Unified Native Callback) ---
     elif args.backend == "cpsat":
-        from solver_core_cpsat import create_base_solver
-        from ortools.sat.python import cp_model
+        from solver_core_cpsat import create_base_solver as create_cp_solver
 
-        solver, model, grid_vars = create_base_solver(p, randomize=True)
+        # 1. Initialize the C++ model definitions
+        solver, model, grid_vars = create_cp_solver(p, randomize=True)
 
-        while True:
-            status = solver.Solve(model)
-            if status not in (cp_model.OPTIMAL, cp_model.FEASIBLE):
-                break
-            sol = [[solver.Value(grid_vars[r][c]) for c in range(p.n)] for r in range(p.n)]
+        # 2. Spin up the solution tracker bound directly to your CLI limit argument
+        solution_printer = SkyscraperSolutionPrinter(grid_vars, limit=args.num_solutions)
+
+        # 3. Enable the native multi-solution state preservation flag
+        solver.parameters.enumerate_all_solutions = True
+
+        # 4. Run the single-pass solve action natively (ignores volatile return status)
+        solver.Solve(model, solution_printer)
+
+        # 5. Extract and format the accumulated solutions cleanly from the callback object
+        for sol in solution_printer.solutions:
             found += 1
-
             prefix = f"{puzzle_id} " if puzzle_id else ""
             if args.num_solutions != 0:
                 if args.print_format == "grid":
@@ -75,19 +80,15 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
                 elif args.print_format == "all":
                     buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
 
-            if args.num_solutions > 0 and found >= args.num_solutions:
-                break
-            flat_grid = [grid_vars[r][c] for r in range(p.n) for c in range(p.n)]
-            flat_sol = [sol[r][c] for r in range(p.n) for c in range(p.n)]
-            model.AddForbiddenAssignments(flat_grid, [tuple(flat_sol)])
-
-    # FIX: If no solutions were found, report it explicitly rather than remaining silent
+    # Handle unsatisfiable fallbacks cleanly based on actual extracted solution count
     if found == 0:
         prefix = f"{puzzle_id} " if puzzle_id else ""
         buffer.append(f"{prefix}UNSATISFIABLE (No Solution Found)")
 
     if args.print_format == "all" and found > 0:
         print(f"Total Unique Solutions Found: {found}\n", file=f)
+
+    # Flush the text arrays down the designated IO stream completely
     for solution in buffer:
         print(solution, file=f)
 

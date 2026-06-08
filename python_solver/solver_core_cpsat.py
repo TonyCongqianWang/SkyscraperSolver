@@ -3,6 +3,27 @@ from typing import Tuple, List
 from ortools.sat.python import cp_model
 from models import Puzzle
 
+from ortools.sat.python import cp_model
+
+
+class SkyscraperSolutionPrinter(cp_model.CpSolverSolutionCallback):
+    """Unified native callback hook that accumulates solutions up to an arbitrary limit."""
+    def __init__(self, grid_vars, limit=0):
+        super().__init__()
+        self._grid_vars = grid_vars
+        self._limit = limit
+        self.solutions = []
+
+    def on_solution_callback(self):
+        n = len(self._grid_vars)
+        sol = [[self.value(self._grid_vars[r][c]) for c in range(n)] for r in range(n)]
+        self.solutions.append(sol)
+
+        # If an explicit non-zero limit is set, halt the C++ engine immediately upon hit
+        if self._limit > 0 and len(self.solutions) >= self._limit:
+            self.stop_search()
+
+
 # In-Memory Cache (Persists for the lifespan of the batch script)
 _TUPLE_CACHE = {}
 
