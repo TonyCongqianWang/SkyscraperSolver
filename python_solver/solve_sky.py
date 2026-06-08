@@ -20,8 +20,8 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
     if args.backend == "z3":
         from z3 import sat, Or
 
-        if args.num_solutions == 1:
-            # --- STRATEGY A: Dynamic Incremental Core (Batch -s 1 Optimization Track) ---
+        if 0 < args.num_solutions < 20:
+            # --- STRATEGY A: Dynamic Incremental Core (Batch Solution Enumeration Track) ---
             from solver_core_z3 import create_base_solver_with_assumptions, add_puzzle_clues_to_assumptions
 
             if _Z3_CURRENT_N != p.n:
@@ -39,17 +39,30 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
                 instance_assumptions.append(_Z3_LITERALS[("grid", r, c, val)] == True)
 
             _Z3_SOLVER.push()
-            if _Z3_SOLVER.check(*instance_assumptions) == sat:
+
+            # Continuous check loop under active assumptions
+            while True:
+                if _Z3_SOLVER.check(*instance_assumptions) != sat:
+                    break
+
                 found += 1
                 m = _Z3_SOLVER.model()
                 sol = [[m[_Z3_VARS[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
 
                 if args.print_format == "grid":
-                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                    buffer.append(f"{prefix}{render_grid_flat(sol)}\n\n")
                 elif args.print_format == "string":
-                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}\n\n")
                 elif args.print_format == "all":
-                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                    buffer.append(f"--- Solution #{found} {prefix}---\n\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}\n\n")
+
+                # Block the exact grid combination from being found again in this sub-frame
+                _Z3_SOLVER.add(Or([_Z3_VARS[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
+
+                # Halt if we hit the user-specified threshold
+                if found >= args.num_solutions:
+                    break
+
             _Z3_SOLVER.pop()
 
         else:
@@ -66,11 +79,11 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
 
                 if args.num_solutions != 0:
                     if args.print_format == "grid":
-                        buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                        buffer.append(f"{prefix}{render_grid_flat(sol)}\n\n")
                     elif args.print_format == "string":
-                        buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                        buffer.append(f"{prefix}{serialize_to_string(p, sol)}\n\n")
                     elif args.print_format == "all":
-                        buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                        buffer.append(f"--- Solution #{found} {prefix}---\n\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}\n\n")
 
                 solver.add(Or([grid_vars[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
                 if args.num_solutions > 0 and found >= args.num_solutions:
@@ -89,11 +102,11 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
             found += 1
             if args.num_solutions != 0:
                 if args.print_format == "grid":
-                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                    buffer.append(f"{prefix}{render_grid_flat(sol)}\n\n")
                 elif args.print_format == "string":
-                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}\n\n")
                 elif args.print_format == "all":
-                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                    buffer.append(f"--- Solution #{found} {prefix}---\n\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}\n\n")
 
     if found == 0:
         buffer.append(f"{prefix}UNSATISFIABLE (No Solution Found)")
