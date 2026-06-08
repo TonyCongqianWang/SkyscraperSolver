@@ -56,7 +56,7 @@ def parse_duration(s):
 
 
 def main(command_name, filename, output_file=None, options="",
-         time_limit=None, print_period=None, use_stdin=False):
+         time_limit=None, print_period=None, use_stdin=False, print_summary_limit=None):
     try:
         with open(filename, 'r') as file:
             raw_lines = file.readlines()
@@ -248,9 +248,14 @@ def main(command_name, filename, output_file=None, options="",
         total_nodes  = sum(nodes_visited_list)               if nodes_visited_list else 0
 
         write_summary(f"\nSorted Times:\n\n")
-        for cmd, et in sorted(zip(commands, elapsed_times), key=lambda x: x[1]):
-            write_summary(f"Command: {cmd}\n")
-            write_summary(f"Elapsed: {format_time(et)}\n\n")
+        sorted_cmds_times = sorted(zip(commands, elapsed_times), key=lambda x: x[1])
+        for i, (cmd, et) in enumerate(sorted_cmds_times):
+            if print_summary_limit is not None and i >= len(sorted_cmds_times) - print_summary_limit:
+                write_summary(f"Command: {cmd}\n")
+                write_summary(f"Elapsed: {format_time(et)}\n\n")
+            else:
+                fwrite(f"Command: {cmd}\n")
+                fwrite(f"Elapsed: {format_time(et)}\n\n")
 
         write_summary(f"\nStart: {total_start_dt}\n")
         write_summary(f"End: {total_end_dt}\n")
@@ -294,6 +299,8 @@ if __name__ == "__main__":
                              '0 or negative silences everything except the final summary. '
                              'Omit for continuous real-time output (default). '
                              'Does not affect output written with -o.')
+    parser.add_argument('--print-limit-summary', default=None, type=int,
+                        help='Maximum number of instance to print at summary. If omitted, prints all instances in the summary.')
     parser.add_argument('--use-stdin', action='store_true',
                         help='Pass the puzzle input via stdin interactively.')
 
@@ -307,4 +314,4 @@ if __name__ == "__main__":
         sys.exit(1)
 
     main(args.command, args.filename, args.output, args.options,
-         time_limit=time_limit, print_period=print_period, use_stdin=args.use_stdin)
+         time_limit=time_limit, print_period=print_period, use_stdin=args.use_stdin, print_summary_limit=args.print_limit_summary)
