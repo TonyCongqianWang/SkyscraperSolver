@@ -3,75 +3,89 @@ import argparse
 import shlex
 from parser import parse_puzzle_input
 from renderer import render_grid_flat, render_ascii_frame, serialize_to_string
-from ortools.sat.python import cp_model
 
-class SkyscraperSolutionPrinter(cp_model.CpSolverSolutionCallback):
-    """Unified native callback hook that accumulates solutions up to an arbitrary limit."""
-    def __init__(self, grid_vars, limit=0):
-        super().__init__()
-        self._grid_vars = grid_vars
-        self._limit = limit
-        self.solutions = []
-
-    def on_solution_callback(self):
-        n = len(self._grid_vars)
-        sol = [[self.value(self._grid_vars[r][c]) for c in range(n)] for r in range(n)]
-        self.solutions.append(sol)
-
-        # Force immediate termination of the C++ loop if the threshold limit is met
-        if self._limit > 0 and len(self.solutions) >= self._limit:
-            self.stop_search()
+# Persistent global registers to preserve Z3 incremental clause sharing for -s 1
+_Z3_SOLVER = None
+_Z3_VARS = None
+_Z3_LITERALS = None
+_Z3_CURRENT_N = None
 
 def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
+    global _Z3_SOLVER, _Z3_VARS, _Z3_LITERALS, _Z3_CURRENT_N
     found = 0
     buffer = []
+    prefix = f"{puzzle_id} " if puzzle_id else ""
 
-    # --- Z3 BACKEND (Direct Constraints) ---
+    # --- Z3 BACKEND ---
     if args.backend == "z3":
-        from solver_core_z3 import create_base_solver
         from z3 import sat, Or
 
-        solver, grid_vars = create_base_solver(p, randomize=True)
+        if args.num_solutions == 1:
+            # --- STRATEGY A: Dynamic Incremental Core (Batch -s 1 Optimization Track) ---
+            from solver_core_z3 import create_base_solver_with_assumptions, add_puzzle_clues_to_assumptions
 
-        while True:
-            if solver.check() != sat:
-                break
-            found += 1
-            m = solver.model()
-            sol = [[m[grid_vars[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
+            if _Z3_CURRENT_N != p.n:
+                _Z3_CURRENT_N = p.n
+                _Z3_SOLVER, _Z3_VARS, _Z3_LITERALS = create_base_solver_with_assumptions(p)
+            else:
+                # Add any missing value-specific constraints dynamically to the shared workspace
+                add_puzzle_clues_to_assumptions(_Z3_SOLVER, _Z3_VARS, p, _Z3_LITERALS)
 
-            if args.num_solutions != 0:
+            # Map inputs to the exact value-specific literal flags
+            instance_assumptions = []
+            for d, idx, val in p.get_active_clues():
+                instance_assumptions.append(_Z3_LITERALS[("edge", d, idx, val)] == True)
+            for r, c, val in p.get_active_grid_given():
+                instance_assumptions.append(_Z3_LITERALS[("grid", r, c, val)] == True)
+
+            _Z3_SOLVER.push()
+            if _Z3_SOLVER.check(*instance_assumptions) == sat:
+                found += 1
+                m = _Z3_SOLVER.model()
+                sol = [[m[_Z3_VARS[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
+
                 if args.print_format == "grid":
-                    buffer.append(render_grid_flat(sol))
+                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
                 elif args.print_format == "string":
-                    buffer.append(serialize_to_string(p, sol))
+                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
                 elif args.print_format == "all":
-                    buffer.append(f"--- Solution #{found} ---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+            _Z3_SOLVER.pop()
 
-            solver.add(Or([grid_vars[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
-            if args.num_solutions > 0 and found >= args.num_solutions:
-                break
+        else:
+            # --- STRATEGY B: Standalone Sandbox Core (Pure Independent -s 0 Exploration Track) ---
+            from solver_core_z3 import create_base_solver
+            solver, grid_vars = create_base_solver(p, randomize=True)
 
-    # --- CP-SAT BACKEND (Unified Native Callback) ---
+            while True:
+                if solver.check() != sat:
+                    break
+                found += 1
+                m = solver.model()
+                sol = [[m[grid_vars[r][c]].as_long() for c in range(p.n)] for r in range(p.n)]
+
+                if args.print_format == "grid":
+                    buffer.append(f"{prefix}{render_grid_flat(sol)}")
+                elif args.print_format == "string":
+                    buffer.append(f"{prefix}{serialize_to_string(p, sol)}")
+                elif args.print_format == "all":
+                    buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
+
+                solver.add(Or([grid_vars[r][c] != sol[r][c] for r in range(p.n) for c in range(p.n)]))
+                if args.num_solutions > 0 and found >= args.num_solutions:
+                    break
+
+    # --- CP-SAT BACKEND (Using native callback arrays) ---
     elif args.backend == "cpsat":
-        from solver_core_cpsat import create_base_solver as create_cp_solver
+        from solver_core_cpsat import create_base_solver, SkyscraperSolutionPrinter
 
-        # 1. Initialize the C++ model definitions
-        solver, model, grid_vars = create_cp_solver(p, randomize=True)
-
-        # 2. Spin up the solution tracker bound directly to your CLI limit argument
+        solver, model, grid_vars = create_base_solver(p, randomize=True)
         solution_printer = SkyscraperSolutionPrinter(grid_vars, limit=args.num_solutions)
-
-        # 3. Enable the native multi-solution state preservation flag
         solver.parameters.enumerate_all_solutions = True
-
-        # 4. Run the single-pass solve action natively (ignores volatile return status)
         solver.Solve(model, solution_printer)
 
-        # 5. Extract and format the accumulated solutions cleanly from the callback object
         for sol in solution_printer.solutions:
             found += 1
-            prefix = f"{puzzle_id} " if puzzle_id else ""
             if args.num_solutions != 0:
                 if args.print_format == "grid":
                     buffer.append(f"{prefix}{render_grid_flat(sol)}")
@@ -80,15 +94,12 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
                 elif args.print_format == "all":
                     buffer.append(f"--- Solution #{found} {prefix}---\n{render_ascii_frame(p.n, sol, p.clues)}\n{serialize_to_string(p, sol)}")
 
-    # Handle unsatisfiable fallbacks cleanly based on actual extracted solution count
     if found == 0:
-        prefix = f"{puzzle_id} " if puzzle_id else ""
         buffer.append(f"{prefix}UNSATISFIABLE (No Solution Found)")
 
     if args.print_format == "all" and found > 0:
         print(f"Total Unique Solutions Found: {found}\n", file=f)
 
-    # Flush the text arrays down the designated IO stream completely
     for solution in buffer:
         print(solution, file=f)
 

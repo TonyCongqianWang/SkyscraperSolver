@@ -33,11 +33,13 @@ def create_base_solver(puzzle: Puzzle, randomize: bool = False) -> Tuple[Solver,
 
     return s, grid
 
-def create_base_solver_with_assumptions(puzzle: Puzzle) -> Tuple[Solver, List[List[Int]], Dict[Tuple[str, Any, Any], Bool]]:
-    """Generates a solver alongside independent constraint literal activation keys."""
+def create_base_solver_with_assumptions(puzzle: Puzzle) -> Tuple[Solver, List[List[Int]], Dict[Tuple[str, Any, Any, Any], Bool]]:
+    """Generates an incremental solver core with value-aware, dynamic literal tracking structures."""
     n = puzzle.n
     s = Solver()
-    b_grid = [[[Bool(f"b_{r}_{c}_{h}") for h in range(n + 1)] for c in range(n)] for r in range(n)]
+
+    # Store references directly inside the solver context to allow dynamic additions later
+    s._b_grid = [[[Bool(f"b_{r}_{c}_{h}") for h in range(n + 1)] for c in range(n)] for r in range(n)]
     grid = [[Int(f"cell_{r}_{c}") for c in range(n)] for r in range(n)]
 
     for r in range(n):
@@ -46,29 +48,39 @@ def create_base_solver_with_assumptions(puzzle: Puzzle) -> Tuple[Solver, List[Li
         for c in range(n):
             s.add(grid[r][c] >= 1, grid[r][c] <= n)
             for h in range(1, n + 1):
-                s.add(b_grid[r][c][h] == (grid[r][c] == h))
+                s.add(s._b_grid[r][c][h] == (grid[r][c] == h))
 
     clue_literals = {}
+    # Incorporate the dynamic addition step directly during the boot pass
+    add_puzzle_clues_to_assumptions(s, grid, puzzle, clue_literals)
+    return s, grid, clue_literals
+
+def add_puzzle_clues_to_assumptions(s: Solver, grid: List[List[Int]], puzzle: Puzzle, clue_literals: dict):
+    """Safely appends value-aware implication networks to an active global solver trace on the fly."""
+    n = puzzle.n
     for d in ["N", "S", "W", "E"]:
         for idx in range(n):
             val = puzzle.clues[d][idx]
             if val > 0:
-                lit = Bool(f"lit_edge_{d}_{idx}")
-                clue_literals[("edge", d, idx)] = lit
-                coords = ([(r, idx) for r in range(n)] if d == "N" else
-                          [(r, idx) for r in reversed(range(n))] if d == "S" else
-                          [(idx, c) for c in range(n)] if d == "W" else [(idx, c) for c in reversed(range(n))])
-                s.add(Implies(lit, _get_vis_expr(n, b_grid, val, coords)))
+                # CRITICAL FIX: The specific clue value is now part of the structural unique key
+                key = ("edge", d, idx, val)
+                if key not in clue_literals:
+                    lit = Bool(f"lit_edge_{d}_{idx}_v{val}")
+                    clue_literals[key] = lit
+                    coords = ([(r, idx) for r in range(n)] if d == "N" else
+                              [(r, idx) for r in reversed(range(n))] if d == "S" else
+                              [(idx, c) for c in range(n)] if d == "W" else [(idx, c) for c in reversed(range(n))])
+                    s.add(Implies(lit, _get_vis_expr(n, s._b_grid, val, coords)))
 
     for r in range(n):
         for c in range(n):
             val = puzzle.grid[r][c]
             if val > 0:
-                lit = Bool(f"lit_grid_{r}_{c}")
-                clue_literals[("grid", r, c)] = lit
-                s.add(Implies(lit, grid[r][c] == val))
-
-    return s, grid, clue_literals
+                key = ("grid", r, c, val)
+                if key not in clue_literals:
+                    lit = Bool(f"lit_grid_{r}_{c}_v{val}")
+                    clue_literals[key] = lit
+                    s.add(Implies(lit, grid[r][c] == val))
 
 def _apply_visibility(s: Solver, b_grid: list, val: int, coords: list):
     if val > 0:
