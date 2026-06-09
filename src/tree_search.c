@@ -81,6 +81,7 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	puzzle->nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
+	init_node_transition(&next);
 	init_sol_info(&node_sols, puzzle->squared_size, 0);
 	prune_node(puzzle);
 	while (!check_sol_target(&node_sols, puzzle->cur_node)
