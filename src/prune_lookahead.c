@@ -20,13 +20,9 @@
 void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 {
 	t_node_transition		tr;
-	t_node_select_config	sel;
 
 	puzzle->cur_node->is_in_lookahead_select = 1;
 	puzzle->cur_node->is_selective_lookahead = config->is_selective;
-	select_node_select_config(puzzle, &sel);
-	sel.is_selective = config->is_selective;
-	build_node_order(puzzle, &sel);
 	init_node_transition(&tr);
 	while (try_get_best_transition(puzzle, &tr))
 	{

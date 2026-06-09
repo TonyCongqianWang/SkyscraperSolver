@@ -22,6 +22,7 @@ void	prune_node(t_puzzle *puzzle)
 
 	puzzle->cur_node->order_caches[0].last_build_prog = 0;
 	puzzle->cur_node->order_caches[1].last_build_prog = 0;
+	puzzle->cur_node->order_caches[2].last_build_prog = 0;
 	select_prune_config(puzzle, &config);
 	if (config.strategy == PRUNE_NONE)
 		return ;
