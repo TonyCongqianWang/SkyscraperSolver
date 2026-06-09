@@ -17,6 +17,7 @@
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
+static void	init_order_caches(t_node_state *node);
 
 void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 {
@@ -70,7 +71,10 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->num_unset = size * size;
 	root_node->target_nunset = 0;
 	root_node->last_prune_nunset = size * size + 1;
-	root_node->cur_prune_nunset = size * size + 1;
+	root_node->rows_changed_since_prune = 0xffff;
+	root_node->cols_changed_since_prune = 0xffff;
+	root_node->is_in_lookahead_select = 0;
+	init_order_caches(root_node);
 	root_node->progress_counter = 0;
 	root_node->last_prune_prog = 0;
 	root_node->solutions_found = 0;
@@ -81,6 +85,7 @@ static void	init_root_node(t_node_state *root_node, int size)
 static void	init_node_grid(t_node_state *node, int size)
 {
 	int		idx;
+	int		v;
 
 	idx = 0;
 	while (idx < size * size)
@@ -89,6 +94,37 @@ static void	init_node_grid(t_node_state *node, int size)
 		node->grid.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(node, idx);
 		node->grid.num_cell_vals[idx] = size;
+		v = 0;
+		while (v < MAX_SIZE + 1)
+		{
+			node->lookahead_scores[idx][v] = 0.0;
+			v++;
+		}
 		idx++;
+	}
+}
+
+static void	init_order_caches(t_node_state *node)
+{
+	int	c;
+	int	i;
+
+	c = 0;
+	while (c < 3)
+	{
+		node->order_caches[c].count = node->size * node->size;
+		node->order_caches[c].last_build_prog = 0;
+		i = 0;
+		while (i < node->size * node->size)
+		{
+			node->order_caches[c].entries[i].cell_idx = i;
+			node->order_caches[c].entries[i].cell_val = 1;
+			node->order_caches[c].entries[i].score = 0.0;
+			node->order_caches[c].entries[i].num_valids_col = 0;
+			node->order_caches[c].entries[i].num_valids_row = 0;
+			node->order_caches[c].entries[i].num_valids_cell = 0;
+			i++;
+		}
+		c++;
 	}
 }

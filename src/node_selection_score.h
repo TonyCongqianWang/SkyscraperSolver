@@ -1,21 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   constraint_update.h                                :+:      :+:    :+:   */
+/*   node_selection_score.h                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 21:31:47 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:46:00 by towang           ###   ########.fr       */
+/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/09 16:48:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CONSTRAINT_UPDATE_H
-# define CONSTRAINT_UPDATE_H
-# include "puzzle_structs.h"
+#ifndef NODE_SELECTION_SCORE_H
+# define NODE_SELECTION_SCORE_H
 
-int	update_constr_bounds(t_puzzle *puzzle, int cell_idx);
-int	update_constr_bounds_unset(t_constraint_bounds *constr, int lb, int ub);
-int	update_constr_bounds_new_val(t_constraint_bounds *constr, int new_val);
+# include "puzzle_structs.h"
+# include "strategy_config.h"
+
+void	score_transition_strat(t_node_state *state, t_node_transition *next,
+			t_score_family family);
 
 #endif

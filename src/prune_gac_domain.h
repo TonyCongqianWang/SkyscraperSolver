@@ -1,21 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   constraint_update.h                                :+:      :+:    :+:   */
+/*   prune_gac_domain.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 21:31:47 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 20:46:00 by towang           ###   ########.fr       */
+/*   Created: 2026/06/09 16:57:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/09 16:57:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CONSTRAINT_UPDATE_H
-# define CONSTRAINT_UPDATE_H
+#ifndef PRUNE_GAC_DOMAIN_H
+# define PRUNE_GAC_DOMAIN_H
+
 # include "puzzle_structs.h"
 
-int	update_constr_bounds(t_puzzle *puzzle, int cell_idx);
-int	update_constr_bounds_unset(t_constraint_bounds *constr, int lb, int ub);
-int	update_constr_bounds_new_val(t_constraint_bounds *constr, int new_val);
+int		count_bits(int bmp);
+void	eliminate_bmp_vals(t_node_state *state, int cell_idx, int u_bmp);
+void	keep_only_values(t_node_state *state, int cell_idx, int keep_mask);
+void	get_value_cells(t_node_state *state, int *cells, int count,
+			int *value_cells);
 
 #endif
