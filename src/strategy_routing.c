@@ -19,10 +19,10 @@
 # define G_PRUNE_PERIOD_SHALLOW		16
 #endif
 #ifndef G_PRUNE_EXTRA_PERIOD_DEEP
-# define G_PRUNE_EXTRA_PERIOD_DEEP	30
+# define G_PRUNE_EXTRA_PERIOD_DEEP	15
 #endif
 #ifndef REBUILD_PERIOD
-# define REBUILD_PERIOD			4
+# define REBUILD_PERIOD			16
 #endif
 
 #define G_DEPTH_THRESHOLD_0		0
@@ -49,14 +49,25 @@ static int	should_skip_prune(t_puzzle *puzzle)
 	return (node->progress_counter < node->last_prune_prog + period);
 }
 
+#ifndef G_LOOKAHEAD_PRUNING_LEVEL
+# define G_LOOKAHEAD_PRUNING_LEVEL	1
+#endif
+
+#ifndef DISABLE_GAC
+# define DISABLE_GAC 0
+#endif
+
 static void	set_root_prune(t_prune_config *config)
 {
-	config->strategy = PRUNE_HYBRID;
+	if (DISABLE_GAC)
+		config->strategy = PRUNE_LOOKAHEAD_DIVE;
+	else
+		config->strategy = PRUNE_HYBRID;
 	config->lookahead.is_selective = 0;
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = 1;
+	config->lookahead.pruning_level = G_LOOKAHEAD_PRUNING_LEVEL;
 	config->gac.is_selective = 0;
 	config->gac.max_k = 3;
 	config->gac.analyse_naked = 1;
@@ -69,8 +80,8 @@ static void	set_deep_prune(t_prune_config *config, double unset_ratio)
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = 1;
-	if (unset_ratio > 0.7)
+	config->lookahead.pruning_level = G_LOOKAHEAD_PRUNING_LEVEL;
+	if (!DISABLE_GAC && unset_ratio > 0.7)
 	{
 		config->strategy = PRUNE_HYBRID;
 		config->gac.is_selective = 1;

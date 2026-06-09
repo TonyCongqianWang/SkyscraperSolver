@@ -56,6 +56,12 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 		else
 			config.start_cell_val = 1;
 		config.is_selective = puzzle->cur_node->is_selective_lookahead;
+#ifdef LOOKAHEAD_SCORE_FAMILY
+		config.score_family = LOOKAHEAD_SCORE_FAMILY;
+#endif
+#ifdef LOOKAHEAD_CRITERION
+		config.criterion = LOOKAHEAD_CRITERION;
+#endif
 	}
 	if (config.enable_cache)
 		return (get_best_from_cache(puzzle, next, &config));

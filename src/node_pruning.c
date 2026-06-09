@@ -16,13 +16,20 @@
 #include "prune_lookahead.h"
 #include "prune_gac.h"
 
+#ifndef FORCE_INVALIDATE_CACHE
+# define FORCE_INVALIDATE_CACHE 1
+#endif
+
 void	prune_node(t_puzzle *puzzle)
 {
 	t_prune_config	config;
 
-	puzzle->cur_node->order_caches[0].last_build_prog = 0;
-	puzzle->cur_node->order_caches[1].last_build_prog = 0;
-	puzzle->cur_node->order_caches[2].last_build_prog = 0;
+	if (FORCE_INVALIDATE_CACHE)
+	{
+		puzzle->cur_node->order_caches[0].last_build_prog = 0;
+		puzzle->cur_node->order_caches[1].last_build_prog = 0;
+		puzzle->cur_node->order_caches[2].last_build_prog = 0;
+	}
 	select_prune_config(puzzle, &config);
 	if (config.strategy == PRUNE_NONE)
 		return ;
