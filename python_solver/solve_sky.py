@@ -124,11 +124,15 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
 def main():
     parser = argparse.ArgumentParser(description="Skyscraper Puzzle Solver Engine.")
     parser.add_argument("input", type=str, nargs="*", help="Input properties (Optional. If omitted, reads from stdin).")
-    parser.add_argument("-b", "--backend", type=str, choices=["z3", "cpsat"], default="cpsat", help="Solver backend to use.")
+    parser.add_argument("-b", "--backend", type=str, choices=["z3", "cpsat"], default=None, help="Solver backend to use.")
     parser.add_argument("-s", "--num_solutions", type=int, default=1, help="Max solutions to track.")
     parser.add_argument("-p", "--print_format", type=str, choices=["grid", "string", "all"], default="all")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output destination file path.")
     args = parser.parse_args()
+
+    if args.backend is None:
+        args.backend = "z3" if args.num_solutions == 1 else "cpsat"
+        print(f"Auto-selected backend: {args.backend}", file=sys.stdout)
 
     f = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
 

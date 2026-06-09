@@ -56,7 +56,7 @@ def parse_duration(s):
 
 
 def main(command_name, filename, output_file=None, options="",
-         time_limit=None, print_period=None, use_stdin=False, print_summary_limit=None):
+         time_limit=None, print_period=None, use_stdin=False, print_summary_limit=-1):
     try:
         with open(filename, 'r') as file:
             raw_lines = file.readlines()
@@ -250,7 +250,7 @@ def main(command_name, filename, output_file=None, options="",
         write_summary(f"\nSorted Times:\n\n")
         sorted_cmds_times = sorted(zip(commands, elapsed_times), key=lambda x: x[1])
         for i, (cmd, et) in enumerate(sorted_cmds_times):
-            if print_summary_limit is not None and i >= len(sorted_cmds_times) - print_summary_limit:
+            if print_summary_limit >= 0 and i >= len(sorted_cmds_times) - print_summary_limit:
                 write_summary(f"Command: {cmd}\n")
                 write_summary(f"Elapsed: {format_time(et)}\n\n")
             else:
@@ -299,8 +299,8 @@ if __name__ == "__main__":
                              '0 or negative silences everything except the final summary. '
                              'Omit for continuous real-time output (default). '
                              'Does not affect output written with -o.')
-    parser.add_argument('--print-limit-summary', default=None, type=int,
-                        help='Maximum number of instance to print at summary. If omitted, prints all instances in the summary.')
+    parser.add_argument('--print-limit-summary', default=10, type=int,
+                        help='Maximum number of instance to print at summary. Negative value to print all.')
     parser.add_argument('--use-stdin', action='store_true',
                         help='Pass the puzzle input via stdin interactively.')
 
