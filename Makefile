@@ -36,7 +36,9 @@ SRCS = $(SRC_DIR)/main.c \
        $(SRC_DIR)/prune_gac_hidden.c \
        $(SRC_DIR)/node_selection_score.c \
        $(SRC_DIR)/node_selection_cache.c \
-       $(SRC_DIR)/node_selection_eval.c
+       $(SRC_DIR)/node_selection_eval.c \
+       $(SRC_DIR)/node_selection_utils.c \
+       $(SRC_DIR)/node_selection_cache_helper.c
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 

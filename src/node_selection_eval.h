@@ -17,12 +17,15 @@
 # include "strategy_config.h"
 
 int		get_cache_index(t_node_state *node);
+int		check_sel(t_node_state *node, int idx,
+			t_node_select_config *conf);
 int		set_next_valid_val(t_puzzle *puzzle, t_node_transition *next);
-int		is_better(double score, double best_score,
-			t_selection_criterion criterion);
 void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config);
 void	sort_node_order(t_node_transition *entries, int count,
 			t_selection_criterion criterion);
+int		scan_best_live(t_puzzle *puzzle, t_node_transition *next,
+			t_node_select_config *config);
+void	init_node_transition(t_node_transition *tr);
 
 #endif
