@@ -69,6 +69,8 @@ static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
 	t_node_state		*cur_node;
 
 	cur_node = puzzle->cur_node;
+	if (cur_node->grid.vals[next.cell_idx] != 0)
+		return (0);
 	cur_node->grid.vals[next.cell_idx] = next.cell_val;
 	is_valid = check_constraints(puzzle, next.cell_idx);
 	cur_node->grid.vals[next.cell_idx] = 0;
