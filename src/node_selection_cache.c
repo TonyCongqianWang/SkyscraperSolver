@@ -16,28 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
-				t_node_select_config *config)
-{
-	int					cell_idx;
-	t_node_transition	best;
-
-	cell_idx = 0;
-	while (cell_idx < puzzle->squared_size)
-	{
-		if (is_cell_empty(puzzle->cur_node, cell_idx))
-		{
-			set_best_val_strat(puzzle, cell_idx, &best, config);
-			if (best.cell_idx != -1)
-			{
-				cache->entries[cache->count] = best;
-				cache->count++;
-			}
-		}
-		cell_idx++;
-	}
-}
-
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 {
 	t_node_state		*node;
@@ -119,21 +97,26 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
-	t_node_order	*cache;
 	int				i;
 	int				sf_idx;
+	int				cell;
+	t_node_state	*n;
 
 	sf_idx = get_score_family_idx(config->score_family);
-	cache = puzzle->cur_node->order_caches[sf_idx];
 	if (resume_next_from_cache(puzzle, next, sf_idx, &i))
 		return (1);
-	while (i < cache->count)
+	n = puzzle->cur_node;
+	while (i < n->order_caches[sf_idx]->count)
 	{
-		if (process_next_entry(puzzle, next, config, i))
+		cell = n->order_caches[sf_idx]->entries[i].cell_idx;
+		next->cell_idx = cell;
+		next->cell_val = 1;
+		if (is_cell_empty(n, cell)
+			&& check_sel_filter(n, cell, puzzle->size, config->is_selective)
+			&& set_next_valid_val(puzzle, next) && is_cell_empty(n, cell))
 			return (1);
-		if (!puzzle->cur_node->is_in_lookahead_select
-			&& i == puzzle->cur_node->lowest_valid_idx[sf_idx])
-			puzzle->cur_node->lowest_valid_idx[sf_idx]++;
+		if (!n->is_in_lookahead_select && i == n->lowest_valid_idx[sf_idx])
+			n->lowest_valid_idx[sf_idx]++;
 		i++;
 	}
 	return (0);

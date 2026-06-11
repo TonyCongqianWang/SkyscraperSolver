@@ -84,24 +84,24 @@ int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 		&& is_cell_empty(puzzle->cur_node, next->cell_idx));
 }
 
-int	process_next_entry(t_puzzle *puzzle, t_node_transition *next,
-		t_node_select_config *config, int i)
+void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
+			t_node_select_config *config)
 {
-	int				cell;
-	t_node_order	*cache;
+	int					cell_idx;
+	t_node_transition	best;
 
-	cache = puzzle->cur_node->order_caches[
-		get_score_family_idx(config->score_family)];
-	cell = cache->entries[i].cell_idx;
-	if (is_cell_empty(puzzle->cur_node, cell)
-		&& check_sel_filter(puzzle->cur_node, cell, puzzle->size,
-			config->is_selective))
+	cell_idx = 0;
+	while (cell_idx < puzzle->squared_size)
 	{
-		next->cell_idx = cell;
-		next->cell_val = 1;
-		if (set_next_valid_val(puzzle, next)
-			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
-			return (1);
+		if (is_cell_empty(puzzle->cur_node, cell_idx))
+		{
+			set_best_val_strat(puzzle, cell_idx, &best, config);
+			if (best.cell_idx != -1)
+			{
+				cache->entries[cache->count] = best;
+				cache->count++;
+			}
+		}
+		cell_idx++;
 	}
-	return (0);
 }
