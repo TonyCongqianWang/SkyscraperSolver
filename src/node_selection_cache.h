@@ -20,7 +20,7 @@ void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config);
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config);
 void	rebuild_cache_if_stale(t_puzzle *puzzle,
-			t_node_select_config *config);
+			t_node_select_config *config, int allow_stale_rebuild);
 int		get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
 int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,

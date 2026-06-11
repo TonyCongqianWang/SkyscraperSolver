@@ -1,25 +1,59 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   strategy_routing.c                                 :+:      :+:    :+:   */
+/*   prune_strat_routing.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/10 10:51:00 by towang           ###   ########.fr       */
+/*   Created: 2026/06/10 14:20:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/10 14:20:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "strategy_routing.h"
 
-static const double			g_min_unset_r_prune = 0.4;
-static const t_prune_prog	g_prune_period_shallow = 160;
-static const t_prune_prog	g_prune_extra_period_deep = 150;
-static const t_prune_prog	g_rebuild_period = 160;
-static const int			g_depth_threshold_0 = 0;
-static const int			g_depth_threshold_1 = 3;
-static const int			g_disable_gac = 0;
-static const int			g_lookahead_pruning_level = 1;
+#ifndef G_MIN_UNSET_R_PRUNE
+# define G_MIN_UNSET_R_PRUNE 0.4
+#endif
+
+#ifndef G_PRUNE_PERIOD_SHALLOW
+# define G_PRUNE_PERIOD_SHALLOW 160
+#endif
+
+#ifndef G_PRUNE_EXTRA_PERIOD_DEEP
+# define G_PRUNE_EXTRA_PERIOD_DEEP 150
+#endif
+
+#ifndef G_PRUNE_DEPTH_THRESHOLD_0
+# define G_PRUNE_DEPTH_THRESHOLD_0 0
+#endif
+
+#ifndef G_PRUNE_DEPTH_THRESHOLD_1
+# define G_PRUNE_DEPTH_THRESHOLD_1 3
+#endif
+
+#ifndef G_PRUNE_DISABLE_GAC
+# define G_PRUNE_DISABLE_GAC 0
+#endif
+
+#ifndef G_PRUNE_LOOKAHEAD_PRUNING_LEVEL
+# define G_PRUNE_LOOKAHEAD_PRUNING_LEVEL 1
+#endif
+
+static const double			g_min_unset_r_prune
+	= G_MIN_UNSET_R_PRUNE;
+static const t_prune_prog	g_prune_period_shallow
+	= G_PRUNE_PERIOD_SHALLOW;
+static const t_prune_prog	g_prune_extra_period_deep
+	= G_PRUNE_EXTRA_PERIOD_DEEP;
+static const int			g_prune_depth_threshold_0
+	= G_PRUNE_DEPTH_THRESHOLD_0;
+static const int			g_prune_depth_threshold_1
+	= G_PRUNE_DEPTH_THRESHOLD_1;
+static const int			g_prune_disable_gac
+	= G_PRUNE_DISABLE_GAC;
+static const int			g_prune_lookahead_pruning_level
+	= G_PRUNE_LOOKAHEAD_PRUNING_LEVEL;
 
 static int	should_skip_prune(t_puzzle *puzzle)
 {
@@ -34,9 +68,9 @@ static int	should_skip_prune(t_puzzle *puzzle)
 		return (0);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
 	period = g_prune_period_shallow;
-	if (node->cur_depth > g_depth_threshold_0)
+	if (node->cur_depth > g_prune_depth_threshold_0)
 		period += g_prune_extra_period_deep;
-	if (node->cur_depth > g_depth_threshold_1)
+	if (node->cur_depth > g_prune_depth_threshold_1)
 		period += g_prune_extra_period_deep;
 	period = (t_prune_prog)(period / unset_ratio);
 	return (node->progress_counter < node->last_prune_prog + period);
@@ -44,7 +78,7 @@ static int	should_skip_prune(t_puzzle *puzzle)
 
 static void	set_root_prune(t_prune_config *config)
 {
-	if (g_disable_gac)
+	if (g_prune_disable_gac)
 		config->strategy = PRUNE_LOOKAHEAD_DIVE;
 	else
 		config->strategy = PRUNE_HYBRID;
@@ -52,7 +86,7 @@ static void	set_root_prune(t_prune_config *config)
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = g_lookahead_pruning_level;
+	config->lookahead.pruning_level = g_prune_lookahead_pruning_level;
 	config->gac.is_selective = 0;
 	config->gac.max_k = 3;
 	config->gac.analyse_naked = 1;
@@ -65,8 +99,8 @@ static void	set_deep_prune(t_prune_config *config, double unset_ratio)
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = g_lookahead_pruning_level;
-	if (!g_disable_gac && unset_ratio > 0.7)
+	config->lookahead.pruning_level = g_prune_lookahead_pruning_level;
+	if (!g_prune_disable_gac && unset_ratio > 0.7)
 	{
 		config->strategy = PRUNE_HYBRID;
 		config->gac.is_selective = 1;
@@ -99,31 +133,4 @@ void	select_prune_config(t_puzzle *puzzle, t_prune_config *config)
 		set_root_prune(config);
 	else
 		set_deep_prune(config, unset_ratio);
-}
-
-void	select_node_select_config(t_puzzle *puzzle,
-			t_node_select_config *config)
-{
-	t_node_state	*node;
-	double			unset_ratio;
-	t_prune_prog	period;
-
-	node = puzzle->cur_node;
-	config->score_family = SCORE_BRANCHING;
-	config->criterion = SELECT_MAX;
-	config->enable_cache = 1;
-	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	period = g_rebuild_period;
-	if (node->cur_depth > g_depth_threshold_0)
-		period += g_prune_extra_period_deep;
-	if (node->cur_depth > g_depth_threshold_1)
-		period += g_prune_extra_period_deep;
-	if (unset_ratio > 0.0)
-		period = (t_prune_prog)(period / unset_ratio);
-	else
-		period = 99999999;
-	config->rebuild_period = period;
-	config->start_cell_idx = -1;
-	config->start_cell_val = 1;
-	config->is_selective = 0;
 }

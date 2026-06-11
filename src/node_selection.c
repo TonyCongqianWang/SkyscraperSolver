@@ -46,7 +46,7 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 	init_select_config(puzzle, next, &config);
 	if (config.enable_cache)
 	{
-		rebuild_cache_if_stale(puzzle, &config);
+		rebuild_cache_if_stale(puzzle, &config, 1);
 		return (get_best_from_cache(puzzle, next, &config));
 	}
 	return (scan_best_live(puzzle, next, &config));
@@ -102,7 +102,7 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	init_select_config(puzzle, next, &config);
 	if (config.enable_cache)
 	{
-		rebuild_cache_if_stale(puzzle, &config);
+		rebuild_cache_if_stale(puzzle, &config, 0);
 		return (get_next_from_cache(puzzle, next, &config));
 	}
 	if (next->cell_idx >= 0 && advance_next_transition(puzzle, next))

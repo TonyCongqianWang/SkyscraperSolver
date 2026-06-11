@@ -30,15 +30,13 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 	t_node_order		*cache;
 	int					cell_idx;
 	t_node_transition	best;
-	int					sf;
+	int					sf_idx;
 
 	node = puzzle->cur_node;
-	sf = config->score_family;
-	cache = get_cache_for_rebuild(puzzle, sf);
+	sf_idx = get_score_family_idx(config->score_family);
+	cache = get_cache_for_rebuild(puzzle, sf_idx);
 	cache->count = 0;
-	node->lowest_valid_idx[0] = 0;
-	node->lowest_valid_idx[1] = 0;
-	node->lowest_valid_idx[2] = 0;
+	node->lowest_valid_idx[sf_idx] = 0;
 	cache->build_depth = node->cur_depth;
 	cell_idx = 0;
 	while (cell_idx < puzzle->squared_size)
@@ -59,19 +57,24 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 }
 
 void	rebuild_cache_if_stale(t_puzzle *puzzle,
-			t_node_select_config *config)
+			t_node_select_config *config, int allow_stale_rebuild)
 {
 	t_node_state	*node;
 	t_node_order	*cache;
 	int				sf;
+	int				is_stale;
 
 	node = puzzle->cur_node;
 	sf = config->score_family;
 	cache = node->order_caches[sf];
-	if (cache->last_build_prog == 0
-		|| (!node->is_in_lookahead_select
-			&& node->progress_counter
-			>= cache->last_build_prog + config->rebuild_period))
+	if (cache->last_build_prog == 0)
+		is_stale = 1;
+	else if (!allow_stale_rebuild)
+		is_stale = 0;
+	else
+		is_stale = (node->progress_counter
+				>= cache->last_build_prog + config->rebuild_period);
+	if (is_stale)
 		build_node_order(puzzle, config);
 }
 
@@ -80,26 +83,34 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 {
 	t_node_order	*cache;
 	int				i;
-	int				sf;
-	int				ci;
+	int				sf_idx;
+	int				cell;
+	int				cached_val;
 
-	sf = config->score_family;
-	ci = get_consumer_index(puzzle->cur_node);
-	cache = puzzle->cur_node->order_caches[sf];
-	i = puzzle->cur_node->lowest_valid_idx[ci];
+	sf_idx = get_score_family_idx(config->score_family);
+	cache = puzzle->cur_node->order_caches[sf_idx];
+	i = puzzle->cur_node->lowest_valid_idx[sf_idx];
 	while (i < cache->count)
 	{
-		if (is_cell_empty(puzzle->cur_node, cache->entries[i].cell_idx)
-			&& is_valid_value(puzzle->cur_node, cache->entries[i].cell_idx,
-				cache->entries[i].cell_val)
-			&& check_sel_filter(puzzle->cur_node, cache->entries[i].cell_idx,
-				puzzle->size, config->is_selective))
+		cell = cache->entries[i].cell_idx;
+		if (is_cell_empty(puzzle->cur_node, cell)
+			&& check_sel_filter(puzzle->cur_node, cell, puzzle->size,
+				config->is_selective))
 		{
-			*next = cache->entries[i];
-			return (1);
+			cached_val = cache->entries[i].cell_val;
+			if (is_valid_value(puzzle->cur_node, cell, cached_val))
+			{
+				*next = cache->entries[i];
+				return (1);
+			}
+			next->cell_idx = cell;
+			next->cell_val = 1;
+			if (set_next_valid_val(puzzle, next)
+				&& is_cell_empty(puzzle->cur_node, next->cell_idx))
+				return (1);
 		}
-		if (i == puzzle->cur_node->lowest_valid_idx[ci])
-			puzzle->cur_node->lowest_valid_idx[ci]++;
+		if (i == puzzle->cur_node->lowest_valid_idx[sf_idx])
+			puzzle->cur_node->lowest_valid_idx[sf_idx]++;
 		i++;
 	}
 	return (0);
@@ -110,28 +121,37 @@ int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 {
 	t_node_order	*cache;
 	int				i;
-	int				sf;
-	int				ci;
+	int				sf_idx;
+	int				*lowest_valid_idx_ptr;
+	int				dummy_lowest_valid_idx;
+	int				cell;
 
-	sf = config->score_family;
-	ci = get_consumer_index(puzzle->cur_node);
-	cache = puzzle->cur_node->order_caches[sf];
-	if (resume_next_from_cache(puzzle, next, cache, &puzzle->cur_node->lowest_valid_idx[ci], &i))
+	sf_idx = get_score_family_idx(config->score_family);
+	cache = puzzle->cur_node->order_caches[sf_idx];
+	if (puzzle->cur_node->is_in_lookahead_select)
+	{
+		dummy_lowest_valid_idx = 0;
+		lowest_valid_idx_ptr = &dummy_lowest_valid_idx;
+	}
+	else
+		lowest_valid_idx_ptr = &puzzle->cur_node->lowest_valid_idx[sf_idx];
+	if (resume_next_from_cache(puzzle, next, cache, lowest_valid_idx_ptr, &i))
 		return (1);
 	while (i < cache->count)
 	{
-		if (is_cell_empty(puzzle->cur_node, cache->entries[i].cell_idx)
-			&& check_sel_filter(puzzle->cur_node, cache->entries[i].cell_idx,
-				puzzle->size, config->is_selective))
+		cell = cache->entries[i].cell_idx;
+		if (is_cell_empty(puzzle->cur_node, cell)
+			&& check_sel_filter(puzzle->cur_node, cell, puzzle->size,
+				config->is_selective))
 		{
-			next->cell_idx = cache->entries[i].cell_idx;
+			next->cell_idx = cell;
 			next->cell_val = 1;
 			if (set_next_valid_val(puzzle, next)
 				&& is_cell_empty(puzzle->cur_node, next->cell_idx))
 				return (1);
 		}
-		if (i == puzzle->cur_node->lowest_valid_idx[ci])
-			puzzle->cur_node->lowest_valid_idx[ci]++;
+		if (i == *lowest_valid_idx_ptr)
+			(*lowest_valid_idx_ptr)++;
 		i++;
 	}
 	return (0);

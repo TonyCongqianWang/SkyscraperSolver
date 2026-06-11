@@ -12,13 +12,9 @@
 
 #include "node_selection_eval.h"
 
-int	get_consumer_index(t_node_state *node)
+int	get_score_family_idx(t_score_family sf)
 {
-	if (node->is_in_lookahead_select && node->sub_node_depth == 0)
-		return (2);
-	if (node->sub_node_depth == 0)
-		return (0);
-	return (1);
+	return ((int)sf);
 }
 
 int	check_sel(t_node_state *node, int idx, t_node_select_config *conf)

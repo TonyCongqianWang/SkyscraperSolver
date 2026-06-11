@@ -28,7 +28,8 @@ SRCS = $(SRC_DIR)/main.c \
        $(SRC_DIR)/string_interface.c \
        $(SRC_DIR)/transition_scoring.c \
        $(SRC_DIR)/tree_search.c \
-       $(SRC_DIR)/strategy_routing.c \
+       $(SRC_DIR)/sel_strat_routing.c \
+       $(SRC_DIR)/prune_strat_routing.c \
        $(SRC_DIR)/prune_lookahead.c \
        $(SRC_DIR)/prune_gac.c \
        $(SRC_DIR)/prune_gac_domain.c \

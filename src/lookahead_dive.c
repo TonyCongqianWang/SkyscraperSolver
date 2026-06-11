@@ -43,6 +43,9 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	cur_node->max_depth = cur_node->cur_depth;
 	cur_node->max_depth += depth;
 	cur_node->sub_node_depth++;
+	cur_node->lowest_valid_idx[0] = 0;
+	cur_node->lowest_valid_idx[1] = 0;
+	cur_node->lowest_valid_idx[2] = 0;
 	return (0);
 }
 
