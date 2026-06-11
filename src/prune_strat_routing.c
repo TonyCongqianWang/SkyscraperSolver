@@ -32,12 +32,20 @@
 # define G_PRUNE_DEPTH_THRESHOLD_1 3
 #endif
 
-#ifndef G_PRUNE_DISABLE_GAC
-# define G_PRUNE_DISABLE_GAC 0
+#ifndef G_PRUNE_GAC_UNSET_R_THRESHOLD
+# define G_PRUNE_GAC_UNSET_R_THRESHOLD 0.7
 #endif
 
-#ifndef G_PRUNE_LOOKAHEAD_PRUNING_LEVEL
-# define G_PRUNE_LOOKAHEAD_PRUNING_LEVEL 1
+#ifndef G_PRUNE_LIN_COEFF
+# define G_PRUNE_LIN_COEFF 0.0
+#endif
+
+#ifndef G_PRUNE_QUAD_COEFF
+# define G_PRUNE_QUAD_COEFF 0.0
+#endif
+
+#ifndef G_PRUNE_CUBIC_COEFF
+# define G_PRUNE_CUBIC_COEFF 0.0
 #endif
 
 static const double			g_min_unset_r_prune
@@ -50,16 +58,21 @@ static const int			g_prune_depth_threshold_0
 	= G_PRUNE_DEPTH_THRESHOLD_0;
 static const int			g_prune_depth_threshold_1
 	= G_PRUNE_DEPTH_THRESHOLD_1;
-static const int			g_prune_disable_gac
-	= G_PRUNE_DISABLE_GAC;
-static const int			g_prune_lookahead_pruning_level
-	= G_PRUNE_LOOKAHEAD_PRUNING_LEVEL;
+static const double			g_prune_gac_unset_r_threshold
+	= G_PRUNE_GAC_UNSET_R_THRESHOLD;
+static const double			g_prune_lin_coeff
+	= G_PRUNE_LIN_COEFF;
+static const double			g_prune_quad_coeff
+	= G_PRUNE_QUAD_COEFF;
+static const double			g_prune_cubic_coeff
+	= G_PRUNE_CUBIC_COEFF;
 
 static int	should_skip_prune(t_puzzle *puzzle)
 {
 	t_node_state	*node;
 	double			unset_ratio;
-	t_prune_prog	period;
+	double			x;
+	double			p;
 
 	node = puzzle->cur_node;
 	if (node->num_unset == 0)
@@ -67,26 +80,25 @@ static int	should_skip_prune(t_puzzle *puzzle)
 	if (node->progress_counter == 0)
 		return (0);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	period = g_prune_period_shallow;
+	x = 1.0 - unset_ratio;
+	p = g_prune_period_shallow;
 	if (node->cur_depth > g_prune_depth_threshold_0)
-		period += g_prune_extra_period_deep;
+		p += g_prune_extra_period_deep;
 	if (node->cur_depth > g_prune_depth_threshold_1)
-		period += g_prune_extra_period_deep;
-	period = (t_prune_prog)(period / unset_ratio);
-	return (node->progress_counter < node->last_prune_prog + period);
+		p += g_prune_extra_period_deep;
+	p *= (1.0 + g_prune_lin_coeff * x + g_prune_quad_coeff * x * x
+			+ g_prune_cubic_coeff * x * x * x);
+	return (node->progress_counter < node->last_prune_prog + (t_prune_prog)p);
 }
 
 static void	set_root_prune(t_prune_config *config)
 {
-	if (g_prune_disable_gac)
-		config->strategy = PRUNE_LOOKAHEAD_DIVE;
-	else
-		config->strategy = PRUNE_HYBRID;
+	config->strategy = PRUNE_HYBRID;
 	config->lookahead.is_selective = 0;
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = g_prune_lookahead_pruning_level;
+	config->lookahead.pruning_level = 1;
 	config->gac.is_selective = 0;
 	config->gac.max_k = 3;
 	config->gac.analyse_naked = 1;
@@ -99,8 +111,8 @@ static void	set_deep_prune(t_prune_config *config, double unset_ratio)
 	config->lookahead.max_depth = 1;
 	config->lookahead.branching_budget = 0;
 	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = g_prune_lookahead_pruning_level;
-	if (!g_prune_disable_gac && unset_ratio > 0.7)
+	config->lookahead.pruning_level = 1;
+	if (unset_ratio > g_prune_gac_unset_r_threshold)
 	{
 		config->strategy = PRUNE_HYBRID;
 		config->gac.is_selective = 1;
