@@ -260,26 +260,38 @@ def main():
     print(f"Compiled {len(compiled)}/{total} configs in {time.time()-t0:.1f}s")
 
     # ── deduplicate ────────────────────────────────────────────────────────────
-    print("\nDeduplicating via calibration instance…")
+    # Run calibration calls in parallel: each binary is independent, and macOS
+    # dyld first-run overhead (~100-200ms) is amortized across workers this way.
+    # A lock guards the shared `seen` dict; duplicate binaries are deleted inline.
+    print(f"\nDeduplicating via calibration instance ({WORKERS_NODES} workers)…")
     sys.stdout.flush()
-    seen: dict[int, int] = {}   # calib_nodes -> first idx
-    unique = []
+    seen: dict[int, int] = {}   # calib_nodes -> first idx kept
+    unique: list[dict]   = []
     n_dup  = 0
-    for conf in compiled:
+    dedup_lock = threading.Lock()
+
+    def dedup_one(conf):
         n = get_calib_nodes(conf["idx"])
         if n is None:
             print(f"  WARNING: calibration failed for idx={conf['idx']}, skipping.")
-            continue
-        if n in seen:
-            n_dup += 1
-            p = binary_path(conf["idx"])
-            if os.path.exists(p):
-                os.remove(p)
-        else:
-            seen[n] = conf["idx"]
-            unique.append(conf)
+            return
+        with dedup_lock:
+            nonlocal n_dup
+            if n in seen:
+                n_dup += 1
+                p = binary_path(conf["idx"])
+                if os.path.exists(p):
+                    os.remove(p)
+            else:
+                seen[n] = conf["idx"]
+                unique.append(conf)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=WORKERS_NODES) as ex:
+        list(ex.map(dedup_one, compiled))   # consume iterator to propagate exceptions
+
     print(f"  {len(unique)} unique configs ({n_dup} duplicates removed).")
     sys.stdout.flush()
+
 
     # ── gauntlet ───────────────────────────────────────────────────────────────
     survivors = unique
