@@ -38,6 +38,7 @@ typedef struct s_node_order
 {
 	t_node_transition	entries[MAX_CELL_COUNT];
 	int					count;
+	int					lowest_valid_idx;
 	t_prune_prog		last_build_prog;
 }		t_node_order;
 

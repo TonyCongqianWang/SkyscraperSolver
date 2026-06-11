@@ -114,6 +114,7 @@ static void	init_order_caches(t_node_state *node)
 	{
 		node->order_caches[c].count = node->size * node->size;
 		node->order_caches[c].last_build_prog = 0;
+		node->order_caches[c].lowest_valid_idx = 0;
 		i = 0;
 		while (i < node->size * node->size)
 		{

@@ -24,7 +24,7 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	puzzle->cur_node->is_in_lookahead_select = 1;
 	puzzle->cur_node->is_selective_lookahead = config->is_selective;
 	init_node_transition(&tr);
-	while (try_get_best_transition(puzzle, &tr))
+	while (try_get_next_transition(puzzle, &tr))
 	{
 		if (!do_l_ahead_dive(puzzle, tr, config->max_depth))
 			set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);

@@ -21,7 +21,12 @@ static void	update_availability(t_node_state *state, int cell_idx, int val);
 
 void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 {
-	state->progress_counter += 10;
+	if (state->grid.vals[cell_idx] != 0)
+	{
+		state->is_invalid = 1;
+		return ;
+	}
+	state->progress_counter += 100;
 	state->grid.vals[cell_idx] = val;
 	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
 	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
@@ -48,11 +53,11 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 	{
 		remaining = state->grid.num_cell_vals[cell_idx] - 1;
 		if (remaining == 1)
-			state->progress_counter += 10;
+			state->progress_counter += 30;
 		else if (remaining == 2)
-			state->progress_counter += 5;
+			state->progress_counter += 15;
 		else
-			state->progress_counter += 1;
+			state->progress_counter += 10;
 		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);

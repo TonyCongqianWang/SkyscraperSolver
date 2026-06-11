@@ -46,6 +46,7 @@ static int	should_skip_prune(t_puzzle *puzzle)
 	if (node->cur_depth > G_DEPTH_THRESHOLD_1)
 		period += G_PRUNE_EXTRA_PERIOD_DEEP;
 	period = (t_prune_prog)(period / unset_ratio);
+	period *= 10;
 	return (node->progress_counter < node->last_prune_prog + period);
 }
 
@@ -119,11 +120,26 @@ void	select_prune_config(t_puzzle *puzzle, t_prune_config *config)
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
 {
-	(void)puzzle;
+	t_node_state	*node;
+	double			unset_ratio;
+	t_prune_prog	period;
+
+	node = puzzle->cur_node;
 	config->score_family = SCORE_BRANCHING;
 	config->criterion = SELECT_MAX;
 	config->enable_cache = 1;
-	config->rebuild_period = REBUILD_PERIOD;
+	unset_ratio = (double)node->num_unset / puzzle->squared_size;
+	period = REBUILD_PERIOD;
+	if (node->cur_depth > G_DEPTH_THRESHOLD_0)
+		period += G_PRUNE_EXTRA_PERIOD_DEEP;
+	if (node->cur_depth > G_DEPTH_THRESHOLD_1)
+		period += G_PRUNE_EXTRA_PERIOD_DEEP;
+	if (unset_ratio > 0.0)
+		period = (t_prune_prog)(period / unset_ratio);
+	else
+		period = 99999999;
+	period *= 10;
+	config->rebuild_period = period;
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
 	config->is_selective = 0;
