@@ -17,7 +17,8 @@
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
-static void	init_order_caches(t_node_state *node);
+static void	init_order_stacks(t_puzzle *puzzle);
+static void	init_node_order_ptrs(t_node_state *node);
 
 void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 {
@@ -28,6 +29,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
+	init_order_stacks(puzzle);
 	puzzle->cur_node = &puzzle->cur_node_storage;
 	puzzle->cur_node->puzzle = puzzle;
 	init_root_node(puzzle->cur_node, size);
@@ -74,7 +76,7 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->rows_changed_since_prune = 0xffff;
 	root_node->cols_changed_since_prune = 0xffff;
 	root_node->is_in_lookahead_select = 0;
-	init_order_caches(root_node);
+	init_node_order_ptrs(root_node);
 	root_node->progress_counter = 0;
 	root_node->last_prune_prog = 0;
 	root_node->solutions_found = 0;
@@ -104,28 +106,49 @@ static void	init_node_grid(t_node_state *node, int size)
 	}
 }
 
-static void	init_order_caches(t_node_state *node)
+static void	init_order_stacks(t_puzzle *puzzle)
+{
+	int	sf;
+	int	stack_idx;
+	int	i;
+
+	sf = 0;
+	while (sf < 3)
+	{
+		puzzle->order_stacks.stacks[sf].top_idx = 0;
+		stack_idx = 0;
+		while (stack_idx < MAX_STACK_DEPTH)
+		{
+			t_node_order *order = &puzzle->order_stacks.stacks[sf].orders[stack_idx];
+			order->count = puzzle->squared_size;
+			order->last_build_prog = 0;
+			order->build_depth = -1;
+			i = 0;
+			while (i < puzzle->squared_size)
+			{
+				order->entries[i].cell_idx = i;
+				order->entries[i].cell_val = 1;
+				order->entries[i].score = 0.0;
+				order->entries[i].num_valids_col = 0;
+				order->entries[i].num_valids_row = 0;
+				order->entries[i].num_valids_cell = 0;
+				i++;
+			}
+			stack_idx++;
+		}
+		sf++;
+	}
+}
+
+static void	init_node_order_ptrs(t_node_state *node)
 {
 	int	c;
-	int	i;
 
 	c = 0;
 	while (c < 3)
 	{
-		node->order_caches[c].count = node->size * node->size;
-		node->order_caches[c].last_build_prog = 0;
-		node->order_caches[c].lowest_valid_idx = 0;
-		i = 0;
-		while (i < node->size * node->size)
-		{
-			node->order_caches[c].entries[i].cell_idx = i;
-			node->order_caches[c].entries[i].cell_val = 1;
-			node->order_caches[c].entries[i].score = 0.0;
-			node->order_caches[c].entries[i].num_valids_col = 0;
-			node->order_caches[c].entries[i].num_valids_row = 0;
-			node->order_caches[c].entries[i].num_valids_cell = 0;
-			i++;
-		}
+		node->order_caches[c] = &node->puzzle->order_stacks.stacks[c].orders[0];
+		node->lowest_valid_idx[c] = 0;
 		c++;
 	}
 }

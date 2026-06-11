@@ -38,9 +38,22 @@ typedef struct s_node_order
 {
 	t_node_transition	entries[MAX_CELL_COUNT];
 	int					count;
-	int					lowest_valid_idx;
 	t_prune_prog		last_build_prog;
+	int					build_depth;
 }		t_node_order;
+
+# define MAX_STACK_DEPTH 128
+
+typedef struct s_node_orders_stack
+{
+	t_node_order	orders[MAX_STACK_DEPTH];
+	int				top_idx;
+}		t_node_orders_stack;
+
+typedef struct s_node_orders_stacks
+{
+	t_node_orders_stack	stacks[3];
+}		t_node_orders_stacks;
 
 typedef struct s_grid_state
 {
@@ -72,7 +85,8 @@ typedef struct s_node_state
 	int						is_in_lookahead_select;
 	int						is_selective_lookahead;
 	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
-	t_node_order			order_caches[3];
+	t_node_order			*order_caches[3];
+	int						lowest_valid_idx[3];
 	t_prune_prog			progress_counter;
 	t_prune_prog			last_prune_prog;
 	t_sol_count				max_solutions;
@@ -128,6 +142,7 @@ typedef struct s_puzzle
 	t_node_state			*cur_node;
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
+	t_node_orders_stacks	order_stacks;
 }		t_puzzle;
 
 #endif

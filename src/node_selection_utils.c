@@ -12,7 +12,7 @@
 
 #include "node_selection_eval.h"
 
-int	get_cache_index(t_node_state *node)
+int	get_consumer_index(t_node_state *node)
 {
 	if (node->is_in_lookahead_select && node->sub_node_depth == 0)
 		return (2);

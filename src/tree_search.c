@@ -16,6 +16,7 @@
 #include "node_selection.h"
 #include "solution_storage.h"
 #include "solution_info.h"
+#include "node_selection_cache.h"
 
 static int	has_reached_terminal_state(t_node_state *cur_node)
 {
@@ -63,6 +64,7 @@ static void	search_step(t_puzzle *puzzle, t_sol_info *node_sols,
 	update_sol_target(node_sols, puzzle->cur_node);
 	recursive_sols = tree_recursion(puzzle, next);
 	*(puzzle->cur_node) = old_state;
+	sync_cache_stacks(puzzle);
 	if (update_sol_info(&recursive_sols, node_sols)
 		|| !check_sol_target(node_sols, puzzle->cur_node)
 		|| recursive_sols.min_nunset == puzzle->squared_size)

@@ -17,6 +17,7 @@
 #include "node_selection.h"
 #include "constraint_checking.h"
 #include "solution_info.h"
+#include "node_selection_cache.h"
 
 static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth);
 static int	check_only_constr(t_puzzle *puzzle, t_node_transition next);
@@ -60,6 +61,7 @@ static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 	old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
 		= (double)progress;
 	*(cur_node) = old_state;
+	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);
 }
 

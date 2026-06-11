@@ -42,15 +42,11 @@ static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
 int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
-	t_node_order			*cache;
-	t_node_state			*node;
 
-	node = puzzle->cur_node;
 	init_select_config(puzzle, next, &config);
 	if (config.enable_cache)
 	{
-		cache = &node->order_caches[get_cache_index(node)];
-		rebuild_cache_if_stale(puzzle, cache, &config);
+		rebuild_cache_if_stale(puzzle, &config);
 		return (get_best_from_cache(puzzle, next, &config));
 	}
 	return (scan_best_live(puzzle, next, &config));
@@ -99,7 +95,6 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
 	t_node_state			*node;
-	t_node_order			*cache;
 
 	node = puzzle->cur_node;
 	if (node->is_complete || node->is_invalid)
@@ -107,8 +102,7 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	init_select_config(puzzle, next, &config);
 	if (config.enable_cache)
 	{
-		cache = &node->order_caches[get_cache_index(node)];
-		rebuild_cache_if_stale(puzzle, cache, &config);
+		rebuild_cache_if_stale(puzzle, &config);
 		return (get_next_from_cache(puzzle, next, &config));
 	}
 	if (next->cell_idx >= 0 && advance_next_transition(puzzle, next))

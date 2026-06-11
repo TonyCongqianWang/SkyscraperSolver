@@ -19,7 +19,7 @@
 void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config);
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config);
-void	rebuild_cache_if_stale(t_puzzle *puzzle, t_node_order *cache,
+void	rebuild_cache_if_stale(t_puzzle *puzzle,
 			t_node_select_config *config);
 int		get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
@@ -28,6 +28,7 @@ int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 int		check_sel_filter(t_node_state *node, int cell_idx,
 			int size, int is_selective);
 int		resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-			t_node_order *cache, int *i_out);
+			t_node_order *cache, int *lowest_valid_idx_ptr, int *i_out);
+void	sync_cache_stacks(t_puzzle *puzzle);
 
 #endif

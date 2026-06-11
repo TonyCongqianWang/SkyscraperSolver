@@ -24,16 +24,16 @@ int	check_sel_filter(t_node_state *node, int cell_idx,
 }
 
 int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-		t_node_order *cache, int *i_out)
+		t_node_order *cache, int *lowest_valid_idx_ptr, int *i_out)
 {
 	int	i;
 
 	if (next->cell_idx < 0)
 	{
-		*i_out = cache->lowest_valid_idx;
+		*i_out = *lowest_valid_idx_ptr;
 		return (0);
 	}
-	i = cache->lowest_valid_idx;
+	i = *lowest_valid_idx_ptr;
 	while (i < cache->count && cache->entries[i].cell_idx != next->cell_idx)
 		i++;
 	if (i < cache->count)
