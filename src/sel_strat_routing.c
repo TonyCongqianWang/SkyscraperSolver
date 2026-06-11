@@ -13,19 +13,19 @@
 #include "strategy_routing.h"
 
 #ifndef G_SEL_REBUILD_PERIOD
-# define G_SEL_REBUILD_PERIOD 2
+# define G_SEL_REBUILD_PERIOD 4
 #endif
 
 #ifndef G_SEL_EXTRA_PERIOD_DEEP
-# define G_SEL_EXTRA_PERIOD_DEEP 8
+# define G_SEL_EXTRA_PERIOD_DEEP 128
 #endif
 
 #ifndef G_SEL_DEPTH_THRESHOLD_0
-# define G_SEL_DEPTH_THRESHOLD_0 0
+# define G_SEL_DEPTH_THRESHOLD_0 2
 #endif
 
 #ifndef G_SEL_LINEAR_COEFF
-# define G_SEL_LINEAR_COEFF 2.0
+# define G_SEL_LINEAR_COEFF 16.0
 #endif
 
 #ifndef G_SEL_QUAD_COEFF
