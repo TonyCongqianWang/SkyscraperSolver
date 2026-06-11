@@ -17,9 +17,11 @@
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 
-typedef unsigned long long	t_prune_prog;
-typedef unsigned long long	t_sol_count;
-typedef unsigned long long	t_node_count;
+typedef unsigned short		t_u16;
+typedef unsigned long long	t_u64;
+typedef t_u64				t_prune_prog;
+typedef t_u64				t_sol_count;
+typedef t_u64				t_node_count;
 typedef struct s_puzzle		t_puzzle;
 
 typedef struct s_node_transition
@@ -31,6 +33,13 @@ typedef struct s_node_transition
 	int			num_valids_cell;
 	double		score;
 }		t_node_transition;
+
+typedef struct s_node_order
+{
+	t_node_transition	entries[MAX_CELL_COUNT];
+	int					count;
+	t_prune_prog		last_build_prog;
+}		t_node_order;
 
 typedef struct s_grid_state
 {
@@ -49,7 +58,6 @@ typedef struct s_node_state
 {
 	int						size;
 	int						last_prune_nunset;
-	int						cur_prune_nunset;
 	int						cur_depth;
 	int						max_depth;
 	int						last_set_idx;
@@ -58,6 +66,12 @@ typedef struct s_node_state
 	int						sub_node_depth;
 	int						target_nunset;
 	int						num_unset;
+	t_u16					rows_changed_since_prune;
+	t_u16					cols_changed_since_prune;
+	int						is_in_lookahead_select;
+	int						is_selective_lookahead;
+	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
+	t_node_order			order_caches[3];
 	t_prune_prog			progress_counter;
 	t_prune_prog			last_prune_prog;
 	t_sol_count				max_solutions;

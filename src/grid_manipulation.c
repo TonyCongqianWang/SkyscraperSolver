@@ -23,6 +23,8 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 {
 	state->progress_counter += 10;
 	state->grid.vals[cell_idx] = val;
+	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
+	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
 	check |= (state->num_unset < state->last_prune_nunset);
 	state->num_unset--;
 	state->last_set_idx = cell_idx;

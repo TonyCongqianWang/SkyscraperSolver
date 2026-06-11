@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:42 by towang            #+#    #+#             */
-/*   Updated: 2025/01/31 00:29:27 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/09 16:57:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,91 +14,47 @@
 #include "transition_scoring.h"
 #include "node_pruning.h"
 #include "grid_availability.h"
-#include "cell_bounds.h"
+#include "strategy_routing.h"
+#include "node_selection_cache.h"
+#include "node_selection_eval.h"
 
-static int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next);
-static int	set_best_val(t_puzzle *puzzle, int idx, t_node_transition *next);
-
-int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
-{
-	int		cell_idx;
-
-	if (puzzle->cur_node->is_complete || puzzle->cur_node->is_invalid)
-		return (0);
-	cell_idx = next->cell_idx;
-	while (cell_idx < puzzle->squared_size)
-	{
-		if (is_cell_empty(puzzle->cur_node, cell_idx))
-		{
-			next->cell_idx = cell_idx;
-			if (set_next_valid_val(puzzle, next))
-				return (1);
-		}
-		cell_idx++;
-		next->cell_val = 1;
-	}
-	return (0);
-}
-
-int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
+static int	scan_best_live(t_puzzle *puzzle, t_node_transition *next,
+				t_node_select_config *config)
 {
 	t_node_transition	candidate;
 	int					cell_idx;
 
-	next->score = -1;
+	next->cell_idx = -1;
 	cell_idx = 0;
 	while (cell_idx < puzzle->squared_size)
 	{
 		if (is_cell_empty(puzzle->cur_node, cell_idx))
 		{
-			set_best_val(puzzle, cell_idx, &candidate);
-			if (candidate.score > -1)
-				score_transition_full(puzzle->cur_node, &candidate);
-			if (candidate.score > next->score)
-				*next = candidate;
+			set_best_val_strat(puzzle, cell_idx, &candidate, config);
+			if (candidate.cell_idx != -1)
+			{
+				if (next->cell_idx == -1 || is_better(candidate.score,
+						next->score, config->criterion))
+					*next = candidate;
+			}
 		}
 		cell_idx++;
 	}
-	return (next->score > -1);
+	return (next->cell_idx != -1);
 }
 
-static int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
+int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 {
-	short			cell_val;
-	short			cell_ub;
+	t_node_select_config	config;
 
-	get_cell_bounds(puzzle->cur_node, next->cell_idx, &cell_val, &cell_ub);
-	if (cell_val < next->cell_val)
-		cell_val = next->cell_val;
-	while (cell_val <= cell_ub)
+	select_node_select_config(puzzle, &config);
+	if (puzzle->cur_node->is_in_lookahead_select)
 	{
-		if (is_valid_value(puzzle->cur_node, next->cell_idx, cell_val))
-		{
-			next->cell_val = cell_val;
-			return (1);
-		}
-		cell_val++;
+		config.start_cell_idx = next->cell_idx;
+		config.start_cell_val = next->cell_val;
+		config.is_selective = puzzle->cur_node->is_selective_lookahead;
 	}
-	return (0);
-}
-
-static int	set_best_val(t_puzzle *puzzle, int idx, t_node_transition *next)
-{
-	t_node_transition	cur;
-	int					cell_val;
-
-	next->score = -1;
-	cur.cell_idx = idx;
-	cell_val = puzzle->size;
-	while (cell_val > 0)
-	{
-		cell_val--;
-		if (!is_valid_value(puzzle->cur_node, idx, cell_val + 1))
-			continue ;
-		cur.cell_val = cell_val + 1;
-		score_transition_constrs(puzzle->cur_node, &cur);
-		if (cur.score > next->score)
-			(*next) = cur;
-	}
-	return (next->cell_val);
+	if (config.enable_cache)
+		return (get_best_from_cache(puzzle, next, &config));
+	return (scan_best_live(puzzle, next, &config));
 }
