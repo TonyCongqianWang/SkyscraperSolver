@@ -54,7 +54,7 @@ def run_set(benchmark_file, options):
 
 def main():
     print("Recompiling solver with optimized parameters...")
-    cflags = "-Wall -Wextra -Werror -O2 -DREBUILD_PERIOD=4 -DG_PRUNE_PERIOD_SHALLOW=16 -DG_PRUNE_EXTRA_PERIOD_DEEP=15 -DREBUILD_IN_LOOKAHEAD=0"
+    cflags = "-Wall -Wextra -Werror -O2 -DREBUILD_PERIOD=16 -DG_PRUNE_PERIOD_SHALLOW=16 -DG_PRUNE_EXTRA_PERIOD_DEEP=15 -DREBUILD_IN_LOOKAHEAD=0 -DG_MIN_UNSET_R_PRUNE=0.40 -DG_LOOKAHEAD_PRUNING_LEVEL=1 -DDISABLE_GAC=0 -DFORCE_INVALIDATE_CACHE=1 -DUSE_CONSTRS_SCORING=0"
     run_cmd("make clean")
     code, out, err = run_cmd(f"make CFLAGS='{cflags}'")
     if code != 0:
