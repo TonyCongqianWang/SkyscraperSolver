@@ -38,13 +38,21 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
+	int	remaining;
+
 	if (state->is_invalid)
 		return ;
-	state->progress_counter++;
 	if (state->grid.vals[cell_idx] == val)
 		state->is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
 	{
+		remaining = state->grid.num_cell_vals[cell_idx] - 1;
+		if (remaining == 1)
+			state->progress_counter += 10;
+		else if (remaining == 2)
+			state->progress_counter += 5;
+		else
+			state->progress_counter += 1;
 		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);
