@@ -84,14 +84,33 @@ def evaluate_config(config_info, size7_instances, size8_instances):
         "total_time": s7_time + s8_time
     }
 
+CALIB_INSTANCE = "2 3 3 2 1 3 3 3 2 4 3 3 1 3 4 1 2 4 2 2 3 2 3 2 1 3 3 2"
+
+def get_calib_nodes(binary):
+    """Run a single calibration instance to fingerprint this binary's behavior."""
+    r = subprocess.run([binary, "-s", "0", CALIB_INSTANCE],
+                      capture_output=True, text=True, timeout=5.0)
+    for line in r.stdout.splitlines():
+        if line.startswith("Nodes visited:"):
+            return int(line.split(":")[1].strip())
+    return None
+
 def main():
-    # Grid space
-    sel_periods = [2, 4, 8, 16]
-    extra_periods = [8, 16, 32, 64]
-    linear_coeffs = [0.0, 2.0, 4.0, 8.0, 16.0]
-    quad_coeffs = [0.0, 0.5, 1.0, 2.0, 4.0]
-    threshold_0 = 0
-    
+    # Parameter ranges chosen so that SEL+EXTRA spans the critical 100-progress
+    # threshold in both directions.  Any config with period << 100 always rebuilds
+    # every step; any config with period >> 100 rarely rebuilds.  The interesting
+    # regime is where the polynomial scaling crosses that boundary during search.
+    #
+    # Progress increments by +100 per set_grid_val.  Effective shallow period is
+    # just SEL; deep period starts at SEL+EXTRA and grows with the polynomial.
+    # We want configs where at least some nodes in a typical search see period
+    # in the range [50, 500] so that the rebuild decision is non-trivial.
+    sel_periods   = [4, 8, 16, 32, 64]          # shallow-depth base period
+    extra_periods = [32, 64, 128, 256]           # added at depth > threshold
+    linear_coeffs = [0.0, 1.0, 4.0, 16.0, 64.0] # scales with set-ratio (0..1)
+    quad_coeffs   = [0.0, 0.5, 2.0, 8.0]        # scales with set-ratio * period
+    threshold_0   = 0
+
     print("Generating HPO configuration grid...")
     configs = []
     idx = 0
@@ -113,8 +132,33 @@ def main():
         ok = compile_config(conf[1], conf[2], conf[3], conf[4], conf[5], conf[0])
         if ok:
             compiled_configs.append(conf)
-            
+
     print(f"Compilation finished. Compiled {len(compiled_configs)}/{total_configs} configs in {time.time() - start_time:.2f}s")
+
+    # Deduplicate: configs with identical calibration node-counts are behaviorally
+    # equivalent (e.g. any period << 100 always rebuilds every step).  Keep only
+    # the first representative of each equivalence class to avoid wasting CPU.
+    print("\nDeduplicating behaviorally-equivalent configs via calibration instance...")
+    seen_calib: dict[int, int] = {}   # calib_nodes -> first config idx
+    unique_configs = []
+    for conf in compiled_configs:
+        binary = f"obj/skyscraper_solver_{conf[0]}"
+        calib = get_calib_nodes(binary)
+        if calib is None:
+            print(f"  WARNING: calibration failed for config {conf[0]}, skipping.")
+            continue
+        if calib in seen_calib:
+            print(f"  DUPLICATE: config {conf[0]} {conf[1:]} identical to config "
+                  f"{seen_calib[calib]} (calib_nodes={calib}), skipping.")
+            binary_path = f"obj/skyscraper_solver_{conf[0]}"
+            if os.path.exists(binary_path):
+                os.remove(binary_path)
+        else:
+            seen_calib[calib] = conf[0]
+            unique_configs.append(conf)
+    print(f"  {len(unique_configs)} unique configs remain after deduplication "
+          f"({len(compiled_configs) - len(unique_configs)} duplicates removed).")
+    compiled_configs = unique_configs
     
     # Load instances
     s7_instances = load_instances(SIZE7_FILE)

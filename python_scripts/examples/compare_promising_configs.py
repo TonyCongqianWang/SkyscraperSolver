@@ -49,6 +49,17 @@ def compile_config(name, params):
     shutil.copy("skyscraper_solver", f"obj/solver_conf_{name}")
     return True
 
+CALIB_INSTANCE = "2 3 3 2 1 3 3 3 2 4 3 3 1 3 4 1 2 4 2 2 3 2 3 2 1 3 3 2"
+
+def get_calib_nodes(binary):
+    """Fingerprint a binary with a single calibration instance."""
+    r = subprocess.run([binary, "-s", "0", CALIB_INSTANCE],
+                      capture_output=True, text=True, timeout=5.0)
+    for line in r.stdout.splitlines():
+        if line.startswith("Nodes visited:"):
+            return int(line.split(":")[1].strip())
+    return None
+
 def run_solver(binary, options, clues):
     cmd = [binary] + options.split() + [clues]
     try:
@@ -119,11 +130,41 @@ def main():
             print(f"Failed to compile {name}!")
             sys.exit(1)
             
-    print("Compilation completed. Loading instances...")
+    print("Compilation completed.")
+    sys.stdout.flush()
+
+    # Deduplication guard: fingerprint each binary on a calibration instance.
+    # Any two configs producing the same node count are behaviourally equivalent
+    # (e.g. if SEL+EXTRA << 100 both always rebuild every step).  Abort rather
+    # than silently report identical results in the comparison table.
+    print("Checking for behaviorally-equivalent configs via calibration instance...")
+    sys.stdout.flush()
+    seen_calib: dict[int, str] = {}   # calib_nodes -> first config name
+    duplicates_found = False
+    for name in CONFIGS:
+        binary = f"obj/solver_conf_{name}"
+        calib = get_calib_nodes(binary)
+        if calib is None:
+            print(f"  WARNING: calibration failed for {name}!")
+            continue
+        if calib in seen_calib:
+            print(f"  ERROR: '{name}' is behaviourally IDENTICAL to '{seen_calib[calib]}' "
+                  f"(both give {calib} nodes on calibration instance). "
+                  f"Update CONFIGS to use distinguishable parameter sets.")
+            duplicates_found = True
+        else:
+            seen_calib[calib] = name
+    if duplicates_found:
+        print("Aborting: duplicate configs detected. Fix CONFIGS before running.")
+        sys.exit(1)
+    print(f"  All {len(CONFIGS)} configs are behaviourally distinct.")
+    sys.stdout.flush()
+
+    print("Loading instances...")
     sys.stdout.flush()
     s7_instances = load_instances(SIZE7_FILE)
     s8_instances = load_instances(SIZE8_FILE)
-    
+
     print(f"Loaded {len(s7_instances)} Size 7 instances and {len(s8_instances)} Size 8 instances.")
     print(f"Running evaluation in parallel using {MAX_WORKERS} workers...")
     sys.stdout.flush()
