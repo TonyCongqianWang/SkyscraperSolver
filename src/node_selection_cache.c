@@ -103,6 +103,10 @@ static int	scan_cache_from(t_puzzle *puzzle, t_node_transition *next,
 	return (0);
 }
 
+#ifndef REBUILD_IN_LOOKAHEAD
+# define REBUILD_IN_LOOKAHEAD 0
+#endif
+
 int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
@@ -111,8 +115,10 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 
 	node = puzzle->cur_node;
 	cache = &node->order_caches[get_cache_index(node)];
-	if (!node->is_in_lookahead_select && node->progress_counter
-		>= cache->last_build_prog + config->rebuild_period)
+	if (cache->last_build_prog == 0
+		|| ((REBUILD_IN_LOOKAHEAD || !node->is_in_lookahead_select)
+			&& node->progress_counter
+			>= cache->last_build_prog + config->rebuild_period))
 		build_node_order(puzzle, config);
 	return (scan_cache_from(puzzle, next, config));
 }

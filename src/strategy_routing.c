@@ -12,11 +12,21 @@
 
 #include "strategy_routing.h"
 
-#define G_MIN_UNSET_R_PRUNE		0.4
+#ifndef G_MIN_UNSET_R_PRUNE
+# define G_MIN_UNSET_R_PRUNE		0.4
+#endif
+#ifndef G_PRUNE_PERIOD_SHALLOW
+# define G_PRUNE_PERIOD_SHALLOW		16
+#endif
+#ifndef G_PRUNE_EXTRA_PERIOD_DEEP
+# define G_PRUNE_EXTRA_PERIOD_DEEP	30
+#endif
+#ifndef REBUILD_PERIOD
+# define REBUILD_PERIOD			4
+#endif
+
 #define G_DEPTH_THRESHOLD_0		0
 #define G_DEPTH_THRESHOLD_1		3
-#define G_PRUNE_PERIOD_SHALLOW		16
-#define G_PRUNE_EXTRA_PERIOD_DEEP	30
 
 static int	should_skip_prune(t_puzzle *puzzle)
 {
@@ -102,7 +112,7 @@ void	select_node_select_config(t_puzzle *puzzle,
 	config->score_family = SCORE_BRANCHING;
 	config->criterion = SELECT_MAX;
 	config->enable_cache = 1;
-	config->rebuild_period = 4;
+	config->rebuild_period = REBUILD_PERIOD;
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
 	config->is_selective = 0;
