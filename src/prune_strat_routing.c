@@ -13,11 +13,11 @@
 #include "strategy_routing.h"
 
 #ifndef G_MIN_UNSET_R_PRUNE
-# define G_MIN_UNSET_R_PRUNE 0.4
+# define G_MIN_UNSET_R_PRUNE 0.5
 #endif
 
 #ifndef G_PRUNE_PERIOD_SHALLOW
-# define G_PRUNE_PERIOD_SHALLOW 160
+# define G_PRUNE_PERIOD_SHALLOW 120
 #endif
 
 #ifndef G_PRUNE_EXTRA_PERIOD_DEEP

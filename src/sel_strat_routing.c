@@ -13,7 +13,7 @@
 #include "strategy_routing.h"
 
 #ifndef G_SEL_REBUILD_PERIOD
-# define G_SEL_REBUILD_PERIOD 160
+# define G_SEL_REBUILD_PERIOD 2
 #endif
 
 #ifndef G_SEL_EXTRA_PERIOD_DEEP
