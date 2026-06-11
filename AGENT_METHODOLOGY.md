@@ -1,6 +1,6 @@
 # Skyscraper Solver - Agent Methodology
 
-This document outlines the workflows, style compliance standards, verification procedures, and regression-checking guidelines established during the `refactor-pruning-node-strategies` optimization track.
+This document outlines the workflows, style compliance standards, verification procedures, and hyperparameter tuning guidelines established during the `refactor-pruning-node-strategies` optimization track.
 
 ---
 
@@ -16,7 +16,7 @@ norminette src/*.c src/*.h
 1. **No Mixed Tabs/Spaces**: All indentation must be done exclusively using tabs.
 2. **Function Length**: No function may exceed **25 lines** of executable code. If a function is too long, decompose it into smaller static helper functions.
 3. **Parameter Limit**: No function may accept more than **4 arguments**. If a function requires more context, package arguments inside a helper struct (see `t_hidden_param` in `src/prune_gac_hidden.h`).
-4. **Function Limit per File**: No source file may contain more than **5 functions**. Files must be modularized accordingly (e.g. splitting GAC into `prune_gac.c`, `prune_gac_domain.c`, `prune_gac_naked.c`, and `prune_gac_hidden.c`).
+4. **Function Limit per File**: Source files must contain no more than **5 functions**. Files must be modularized accordingly (e.g. splitting GAC into `prune_gac.c`, `prune_gac_domain.c`, `prune_gac_naked.c`, and `prune_gac_hidden.c`).
 5. **Variable Declarations**: 
    - All variable declarations must be at the very top of a function block.
    - Declarations cannot be initialized at definition (except in global scopes/constants).
@@ -28,19 +28,21 @@ norminette src/*.c src/*.h
 
 Because Skyscraper puzzles can have multiple valid grid solutions depending on clue configurations, comparing solution grids directly across versions is prone to false positives. Correctness must be verified by comparing **exhaustive solution counts** under the `-s 0` flag.
 
-### Verification Workflow:
-1. **Preserve Baseline**: Compile the reference version from the `main` branch and copy it as `skyscraper_solver_main` in the workspace root.
-2. **Run Consistency Script**:
-   We have created a parallel consistency check script at `python_scripts/verify_consistency.py`. Run it on a benchmark set:
+### Automated Verification Workflow:
+We have created a parallel consistency check script at `python_scripts/verify_consistency.py`. 
 
+1. **Default Verification**: Run the script without arguments to automatically run the quick verification suites on Size 7 and Size 8 sets against expected solutions:
+   ```bash
+   python3 python_scripts/verify_consistency.py
+   ```
+2. **Checking Specific Benchmark Files**:
    ```bash
    python3 python_scripts/verify_consistency.py benchmark_sets/benchmarkSet7.txt
    ```
-
-3. **How It Works**:
-   - The script runs both `./skyscraper_solver` (refactored) and `./skyscraper_solver_main` (baseline) concurrently on every instance.
-   - It parses `Solutions found: <count>` and asserts that the count matches exactly.
-   - **Important**: Always verify on Size 7 benchmark sets for fast, exhaustive checking. Size 8 sets are computationally expensive for `-s 0` and should only be verified on smaller subsets (e.g., `benchmarkSet8_subset10.txt`).
+3. **Correctness Conventions**:
+   - **Size 7**: Always verify using the `-s 0` flag (exhaustive search) as size 7 instances are quick.
+   - **Size 8**: Only use `-s 0` on easy sets (e.g. `benchmarkSet8_easy50.txt`). Never run `-s 0` on random or hard size-8 instances as it is computationally prohibitive.
+   - **Size 9**: Never use `-s 0` for verification; verify using standard `-s 1` (single solution) only.
 
 ---
 
@@ -53,18 +55,25 @@ To measure how changes affect solver search speed and search space compression:
 > Always specify the solver binary command using the `-c` flag and pass the benchmark set text file path as the final positional argument.
 
 1. Run the benchmark tool against the random subset of size 7 (`benchmarkSet7_rand100.txt`) or the full suite:
-
    ```bash
    python3 python_scripts/run_benchmark.py -c ./skyscraper_solver benchmark_sets/benchmarkSet7_rand100.txt
    ```
-
 2. Compare the **Total Nodes Visited** and **Total Time** metrics against the baseline version (`./skyscraper_solver_main`).
 
 ---
 
-## 📈 4. Strategy Patterns & Pruning Hyperparameters
+## 📈 4. Hyperparameter Optimization (HPO) Tuning Gauntlet
 
-- **Configuration Routing**: Exposed via [src/strategy_routing.c](file:///Users/spm00004/.gemini/antigravity/worktrees/SkyscraperSolver/refactor-pruning-node-strategies/src/strategy_routing.c). Modify this file to adjust when GAC and Lookahead Pruning are applied.
-- **Root vs. Deep Pruning**:
-  - GAC is computationally expensive. It is best applied fully at the **root node** (depth 0) to shrink initial domains, and selectively (`is_selective = 1`) at shallow deep nodes (e.g., when `unset_ratio > 0.7`).
-  - Caching and reuse of node selection orderings are routed in `select_node_select_config`.
+To optimize pruning strategy routing hyperparameters efficiently without compiling thousands of binaries, we compile a single binary with conditional environment variable loading (`-DG_PRUNE_NO_ENV=0`) and execute a multi-phase gauntlet script.
+
+### Workflow & Concepts:
+1. **High-Throughput Pre-Filtering (Phase 1)**:
+   - Evaluate all generated configuration combinations on cheap tiny sets (100 S7 + 50 S8). This is timing-noise independent and runs very fast.
+   - **Stratified Filtering**: Filter survivors by keeping the top 20% of configurations by node count within each GAC threshold group. This preserves parameter diversity across GAC thresholds.
+2. **Post-Phase 1 Calibration Deduplication**:
+   - Run deduplication only on Phase 1 survivors using 5 calibration instances (1 size-7, 1 size-8, 3 hard size-9). This avoids executing heavy size-9 instances on thousands of poor configurations.
+   - **High Timeout Safeguard**: Use a 10.0-second timeout for calibration solver runs to prevent temporary CPU noise from falsely timing out and discarding valid configurations.
+3. **Gauntlet Skip Logic**:
+   - If the deduplicated unique survivor count drops below 2,000, skip Phase 1b (tiny sets time filter) entirely and route survivors directly to Phase 2 (small sets time filter) to optimize execution time.
+4. **Timing-Based Filtering (Phases 2-4)**:
+   - Progressively evaluate survivor configurations on larger sets (`S7_SMALL`, `S8_MEDIUM`, `S7_FULL`) to refine timing signals and report the optimal winners.
