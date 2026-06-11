@@ -51,10 +51,23 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 	if (puzzle->cur_node->is_in_lookahead_select)
 	{
 		config.start_cell_idx = next->cell_idx;
-		config.start_cell_val = next->cell_val;
+		if (next->cell_idx >= 0)
+			config.start_cell_val = next->cell_val + 1;
+		else
+			config.start_cell_val = 1;
 		config.is_selective = puzzle->cur_node->is_selective_lookahead;
 	}
 	if (config.enable_cache)
 		return (get_best_from_cache(puzzle, next, &config));
 	return (scan_best_live(puzzle, next, &config));
+}
+
+void	init_node_transition(t_node_transition *tr)
+{
+	tr->cell_idx = -1;
+	tr->cell_val = 1;
+	tr->score = 0.0;
+	tr->num_valids_col = 0;
+	tr->num_valids_row = 0;
+	tr->num_valids_cell = 0;
 }
