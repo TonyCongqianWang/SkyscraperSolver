@@ -30,23 +30,37 @@ def run_solver(binary, options, clues):
 
 def main():
     parser = argparse.ArgumentParser()
-    # Accept one or more benchmark files
     parser.add_argument("benchmark_files", nargs="+", help="List of benchmark files to process")
-    parser.add_argument("-r", "--compare", default="./skyscraper_solver_compare")
-    parser.add_argument("-b", "--baseline", default="./skyscraper_solver_baseline")
-    parser.add_argument("-o", "--options", default="-s 1")
+    parser.add_argument("-r", "--refactored", default="./skyscraper_solver")
+    parser.add_argument("-b", "--baseline", default="./skyscraper_solver_main")
+    # Changed to nargs="+" with a default list containing the default string
+    parser.add_argument("-o", "--options", nargs="+", default=["-s 1"])
     parser.add_argument("-n", "--num_instances", type=int, default=None)
     args = parser.parse_args()
 
-    print(f"Compare: {args.compare}")
+    num_files = len(args.benchmark_files)
+    num_options = len(args.options)
+
+    # Validate the length of the options list
+    if num_options != 1 and num_options != num_files:
+        print(
+            f"Error: Number of options ({num_options}) must match either 1 "
+            f"or the number of benchmark files ({num_files}).",
+            file=sys.stderr
+        )
+        sys.exit(1)
+
+    print(f"Refactored: {args.refactored}")
     print(f"Baseline:   {args.baseline}")
-    print(f"Options:    {args.options}")
     print("=" * 50)
 
-    for benchmark_file in args.benchmark_files:
+    for idx, benchmark_file in enumerate(args.benchmark_files):
         if not os.path.exists(benchmark_file):
             print(f"\nError: File {benchmark_file} not found. Skipping.\n" + "=" * 50, file=sys.stderr)
             continue
+
+        # Determine which option string to use for this specific file
+        current_options = args.options[0] if num_options == 1 else args.options[idx]
 
         with open(benchmark_file, "r") as f:
             lines = [line.strip().strip('"') for line in f if line.strip()]
@@ -55,20 +69,20 @@ def main():
             lines = lines[:args.num_instances]
 
         print(f"\nEvaluating benchmark file: {benchmark_file} ({len(lines)} instances)")
+        print(f"Options used:             {current_options}")
         print("-" * 50)
 
-        # Reset counters for each file to prevent aggregation
         ref_total_nodes = 0
         ref_total_time = 0.0
         base_total_nodes = 0
         base_total_time = 0.0
 
-        for idx, clues in enumerate(lines, start=1):
-            res_ref = run_solver(args.compare, args.options, clues)
-            res_base = run_solver(args.baseline, args.options, clues)
+        for inst_idx, clues in enumerate(lines, start=1):
+            res_ref = run_solver(args.refactored, current_options, clues)
+            res_base = run_solver(args.baseline, current_options, clues)
 
             if "error" in res_ref or "error" in res_base:
-                print(f"Instance {idx} error: ref={res_ref.get('error')}, base={res_base.get('error')}", file=sys.stderr)
+                print(f"Instance {inst_idx} error: ref={res_ref.get('error')}, base={res_base.get('error')}", file=sys.stderr)
                 continue
 
             ref_total_nodes += res_ref["nodes"]
@@ -76,12 +90,12 @@ def main():
             base_total_nodes += res_base["nodes"]
             base_total_time += res_base["time"]
 
-        print(f"Compare total nodes:  {ref_total_nodes}")
+        print(f"Refactored total nodes: {ref_total_nodes}")
         print(f"Baseline total nodes:   {base_total_nodes}")
         node_red = (base_total_nodes - ref_total_nodes) / base_total_nodes * 100 if base_total_nodes else 0
         print(f"Node Reduction:         {node_red:.2f}%")
         print("-" * 50)
-        print(f"Compare total time:  {ref_total_time:.3f}s")
+        print(f"Refactored total time:  {ref_total_time:.3f}s")
         print(f"Baseline total time:    {base_total_time:.3f}s")
         time_red = (base_total_time - ref_total_time) / base_total_time * 100 if base_total_time else 0
         print(f"Speedup:                {time_red:.2f}%")
