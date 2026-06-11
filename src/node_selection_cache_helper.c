@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 11:03:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/10 11:03:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,17 +23,12 @@ int	check_sel_filter(t_node_state *node, int cell_idx,
 		|| (node->cols_changed_since_prune & (1 << (cell_idx % size))));
 }
 
-int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-		t_node_order *cache, int *lowest_valid_idx_ptr, int *i_out)
+static int	scan_and_check_entry(t_puzzle *puzzle, t_node_transition *next,
+				t_node_order *cache, int *i_ptr)
 {
 	int	i;
 
-	if (next->cell_idx < 0)
-	{
-		*i_out = *lowest_valid_idx_ptr;
-		return (0);
-	}
-	i = *lowest_valid_idx_ptr;
+	i = *i_ptr;
 	while (i < cache->count && cache->entries[i].cell_idx != next->cell_idx)
 		i++;
 	if (i < cache->count)
@@ -42,11 +37,71 @@ int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		if (set_next_valid_val(puzzle, next)
 			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
 		{
-			*i_out = i;
+			*i_ptr = i;
 			return (1);
 		}
 		i++;
 	}
-	*i_out = i;
+	*i_ptr = i;
+	return (0);
+}
+
+int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
+		int sf_idx, int *i_out)
+{
+	t_node_order	*cache;
+	int				lowest_valid;
+
+	cache = puzzle->cur_node->order_caches[sf_idx];
+	lowest_valid = 0;
+	if (!puzzle->cur_node->is_in_lookahead_select)
+		lowest_valid = puzzle->cur_node->lowest_valid_idx[sf_idx];
+	if (next->cell_idx < 0)
+	{
+		*i_out = lowest_valid;
+		return (0);
+	}
+	*i_out = lowest_valid;
+	return (scan_and_check_entry(puzzle, next, cache, i_out));
+}
+
+int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
+		t_node_order *cache, int i)
+{
+	int	cell;
+	int	cached_val;
+
+	cell = cache->entries[i].cell_idx;
+	cached_val = cache->entries[i].cell_val;
+	if (is_valid_value(puzzle->cur_node, cell, cached_val))
+	{
+		*next = cache->entries[i];
+		return (1);
+	}
+	next->cell_idx = cell;
+	next->cell_val = 1;
+	return (set_next_valid_val(puzzle, next)
+		&& is_cell_empty(puzzle->cur_node, next->cell_idx));
+}
+
+int	process_next_entry(t_puzzle *puzzle, t_node_transition *next,
+		t_node_select_config *config, int i)
+{
+	int				cell;
+	t_node_order	*cache;
+
+	cache = puzzle->cur_node->order_caches[
+		get_score_family_idx(config->score_family)];
+	cell = cache->entries[i].cell_idx;
+	if (is_cell_empty(puzzle->cur_node, cell)
+		&& check_sel_filter(puzzle->cur_node, cell, puzzle->size,
+			config->is_selective))
+	{
+		next->cell_idx = cell;
+		next->cell_val = 1;
+		if (set_next_valid_val(puzzle, next)
+			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
+			return (1);
+	}
 	return (0);
 }

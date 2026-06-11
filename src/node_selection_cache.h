@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/10 11:03:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,12 @@ int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 int		check_sel_filter(t_node_state *node, int cell_idx,
 			int size, int is_selective);
 int		resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-			t_node_order *cache, int *lowest_valid_idx_ptr, int *i_out);
+			int sf_idx, int *i_out);
+int		try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
+			t_node_order *cache, int i);
+int		process_next_entry(t_puzzle *puzzle, t_node_transition *next,
+			t_node_select_config *config, int i);
+void	init_order_stacks(t_puzzle *puzzle);
 void	sync_cache_stacks(t_puzzle *puzzle);
 
 #endif

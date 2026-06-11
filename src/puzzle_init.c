@@ -6,18 +6,18 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:21:54 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "puzzle_init.h"
 #include "cell_bounds.h"
 #include "solution_storage.h"
+#include "node_selection_cache.h"
 
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
-static void	init_order_stacks(t_puzzle *puzzle);
 static void	init_node_order_ptrs(t_node_state *node);
 
 void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
@@ -103,40 +103,6 @@ static void	init_node_grid(t_node_state *node, int size)
 			v++;
 		}
 		idx++;
-	}
-}
-
-static void	init_order_stacks(t_puzzle *puzzle)
-{
-	int	sf;
-	int	stack_idx;
-	int	i;
-
-	sf = 0;
-	while (sf < 3)
-	{
-		puzzle->order_stacks.stacks[sf].top_idx = 0;
-		stack_idx = 0;
-		while (stack_idx < MAX_STACK_DEPTH)
-		{
-			t_node_order *order = &puzzle->order_stacks.stacks[sf].orders[stack_idx];
-			order->count = puzzle->squared_size;
-			order->last_build_prog = 0;
-			order->build_depth = -1;
-			i = 0;
-			while (i < puzzle->squared_size)
-			{
-				order->entries[i].cell_idx = i;
-				order->entries[i].cell_val = 1;
-				order->entries[i].score = 0.0;
-				order->entries[i].num_valids_col = 0;
-				order->entries[i].num_valids_row = 0;
-				order->entries[i].num_valids_cell = 0;
-				i++;
-			}
-			stack_idx++;
-		}
-		sf++;
 	}
 }
 

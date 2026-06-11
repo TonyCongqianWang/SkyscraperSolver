@@ -39,3 +39,24 @@ void	init_node_transition(t_node_transition *tr)
 	tr->num_valids_row = 0;
 	tr->num_valids_cell = 0;
 }
+
+void	sync_cache_stacks(t_puzzle *puzzle)
+{
+	t_node_state	*node;
+	int				sf;
+	int				idx;
+	t_node_order	*stack;
+
+	node = puzzle->cur_node;
+	sf = 0;
+	while (sf < 3)
+	{
+		if (node->order_caches[sf])
+		{
+			stack = &puzzle->order_stacks.stacks[sf].orders[0];
+			idx = node->order_caches[sf] - stack;
+			puzzle->order_stacks.stacks[sf].top_idx = idx;
+		}
+		sf++;
+	}
+}

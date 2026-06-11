@@ -18,6 +18,30 @@
 #include "node_selection_cache.h"
 #include "node_selection_eval.h"
 
+#ifdef LOOKAHEAD_SCORE_FAMILY
+
+static const t_score_family			g_lh_score_family = LOOKAHEAD_SCORE_FAMILY;
+static const int					g_lh_score_family_defined = 1;
+
+#else
+
+static const t_score_family			g_lh_score_family = SCORE_BRANCHING;
+static const int					g_lh_score_family_defined = 0;
+
+#endif
+
+#ifdef LOOKAHEAD_CRITERION
+
+static const t_selection_criterion	g_lh_criterion = LOOKAHEAD_CRITERION;
+static const int					g_lh_criterion_defined = 1;
+
+#else
+
+static const t_selection_criterion	g_lh_criterion = SELECT_MAX;
+static const int					g_lh_criterion_defined = 0;
+
+#endif
+
 static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
 				t_node_select_config *config)
 {
