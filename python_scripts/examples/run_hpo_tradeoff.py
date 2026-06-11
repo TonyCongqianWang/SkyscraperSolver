@@ -169,10 +169,10 @@ def run_phase(label, configs, s7_file, s8_file, metric, keep_frac, workers):
             if n % report_every == 0 or n == n_total:
                 c = conf["params"]
                 elapsed = res["time"] if res else -1
+                status = "FAILED" if res is None else f"nodes={res['nodes']:,}  t={elapsed:.2f}s"
                 print(f"  [{n}/{n_total}] idx={conf['idx']:4d} "
                       f"(SEL={c[0]},EXTRA={c[1]},TH0={c[2]},"
-                      f"LIN={c[3]},QUAD={c[4]}) "
-                      f"{'FAILED' if res is None else f'nodes={res[\"nodes\"]:,}  t={elapsed:.2f}s'}")
+                      f"LIN={c[3]},QUAD={c[4]}) {status}")
                 sys.stdout.flush()
         return res
 
