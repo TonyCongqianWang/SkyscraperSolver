@@ -12,36 +12,40 @@
 
 #include "strategy_routing.h"
 
+#ifndef G_PRUNE_NO_ENV
+# define G_PRUNE_NO_ENV 1
+#endif
+
 #ifndef G_MIN_UNSET_R_PRUNE
 # define G_MIN_UNSET_R_PRUNE 0.5
 #endif
 
 #ifndef G_PRUNE_PERIOD_SHALLOW
-# define G_PRUNE_PERIOD_SHALLOW 120
+# define G_PRUNE_PERIOD_SHALLOW 240
 #endif
 
 #ifndef G_PRUNE_EXTRA_PERIOD_DEEP
-# define G_PRUNE_EXTRA_PERIOD_DEEP 150
+# define G_PRUNE_EXTRA_PERIOD_DEEP 200
 #endif
 
 #ifndef G_PRUNE_DEPTH_THRESHOLD_0
-# define G_PRUNE_DEPTH_THRESHOLD_0 0
+# define G_PRUNE_DEPTH_THRESHOLD_0 1
 #endif
 
 #ifndef G_PRUNE_DEPTH_THRESHOLD_1
-# define G_PRUNE_DEPTH_THRESHOLD_1 3
+# define G_PRUNE_DEPTH_THRESHOLD_1 4
 #endif
 
 #ifndef G_PRUNE_GAC_UNSET_R_THRESHOLD
-# define G_PRUNE_GAC_UNSET_R_THRESHOLD 0.7
+# define G_PRUNE_GAC_UNSET_R_THRESHOLD 0.6
 #endif
 
 #ifndef G_PRUNE_LIN_COEFF
-# define G_PRUNE_LIN_COEFF 0.0
+# define G_PRUNE_LIN_COEFF 0.1
 #endif
 
 #ifndef G_PRUNE_QUAD_COEFF
-# define G_PRUNE_QUAD_COEFF 0.0
+# define G_PRUNE_QUAD_COEFF 1.5
 #endif
 
 #ifndef G_PRUNE_CUBIC_COEFF
@@ -77,32 +81,11 @@ int							g_keep_pruning = 0;
 #endif
 
 #ifndef G_PRUNE_NO_ENV
-static void	init_pruning_env_coeffs(void)
+__attribute__((constructor))
+static void	init_pruning_env(void)
 {
 	char	*val;
 
-	val = getenv("G_PRUNE_LIN_COEFF");
-	if (val)
-		g_prune_lin_coeff = atof(val);
-	val = getenv("G_PRUNE_QUAD_COEFF");
-	if (val)
-		g_prune_quad_coeff = atof(val);
-	val = getenv("G_PRUNE_CUBIC_COEFF");
-	if (val)
-		g_prune_cubic_coeff = atof(val);
-	val = getenv("KEEP_PRUNING");
-	if (val)
-		g_keep_pruning = atoi(val);
-}
-
-void	init_pruning_env(void)
-{
-	static int	initialized = 0;
-	char		*val;
-
-	if (initialized)
-		return ;
-	initialized = 1;
 	val = getenv("G_MIN_UNSET_R_PRUNE");
 	if (val)
 		g_min_unset_r_prune = atof(val);
@@ -121,7 +104,18 @@ void	init_pruning_env(void)
 	val = getenv("G_PRUNE_GAC_UNSET_R_THRESHOLD");
 	if (val)
 		g_prune_gac_unset_r_threshold = atof(val);
-	init_pruning_env_coeffs();
+	val = getenv("G_PRUNE_LIN_COEFF");
+	if (val)
+		g_prune_lin_coeff = atof(val);
+	val = getenv("G_PRUNE_QUAD_COEFF");
+	if (val)
+		g_prune_quad_coeff = atof(val);
+	val = getenv("G_PRUNE_CUBIC_COEFF");
+	if (val)
+		g_prune_cubic_coeff = atof(val);
+	val = getenv("KEEP_PRUNING");
+	if (val)
+		g_keep_pruning = atoi(val);
 }
 #endif
 
@@ -188,9 +182,6 @@ void	select_prune_config(t_puzzle *puzzle, t_prune_config *config)
 {
 	double	unset_ratio;
 
-#ifndef G_PRUNE_NO_ENV
-	init_pruning_env();
-#endif
 	if (should_skip_prune(puzzle))
 	{
 		config->strategy = PRUNE_NONE;
