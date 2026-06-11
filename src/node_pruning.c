@@ -16,9 +16,7 @@
 #include "prune_lookahead.h"
 #include "prune_gac.h"
 
-#ifndef KEEP_PRUNING
-# define KEEP_PRUNING 0
-#endif
+extern int g_keep_pruning;
 
 void	prune_node(t_puzzle *puzzle)
 {
@@ -40,7 +38,7 @@ void	prune_node(t_puzzle *puzzle)
 		puzzle->cur_node->last_prune_prog = prev_prog;
 		puzzle->cur_node->rows_changed_since_prune = 0;
 		puzzle->cur_node->cols_changed_since_prune = 0;
-		if (!KEEP_PRUNING || puzzle->cur_node->progress_counter == prev_prog)
+		if (!g_keep_pruning || puzzle->cur_node->progress_counter == prev_prog)
 			break ;
 	}
 }
