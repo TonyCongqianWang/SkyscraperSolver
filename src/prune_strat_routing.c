@@ -17,15 +17,15 @@
 #endif
 
 #ifndef G_MIN_UNSET_R_PRUNE
-# define G_MIN_UNSET_R_PRUNE 0.5
+# define G_MIN_UNSET_R_PRUNE 0.53
 #endif
 
 #ifndef G_PRUNE_PERIOD_SHALLOW
-# define G_PRUNE_PERIOD_SHALLOW 240
+# define G_PRUNE_PERIOD_SHALLOW 360
 #endif
 
 #ifndef G_PRUNE_EXTRA_PERIOD_DEEP
-# define G_PRUNE_EXTRA_PERIOD_DEEP 200
+# define G_PRUNE_EXTRA_PERIOD_DEEP 50
 #endif
 
 #ifndef G_PRUNE_DEPTH_THRESHOLD_0
@@ -37,26 +37,26 @@
 #endif
 
 #ifndef G_PRUNE_GAC_UNSET_R_THRESHOLD
-# define G_PRUNE_GAC_UNSET_R_THRESHOLD 0.6
+# define G_PRUNE_GAC_UNSET_R_THRESHOLD 0.55
 #endif
 
 #ifndef G_PRUNE_LIN_COEFF
-# define G_PRUNE_LIN_COEFF 0.1
+# define G_PRUNE_LIN_COEFF 0.2
 #endif
 
 #ifndef G_PRUNE_QUAD_COEFF
-# define G_PRUNE_QUAD_COEFF 1.5
+# define G_PRUNE_QUAD_COEFF 0.5
 #endif
 
 #ifndef G_PRUNE_CUBIC_COEFF
-# define G_PRUNE_CUBIC_COEFF 0.0
+# define G_PRUNE_CUBIC_COEFF 1.0
 #endif
 
-#ifndef G_PRUNE_NO_ENV
+#if G_PRUNE_NO_ENV == 0
 # include <stdlib.h>
 #endif
 
-#ifndef G_PRUNE_NO_ENV
+#if G_PRUNE_NO_ENV == 0
 static double			g_min_unset_r_prune = G_MIN_UNSET_R_PRUNE;
 static t_prune_prog		g_prune_period_shallow = G_PRUNE_PERIOD_SHALLOW;
 static t_prune_prog		g_prune_extra_period_deep = G_PRUNE_EXTRA_PERIOD_DEEP;
@@ -80,12 +80,15 @@ static const double			g_prune_cubic_coeff = G_PRUNE_CUBIC_COEFF;
 int							g_keep_pruning = 0;
 #endif
 
-#ifndef G_PRUNE_NO_ENV
-__attribute__((constructor))
-static void	init_pruning_env(void)
+#if G_PRUNE_NO_ENV == 0
+void	init_pruning_env(void)
 {
-	char	*val;
+	static int	initialized = 0;
+	char		*val;
 
+	if (initialized)
+		return ;
+	initialized = 1;
 	val = getenv("G_MIN_UNSET_R_PRUNE");
 	if (val)
 		g_min_unset_r_prune = atof(val);
@@ -182,6 +185,9 @@ void	select_prune_config(t_puzzle *puzzle, t_prune_config *config)
 {
 	double	unset_ratio;
 
+#if G_PRUNE_NO_ENV == 0
+	init_pruning_env();
+#endif
 	if (should_skip_prune(puzzle))
 	{
 		config->strategy = PRUNE_NONE;

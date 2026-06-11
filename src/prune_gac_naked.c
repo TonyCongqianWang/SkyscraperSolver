@@ -20,6 +20,7 @@ static void	check_pair(t_node_state *state, int *cells, int count, int *pair)
 
 	u_bmp = state->grid.valid_val_bmps[cells[pair[0]]]
 		| state->grid.valid_val_bmps[cells[pair[1]]];
+	u_bmp &= (1 << state->size) - 1;
 	if (count_bits(u_bmp) == 2)
 	{
 		c = 0;
@@ -62,6 +63,7 @@ static void	check_triple(t_node_state *state, int *cells, int count,
 	u_bmp = state->grid.valid_val_bmps[cells[inds[0]]]
 		| state->grid.valid_val_bmps[cells[inds[1]]]
 		| state->grid.valid_val_bmps[cells[inds[2]]];
+	u_bmp &= (1 << state->size) - 1;
 	if (count_bits(u_bmp) == 3)
 	{
 		c = 0;
