@@ -66,14 +66,20 @@ To measure how changes affect solver search speed and search space compression:
 
 To optimize pruning strategy routing hyperparameters efficiently without compiling thousands of binaries, we compile a single binary with conditional environment variable loading (`-DG_PRUNE_NO_ENV=0`) and execute a multi-phase gauntlet script.
 
+> [!IMPORTANT]
+> **Exhaustive Search Requirement**: To avoid overfitting, hyperparameter tuning on size-7 and size-8 instances must always use **full enumeration (`-s 0`)** instead of single-solution search (`-s 1`). 
+> - *Why?* If S8 instances are evaluated using single-solution search (`-s 1`), the search is too shallow and lookahead pruning overhead dominates. The HPO will greedily select passive parameters that minimize/disable lookahead pruning. This causes a catastrophic explosion of search nodes (up to 8.3x) when the selected configuration is deployed on harder datasets.
+
 ### Workflow & Concepts:
 1. **High-Throughput Pre-Filtering (Phase 1)**:
    - Evaluate all generated configuration combinations on cheap tiny sets (100 S7 + 50 S8). This is timing-noise independent and runs very fast.
+   - **Exhaustive Search**: S7 and S8 instances must be evaluated under `-s 0`.
    - **Stratified Filtering**: Filter survivors by keeping the top 20% of configurations by node count within each GAC threshold group. This preserves parameter diversity across GAC thresholds.
 2. **Post-Phase 1 Calibration Deduplication**:
-   - Run deduplication only on Phase 1 survivors using 5 calibration instances (1 size-7, 1 size-8, 3 hard size-9). This avoids executing heavy size-9 instances on thousands of poor configurations.
+   - Run deduplication only on Phase 1 survivors using 5 calibration instances (1 size-7 with `-s 0`, 1 size-8 with `-s 0`, 3 hard size-9 with `-s 1`). This avoids executing heavy size-9 instances on thousands of poor configurations.
    - **High Timeout Safeguard**: Use a 10.0-second timeout for calibration solver runs to prevent temporary CPU noise from falsely timing out and discarding valid configurations.
 3. **Gauntlet Skip Logic**:
    - If the deduplicated unique survivor count drops below 2,000, skip Phase 1b (tiny sets time filter) entirely and route survivors directly to Phase 2 (small sets time filter) to optimize execution time.
 4. **Timing-Based Filtering (Phases 2-4)**:
-   - Progressively evaluate survivor configurations on larger sets (`S7_SMALL`, `S8_MEDIUM`, `S7_FULL`) to refine timing signals and report the optimal winners.
+   - Progressively evaluate survivor configurations on larger sets (`S7_SMALL`, `S8_MEDIUM`, `S7_FULL`) to refine timing signals and report the optimal winners. Always preserve the `-s 0` flag for size 7 and size 8.
+

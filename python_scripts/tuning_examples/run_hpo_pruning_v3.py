@@ -12,7 +12,7 @@ CONCEPT & METHODOLOGY FOR THE NEXT AGENT:
    - Time Winner (idx=5045):   (MIN_U=0.50, SHAL=200, DEEP=100, TH=(1,4), GAC=0.55, Curve 11)
    - Node Winner (idx=9840):   (MIN_U=0.56, SHAL=200, DEEP=100, TH=(1,4), GAC=0.55, Curve 2)
    - Selected Default (idx=9172): (MIN_U=0.53, SHAL=360, DEEP=50,  TH=(1,4), GAC=0.55, Curve 10)
-
+   
    The grid generates 29,160 configs around these values.
 
 2. Stratified Filtering and Calibration Deduplication (Crucial Change):
@@ -38,10 +38,10 @@ HOW TO RUN:
 1. Build the solver binary and ensure verify_consistency.py passes:
    $ make clean && make
    $ python3 python_scripts/verify_consistency.py
-
+   
 2. Run the HPO script (do NOT run it now, as requested by the user):
    $ python3 python_scripts/examples/run_hpo_pruning_v3.py 2>&1 | tee python_scripts/examples/hpo_pruning_results_v4.log
-
+   
 3. Once complete, inspect the log for the winners, apply the new parameter macros
    to src/prune_strat_routing.c, and run verify_consistency.py to ensure correctness.
 """
@@ -53,7 +53,7 @@ import time
 import sys
 
 # ── tuneable constants ────────────────────────────────────────────────────────
-WORKERS_NODES = 6    # node-count phases: many workers, no timing noise concern
+WORKERS_NODES = 12   # node-count phases: many workers, no timing noise concern
 WORKERS_TIME  = 4    # timing phases: fewer workers to reduce contention noise
 
 # Benchmark files used across phases (relative to project root)
@@ -62,7 +62,6 @@ S7_SMALL  = "benchmark_sets/benchmarkSet7_easy500.txt"     # 500  instances
 S7_FULL   = "benchmark_sets/benchmarkSet7.txt"             # 6000 instances
 S8_TINY   = "benchmark_sets/benchmarkSet8_easy50.txt"      # 50   instances
 S8_MEDIUM = "benchmark_sets/benchmarkSet8_subset300.txt"   # 300  instances
-S8_FULL   = "benchmark_sets/benchmarkSet8.txt"             # 6000 instances
 
 # Predefined curves (a, b, c)
 curves = [
@@ -93,7 +92,7 @@ GAUNTLET = [
      S7_SMALL, S8_MEDIUM, "time",  0.15, WORKERS_TIME),
     # Phase 4: final timing on full sets – all survivors are reported
     ("Phase 4 – final timing (full sets)",
-     S7_FULL,  S8_FULL,   "time",  None, WORKERS_TIME),
+     S7_FULL,  S8_MEDIUM, "time",  None, WORKERS_TIME),
 ]
 
 # ── helpers ───────────────────────────────────────────────────────────────────
@@ -141,7 +140,7 @@ def evaluate_config(conf, s7_instances, s8_instances, max_nodes_cutoff=None):
     t_start  = time.time()
     total_nodes = 0
 
-    for instances, opt in [(s7_instances, "-s 0"), (s8_instances, "-s 1")]:
+    for instances, opt in [(s7_instances, "-s 0"), (s8_instances, "-s 0")]:
         for clue in instances:
             n = run_solver(env, opt, clue)
             if n is None:
@@ -207,14 +206,14 @@ def run_phase(label, configs, s7_file, s8_file, metric, keep_frac, workers):
         for r in results:
             gac_val = r["params"][5]
             gac_groups[gac_val].append(r)
-
+        
         survivors = []
         for gac_val, grp in gac_groups.items():
             grp.sort(key=lambda x: x["nodes"])
             n_keep = max(5, int(len(grp) * keep_frac))
             survivors.extend(grp[:n_keep])
             print(f"  GAC threshold {gac_val}: kept {n_keep} / {len(grp)} configs.")
-
+        
         # Sort survivors by nodes
         survivors.sort(key=lambda r: r[metric])
         print(f"  Total kept: {len(survivors)}, dropped {len(results) - len(survivors)} worst.")
@@ -303,7 +302,7 @@ def main():
                 return None
             total_nodes += n
         for clue in calib_s8:
-            n = run_solver(env, "-s 1", clue, timeout=timeout)
+            n = run_solver(env, "-s 0", clue, timeout=timeout)
             if n is None:
                 return None
             total_nodes += n
@@ -353,17 +352,17 @@ def main():
     print("Writing duplicates analysis to python_scripts/examples/hpo_duplicates_analysis.log...")
     p_names = ["MIN_U", "SHAL", "DEEP", "TH0", "TH1", "GAC", "C_IDX", "KP"]
     var_counts = defaultdict(int)
-
+    
     with open("python_scripts/examples/hpo_duplicates_analysis.log", "w") as out_log:
         out_log.write("HPO DUPLICATE CONFIGURATIONS QUALITATIVE ANALYSIS\n")
         out_log.write("==================================================\n\n")
         out_log.write(f"Total configurations input to calibration: {len(survivors)}\n")
         out_log.write(f"Unique configurations kept:              {len(unique_configs)}\n")
         out_log.write(f"Duplicate configurations:                 {n_dup}\n\n")
-
+        
         out_log.write("Analysis of Parameter Variations within identical behavior groups:\n")
         out_log.write("-------------------------------------------------------------------\n")
-
+        
         large_groups = sorted(fingerprint_groups.items(), key=lambda x: len(x[1]), reverse=True)
         for rank, (f, grp) in enumerate(large_groups[:20], 1):
             out_log.write(f"\nGroup {rank}: Fingerprint = {f} nodes | Size = {len(grp)} configs\n")
@@ -378,13 +377,13 @@ def main():
                     var_counts[p_name] += 1
             out_log.write("  Constants: " + ", ".join(f"{k}={v}" for k, v in constant.items()) + "\n")
             out_log.write("  Varying:   " + ", ".join(f"{k} in {v}" for k, v in varying) + "\n")
-
+            
         out_log.write("\nSummary of Redundant/Inactive Parameters in Calibration:\n")
         out_log.write("--------------------------------------------------------\n")
         for p_name in p_names:
             cnt = var_counts[p_name]
             out_log.write(f"  Parameter '{p_name}' varies in {cnt} duplicate groups.\n")
-
+            
     print("  Analysis summary: Parameter variations in duplicate groups:")
     for p_name in p_names:
         print(f"    - {p_name}: varies in {var_counts[p_name]} duplicate groups.")
