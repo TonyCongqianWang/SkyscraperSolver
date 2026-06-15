@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install Python deps (if present)
+        run: |
+          if [ -f python_solver/requirements.txt ]; then
+            pip install --upgrade pip
+            pip install -r python_solver/requirements.txt
+          fi
+
+      - name: Build (make re)
+        run: make re
+
+      - name: Run consistency verification
+        run: python python_scripts/verify_consistency.py
