@@ -4,3 +4,8 @@ skyscraper_solver*
 .vs
 *.pyc
 venv/
+obj/
+*.log
+benchmark_sets/*rand*.txt
+benchmark_sets/*subset*.txt
+scratch/
