@@ -86,7 +86,7 @@ typedef struct s_node_state
 	int						is_selective_lookahead;
 	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
 	t_node_order			*order_caches[3];
-	int						lowest_valid_idx[3];
+	int						lowest_empty_idx[3];
 	t_prune_prog			progress_counter;
 	t_prune_prog			last_prune_prog;
 	t_sol_count				max_solutions;

@@ -50,18 +50,18 @@ int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		int sf_idx, int *i_out)
 {
 	t_node_order	*cache;
-	int				lowest_valid;
+	int				lowest_empty;
 
 	cache = puzzle->cur_node->order_caches[sf_idx];
-	lowest_valid = 0;
+	lowest_empty = 0;
 	if (!puzzle->cur_node->is_in_lookahead_select)
-		lowest_valid = puzzle->cur_node->lowest_valid_idx[sf_idx];
+		lowest_empty = puzzle->cur_node->lowest_empty_idx[sf_idx];
 	if (next->cell_idx < 0)
 	{
-		*i_out = lowest_valid;
+		*i_out = lowest_empty;
 		return (0);
 	}
-	*i_out = lowest_valid;
+	*i_out = lowest_empty;
 	return (scan_and_check_entry(puzzle, next, cache, i_out));
 }
 
