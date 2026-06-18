@@ -137,12 +137,13 @@ typedef struct s_puzzle
 	t_node_count			nodes_visited;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
-	t_node_state			cur_node_storage;
 	t_node_state			sol_node_storage;
 	t_node_state			*cur_node;
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
 	t_node_orders_stacks	order_stacks;
+	t_node_state			node_stack[MAX_STACK_DEPTH];
+	int						node_stack_top;
 }		t_puzzle;
 
 #endif

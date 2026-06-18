@@ -44,14 +44,15 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/solution_storage.c \
 	$(SRC_DIR)/string_interface.c \
 	$(SRC_DIR)/transition_scoring.c \
-	$(SRC_DIR)/tree_search.c
+	$(SRC_DIR)/tree_search.c \
+	$(SRC_DIR)/tree_search_step.c
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(NAME)
+	$(CC) $(CFLAGS) -Wl,--stack,8388608 $(OBJS) -o $(NAME)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@

@@ -30,7 +30,8 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	puzzle->nodes_visited = 0;
 	puzzle->constr_bounds.size = size;
 	init_order_stacks(puzzle);
-	puzzle->cur_node = &puzzle->cur_node_storage;
+	puzzle->node_stack_top = 0;
+	puzzle->cur_node = &puzzle->node_stack[0];
 	puzzle->cur_node->puzzle = puzzle;
 	init_root_node(puzzle->cur_node, size);
 	idx = 0;

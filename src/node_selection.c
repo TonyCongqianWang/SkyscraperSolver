@@ -12,7 +12,6 @@
 
 #include "node_selection.h"
 #include "transition_scoring.h"
-#include "node_pruning.h"
 #include "grid_availability.h"
 #include "strategy_routing.h"
 #include "node_selection_cache.h"
