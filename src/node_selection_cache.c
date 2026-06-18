@@ -19,21 +19,26 @@
 static void	partition_cache(t_puzzle *puzzle, t_node_order *cache,
 				t_node_state *node, int sf_idx)
 {
+	t_node_transition	tmp[MAX_CELL_COUNT];
 	int					i;
-	t_node_transition	tmp;
+	int					fill_c;
+	int					emp_c;
 
 	i = node->lowest_empty_idx[sf_idx];
+	fill_c = i;
+	emp_c = 0;
 	while (i < cache->count)
 	{
 		if (!is_cell_empty(node, cache->entries[i].cell_idx))
-		{
-			tmp = cache->entries[i];
-			cache->entries[i] = cache->entries[node->lowest_empty_idx[sf_idx]];
-			cache->entries[node->lowest_empty_idx[sf_idx]] = tmp;
-			node->lowest_empty_idx[sf_idx]++;
-		}
+			cache->entries[fill_c++] = cache->entries[i];
+		else
+			tmp[emp_c++] = cache->entries[i];
 		i++;
 	}
+	i = -1;
+	while (++i < emp_c)
+		cache->entries[fill_c + i] = tmp[i];
+	node->lowest_empty_idx[sf_idx] = fill_c;
 	(void)puzzle;
 }
 
@@ -41,9 +46,11 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 				t_node_select_config *config, int sf, int old_top)
 {
 	t_node_state	*n;
+	t_node_order	*parent_cache;
 
 	n = puzzle->cur_node;
-	if (old_top == 0)
+	parent_cache = &puzzle->order_stacks.stacks[sf].orders[old_top];
+	if (old_top == 0 || parent_cache->build_depth < 0)
 	{
 		cache->count = 0;
 		n->lowest_empty_idx[sf] = 0;
@@ -53,7 +60,7 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 	}
 	else
 	{
-		*cache = puzzle->order_stacks.stacks[sf].orders[old_top];
+		*cache = *parent_cache;
 		cache->build_depth = n->cur_depth;
 		partition_cache(puzzle, cache, n, sf);
 	}
@@ -145,8 +152,6 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			if (try_cached_entry(puzzle, next, cache, i))
 				return (1);
 		}
-		if (i == puzzle->cur_node->lowest_empty_idx[sf])
-			puzzle->cur_node->lowest_empty_idx[sf]++;
 		i++;
 	}
 	return (0);
@@ -170,9 +175,6 @@ int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			&& set_next_valid_val(puzzle, next)
 			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
 			return (1);
-		if (!puzzle->cur_node->is_in_lookahead_select
-			&& i == puzzle->cur_node->lowest_empty_idx[sf])
-			puzzle->cur_node->lowest_empty_idx[sf]++;
 		i++;
 	}
 	return (0);
