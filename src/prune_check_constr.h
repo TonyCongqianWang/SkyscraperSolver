@@ -1,25 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   strategy_routing.h                                 :+:      :+:    :+:   */
+/*   prune_check_constr.h                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
 /*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef STRATEGY_ROUTING_H
-# define STRATEGY_ROUTING_H
+#ifndef PRUNE_CHECK_CONSTR_H
+# define PRUNE_CHECK_CONSTR_H
 
 # include "puzzle_structs.h"
-# include "strategy_config.h"
 
-void	run_prune_initial_fixpoint(t_puzzle *puzzle);
-void	run_prune_root_fixpoint(t_puzzle *puzzle);
-void	run_node_pruning_depth(t_puzzle *puzzle);
-void	select_node_select_config(t_puzzle *puzzle,
-			t_node_select_config *config);
+void	prune_check_constr(t_puzzle *puzzle);
 
 #endif

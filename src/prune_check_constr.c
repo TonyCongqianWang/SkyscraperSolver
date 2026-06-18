@@ -1,25 +1,31 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   strategy_routing.h                                 :+:      :+:    :+:   */
+/*   prune_check_constr.c                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
 /*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef STRATEGY_ROUTING_H
-# define STRATEGY_ROUTING_H
+#include "prune_check_constr.h"
+#include "lookahead_dive.h"
+#include "node_selection.h"
+#include "grid_manipulation.h"
 
-# include "puzzle_structs.h"
-# include "strategy_config.h"
+void	prune_check_constr(t_puzzle *puzzle)
+{
+	t_node_transition	tr;
 
-void	run_prune_initial_fixpoint(t_puzzle *puzzle);
-void	run_prune_root_fixpoint(t_puzzle *puzzle);
-void	run_node_pruning_depth(t_puzzle *puzzle);
-void	select_node_select_config(t_puzzle *puzzle,
-			t_node_select_config *config);
-
-#endif
+	puzzle->cur_node->is_in_lookahead_select = 1;
+	puzzle->cur_node->is_selective_lookahead = 0;
+	init_node_transition(&tr);
+	while (try_get_next_transition(puzzle, &tr))
+	{
+		if (!do_l_ahead_dive(puzzle, tr, 0))
+			set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
+	}
+	puzzle->cur_node->is_in_lookahead_select = 0;
+}

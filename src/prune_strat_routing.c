@@ -6,99 +6,94 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 14:20:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/12 00:52:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "strategy_routing.h"
+#include "prune_initial.h"
+#include "prune_root.h"
+#include "prune_shallow.h"
+#include "prune_medium.h"
+#include "prune_deep.h"
 
-static const double			g_min_unset_r_prune = 0.53;
-static const t_prune_prog	g_prune_period_shallow = 360;
-static const t_prune_prog	g_prune_extra_period_deep = 50;
-static const int			g_prune_depth_threshold_0 = 1;
-static const int			g_prune_depth_threshold_1 = 4;
-static const double			g_prune_gac_unset_r_threshold = 0.55;
-static const double			g_prune_lin_coeff = 0.2;
-static const double			g_prune_quad_coeff = 0.5;
-static const double			g_prune_cubic_coeff = 1.0;
-const int					g_keep_pruning = 0;
-
-static int	should_skip_prune(t_puzzle *puzzle)
+static void	update_prune_progress(t_puzzle *puzzle, int prev_num_unset,
+		t_prune_prog prev_prog)
 {
-	t_node_state	*node;
-	double			unset_ratio;
-	double			x;
-	double			p;
-
-	node = puzzle->cur_node;
-	if (node->num_unset == 0)
-		return (1);
-	if (node->progress_counter == 0)
-		return (0);
-	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	x = 1.0 - unset_ratio;
-	p = g_prune_period_shallow;
-	if (node->cur_depth > g_prune_depth_threshold_0)
-		p += g_prune_extra_period_deep;
-	if (node->cur_depth > g_prune_depth_threshold_1)
-		p += g_prune_extra_period_deep;
-	p *= (1.0 + g_prune_lin_coeff * x + g_prune_quad_coeff * x * x
-			+ g_prune_cubic_coeff * x * x * x);
-	return (node->progress_counter < node->last_prune_prog + (t_prune_prog)p);
+	puzzle->cur_node->last_prune_nunset = prev_num_unset;
+	puzzle->cur_node->last_prune_prog = prev_prog;
+	puzzle->cur_node->rows_changed_since_prune = 0;
+	puzzle->cur_node->cols_changed_since_prune = 0;
 }
 
-static void	set_root_prune(t_prune_config *config)
+void	run_prune_initial_fixpoint(t_puzzle *puzzle)
 {
-	config->strategy = PRUNE_HYBRID;
-	config->lookahead.is_selective = 0;
-	config->lookahead.max_depth = 1;
-	config->lookahead.branching_budget = 0;
-	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = 1;
-	config->gac.is_selective = 0;
-	config->gac.max_k = 3;
-	config->gac.analyse_naked = 1;
-	config->gac.analyse_hidden = 1;
-}
+	t_prune_prog	prev_prog;
+	int				prev_num_unset;
 
-static void	set_deep_prune(t_prune_config *config, double unset_ratio)
-{
-	config->lookahead.is_selective = 1;
-	config->lookahead.max_depth = 1;
-	config->lookahead.branching_budget = 0;
-	config->lookahead.enable_node_select = 0;
-	config->lookahead.pruning_level = 1;
-	if (unset_ratio > g_prune_gac_unset_r_threshold)
-	{
-		config->strategy = PRUNE_HYBRID;
-		config->gac.is_selective = 1;
-		config->gac.max_k = 2;
-		config->gac.analyse_naked = 1;
-		config->gac.analyse_hidden = 1;
-	}
-	else
-	{
-		config->strategy = PRUNE_LOOKAHEAD_DIVE;
-	}
-}
-
-void	select_prune_config(t_puzzle *puzzle, t_prune_config *config)
-{
-	double	unset_ratio;
-
-	if (should_skip_prune(puzzle))
-	{
-		config->strategy = PRUNE_NONE;
+	if (should_skip_prune_initial(puzzle))
 		return ;
-	}
-	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
-	if (unset_ratio < g_min_unset_r_prune)
+	while (1)
 	{
-		config->strategy = PRUNE_NONE;
-		return ;
+		prev_prog = puzzle->cur_node->progress_counter;
+		prev_num_unset = puzzle->cur_node->num_unset;
+		prune_initial(puzzle);
+		update_prune_progress(puzzle, prev_num_unset, prev_prog);
+		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
+			break ;
+		if (puzzle->cur_node->progress_counter == prev_prog)
+			break ;
 	}
-	if (puzzle->cur_node->cur_depth == 0)
-		set_root_prune(config);
+}
+
+void	run_prune_root_fixpoint(t_puzzle *puzzle)
+{
+	t_prune_prog	prev_prog;
+	int				prev_num_unset;
+
+	if (should_skip_prune_root(puzzle))
+		return ;
+	while (1)
+	{
+		prev_prog = puzzle->cur_node->progress_counter;
+		prev_num_unset = puzzle->cur_node->num_unset;
+		prune_root(puzzle);
+		update_prune_progress(puzzle, prev_num_unset, prev_prog);
+		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
+			break ;
+		if (puzzle->cur_node->progress_counter == prev_prog)
+			break ;
+	}
+}
+
+static void	prune_depth_helper(t_puzzle *puzzle)
+{
+	if (puzzle->cur_node->cur_depth <= 1)
+		prune_shallow(puzzle);
+	else if (puzzle->cur_node->cur_depth <= 3)
+		prune_medium(puzzle);
 	else
-		set_deep_prune(config, unset_ratio);
+		prune_deep(puzzle);
+}
+
+static int	should_skip_depth(t_puzzle *puzzle)
+{
+	if (puzzle->cur_node->cur_depth <= 1)
+		return (should_skip_prune_shallow(puzzle));
+	if (puzzle->cur_node->cur_depth <= 3)
+		return (should_skip_prune_medium(puzzle));
+	return (should_skip_prune_deep(puzzle));
+}
+
+void	run_node_pruning_depth(t_puzzle *puzzle)
+{
+	t_prune_prog	prev_prog;
+	int				prev_num_unset;
+
+	if (should_skip_depth(puzzle))
+		return ;
+	prev_prog = puzzle->cur_node->progress_counter;
+	prev_num_unset = puzzle->cur_node->num_unset;
+	prune_depth_helper(puzzle);
+	update_prune_progress(puzzle, prev_num_unset, prev_prog);
 }

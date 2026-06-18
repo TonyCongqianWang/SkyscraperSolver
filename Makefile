@@ -16,7 +16,6 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/grid_manipulation.c \
 	$(SRC_DIR)/grid_update.c \
 	$(SRC_DIR)/lookahead_dive.c \
-	$(SRC_DIR)/node_pruning.c \
 	$(SRC_DIR)/node_selection.c \
 	$(SRC_DIR)/node_selection_cache.c \
 	$(SRC_DIR)/node_selection_cache_helper.c \
@@ -25,6 +24,12 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/node_selection_utils.c \
 	$(SRC_DIR)/print_grid.c \
 	$(SRC_DIR)/print_utlilty.c \
+	$(SRC_DIR)/prune_check_constr.c \
+	$(SRC_DIR)/prune_initial.c \
+	$(SRC_DIR)/prune_root.c \
+	$(SRC_DIR)/prune_shallow.c \
+	$(SRC_DIR)/prune_medium.c \
+	$(SRC_DIR)/prune_deep.c \
 	$(SRC_DIR)/prune_gac.c \
 	$(SRC_DIR)/prune_gac_domain.c \
 	$(SRC_DIR)/prune_gac_hidden.c \
