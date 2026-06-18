@@ -3,6 +3,18 @@ NAME = skyscraper_solver
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O2
 
+ifeq ($(OS),Windows_NT)
+	LDFLAGS = -Wl,--stack,8388608
+else
+	UNAME_S := $(shell uname -s)
+	ifeq ($(UNAME_S),Linux)
+		LDFLAGS = -Wl,-z,stack-size=8388608
+	endif
+	ifeq ($(UNAME_S),Darwin)
+		LDFLAGS = -Wl,-stack_size,0x800000
+	endif
+endif
+
 SRC_DIR = src
 OBJ_DIR = obj
 
@@ -52,19 +64,32 @@ OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) -Wl,--stack,8388608 $(OBJS) -o $(NAME)
+	$(CC) $(CFLAGS) $(LDFLAGS) $(OBJS) -o $(NAME)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJ_DIR):
+ifeq ($(OS),Windows_NT)
+	@if not exist $(OBJ_DIR) mkdir $(OBJ_DIR)
+else
 	mkdir -p $(OBJ_DIR)
+endif
 
 clean:
+ifeq ($(OS),Windows_NT)
+	@if exist $(OBJ_DIR) rmdir /S /Q $(OBJ_DIR)
+else
 	rm -rf $(OBJ_DIR)
+endif
 
 fclean: clean
+ifeq ($(OS),Windows_NT)
+	@if exist $(NAME).exe del /Q /F $(NAME).exe
+	@if exist $(NAME) del /Q /F $(NAME)
+else
 	rm -f $(NAME)
+endif
 
 re: fclean all
 
