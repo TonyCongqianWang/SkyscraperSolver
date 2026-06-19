@@ -31,11 +31,11 @@ def canonize(nums):
     return tuple(min(sym_lists))
 
 def load_and_canonize_files(filepaths, is_exclude_set=False):
-    """Parses files and yields (cmd_str, canonical_key) tuples."""
+    """Parses files and yields (cmd_str, canonical_key, origin_str) tuples."""
     instances = []
     set_type = "Negative" if is_exclude_set else "Positive"
     
-    for path in filepaths:
+    for file_idx, path in enumerate(filepaths):
         if not os.path.exists(path):
             print(f"Error: {set_type} benchmark file not found at {path}")
             sys.exit(1)
@@ -47,18 +47,19 @@ def load_and_canonize_files(filepaths, is_exclude_set=False):
             try:
                 nums = list(map(int, line.split()))
                 if len(nums) == 0 or len(nums) % 4 != 0:
-                    print(f"Warning: {path} Line {idx+1} has invalid clue count. Skipping.")
+                    print(f"Warning: {path} Line {idx} has invalid clue count. Skipping.")
                     continue
                 key = canonize(nums)
-                instances.append((line, key))
+                origin_str = f"{file_idx}:{idx}"
+                instances.append((line, key, origin_str))
             except ValueError:
-                print(f"Warning: {path} Line {idx+1} contains invalid numeric data. Skipping.")
+                print(f"Warning: {path} Line {idx} contains invalid numeric data. Skipping.")
                 
     return instances
 
 def run_pre_screen(args):
     """Run solver with a specific solution limit and timeout to estimate density."""
-    idx, cmd_str, solver_path, prescreen_sols, timeout = args
+    idx, cmd_str, origin, solver_path, prescreen_sols, timeout = args
     try:
         t0 = time.time()
         res = subprocess.run(
@@ -68,7 +69,7 @@ def run_pre_screen(args):
         t1 = time.time()
 
         if res.returncode != 0:
-            return idx, cmd_str, "error", 0, 999999999, timeout
+            return idx, cmd_str, origin, "error", 0, 999999999, timeout
 
         sols = 0
         nodes = 0
@@ -78,15 +79,15 @@ def run_pre_screen(args):
             elif line.startswith("Nodes visited:"):
                 nodes = int(line.split(":")[1].strip())
 
-        return idx, cmd_str, "success", sols, nodes, t1 - t0
+        return idx, cmd_str, origin, "success", sols, nodes, t1 - t0
     except subprocess.TimeoutExpired:
-        return idx, cmd_str, "timeout", 0, 999999999, timeout
+        return idx, cmd_str, origin, "timeout", 0, 999999999, timeout
     except Exception as e:
-        return idx, cmd_str, "error", 0, 999999999, timeout
+        return idx, cmd_str, origin, "error", 0, 999999999, timeout
 
 def run_full_enum(args):
     """Run solver with -s 0 (full enumeration) and a specific timeout."""
-    idx, cmd_str, solver_path, timeout = args
+    idx, cmd_str, origin, solver_path, timeout = args
     try:
         t0 = time.time()
         res = subprocess.run(
@@ -106,6 +107,7 @@ def run_full_enum(args):
             return {
                 "idx": idx,
                 "cmd_str": cmd_str,
+                "origin": origin,
                 "status": "success",
                 "nodes": nodes,
                 "sols_found": sols_found,
@@ -115,12 +117,13 @@ def run_full_enum(args):
             return {
                 "idx": idx,
                 "cmd_str": cmd_str,
+                "origin": origin,
                 "status": f"failed_code_{res.returncode}"
             }
     except subprocess.TimeoutExpired:
-        return {"idx": idx, "cmd_str": cmd_str, "status": "timeout"}
+        return {"idx": idx, "cmd_str": cmd_str, "origin": origin, "status": "timeout"}
     except Exception as e:
-        return {"idx": idx, "cmd_str": cmd_str, "status": f"error_{str(e)}"}
+        return {"idx": idx, "cmd_str": cmd_str, "origin": origin, "status": f"error_{str(e)}"}
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Skyscraper puzzle enumeration and filtering tool.")
@@ -139,6 +142,8 @@ def parse_args():
                         help="Maximum solutions to search for during pre-screening (-s argument).")
     parser.add_argument("--output", type=str, default=None, 
                         help="Optional filepath to save discovered solvable instances.")
+    parser.add_argument("--solutions-output", type=str, default=None,
+                        help="Optional filepath to save solution counts. Defaults to prefixing the --output file name. Empty string or missing --output skips writing.")
     parser.add_argument("--max-solved", type=int, default=50, 
                         help="Limit the number of fully solved instances to find before halting.")
     parser.add_argument("--workers", type=int, default=None, 
@@ -162,7 +167,7 @@ def main():
     if args.exclude:
         print(f"Loading exclusions from {len(args.exclude)} file(s)...", flush=True)
         neg_instances = load_and_canonize_files(args.exclude, is_exclude_set=True)
-        for _, key in neg_instances:
+        for _, key, _ in neg_instances:
             seen.add(key)
         print(f"Loaded {len(seen)} unique exclusions.", flush=True)
 
@@ -172,10 +177,10 @@ def main():
     
     unique_instances = []
     current_idx = 1
-    for cmd_str, key in pos_instances:
+    for cmd_str, key, origin in pos_instances:
         if key not in seen:
             seen.add(key)
-            unique_instances.append((current_idx, cmd_str))
+            unique_instances.append((current_idx, cmd_str, origin))
             current_idx += 1
 
     if not unique_instances:
@@ -186,7 +191,7 @@ def main():
 
     # Step 1: Pre-screen
     print(f"\nPre-screening instances (-s {args.prescreen_sols}, {args.prescreen_timeout:.3f}s timeout)...", flush=True)
-    prescreen_args = [(idx, line, args.binary, args.prescreen_sols, args.prescreen_timeout) for idx, cmd_str in unique_instances for line in [cmd_str]]
+    prescreen_args = [(idx, cmd_str, origin, args.binary, args.prescreen_sols, args.prescreen_timeout) for idx, cmd_str, origin in unique_instances]
     
     t0 = time.time()
     with Pool(processes=num_cpus) as pool:
@@ -196,15 +201,15 @@ def main():
 
     group1 = []
     group2 = []
-    for idx, cmd_str, status, sols, nodes, duration in prescreen_results:
+    for idx, cmd_str, origin, status, sols, nodes, duration in prescreen_results:
         if status == "success":
             if sols < args.prescreen_sols:
-                group1.append((idx, cmd_str, sols, nodes, duration))
+                group1.append((idx, cmd_str, origin, sols, nodes, duration))
             else:
-                group2.append((idx, cmd_str, sols, nodes, duration))
+                group2.append((idx, cmd_str, origin, sols, nodes, duration))
 
     # Sort Group 2 by time ascending
-    group2.sort(key=lambda x: x[4])
+    group2.sort(key=lambda x: x[5])
     candidates = group1 + group2
     
     print(f"Pre-screened candidates: {len(group1)} finished completely, {len(group2)} hit the {args.prescreen_sols} solution limit.", flush=True)
@@ -215,44 +220,73 @@ def main():
         
     print(f"Total candidates queued for full enumeration: {len(candidates)}", flush=True)
 
-    solved_instances = {}
+    # Resolve secondary solution counts filename relative to the output file
+    sols_file_path = None
+    if args.output and args.solutions_output != "":
+        if args.solutions_output is None:
+            # Fallback to the output filename with the _num_solutions_ prefix
+            base_dir = os.path.dirname(args.output)
+            base_name = os.path.basename(args.output)
+            sols_file_path = os.path.join(base_dir, f"_num_solutions_{base_name}")
+        else:
+            sols_file_path = args.solutions_output
 
-    # Step 2: Full Enumeration Run
+    # Step 2: Full Enumeration Run with line-by-line streaming output
     print(f"\nRunning full enumeration ({args.timeout}s timeout) on candidates...", flush=True)
-    run_args = [(idx, cmd_str, args.binary, args.timeout) for idx, cmd_str, _, _, _ in candidates]
+    run_args = [(idx, cmd_str, origin, args.binary, args.timeout) for idx, cmd_str, origin, _, _, _ in candidates]
 
-    with Pool(processes=num_cpus) as pool:
-        try:
-            for r in pool.imap_unordered(run_full_enum, run_args):
-                if len(solved_instances) >= args.max_solved:
-                    print(f"Reached maximum solved instances limit ({args.max_solved}). Stopping search.", flush=True)
-                    pool.terminate()
-                    break
+    solved_count = 0
 
-                if r["status"] == "success":
-                    solved_instances[r["idx"]] = r
-                    print(f"  -> Solved: Process ID {r['idx']} in {r['time']:.2f}s (Sols: {r['sols_found']}, Nodes: {r['nodes']})", flush=True)
-        except KeyboardInterrupt:
-            print("\nExecution interrupted by user. Terminating pool...")
-            pool.terminate()
-            pool.join()
-            sys.exit(1)
-
-    solved_keys = sorted(solved_instances.keys())
-    print(f"\nFound {len(solved_keys)} solvable instances in total.", flush=True)
-
-    if args.output:
-        print(f"Writing solvable instances to {args.output}...", flush=True)
-        try:
+    # Open files context-managed safely up front
+    out_f = None
+    sols_f = None
+    try:
+        if args.output:
             os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
-            with open(args.output, "w") as out_f:
-                for idx in solved_keys:
-                    out_f.write(f'"{solved_instances[idx]["cmd_str"]}"\n')
-            print("Write successful.")
-        except Exception as e:
-            print(f"Failed to write to {args.output}: {e}")
-    else:
-        print("No output file specified. Skipping file write.")
+            out_f = open(args.output, "w")
+            print(f"Streaming solvable instances directly to {args.output}...", flush=True)
+            
+            if sols_file_path:
+                if os.path.dirname(sols_file_path):
+                    os.makedirs(os.path.dirname(os.path.abspath(sols_file_path)), exist_ok=True)
+                sols_f = open(sols_file_path, "w")
+                print(f"Streaming solution metrics directly to {sols_file_path}...", flush=True)
+        else:
+            print("No output file specified via --output. Results will only be logged to stdout.", flush=True)
+
+        with Pool(processes=num_cpus) as pool:
+            try:
+                for r in pool.imap_unordered(run_full_enum, run_args):
+                    if solved_count >= args.max_solved:
+                        print(f"Reached maximum solved instances limit ({args.max_solved}). Stopping search.", flush=True)
+                        pool.terminate()
+                        break
+
+                    if r["status"] == "success":
+                        solved_count += 1
+                        print(f"  -> Solved: Process ID {r['idx']} [{r['origin']}] in {r['time']:.2f}s (Sols: {r['sols_found']}, Nodes: {r['nodes']})", flush=True)
+                        
+                        # Direct incremental writes followed by immediate flush to prevent buffer losses
+                        if out_f:
+                            out_f.write(f'"{r["cmd_str"]}"\n')
+                            out_f.flush()
+                        if sols_f:
+                            sols_f.write(f'{r["sols_found"]}\n')
+                            sols_f.flush()
+                            
+            except KeyboardInterrupt:
+                print("\nExecution interrupted by user. Terminating worker pool cleanly...")
+                pool.terminate()
+                pool.join()
+                sys.exit(1)
+
+    finally:
+        if out_f:
+            out_f.close()
+        if sols_f:
+            sols_f.close()
+
+    print(f"\nCompleted! Found and successfully logged {solved_count} solvable instances.", flush=True)
 
 if __name__ == "__main__":
     main()
