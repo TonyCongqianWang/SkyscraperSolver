@@ -18,11 +18,11 @@
 #include "argument_parsing.h"
 
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
-static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth);
+static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth);
 
 int	main(int argc, char **argv)
 {
-	t_puzzle	puzzle;
+	static t_puzzle	puzzle;
 	int			parsing_retcode;
 
 	parsing_retcode = init_puzzle_from_argv(&puzzle, argc, argv);
@@ -62,24 +62,24 @@ static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 	print_value("Nodes visited", puzzle->nodes_visited);
 }
 
-static void	partial_solve_cpy_and_print_debug(t_puzzle puzzle, int max_depth)
+static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth)
 {
 	int			cell_val;
 
-	solve_puzzle(&puzzle, max_depth);
+	solve_puzzle(puzzle, max_depth);
 	cell_val = 1;
-	while (cell_val <= puzzle.size)
+	while (cell_val <= puzzle->size)
 	{
-		print_bmp_grid(&puzzle, cell_val);
+		print_bmp_grid(puzzle, cell_val);
 		print_message("");
 		cell_val++;
 	}
-	print_bound_grid(puzzle.cur_node, 0);
+	print_bound_grid(puzzle->cur_node, 0);
 	print_message("");
-	print_bound_grid(puzzle.cur_node, 1);
+	print_bound_grid(puzzle->cur_node, 1);
 	print_message("");
-	print_solution_grid(&puzzle, 0);
-	print_value("Unset", puzzle.cur_node->num_unset);
-	print_value("Nodes visited", puzzle.nodes_visited);
+	print_solution_grid(puzzle, 0);
+	print_value("Unset", puzzle->cur_node->num_unset);
+	print_value("Nodes visited", puzzle->nodes_visited);
 	print_message("");
 }

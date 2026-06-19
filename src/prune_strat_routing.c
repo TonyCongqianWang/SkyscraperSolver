@@ -68,9 +68,14 @@ void	run_prune_root_fixpoint(t_puzzle *puzzle)
 
 static void	prune_depth_helper(t_puzzle *puzzle)
 {
-	if (puzzle->cur_node->cur_depth <= 1)
+	int	shallow_lim;
+	int	medium_lim;
+
+	shallow_lim = (puzzle->squared_size * 2) / 64;
+	medium_lim = (puzzle->squared_size * 5) / 64;
+	if (puzzle->cur_node->cur_depth <= shallow_lim)
 		prune_shallow(puzzle);
-	else if (puzzle->cur_node->cur_depth <= 3)
+	else if (puzzle->cur_node->cur_depth <= medium_lim)
 		prune_medium(puzzle);
 	else
 		prune_deep(puzzle);
@@ -78,9 +83,14 @@ static void	prune_depth_helper(t_puzzle *puzzle)
 
 static int	should_skip_depth(t_puzzle *puzzle)
 {
-	if (puzzle->cur_node->cur_depth <= 1)
+	int	shallow_lim;
+	int	medium_lim;
+
+	shallow_lim = (puzzle->squared_size * 2) / 64;
+	medium_lim = (puzzle->squared_size * 5) / 64;
+	if (puzzle->cur_node->cur_depth <= shallow_lim)
 		return (should_skip_prune_shallow(puzzle));
-	if (puzzle->cur_node->cur_depth <= 3)
+	if (puzzle->cur_node->cur_depth <= medium_lim)
 		return (should_skip_prune_medium(puzzle));
 	return (should_skip_prune_deep(puzzle));
 }
