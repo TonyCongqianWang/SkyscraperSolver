@@ -16,7 +16,7 @@
 #include "node_selection.h"
 #include "grid_manipulation.h"
 
-void	prune_root(t_puzzle *puzzle)
+static void	prune_root_step(t_puzzle *puzzle)
 {
 	t_gac_config		gac_cfg;
 	t_node_transition	tr;
@@ -37,7 +37,7 @@ void	prune_root(t_puzzle *puzzle)
 	puzzle->cur_node->is_in_lookahead_select = 0;
 }
 
-int	should_skip_prune_root(t_puzzle *puzzle)
+static int	should_skip_prune_root(t_puzzle *puzzle)
 {
 	double	unset_ratio;
 
@@ -47,4 +47,27 @@ int	should_skip_prune_root(t_puzzle *puzzle)
 	if (unset_ratio < 0.4)
 		return (1);
 	return (0);
+}
+
+void	prune_root(t_puzzle *puzzle)
+{
+	t_prune_prog	prev_prog;
+	int				prev_num_unset;
+
+	if (should_skip_prune_root(puzzle))
+		return ;
+	while (1)
+	{
+		prev_prog = puzzle->cur_node->progress_counter;
+		prev_num_unset = puzzle->cur_node->num_unset;
+		prune_root_step(puzzle);
+		puzzle->cur_node->last_prune_nunset = prev_num_unset;
+		puzzle->cur_node->last_prune_prog = prev_prog;
+		puzzle->cur_node->rows_changed_since_prune = 0;
+		puzzle->cur_node->cols_changed_since_prune = 0;
+		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
+			break ;
+		if (puzzle->cur_node->progress_counter == prev_prog)
+			break ;
+	}
 }

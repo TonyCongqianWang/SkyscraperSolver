@@ -16,6 +16,5 @@
 # include "puzzle_structs.h"
 
 void	prune_initial(t_puzzle *puzzle);
-int		should_skip_prune_initial(t_puzzle *puzzle);
 
 #endif

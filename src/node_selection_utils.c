@@ -60,3 +60,12 @@ void	sync_cache_stacks(t_puzzle *puzzle)
 		sf++;
 	}
 }
+
+int	check_sel_filter(t_node_state *node, int cell_idx,
+		int size, int is_selective)
+{
+	if (!node->is_in_lookahead_select || !is_selective)
+		return (1);
+	return ((node->rows_changed_since_prune & (1 << (cell_idx / size)))
+		|| (node->cols_changed_since_prune & (1 << (cell_idx % size))));
+}

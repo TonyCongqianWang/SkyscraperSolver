@@ -16,9 +16,7 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-void	run_prune_initial_fixpoint(t_puzzle *puzzle);
-void	run_prune_root_fixpoint(t_puzzle *puzzle);
-void	run_node_pruning_depth(t_puzzle *puzzle);
+void	prune_current_step(t_puzzle *puzzle, int is_first_iter);
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config);
 

@@ -30,6 +30,7 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/lookahead_dive.c \
 	$(SRC_DIR)/node_selection.c \
 	$(SRC_DIR)/node_selection_cache.c \
+	$(SRC_DIR)/node_selection_cache_api.c \
 	$(SRC_DIR)/node_selection_cache_helper.c \
 	$(SRC_DIR)/node_selection_eval.c \
 	$(SRC_DIR)/node_selection_score.c \

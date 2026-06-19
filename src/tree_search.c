@@ -42,21 +42,6 @@ t_sol_info	handle_leaf_node(t_puzzle *puzzle)
 	return (node_sols);
 }
 
-void	prune_current_step(t_puzzle *puzzle, int is_first_iter)
-{
-	if (puzzle->cur_node->cur_depth == 0)
-	{
-		if (puzzle->nodes_visited == 1 && is_first_iter)
-			run_prune_initial_fixpoint(puzzle);
-		else
-			run_prune_root_fixpoint(puzzle);
-	}
-	else if (is_first_iter)
-	{
-		run_node_pruning_depth(puzzle);
-	}
-}
-
 t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
 {
 	t_node_state		*cur_node;

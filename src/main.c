@@ -23,7 +23,7 @@ static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth);
 int	main(int argc, char **argv)
 {
 	static t_puzzle	puzzle;
-	int			parsing_retcode;
+	int				parsing_retcode;
 
 	parsing_retcode = init_puzzle_from_argv(&puzzle, argc, argv);
 	if (parsing_retcode != 0)
