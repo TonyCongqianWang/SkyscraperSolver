@@ -115,7 +115,7 @@ static void	init_node_order_ptrs(t_node_state *node)
 	while (c < 3)
 	{
 		node->order_caches[c] = &node->puzzle->order_stacks.stacks[c].orders[0];
-		node->lowest_valid_idx[c] = 0;
+		node->lowest_empty_idx[c] = 0;
 		c++;
 	}
 }

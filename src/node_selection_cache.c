@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 11:02:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/19 02:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,32 +16,106 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void	partition_cache(t_puzzle *puzzle, t_node_order *cache,
+				t_node_state *node, int sf_idx)
+{
+	t_node_transition	tmp[MAX_CELL_COUNT];
+	int					i;
+	int					fill_c;
+	int					emp_c;
+
+	i = node->lowest_empty_idx[sf_idx];
+	fill_c = i;
+	emp_c = 0;
+	while (i < cache->count)
+	{
+		if (!is_cell_empty(node, cache->entries[i].cell_idx))
+			cache->entries[fill_c++] = cache->entries[i];
+		else
+			tmp[emp_c++] = cache->entries[i];
+		i++;
+	}
+	i = -1;
+	while (++i < emp_c)
+		cache->entries[fill_c + i] = tmp[i];
+	node->lowest_empty_idx[sf_idx] = fill_c;
+	(void)puzzle;
+}
+
+static void	rescore_empty_suffix(t_puzzle *puzzle, t_node_order *cache,
+				t_node_select_config *config, int sf)
+{
+	t_node_state	*n;
+	int				i;
+
+	n = puzzle->cur_node;
+	i = n->lowest_empty_idx[sf];
+	while (i < cache->count)
+	{
+		set_best_val_strat(puzzle, cache->entries[i].cell_idx,
+			&cache->entries[i], config);
+		i++;
+	}
+	sort_node_order(&cache->entries[n->lowest_empty_idx[sf]],
+		cache->count - n->lowest_empty_idx[sf], config->criterion);
+}
+
+static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
+				t_node_select_config *config, int sf, int old_top)
+{
+	t_node_state	*n;
+	t_node_order	*parent_cache;
+
+	n = puzzle->cur_node;
+	parent_cache = &puzzle->order_stacks.stacks[sf].orders[old_top];
+	if (old_top == 0 || parent_cache->build_depth < 0)
+	{
+		cache->count = 0;
+		n->lowest_empty_idx[sf] = 0;
+		cache->build_depth = n->cur_depth;
+		collect_cache_entries(puzzle, cache, config);
+		sort_node_order(cache->entries, cache->count, config->criterion);
+	}
+	else
+	{
+		*cache = *parent_cache;
+		cache->build_depth = n->cur_depth;
+		partition_cache(puzzle, cache, n, sf);
+		rescore_empty_suffix(puzzle, cache, config, sf);
+	}
+}
+
+static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
+				t_node_select_config *config, int sf)
+{
+	partition_cache(puzzle, cache, puzzle->cur_node, sf);
+	rescore_empty_suffix(puzzle, cache, config, sf);
+}
+
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 {
-	t_node_state		*node;
-	t_node_order		*cache;
-	int					sf_idx;
-	int					top;
+	t_node_state	*n;
+	t_node_order	*cache;
+	int				sf;
+	int				top;
 
-	node = puzzle->cur_node;
-	sf_idx = get_score_family_idx(config->score_family);
-	cache = node->order_caches[sf_idx];
-	if (!cache || cache->build_depth < node->cur_depth)
+	n = puzzle->cur_node;
+	sf = get_score_family_idx(config->score_family);
+	cache = n->order_caches[sf];
+	top = puzzle->order_stacks.stacks[sf].top_idx;
+	if (!cache || cache->build_depth < n->cur_depth)
 	{
-		puzzle->order_stacks.stacks[sf_idx].top_idx++;
-		top = puzzle->order_stacks.stacks[sf_idx].top_idx;
-		if (top >= MAX_STACK_DEPTH)
+		puzzle->order_stacks.stacks[sf].top_idx++;
+		if (puzzle->order_stacks.stacks[sf].top_idx >= MAX_STACK_DEPTH)
 			exit(1);
-		node->order_caches[sf_idx] = &puzzle->order_stacks
-			.stacks[sf_idx].orders[top];
-		cache = node->order_caches[sf_idx];
+		n->order_caches[sf] = &puzzle->order_stacks
+			.stacks[sf].orders[puzzle->order_stacks.stacks[sf].top_idx];
+		cache = n->order_caches[sf];
+		init_new_cache(puzzle, cache, config, sf, top);
 	}
-	cache->count = 0;
-	node->lowest_valid_idx[sf_idx] = 0;
-	cache->build_depth = node->cur_depth;
-	collect_cache_entries(puzzle, cache, config);
-	sort_node_order(cache->entries, cache->count, config->criterion);
-	cache->last_build_prog = node->progress_counter;
+	else
+		rebuild_existing_cache(puzzle, cache, config, sf);
+	cache->last_build_prog = n->progress_counter;
 }
 
 void	rebuild_cache_if_stale(t_puzzle *puzzle,
@@ -53,7 +127,7 @@ void	rebuild_cache_if_stale(t_puzzle *puzzle,
 	int				is_stale;
 
 	node = puzzle->cur_node;
-	sf = config->score_family;
+	sf = get_score_family_idx(config->score_family);
 	cache = node->order_caches[sf];
 	if (cache->last_build_prog == 0)
 		is_stale = 1;
@@ -71,24 +145,20 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 {
 	t_node_order	*cache;
 	int				i;
-	int				sf_idx;
-	int				cell;
+	int				sf;
 
-	sf_idx = get_score_family_idx(config->score_family);
-	cache = puzzle->cur_node->order_caches[sf_idx];
-	i = puzzle->cur_node->lowest_valid_idx[sf_idx];
+	sf = get_score_family_idx(config->score_family);
+	cache = puzzle->cur_node->order_caches[sf];
+	i = puzzle->cur_node->lowest_empty_idx[sf];
 	while (i < cache->count)
 	{
-		cell = cache->entries[i].cell_idx;
-		if (is_cell_empty(puzzle->cur_node, cell)
-			&& check_sel_filter(puzzle->cur_node, cell, puzzle->size,
-				config->is_selective))
+		if (is_cell_empty(puzzle->cur_node, cache->entries[i].cell_idx)
+			&& check_sel_filter(puzzle->cur_node, cache->entries[i].cell_idx,
+				puzzle->size, config->is_selective))
 		{
 			if (try_cached_entry(puzzle, next, cache, i))
 				return (1);
 		}
-		if (i == puzzle->cur_node->lowest_valid_idx[sf_idx])
-			puzzle->cur_node->lowest_valid_idx[sf_idx]++;
 		i++;
 	}
 	return (0);
@@ -97,26 +167,21 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
-	int				i;
-	int				sf_idx;
-	int				cell;
-	t_node_state	*n;
+	int	i;
+	int	sf;
 
-	sf_idx = get_score_family_idx(config->score_family);
-	if (resume_next_from_cache(puzzle, next, sf_idx, &i))
+	sf = get_score_family_idx(config->score_family);
+	if (resume_next_from_cache(puzzle, next, sf, &i))
 		return (1);
-	n = puzzle->cur_node;
-	while (i < n->order_caches[sf_idx]->count)
+	while (i < puzzle->cur_node->order_caches[sf]->count)
 	{
-		cell = n->order_caches[sf_idx]->entries[i].cell_idx;
-		next->cell_idx = cell;
+		next->cell_idx = puzzle->cur_node->order_caches[sf]->entries[i].cell_idx;
 		next->cell_val = 1;
-		if (is_cell_empty(n, cell)
-			&& check_sel_filter(n, cell, puzzle->size, config->is_selective)
-			&& set_next_valid_val(puzzle, next) && is_cell_empty(n, cell))
+		if (is_cell_empty(puzzle->cur_node, next->cell_idx) && check_sel_filter(
+				puzzle->cur_node, next->cell_idx, puzzle->size, config->is_selective)
+			&& set_next_valid_val(puzzle, next)
+			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
 			return (1);
-		if (!n->is_in_lookahead_select && i == n->lowest_valid_idx[sf_idx])
-			n->lowest_valid_idx[sf_idx]++;
 		i++;
 	}
 	return (0);

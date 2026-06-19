@@ -42,20 +42,20 @@ void	init_node_transition(t_node_transition *tr)
 
 void	sync_cache_stacks(t_puzzle *puzzle)
 {
-	t_node_state	*node;
 	int				sf;
 	int				idx;
 	t_node_order	*stack;
 
-	node = puzzle->cur_node;
 	sf = 0;
 	while (sf < 3)
 	{
-		if (node->order_caches[sf])
+		if (puzzle->cur_node->order_caches[sf])
 		{
 			stack = &puzzle->order_stacks.stacks[sf].orders[0];
-			idx = node->order_caches[sf] - stack;
+			idx = puzzle->cur_node->order_caches[sf] - stack;
 			puzzle->order_stacks.stacks[sf].top_idx = idx;
+			while (++idx < MAX_STACK_DEPTH)
+				puzzle->order_stacks.stacks[sf].orders[idx].build_depth = -1;
 		}
 		sf++;
 	}
