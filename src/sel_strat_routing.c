@@ -12,9 +12,9 @@
 
 #include "strategy_routing.h"
 
-static const t_prune_prog	g_sel_rebuild_period = 5;
-static const double			g_sel_linear_coeff = 20;
-static const double			g_sel_quad_coeff = 50;
+static const t_prune_prog	g_sel_rebuild_period = 25;
+static const double			g_sel_linear_coeff = 100;
+static const double			g_sel_quad_coeff = 300;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)

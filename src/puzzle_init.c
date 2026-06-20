@@ -112,13 +112,6 @@ static void	init_node_grid(t_node_state *node, int size)
 
 static void	init_node_order_ptrs(t_node_state *node)
 {
-	int	c;
-
-	c = 0;
-	while (c < 3)
-	{
-		node->order_caches[c] = &node->puzzle->order_stacks.stacks[c].orders[0];
-		node->lowest_empty_idx[c] = 0;
-		c++;
-	}
+	node->order_cache = &node->puzzle->order_stack.orders[0];
+	node->lowest_empty_idx = 0;
 }

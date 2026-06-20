@@ -29,8 +29,6 @@ int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 void	init_order_stacks(t_puzzle *puzzle);
 
 /* node_selection_cache_helper.c */
-int		resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-			int sf_idx, int *i_out);
 int		try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 			t_node_order *cache, int i);
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,

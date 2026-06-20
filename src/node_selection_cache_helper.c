@@ -6,55 +6,13 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 11:03:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/21 01:28:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "node_selection_cache.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
-
-static int	scan_and_check_entry(t_puzzle *puzzle, t_node_transition *next,
-				t_node_order *cache, int *i_ptr)
-{
-	int	i;
-
-	i = *i_ptr;
-	while (i < cache->count && cache->entries[i].cell_idx != next->cell_idx)
-		i++;
-	if (i < cache->count)
-	{
-		next->cell_val++;
-		if (set_next_valid_val(puzzle, next)
-			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
-		{
-			*i_ptr = i;
-			return (1);
-		}
-		i++;
-	}
-	*i_ptr = i;
-	return (0);
-}
-
-int	resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
-		int sf_idx, int *i_out)
-{
-	t_node_order	*cache;
-	int				lowest_empty;
-
-	cache = puzzle->cur_node->order_caches[sf_idx];
-	lowest_empty = 0;
-	if (!puzzle->cur_node->is_in_lookahead_select)
-		lowest_empty = puzzle->cur_node->lowest_empty_idx[sf_idx];
-	if (next->cell_idx < 0)
-	{
-		*i_out = lowest_empty;
-		return (0);
-	}
-	*i_out = lowest_empty;
-	return (scan_and_check_entry(puzzle, next, cache, i_out));
-}
 
 int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 		t_node_order *cache, int i)
