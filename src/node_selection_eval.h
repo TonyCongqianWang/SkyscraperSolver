@@ -26,6 +26,5 @@ void	sort_node_order(t_node_transition *entries, int count,
 			t_selection_criterion criterion);
 int		scan_best_live(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
-void	init_node_transition(t_node_transition *tr);
 
 #endif

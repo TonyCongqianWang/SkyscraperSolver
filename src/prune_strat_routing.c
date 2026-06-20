@@ -56,7 +56,8 @@ void	prune_current_step(t_puzzle *puzzle)
 {
 	if (puzzle->cur_node->cur_depth == 0)
 	{
-		if (puzzle->nodes_visited <= 1 && puzzle->cur_node->last_prune_prog == 0)
+		if (puzzle->nodes_visited <= 1
+			&& puzzle->cur_node->last_prune_prog == 0)
 			prune_initial(puzzle);
 		else if (should_skip_prune_root(puzzle))
 			prune_root(puzzle);

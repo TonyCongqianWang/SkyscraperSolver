@@ -12,6 +12,7 @@
 
 #include "tree_search.h"
 #include "grid_manipulation.h"
+#include "strategy_routing.h"
 #include "node_selection.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"

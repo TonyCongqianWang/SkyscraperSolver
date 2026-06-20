@@ -16,7 +16,10 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
+/* prune_strat_routing.c */
 void	prune_current_step(t_puzzle *puzzle);
+
+/* sel_strat_routing.c */
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config);
 

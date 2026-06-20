@@ -16,24 +16,29 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-void	set_best_val_strat(t_puzzle *puzzle, int idx,
-			t_node_transition *best, t_node_select_config *config);
+/* node_selection_cache.c */
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config);
-void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
-			t_node_select_config *config);
+
+/* node_selection_cache_api.c */
 void	rebuild_cache_if_stale(t_puzzle *puzzle,
 			t_node_select_config *config, int allow_stale_rebuild);
 int		get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
 int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
-int		check_sel_filter(t_node_state *node, int cell_idx,
-			int size, int is_selective);
+void	init_order_stacks(t_puzzle *puzzle);
+
+/* node_selection_cache_helper.c */
 int		resume_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			int sf_idx, int *i_out);
 int		try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 			t_node_order *cache, int i);
-void	init_order_stacks(t_puzzle *puzzle);
+void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
+			t_node_select_config *config);
+
+/* node_selection_utils.c */
 void	sync_cache_stacks(t_puzzle *puzzle);
+int		check_sel_filter(t_node_state *node, int cell_idx,
+			int size, int is_selective);
 
 #endif
