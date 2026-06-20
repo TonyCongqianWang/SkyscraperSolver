@@ -15,18 +15,9 @@
 
 void	prune_initial(t_puzzle *puzzle)
 {
-	t_prune_prog			prev_prog;
 	t_prune_routine_cfg		cfg;
 
 	get_prune_cfg_heavy(&cfg);
 	cfg.run_check_constr = 1;
-	while (1)
-	{
-		prev_prog = puzzle->cur_node->progress_counter;
-		run_pruning_routine(puzzle, &cfg);
-		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
-			break ;
-		if (puzzle->cur_node->progress_counter == prev_prog)
-			break ;
-	}
+	run_pruning_routine(puzzle, &cfg);
 }
