@@ -111,11 +111,15 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 	i = 0;
 	while (i < state->size)
 	{
-		if (!config->is_selective
-			|| (state->rows_changed_since_prune & (1 << i)))
+		if (config->selectivity == SELECTIVITY_NONE
+			|| (state->rows_changed_since_prune & (1 << i))
+			|| (config->selectivity == SELECTIVITY_ANY_CHANGE
+				&& (state->rows_invalid_since_prune & (1 << i))))
 			analyse_row(state, i, config);
-		if (!config->is_selective
-			|| (state->cols_changed_since_prune & (1 << i)))
+		if (config->selectivity == SELECTIVITY_NONE
+			|| (state->cols_changed_since_prune & (1 << i))
+			|| (config->selectivity == SELECTIVITY_ANY_CHANGE
+				&& (state->cols_invalid_since_prune & (1 << i))))
 			analyse_col(state, i, config);
 		i++;
 	}

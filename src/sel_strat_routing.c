@@ -36,5 +36,5 @@ void	select_node_select_config(t_puzzle *puzzle,
 	config->rebuild_period = period;
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
-	config->is_selective = 0;
+	config->selectivity = SELECTIVITY_NONE;
 }

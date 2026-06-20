@@ -64,6 +64,8 @@ void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);
 		decrement_constr_num_valids(state, cell_idx, val);
+		state->rows_invalid_since_prune |= (1 << (cell_idx / state->size));
+		state->cols_invalid_since_prune |= (1 << (cell_idx % state->size));
 	}
 }
 

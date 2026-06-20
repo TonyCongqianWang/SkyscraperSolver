@@ -12,6 +12,8 @@
 
 #ifndef PUZZLE_STRUCTS_H
 # define PUZZLE_STRUCTS_H
+# include "strategy_config.h"
+
 # define MAX_N_CONSTR_PAIRS 18
 # define MAX_CELL_COUNT 81
 # define MAX_SIZE 9
@@ -82,8 +84,10 @@ typedef struct s_node_state
 	int						num_unset;
 	t_u16					rows_changed_since_prune;
 	t_u16					cols_changed_since_prune;
+	t_u16					rows_invalid_since_prune;
+	t_u16					cols_invalid_since_prune;
 	int						is_in_lookahead_select;
-	int						is_selective_lookahead;
+	t_selectivity_level		lookahead_selectivity;
 	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
 	t_node_order			*order_caches[3];
 	int						lowest_empty_idx[3];

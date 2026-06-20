@@ -76,6 +76,8 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->last_prune_nunset = size * size + 1;
 	root_node->rows_changed_since_prune = 0xffff;
 	root_node->cols_changed_since_prune = 0xffff;
+	root_node->rows_invalid_since_prune = 0xffff;
+	root_node->cols_invalid_since_prune = 0xffff;
 	root_node->is_in_lookahead_select = 0;
 	init_node_order_ptrs(root_node);
 	root_node->progress_counter = 0;

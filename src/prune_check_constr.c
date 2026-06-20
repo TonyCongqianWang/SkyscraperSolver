@@ -20,7 +20,7 @@ void	prune_check_constr(t_puzzle *puzzle)
 	t_node_transition	tr;
 
 	puzzle->cur_node->is_in_lookahead_select = 1;
-	puzzle->cur_node->is_selective_lookahead = 0;
+	puzzle->cur_node->lookahead_selectivity = SELECTIVITY_NONE;
 	init_node_transition(&tr);
 	while (try_get_next_transition(puzzle, &tr))
 	{

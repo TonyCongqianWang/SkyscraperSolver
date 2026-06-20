@@ -50,7 +50,7 @@ int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 	{
 		if (is_cell_empty(puzzle->cur_node, cache->entries[i].cell_idx)
 			&& check_sel_filter(puzzle->cur_node, cache->entries[i].cell_idx,
-				puzzle->size, config->is_selective))
+				puzzle->size, config->selectivity))
 		{
 			if (try_cached_entry(puzzle, next, cache, i))
 				return (1);
@@ -76,7 +76,7 @@ int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		next->cell_val = 1;
 		if (is_cell_empty(puzzle->cur_node, next->cell_idx)
 			&& check_sel_filter(puzzle->cur_node, next->cell_idx,
-				puzzle->size, config->is_selective)
+				puzzle->size, config->selectivity)
 			&& set_next_valid_val(puzzle, next)
 			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
 			return (1);

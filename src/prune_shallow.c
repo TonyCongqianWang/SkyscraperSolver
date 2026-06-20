@@ -21,13 +21,13 @@ void	prune_shallow(t_puzzle *puzzle)
 	t_gac_config		gac_cfg;
 	t_node_transition	tr;
 
-	gac_cfg.is_selective = 1;
+	gac_cfg.selectivity = SELECTIVITY_ANY_CHANGE;
 	gac_cfg.max_k = 2;
 	gac_cfg.analyse_naked = 1;
 	gac_cfg.analyse_hidden = 1;
 	prune_gac(puzzle, &gac_cfg);
 	puzzle->cur_node->is_in_lookahead_select = 1;
-	puzzle->cur_node->is_selective_lookahead = 0;
+	puzzle->cur_node->lookahead_selectivity = SELECTIVITY_NONE;
 	init_node_transition(&tr);
 	while (try_get_next_transition(puzzle, &tr))
 	{

@@ -21,13 +21,13 @@ static void	prune_root_step(t_puzzle *puzzle)
 	t_gac_config		gac_cfg;
 	t_node_transition	tr;
 
-	gac_cfg.is_selective = 0;
+	gac_cfg.selectivity = SELECTIVITY_NONE;
 	gac_cfg.max_k = 3;
 	gac_cfg.analyse_naked = 1;
 	gac_cfg.analyse_hidden = 1;
 	prune_gac(puzzle, &gac_cfg);
 	puzzle->cur_node->is_in_lookahead_select = 1;
-	puzzle->cur_node->is_selective_lookahead = 0;
+	puzzle->cur_node->lookahead_selectivity = SELECTIVITY_NONE;
 	init_node_transition(&tr);
 	while (try_get_next_transition(puzzle, &tr))
 	{
@@ -51,6 +51,8 @@ void	prune_root(t_puzzle *puzzle)
 		puzzle->cur_node->last_prune_prog = prev_prog;
 		puzzle->cur_node->rows_changed_since_prune = 0;
 		puzzle->cur_node->cols_changed_since_prune = 0;
+		puzzle->cur_node->rows_invalid_since_prune = 0;
+		puzzle->cur_node->cols_invalid_since_prune = 0;
 		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
 			break ;
 		if (puzzle->cur_node->progress_counter == prev_prog)

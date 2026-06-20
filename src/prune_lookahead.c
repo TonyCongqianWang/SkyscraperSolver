@@ -22,7 +22,7 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	t_node_transition		tr;
 
 	puzzle->cur_node->is_in_lookahead_select = 1;
-	puzzle->cur_node->is_selective_lookahead = config->is_selective;
+	puzzle->cur_node->lookahead_selectivity = config->selectivity;
 	init_node_transition(&tr);
 	while (try_get_next_transition(puzzle, &tr))
 	{

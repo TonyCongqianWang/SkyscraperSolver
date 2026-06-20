@@ -21,21 +21,28 @@ typedef enum e_prune_strategy
 	PRUNE_NONE
 }	t_prune_strategy;
 
+typedef enum e_selectivity_level
+{
+	SELECTIVITY_NONE,
+	SELECTIVITY_ANY_CHANGE,
+	SELECTIVITY_VALUE_SET
+}	t_selectivity_level;
+
 typedef struct s_lookahead_config
 {
-	int		is_selective;
-	int		max_depth;
-	int		branching_budget;
-	int		enable_node_select;
-	int		pruning_level;
+	t_selectivity_level	selectivity;
+	int					max_depth;
+	int					branching_budget;
+	int					enable_node_select;
+	int					pruning_level;
 }	t_lookahead_config;
 
 typedef struct s_gac_config
 {
-	int		is_selective;
-	int		max_k;
-	int		analyse_naked;
-	int		analyse_hidden;
+	t_selectivity_level	selectivity;
+	int					max_k;
+	int					analyse_naked;
+	int					analyse_hidden;
 }	t_gac_config;
 
 typedef struct s_prune_config
@@ -66,7 +73,7 @@ typedef struct s_node_select_config
 	int						rebuild_period;
 	int						start_cell_idx;
 	char					start_cell_val;
-	int						is_selective;
+	t_selectivity_level		selectivity;
 }	t_node_select_config;
 
 #endif

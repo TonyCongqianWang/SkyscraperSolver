@@ -54,7 +54,7 @@ static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
 		config->start_cell_val = 1;
 		if (next->cell_idx >= 0)
 			config->start_cell_val = next->cell_val + 1;
-		config->is_selective = node->is_selective_lookahead;
+		config->selectivity = node->lookahead_selectivity;
 		if (g_lh_score_family_defined)
 			config->score_family = g_lh_score_family;
 		if (g_lh_criterion_defined)

@@ -50,6 +50,8 @@ static void	run_node_pruning_depth(t_puzzle *puzzle)
 	puzzle->cur_node->last_prune_prog = prev_prog;
 	puzzle->cur_node->rows_changed_since_prune = 0;
 	puzzle->cur_node->cols_changed_since_prune = 0;
+	puzzle->cur_node->rows_invalid_since_prune = 0;
+	puzzle->cur_node->cols_invalid_since_prune = 0;
 }
 
 void	prune_current_step(t_puzzle *puzzle)
