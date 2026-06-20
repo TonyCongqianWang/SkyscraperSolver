@@ -15,19 +15,15 @@
 
 void	prune_root(t_puzzle *puzzle)
 {
-	t_prune_prog			prev_prog;
-	t_prune_routine_cfg		cfg;
+	t_prune_routine_cfg	cfg;
+	double				unset_ratio;
 
-	get_prune_cfg_heavy(&cfg);
-	while (1)
-	{
-		prev_prog = puzzle->cur_node->progress_counter;
-		run_pruning_routine(puzzle, &cfg);
-		if (puzzle->cur_node->is_invalid || puzzle->cur_node->is_complete)
-			break ;
-		if (puzzle->cur_node->progress_counter == prev_prog)
-			break ;
-	}
+	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
+	if (unset_ratio > 0.5)
+		get_prune_cfg_heavy(&cfg);
+	else
+		get_prune_cfg_medium(&cfg);
+	run_pruning_routine(puzzle, &cfg);
 }
 
 int	should_skip_prune_root(t_puzzle *puzzle)

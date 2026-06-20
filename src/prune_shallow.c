@@ -16,8 +16,13 @@
 void	prune_shallow(t_puzzle *puzzle)
 {
 	t_prune_routine_cfg	cfg;
+	double				unset_ratio;
 
-	get_prune_cfg_medium(&cfg);
+	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
+	if (unset_ratio > 0.6)
+		get_prune_cfg_heavy(&cfg);
+	else
+		get_prune_cfg_medium(&cfg);
 	run_pruning_routine(puzzle, &cfg);
 }
 
