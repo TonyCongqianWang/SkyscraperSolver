@@ -16,7 +16,7 @@
 #include "node_selection.h"
 #include "grid_manipulation.h"
 
-void	get_prune_cfg_light(t_prune_routine_config *cfg)
+void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
 	cfg->run_gac = 0;
@@ -25,7 +25,7 @@ void	get_prune_cfg_light(t_prune_routine_config *cfg)
 	cfg->lookahead.max_depth = 1;
 }
 
-void	get_prune_cfg_medium(t_prune_routine_config *cfg)
+void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
 	cfg->run_gac = 1;
@@ -38,7 +38,7 @@ void	get_prune_cfg_medium(t_prune_routine_config *cfg)
 	cfg->lookahead.max_depth = 1;
 }
 
-void	get_prune_cfg_heavy(t_prune_routine_config *cfg)
+void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
 	cfg->run_gac = 1;
@@ -51,43 +51,39 @@ void	get_prune_cfg_heavy(t_prune_routine_config *cfg)
 	cfg->lookahead.max_depth = 1;
 }
 
-void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_config *config)
+static void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
+				t_selectivity_level selectivity, int max_depth)
 {
 	t_node_transition	tr;
-	t_node_state		*node;
-	t_prune_prog		prev_prog;
-	int					prev_num_unset;
+
+	node->is_in_lookahead_select = 1;
+	node->lookahead_selectivity = selectivity;
+	init_node_transition(&tr);
+	while (try_get_next_transition(puzzle, &tr))
+	{
+		if (!do_l_ahead_dive(puzzle, tr, max_depth))
+			set_value_invalid(node, tr.cell_idx, tr.cell_val);
+	}
+	node->is_in_lookahead_select = 0;
+}
+
+void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg)
+{
+	t_node_state	*node;
+	t_prune_prog	prev_prog;
+	int				prev_num_unset;
 
 	puzzle->prune_runs_count++;
 	node = puzzle->cur_node;
 	prev_prog = node->progress_counter;
 	prev_num_unset = node->num_unset;
-	if (config->run_check_constr)
-	{
-		node->is_in_lookahead_select = 1;
-		node->lookahead_selectivity = SELECTIVITY_NONE;
-		init_node_transition(&tr);
-		while (try_get_next_transition(puzzle, &tr))
-		{
-			if (!do_l_ahead_dive(puzzle, tr, 0))
-				set_value_invalid(node, tr.cell_idx, tr.cell_val);
-		}
-		node->is_in_lookahead_select = 0;
-	}
-	if (config->run_gac)
-		prune_gac(puzzle, (t_gac_config *)&config->gac);
-	if (config->run_lookahead)
-	{
-		node->is_in_lookahead_select = 1;
-		node->lookahead_selectivity = config->lookahead.selectivity;
-		init_node_transition(&tr);
-		while (try_get_next_transition(puzzle, &tr))
-		{
-			if (!do_l_ahead_dive(puzzle, tr, config->lookahead.max_depth))
-				set_value_invalid(node, tr.cell_idx, tr.cell_val);
-		}
-		node->is_in_lookahead_select = 0;
-	}
+	if (cfg->run_check_constr)
+		run_lookahead_loop(puzzle, node, SELECTIVITY_NONE, 0);
+	if (cfg->run_gac)
+		prune_gac(puzzle, (t_gac_config *)&cfg->gac);
+	if (cfg->run_lookahead)
+		run_lookahead_loop(puzzle, node, cfg->lookahead.selectivity,
+			cfg->lookahead.max_depth);
 	node->last_prune_nunset = prev_num_unset;
 	node->last_prune_prog = prev_prog;
 	node->rows_changed_since_prune = 0;

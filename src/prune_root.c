@@ -16,7 +16,7 @@
 void	prune_root(t_puzzle *puzzle)
 {
 	t_prune_prog			prev_prog;
-	t_prune_routine_config	cfg;
+	t_prune_routine_cfg		cfg;
 
 	get_prune_cfg_heavy(&cfg);
 	while (1)

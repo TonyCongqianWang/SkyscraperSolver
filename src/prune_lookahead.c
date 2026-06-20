@@ -15,7 +15,7 @@
 
 void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 {
-	t_prune_routine_config	cfg;
+	t_prune_routine_cfg	cfg;
 
 	get_prune_cfg_light(&cfg);
 	cfg.lookahead = *config;

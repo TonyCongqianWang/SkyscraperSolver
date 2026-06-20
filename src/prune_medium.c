@@ -15,7 +15,7 @@
 
 void	prune_medium(t_puzzle *puzzle)
 {
-	t_prune_routine_config	cfg;
+	t_prune_routine_cfg	cfg;
 
 	get_prune_cfg_light(&cfg);
 	run_pruning_routine(puzzle, &cfg);
