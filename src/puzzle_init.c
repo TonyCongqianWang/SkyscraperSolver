@@ -28,6 +28,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	puzzle->squared_size = size * size;
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
+	puzzle->prune_runs_count = 0;
 	puzzle->constr_bounds.size = size;
 	init_order_stacks(puzzle);
 	puzzle->node_stack_top = 0;

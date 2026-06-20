@@ -139,6 +139,7 @@ typedef struct s_puzzle
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_node_count			nodes_visited;
+	int						prune_runs_count;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
 	t_node_state			sol_node_storage;

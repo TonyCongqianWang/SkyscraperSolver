@@ -37,6 +37,7 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/node_selection_utils.c \
 	$(SRC_DIR)/print_grid.c \
 	$(SRC_DIR)/print_utlilty.c \
+	$(SRC_DIR)/pruning_routines.c \
 	$(SRC_DIR)/prune_check_constr.c \
 	$(SRC_DIR)/prune_initial.c \
 	$(SRC_DIR)/prune_root.c \

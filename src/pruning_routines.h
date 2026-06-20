@@ -1,23 +1,34 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   prune_lookahead.c                                  :+:      :+:    :+:   */
+/*   pruning_routines.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Created: 2026/06/20 23:59:00 by towang            #+#    #+#             */
 /*   Updated: 2026/06/20 23:59:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "prune_lookahead.h"
-#include "pruning_routines.h"
+#ifndef PRUNING_ROUTINES_H
+# define PRUNING_ROUTINES_H
 
-void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
+# include "puzzle_structs.h"
+# include "strategy_config.h"
+
+typedef struct s_prune_routine_config
 {
-	t_prune_routine_config	cfg;
+	int					run_check_constr;
+	int					run_gac;
+	t_gac_config		gac;
+	int					run_lookahead;
+	t_lookahead_config	lookahead;
+}	t_prune_routine_config;
 
-	get_prune_cfg_light(&cfg);
-	cfg.lookahead = *config;
-	run_pruning_routine(puzzle, &cfg);
-}
+void	get_prune_cfg_light(t_prune_routine_config *cfg);
+void	get_prune_cfg_medium(t_prune_routine_config *cfg);
+void	get_prune_cfg_heavy(t_prune_routine_config *cfg);
+
+void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_config *config);
+
+#endif

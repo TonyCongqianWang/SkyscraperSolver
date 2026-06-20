@@ -31,14 +31,10 @@ static int	should_skip_depth(t_puzzle *puzzle)
 
 static void	run_node_pruning_depth(t_puzzle *puzzle)
 {
-	t_prune_prog	prev_prog;
-	int				prev_num_unset;
-	int				d;
+	int	d;
 
 	if (should_skip_depth(puzzle))
 		return ;
-	prev_prog = puzzle->cur_node->progress_counter;
-	prev_num_unset = puzzle->cur_node->num_unset;
 	d = puzzle->cur_node->cur_depth;
 	if (d <= (puzzle->squared_size * 2) / 64)
 		prune_shallow(puzzle);
@@ -46,20 +42,13 @@ static void	run_node_pruning_depth(t_puzzle *puzzle)
 		prune_medium(puzzle);
 	else
 		prune_deep(puzzle);
-	puzzle->cur_node->last_prune_nunset = prev_num_unset;
-	puzzle->cur_node->last_prune_prog = prev_prog;
-	puzzle->cur_node->rows_changed_since_prune = 0;
-	puzzle->cur_node->cols_changed_since_prune = 0;
-	puzzle->cur_node->rows_invalid_since_prune = 0;
-	puzzle->cur_node->cols_invalid_since_prune = 0;
 }
 
 void	prune_current_step(t_puzzle *puzzle)
 {
 	if (puzzle->cur_node->cur_depth == 0)
 	{
-		if (puzzle->nodes_visited <= 1
-			&& puzzle->cur_node->last_prune_prog == 0)
+		if (puzzle->prune_runs_count == 0)
 			prune_initial(puzzle);
 		else if (should_skip_prune_root(puzzle))
 			prune_root(puzzle);

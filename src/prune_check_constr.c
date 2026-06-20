@@ -6,26 +6,19 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/20 23:59:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "prune_check_constr.h"
-#include "lookahead_dive.h"
-#include "node_selection.h"
-#include "grid_manipulation.h"
+#include "pruning_routines.h"
 
 void	prune_check_constr(t_puzzle *puzzle)
 {
-	t_node_transition	tr;
+	t_prune_routine_config	cfg;
 
-	puzzle->cur_node->is_in_lookahead_select = 1;
-	puzzle->cur_node->lookahead_selectivity = SELECTIVITY_NONE;
-	init_node_transition(&tr);
-	while (try_get_next_transition(puzzle, &tr))
-	{
-		if (!do_l_ahead_dive(puzzle, tr, 0))
-			set_value_invalid(puzzle->cur_node, tr.cell_idx, tr.cell_val);
-	}
-	puzzle->cur_node->is_in_lookahead_select = 0;
+	get_prune_cfg_light(&cfg);
+	cfg.lookahead.selectivity = SELECTIVITY_NONE;
+	cfg.lookahead.max_depth = 0;
+	run_pruning_routine(puzzle, &cfg);
 }
