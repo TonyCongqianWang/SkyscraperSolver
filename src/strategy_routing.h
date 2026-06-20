@@ -16,7 +16,7 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-void	prune_current_step(t_puzzle *puzzle, int is_first_iter);
+void	prune_current_step(t_puzzle *puzzle);
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config);
 

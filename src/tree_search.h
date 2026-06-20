@@ -18,14 +18,13 @@ typedef struct s_search_frame
 {
 	t_sol_info			node_sols;
 	t_node_transition	next;
-	int					is_first;
 }		t_search_frame;
 
 t_sol_info	tree_search(t_puzzle *puzzle);
 t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next);
 int			has_reached_terminal_state(t_node_state *cur_node);
 t_sol_info	handle_leaf_node(t_puzzle *puzzle);
-void		prune_current_step(t_puzzle *puzzle, int is_first_iter);
+void		prune_current_step(t_puzzle *puzzle);
 void		backtrack_to_parent(t_puzzle *puzzle, int *d,
 				t_search_frame *frames);
 void		descend_to_child(t_puzzle *puzzle, int *d,

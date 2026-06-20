@@ -37,16 +37,20 @@ static void	prune_root_step(t_puzzle *puzzle)
 	puzzle->cur_node->is_in_lookahead_select = 0;
 }
 
-static int	should_skip_prune_root(t_puzzle *puzzle)
+int	should_skip_prune_root(t_puzzle *puzzle)
 {
-	double	unset_ratio;
+	t_node_state	*node;
+	double			unset_ratio;
+	int				period;
 
-	if (puzzle->cur_node->num_unset == 0)
+	node = puzzle->cur_node;
+	if (node->num_unset == 0)
 		return (1);
-	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
+	unset_ratio = (double)node->num_unset / puzzle->squared_size;
 	if (unset_ratio < 0.4)
 		return (1);
-	return (0);
+	period = (t_prune_prog)(25 / unset_ratio);
+	return (node->progress_counter < node->last_prune_prog + period);
 }
 
 void	prune_root(t_puzzle *puzzle)
@@ -54,8 +58,6 @@ void	prune_root(t_puzzle *puzzle)
 	t_prune_prog	prev_prog;
 	int				prev_num_unset;
 
-	if (should_skip_prune_root(puzzle))
-		return ;
 	while (1)
 	{
 		prev_prog = puzzle->cur_node->progress_counter;

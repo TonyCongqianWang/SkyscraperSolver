@@ -16,5 +16,6 @@
 # include "puzzle_structs.h"
 
 void	prune_root(t_puzzle *puzzle);
+int		should_skip_prune_root(t_puzzle *puzzle);
 
 #endif

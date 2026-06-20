@@ -66,7 +66,6 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
 	init_sol_info(&frames[d].node_sols, puzzle->squared_size, 0);
-	frames[d].is_first = 1;
 	while (1)
 	{
 		if (process_frame(puzzle, &d, start_d, frames))

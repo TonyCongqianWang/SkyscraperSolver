@@ -52,17 +52,14 @@ static void	run_node_pruning_depth(t_puzzle *puzzle)
 	puzzle->cur_node->cols_changed_since_prune = 0;
 }
 
-void	prune_current_step(t_puzzle *puzzle, int is_first_iter)
+void	prune_current_step(t_puzzle *puzzle)
 {
 	if (puzzle->cur_node->cur_depth == 0)
 	{
-		if (puzzle->nodes_visited == 1 && is_first_iter)
+		if (puzzle->nodes_visited <= 1 && puzzle->cur_node->last_prune_prog == 0)
 			prune_initial(puzzle);
-		else
+		else if (should_skip_prune_root(puzzle))
 			prune_root(puzzle);
 	}
-	else if (is_first_iter)
-	{
-		run_node_pruning_depth(puzzle);
-	}
+	run_node_pruning_depth(puzzle);
 }

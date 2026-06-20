@@ -65,8 +65,7 @@ static int	check_early_states(t_puzzle *puzzle, int *d, int start_d,
 
 	if (check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 		return (check_backtrack(puzzle, d, start_d, frames));
-	prune_current_step(puzzle, frames[*d].is_first);
-	frames[*d].is_first = 0;
+	prune_current_step(puzzle);
 	if (has_reached_terminal_state(puzzle->cur_node))
 	{
 		rec_sols = handle_leaf_node(puzzle);
@@ -96,7 +95,6 @@ int	process_frame(t_puzzle *puzzle, int *d, int start_d,
 	else
 	{
 		init_sol_info(&frames[*d].node_sols, puzzle->squared_size, 0);
-		frames[*d].is_first = 1;
 	}
 	return (0);
 }
