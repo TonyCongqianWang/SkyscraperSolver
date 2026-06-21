@@ -50,8 +50,9 @@ void	prune_current_step(t_puzzle *puzzle)
 	{
 		if (puzzle->prune_runs_count == 0)
 			prune_initial(puzzle);
-		else if (should_skip_prune_root(puzzle))
+		else if (!should_skip_prune_root(puzzle))
 			prune_root(puzzle);
 	}
-	run_node_pruning_depth(puzzle);
+	else
+		run_node_pruning_depth(puzzle);
 }
