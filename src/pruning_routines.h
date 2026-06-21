@@ -19,6 +19,7 @@
 typedef struct s_prune_routine_config
 {
 	int					run_check_constr;
+	t_selectivity_level	check_constr_selectivity;
 	int					run_gac;
 	t_gac_config		gac;
 	int					run_lookahead;

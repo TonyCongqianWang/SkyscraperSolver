@@ -15,10 +15,12 @@
 #include "lookahead_dive.h"
 #include "node_selection.h"
 #include "grid_manipulation.h"
+#include "prune_check_constr.h"
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
+	cfg->check_constr_selectivity = SELECTIVITY_NONE;
 	cfg->run_gac = 0;
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
@@ -28,6 +30,7 @@ void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
+	cfg->check_constr_selectivity = SELECTIVITY_NONE;
 	cfg->run_gac = 1;
 	cfg->gac.selectivity = SELECTIVITY_VALUE_SET;
 	cfg->gac.max_k = 3;
@@ -41,6 +44,7 @@ void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 {
 	cfg->run_check_constr = 0;
+	cfg->check_constr_selectivity = SELECTIVITY_NONE;
 	cfg->run_gac = 1;
 	cfg->gac.selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->gac.max_k = 3;
@@ -78,7 +82,7 @@ void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg)
 	prev_prog = node->progress_counter;
 	prev_num_unset = node->num_unset;
 	if (cfg->run_check_constr)
-		run_lookahead_loop(puzzle, node, SELECTIVITY_NONE, 0);
+		prune_check_constr(puzzle, cfg->check_constr_selectivity);
 	if (cfg->run_gac)
 		prune_gac(puzzle, (t_gac_config *)&cfg->gac);
 	if (cfg->run_lookahead)
