@@ -34,6 +34,7 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/node_selection_cache.c \
 	$(SRC_DIR)/node_selection_cache_api.c \
 	$(SRC_DIR)/node_selection_cache_helper.c \
+	$(SRC_DIR)/node_selection_cache_api_next.c \
 	$(SRC_DIR)/node_selection_eval.c \
 	$(SRC_DIR)/node_selection_score.c \
 	$(SRC_DIR)/node_selection_utils.c \
@@ -41,6 +42,8 @@ SRCS = $(SRC_DIR)/main.c \
 	$(SRC_DIR)/print_utlilty.c \
 	$(SRC_DIR)/pruning_routines.c \
 	$(SRC_DIR)/prune_check_constr.c \
+	$(SRC_DIR)/prune_check_constr_dp.c \
+	$(SRC_DIR)/prune_check_constr_utils.c \
 	$(SRC_DIR)/prune_initial.c \
 	$(SRC_DIR)/prune_root.c \
 	$(SRC_DIR)/prune_shallow.c \

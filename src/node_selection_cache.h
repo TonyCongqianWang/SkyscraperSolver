@@ -16,6 +16,14 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
+typedef struct s_best_search_ctx
+{
+	t_node_transition		*next;
+	t_node_transition		*best;
+	t_node_select_config	*config;
+	double					best_possible;
+}	t_best_search_ctx;
+
 /* node_selection_cache.c */
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config);
 

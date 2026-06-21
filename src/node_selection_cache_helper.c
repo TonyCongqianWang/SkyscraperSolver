@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/10 11:03:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/21 01:28:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/21 18:50:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,4 +53,40 @@ void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 		}
 		cell_idx++;
 	}
+}
+
+void	init_order_stacks(t_puzzle *puzzle)
+{
+	int				stack_idx;
+	t_node_order	*order;
+
+	puzzle->order_stack.top_idx = 0;
+	stack_idx = 0;
+	while (stack_idx < MAX_STACK_DEPTH)
+	{
+		order = &puzzle->order_stack.orders[stack_idx];
+		order->last_build_prog = 0;
+		order->build_depth = -1;
+		stack_idx++;
+	}
+}
+
+void	rebuild_cache_if_stale(t_puzzle *puzzle,
+			t_node_select_config *config, int allow_stale_rebuild)
+{
+	t_node_state	*node;
+	t_node_order	*cache;
+	int				is_stale;
+
+	node = puzzle->cur_node;
+	cache = node->order_cache;
+	if (cache->last_build_prog == 0)
+		is_stale = 1;
+	else if (!allow_stale_rebuild)
+		is_stale = 0;
+	else
+		is_stale = (node->progress_counter
+				>= cache->last_build_prog + config->rebuild_period);
+	if (is_stale)
+		build_node_order(puzzle, config);
 }
