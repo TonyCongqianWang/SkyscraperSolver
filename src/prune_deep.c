@@ -19,7 +19,7 @@ void	prune_deep(t_puzzle *puzzle)
 	double				unset_ratio;
 
 	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
-	if (unset_ratio > 0.4)
+	if (unset_ratio > 0.45)
 		get_prune_cfg_medium(&cfg);
 	else
 		get_prune_cfg_light(&cfg);
@@ -37,9 +37,9 @@ int	should_skip_prune_deep(t_puzzle *puzzle)
 	if (node->num_unset == 0)
 		return (1);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	if (unset_ratio < 0.3)
+	if (unset_ratio < 0.35)
 		return (1);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(1 + 10 * x + 30 * x * x + 100 * x * x * x);
+	period = (t_prune_prog)(1 + 20 * x + 30 * x * x + 120 * x * x * x);
 	return (node->progress_counter < node->last_prune_prog + period);
 }
