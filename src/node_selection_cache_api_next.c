@@ -14,7 +14,7 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
-static int	get_cell_priority_pass(t_node_state *node, int cell_idx, int size)
+int	get_cell_priority_pass(t_node_state *node, int cell_idx, int size)
 {
 	int	r;
 	int	c;
@@ -90,18 +90,56 @@ static void	get_resume_pos(t_node_state *node, t_node_transition *next,
 int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
-	int	curr_pass;
-	int	max_pass;
-	int	i;
+	t_node_state	*node;
+	t_node_order	*cache;
+	int				max_pass;
+	int				cell_idx;
+	int				curr_pass;
+	int				i;
 
+	node = puzzle->cur_node;
+	cache = node->order_cache;
+	if (node->lookahead_ctx)
+	{
+		if (next->cell_idx >= 0)
+		{
+			next->cell_val++;
+			if (set_next_valid_val(puzzle, next)
+				&& is_cell_empty(node, next->cell_idx))
+				return (1);
+			node->lookahead_ctx->curr_index++;
+		}
+		max_pass = get_max_allowed_pass(config->selectivity);
+		while (node->lookahead_ctx->curr_pass <= max_pass)
+		{
+			while (node->lookahead_ctx->curr_index < cache->count)
+			{
+				cell_idx = cache->entries[node->lookahead_ctx->curr_index].cell_idx;
+				if (is_cell_empty(node, cell_idx)
+					&& node->lookahead_ctx->cell_passes[cell_idx]
+						== node->lookahead_ctx->curr_pass)
+				{
+					next->cell_idx = cell_idx;
+					next->cell_val = 1;
+					if (set_next_valid_val(puzzle, next)
+						&& is_cell_empty(node, cell_idx))
+						return (1);
+				}
+				node->lookahead_ctx->curr_index++;
+			}
+			node->lookahead_ctx->curr_pass++;
+			node->lookahead_ctx->curr_index = node->lowest_empty_idx;
+		}
+		return (0);
+	}
 	if (next->cell_idx >= 0)
 	{
 		next->cell_val++;
 		if (set_next_valid_val(puzzle, next)
-			&& is_cell_empty(puzzle->cur_node, next->cell_idx))
+			&& is_cell_empty(node, next->cell_idx))
 			return (1);
 	}
-	get_resume_pos(puzzle->cur_node, next, &curr_pass, &i);
+	get_resume_pos(node, next, &curr_pass, &i);
 	max_pass = get_max_allowed_pass(config->selectivity);
 	while (curr_pass <= max_pass)
 	{

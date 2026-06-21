@@ -16,6 +16,8 @@
 #include "node_selection.h"
 #include "grid_manipulation.h"
 #include "prune_check_constr.h"
+#include "node_selection_cache.h"
+#include <stddef.h>
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {
@@ -59,15 +61,30 @@ static void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 				t_selectivity_level selectivity, int max_depth)
 {
 	t_node_transition	tr;
+	t_lookahead_ctx		ctx;
+	int					i;
+	int					cell_idx;
 
 	node->is_in_lookahead_select = 1;
 	node->lookahead_selectivity = selectivity;
+	ctx.curr_pass = 1;
+	ctx.curr_index = node->lowest_empty_idx;
+	i = 0;
+	while (i < node->order_cache->count)
+	{
+		cell_idx = node->order_cache->entries[i].cell_idx;
+		ctx.cell_passes[cell_idx] = get_cell_priority_pass(node, cell_idx,
+				puzzle->size);
+		i++;
+	}
+	node->lookahead_ctx = &ctx;
 	init_node_transition(&tr);
 	while (try_get_next_transition(puzzle, &tr))
 	{
 		if (!do_l_ahead_dive(puzzle, tr, max_depth))
 			set_value_invalid(node, tr.cell_idx, tr.cell_val);
 	}
+	node->lookahead_ctx = NULL;
 	node->is_in_lookahead_select = 0;
 }
 

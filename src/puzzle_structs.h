@@ -65,6 +65,13 @@ typedef struct s_constrs_state
 	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
 }		t_constrs_state;
 
+typedef struct s_lookahead_ctx
+{
+	int						curr_pass;
+	int						curr_index;
+	char					cell_passes[MAX_CELL_COUNT];
+}		t_lookahead_ctx;
+
 typedef struct s_node_state
 {
 	int						size;
@@ -85,6 +92,7 @@ typedef struct s_node_state
 	t_selectivity_level		lookahead_selectivity;
 	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
 	t_node_order			*order_cache;
+	t_lookahead_ctx			*lookahead_ctx;
 	int						lowest_empty_idx;
 	t_prune_prog			progress_counter;
 	t_prune_prog			last_prune_prog;
