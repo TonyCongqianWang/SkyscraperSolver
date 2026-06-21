@@ -40,6 +40,6 @@ int	should_skip_prune_deep(t_puzzle *puzzle)
 	if (unset_ratio < 0.35)
 		return (1);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(1 + 20 * x + 30 * x * x + 120 * x * x * x);
+	period = (t_prune_prog)(100 + 200 * x + 300 * x * x + 1000 * x * x * x);
 	return (node->progress_counter < node->last_prune_prog + period);
 }
