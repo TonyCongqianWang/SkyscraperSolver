@@ -5,6 +5,7 @@ CFLAGS = -Wall -Wextra -Werror -O2
 
 ifeq ($(OS),Windows_NT)
 	LDFLAGS = -Wl,--stack,8388608
+	BINARY = $(NAME).exe
 else
 	UNAME_S := $(shell uname -s)
 	ifeq ($(UNAME_S),Linux)
@@ -13,6 +14,7 @@ else
 	ifeq ($(UNAME_S),Darwin)
 		LDFLAGS = -Wl,-stack_size,0x800000
 	endif
+	BINARY = ./$(NAME)
 endif
 
 SRC_DIR = src
@@ -95,4 +97,7 @@ endif
 
 re: fclean all
 
-.PHONY: all clean fclean re
+test: $(NAME)
+	python3 python_scripts/verify_consistency.py -r $(BINARY)
+
+.PHONY: all clean fclean re test
