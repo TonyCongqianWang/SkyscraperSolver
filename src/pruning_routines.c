@@ -29,8 +29,8 @@ void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 
 void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 {
-	cfg->run_check_constr = 0;
-	cfg->check_constr_selectivity = SELECTIVITY_NONE;
+	cfg->run_check_constr = 1;
+	cfg->check_constr_selectivity = SELECTIVITY_VALUE_SET;
 	cfg->run_gac = 1;
 	cfg->gac.selectivity = SELECTIVITY_VALUE_SET;
 	cfg->gac.max_k = 3;
@@ -43,8 +43,8 @@ void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 
 void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 {
-	cfg->run_check_constr = 0;
-	cfg->check_constr_selectivity = SELECTIVITY_NONE;
+	cfg->run_check_constr = 1;
+	cfg->check_constr_selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->run_gac = 1;
 	cfg->gac.selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->gac.max_k = 3;
