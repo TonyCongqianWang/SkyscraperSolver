@@ -33,6 +33,8 @@ int	should_skip_prune_root(t_puzzle *puzzle)
 	t_node_state	*node;
 	double			unset_ratio;
 	double			x;
+	double			x2;
+	double			x4;
 	int				period;
 
 	node = puzzle->cur_node;
@@ -42,6 +44,8 @@ int	should_skip_prune_root(t_puzzle *puzzle)
 	if (unset_ratio < 0.3)
 		return (1);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(100 + 100 * x + 300 * x * x + 600 * x * x * x);
+	x2 = x * x;
+	x4 = x2 * x2;
+	period = (t_prune_prog)(20 + 200 * x2 + 1000 * x4);
 	return (node->progress_counter < node->last_prune_prog + period);
 }

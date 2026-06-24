@@ -33,6 +33,8 @@ int	should_skip_prune_shallow(t_puzzle *puzzle)
 	t_node_state	*node;
 	double			unset_ratio;
 	double			x;
+	double			x2;
+	double			x4;
 	t_prune_prog	period;
 
 	node = puzzle->cur_node;
@@ -42,6 +44,8 @@ int	should_skip_prune_shallow(t_puzzle *puzzle)
 	if (unset_ratio < 0.3)
 		return (1);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(250 + 250 * x + 500 * x * x + 1000 * x * x * x);
+	x2 = x * x;
+	x4 = x2 * x2;
+	period = (t_prune_prog)(20 + 500 * x2 + 1500 * x4);
 	return (node->progress_counter < node->last_prune_prog + period);
 }
