@@ -41,4 +41,7 @@ fclean: clean
 
 re: fclean all
 
-.PHONY: all clean fclean re
+test: $(BINARY)
+	python3 python_scripts/verify_consistency.py -r $(BINARY)
+
+.PHONY: all clean fclean re test
