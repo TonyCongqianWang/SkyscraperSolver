@@ -58,7 +58,9 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
         with open(expected_file, "r") as f:
             expected_counts = [int(line.strip()) for line in f if line.strip()]
     else:
-        if not os.path.exists(baseline):
+        try:
+            subprocess.run([baseline], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
             print(f"Error: Baseline binary {baseline} not found.")
             return False
 
@@ -146,8 +148,10 @@ def main():
     
     args = parser.parse_args()
     
-    if not os.path.exists(args.refactored):
-        print(f"Error: Binary {args.refactored} not found. Please compile it first.")
+    try:
+        subprocess.run([args.refactored], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        print(f"Error: Refactored binary {args.refactored} not found. Please compile it first.")
         sys.exit(1)
         
     if args.benchmark_file is not None:
