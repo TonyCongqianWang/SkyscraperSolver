@@ -12,9 +12,9 @@
 
 #include "strategy_routing.h"
 
-static const t_prune_prog	g_sel_rebuild_period = 30;
-static const double			g_sel_linear_coeff = 2000;
-static const double			g_sel_quad_coeff = 6000;
+static const t_prune_prog	g_sel_rebuild_period = 1000;
+static const double			g_sel_ord2_coeff = 4000;
+static const double			g_sel_ord4_coeff = 80000;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
@@ -31,8 +31,8 @@ void	select_node_select_config(t_puzzle *puzzle,
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
 	period = g_sel_rebuild_period;
 	x = 1.0 - unset_ratio;
-	period += (t_prune_prog)(g_sel_linear_coeff * x);
-	period += (t_prune_prog)(g_sel_quad_coeff * x * x);
+	period += (t_prune_prog)(g_sel_ord2_coeff * x * x);
+	period += (t_prune_prog)(g_sel_ord4_coeff * x * x * x * x);
 	config->rebuild_period = period;
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
