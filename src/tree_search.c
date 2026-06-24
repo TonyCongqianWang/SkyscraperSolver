@@ -63,6 +63,8 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	start_d = puzzle->node_stack_top;
 	d = start_d;
 	puzzle->nodes_visited++;
+	if (puzzle->cur_node->sub_node_depth == 0)
+		puzzle->main_nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
 	init_sol_info(&frames[d].node_sols, puzzle->squared_size, 0);

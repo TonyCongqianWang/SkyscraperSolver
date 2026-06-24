@@ -48,6 +48,8 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 		frames[*d - 1].next.cell_val, 0);
 	puzzle->cur_node->cur_depth++;
 	puzzle->nodes_visited++;
+	if (puzzle->cur_node->sub_node_depth == 0)
+		puzzle->main_nodes_visited++;
 }
 
 int	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
