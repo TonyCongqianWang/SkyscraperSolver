@@ -6,18 +6,14 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/20 23:59:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/20 23:59:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/24 22:52:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "pruning_routines.h"
 #include "prune_gac.h"
-#include "lookahead_dive.h"
-#include "node_selection.h"
-#include "grid_manipulation.h"
+#include "prune_lookahead.h"
 #include "prune_check_constr.h"
-#include "node_selection_cache.h"
-#include "strategy_routing.h"
 #include <stddef.h>
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
@@ -56,35 +52,6 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_NONE;
 	cfg->lookahead.max_depth = 1;
-}
-
-static void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
-				t_selectivity_level selectivity, int max_depth)
-{
-	t_node_transition		tr;
-	t_lookahead_ctx			ctx;
-	t_node_select_config	config;
-	int						i;
-
-	node->is_in_lookahead_select = 1;
-	node->lookahead_selectivity = selectivity;
-	select_node_select_config(puzzle, &config);
-	config.selectivity = selectivity;
-	rebuild_cache_if_stale(puzzle, &config, 1);
-	ctx.curr_pass = 1;
-	ctx.curr_index = node->lowest_empty_idx;
-	i = -1;
-	while (++i < node->order_cache->count)
-		ctx.cell_passes[node->order_cache->entries[i].cell_idx]
-			= get_cell_priority_pass(node,
-				node->order_cache->entries[i].cell_idx, puzzle->size);
-	node->lookahead_ctx = &ctx;
-	init_node_transition(&tr);
-	while (try_get_next_transition(puzzle, &tr))
-		if (!do_l_ahead_dive(puzzle, tr, max_depth))
-			set_value_invalid(node, tr.cell_idx, tr.cell_val);
-	node->lookahead_ctx = NULL;
-	node->is_in_lookahead_select = 0;
 }
 
 void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg)

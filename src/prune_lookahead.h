@@ -17,5 +17,7 @@
 # include "strategy_config.h"
 
 void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config);
+void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
+			t_selectivity_level selectivity, int max_depth);
 
 #endif
