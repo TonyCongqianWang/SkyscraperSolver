@@ -18,6 +18,7 @@ void	prune_initial(t_puzzle *puzzle)
 	t_prune_routine_cfg		cfg;
 
 	get_prune_cfg_heavy(&cfg);
-	cfg.run_check_constr = 1;
+	cfg.check_constr_selectivity = SELECTIVITY_NONE;
+	cfg.lookahead.selectivity = SELECTIVITY_NONE;
 	run_pruning_routine(puzzle, &cfg);
 }

@@ -58,7 +58,7 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->gac.analyse_naked = 1;
 	cfg->gac.analyse_hidden = 1;
 	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_NONE;
+	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->lookahead.max_depth = 1;
 }
 

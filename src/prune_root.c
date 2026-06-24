@@ -20,7 +20,11 @@ void	prune_root(t_puzzle *puzzle)
 
 	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
 	if (unset_ratio > 0.8)
+	{
 		get_prune_cfg_heavy(&cfg);
+		cfg.check_constr_selectivity = SELECTIVITY_NONE;
+		cfg.lookahead.selectivity = SELECTIVITY_NONE;
+	}
 	else if (unset_ratio > 0.4)
 		get_prune_cfg_medium(&cfg);
 	else if (unset_ratio > 0.3)
