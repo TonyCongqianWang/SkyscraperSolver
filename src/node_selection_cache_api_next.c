@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/21 18:52:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/21 19:00:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/24 22:50:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ int	get_cell_priority_pass(t_node_state *node, int cell_idx, int size)
 	return (3);
 }
 
-static int	get_max_allowed_pass(t_selectivity_level selectivity)
+int	get_max_allowed_pass(t_selectivity_level selectivity)
 {
 	if (selectivity == SELECTIVITY_VALUE_SET)
 		return (1);
@@ -91,47 +91,13 @@ int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_state	*node;
-	t_node_order	*cache;
 	int				max_pass;
-	int				cell_idx;
 	int				curr_pass;
 	int				i;
 
 	node = puzzle->cur_node;
-	cache = node->order_cache;
 	if (node->lookahead_ctx)
-	{
-		if (next->cell_idx >= 0)
-		{
-			next->cell_val++;
-			if (set_next_valid_val(puzzle, next)
-				&& is_cell_empty(node, next->cell_idx))
-				return (1);
-			node->lookahead_ctx->curr_index++;
-		}
-		max_pass = get_max_allowed_pass(config->selectivity);
-		while (node->lookahead_ctx->curr_pass <= max_pass)
-		{
-			while (node->lookahead_ctx->curr_index < cache->count)
-			{
-				cell_idx = cache->entries[node->lookahead_ctx->curr_index].cell_idx;
-				if (is_cell_empty(node, cell_idx)
-					&& node->lookahead_ctx->cell_passes[cell_idx]
-						== node->lookahead_ctx->curr_pass)
-				{
-					next->cell_idx = cell_idx;
-					next->cell_val = 1;
-					if (set_next_valid_val(puzzle, next)
-						&& is_cell_empty(node, cell_idx))
-						return (1);
-				}
-				node->lookahead_ctx->curr_index++;
-			}
-			node->lookahead_ctx->curr_pass++;
-			node->lookahead_ctx->curr_index = node->lowest_empty_idx;
-		}
-		return (0);
-	}
+		return (get_next_lookahead(puzzle, next, config));
 	if (next->cell_idx >= 0)
 	{
 		next->cell_val++;

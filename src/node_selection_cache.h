@@ -34,6 +34,9 @@ int		get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
 int		get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
+int		get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
+			t_node_select_config *config);
+int		get_max_allowed_pass(t_selectivity_level selectivity);
 void	init_order_stacks(t_puzzle *puzzle);
 int		get_cell_priority_pass(t_node_state *node, int cell_idx, int size);
 
