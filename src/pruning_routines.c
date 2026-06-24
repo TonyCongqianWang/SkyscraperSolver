@@ -16,13 +16,25 @@
 #include "prune_check_constr.h"
 #include <stddef.h>
 
+void	get_prune_cfg_vlight(t_prune_routine_cfg *cfg)
+{
+	cfg->run_check_constr = 1;
+	cfg->check_constr_selectivity = SELECTIVITY_VALUE_SET;
+	cfg->run_gac = 0;
+	cfg->gac.selectivity = SELECTIVITY_VALUE_SET;
+	cfg->gac.max_k = 3;
+	cfg->gac.analyse_naked = 1;
+	cfg->gac.analyse_hidden = 1;
+	cfg->run_lookahead = 0;
+}
+
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {
-	cfg->run_check_constr = 0;
-	cfg->check_constr_selectivity = SELECTIVITY_NONE;
+	cfg->run_check_constr = 1;
+	cfg->check_constr_selectivity = SELECTIVITY_VALUE_SET;
 	cfg->run_gac = 0;
 	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
+	cfg->lookahead.selectivity = SELECTIVITY_VALUE_SET;
 	cfg->lookahead.max_depth = 1;
 }
 
