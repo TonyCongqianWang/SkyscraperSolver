@@ -9,6 +9,7 @@ OBJ_DIR = obj
 SRCS = $(wildcard $(SRC_DIR)/*.c)
 
 OBJS = $(SRCS:$(SRC_DIR)/%.c=$(OBJ_DIR)/%.o)
+DEPS = $(OBJS:.o=.d)
 
 ifeq ($(OS),Windows_NT)
 	BINARY = $(NAME).exe
@@ -28,7 +29,7 @@ $(BINARY): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(BINARY)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -c $< -o $@
 
 $(OBJ_DIR):
 	$(MKDIR_CMD)
@@ -43,5 +44,7 @@ re: fclean all
 
 test: $(BINARY)
 	python3 python_scripts/verify_consistency.py -r $(BINARY)
+
+-include $(DEPS)
 
 .PHONY: all clean fclean re test
