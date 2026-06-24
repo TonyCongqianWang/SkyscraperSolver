@@ -3,20 +3,6 @@ NAME = skyscraper_solver
 CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O2
 
-ifeq ($(OS),Windows_NT)
-	LDFLAGS = -Wl,--stack,8388608
-	BINARY = $(NAME).exe
-else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		LDFLAGS = -Wl,-z,stack-size=8388608
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		LDFLAGS = -Wl,-stack_size,0x800000
-	endif
-	BINARY = ./$(NAME)
-endif
-
 SRC_DIR = src
 OBJ_DIR = obj
 
