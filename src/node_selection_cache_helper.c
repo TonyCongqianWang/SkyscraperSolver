@@ -86,7 +86,7 @@ void	rebuild_cache_if_stale(t_puzzle *puzzle,
 		is_stale = 0;
 	else
 		is_stale = (node->progress_counter
-				>= cache->last_build_prog + config->rebuild_period);
+				> cache->last_build_prog + config->rebuild_period);
 	if (is_stale)
 		build_node_order(puzzle, config);
 }
