@@ -21,8 +21,10 @@ void	prune_medium(t_puzzle *puzzle)
 	unset_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
 	if (unset_ratio > 0.45)
 		get_prune_cfg_medium(&cfg);
-	else
+	else if (unset_ratio > 0.3)
 		get_prune_cfg_light(&cfg);
+	else
+		get_prune_cfg_vlight(&cfg);
 	run_pruning_routine(puzzle, &cfg);
 }
 
@@ -37,9 +39,9 @@ int	should_skip_prune_medium(t_puzzle *puzzle)
 	if (node->num_unset == 0)
 		return (1);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	if (unset_ratio < 0.35)
+	if (unset_ratio < 0.2)
 		return (1);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(20 + 500 * x * x + 2000 * x * x * x * x);
+	period = (t_prune_prog)(100 + 400 * x * x + 3000 * x * x * x * x);
 	return (node->progress_counter < node->last_prune_prog + period);
 }

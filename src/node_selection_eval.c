@@ -14,6 +14,7 @@
 #include "node_selection_score.h"
 #include "grid_availability.h"
 #include "cell_bounds.h"
+#include "transition_scoring.h"
 
 int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
 {
@@ -35,29 +36,45 @@ int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
 	return (0);
 }
 
+static int	is_better_cand(t_node_transition *cur, t_node_transition *best,
+				t_selection_criterion criterion)
+{
+	if (best->cell_idx == -1)
+		return (1);
+	if (criterion == SELECT_MAX && cur->score > best->score)
+		return (1);
+	if (criterion == SELECT_MIN && cur->score < best->score)
+		return (1);
+	return (0);
+}
+
 void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config)
 {
 	t_node_transition	cur;
 	int					val;
+	int					is_br;
 
 	best->cell_idx = -1;
 	cur.cell_idx = idx;
-	val = 1;
-	while (val <= puzzle->size)
+	val = puzzle->size;
+	is_br = (config->score_family == SCORE_BRANCHING);
+	while (val > 0)
 	{
 		if (is_valid_value(puzzle->cur_node, idx, val))
 		{
 			cur.cell_val = val;
-			score_transition_strat(puzzle->cur_node, &cur,
-				config->score_family);
-			if (best->cell_idx == -1
-				|| (config->criterion == SELECT_MAX && cur.score > best->score)
-				|| (config->criterion == SELECT_MIN && cur.score < best->score))
+			if (is_br)
+				score_transition_constrs(puzzle->cur_node, &cur);
+			else
+				score_transition_strat(puzzle->cur_node, &cur, config->score_family);
+			if (is_better_cand(&cur, best, config->criterion))
 				*best = cur;
 		}
-		val++;
+		val--;
 	}
+	if (best->cell_idx != -1 && is_br)
+		score_transition_full(puzzle->cur_node, best);
 }
 
 void	sort_node_order(t_node_transition *entries, int count,
