@@ -60,6 +60,7 @@ static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
 		}
 	}
 	print_value("Nodes visited", puzzle->nodes_visited);
+	print_value("Pruning runs", puzzle->prune_runs_count);
 }
 
 static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth)
@@ -81,5 +82,6 @@ static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth)
 	print_solution_grid(puzzle, 0);
 	print_value("Unset", puzzle->cur_node->num_unset);
 	print_value("Nodes visited", puzzle->nodes_visited);
+	print_value("Pruning runs", puzzle->prune_runs_count);
 	print_message("");
 }

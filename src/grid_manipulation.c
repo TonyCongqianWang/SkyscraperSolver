@@ -30,14 +30,13 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 	state->grid.vals[cell_idx] = val;
 	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
 	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
-	check |= (state->num_unset < state->last_prune_nunset);
+	(void)check;
 	state->num_unset--;
 	state->last_set_idx = cell_idx;
 	update_availability(state, cell_idx, val);
 	if (state->num_unset == 0)
 		state->is_complete = 1;
-	check |= state->is_complete;
-	if (check && !state->is_invalid)
+	if (!state->is_invalid)
 		state->is_invalid = !check_constraints(state->puzzle, cell_idx);
 }
 
