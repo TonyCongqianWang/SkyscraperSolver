@@ -1,23 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   print_utility.h                                    :+:      :+:    :+:   */
+/*   strategy_routing.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:39 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:03:37 by towang           ###   ########.fr       */
+/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PRINT_UTILITY_H
-# define PRINT_UTILITY_H
-# include "puzzle_structs.h"
+#ifndef STRATEGY_ROUTING_H
+# define STRATEGY_ROUTING_H
 
-void	put_char(const char ch);
-void	print_message(const char *str);
-void	print_value(const char *descr, unsigned long long value);
-void	print_error(const char *str);
-void	put_number(unsigned long long nbr);
+# include "puzzle_structs.h"
+# include "strategy_config.h"
+
+/* prune_strat_routing.c */
+void	prune_current_step(t_puzzle *puzzle);
+
+/* sel_strat_routing.c */
+void	select_node_select_config(t_puzzle *puzzle,
+			t_node_select_config *config);
 
 #endif

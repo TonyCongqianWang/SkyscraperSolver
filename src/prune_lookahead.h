@@ -1,23 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   print_utility.h                                    :+:      :+:    :+:   */
+/*   prune_lookahead.h                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:39 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:03:37 by towang           ###   ########.fr       */
+/*   Created: 2026/06/09 16:48:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/09 16:48:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PRINT_UTILITY_H
-# define PRINT_UTILITY_H
-# include "puzzle_structs.h"
+#ifndef PRUNE_LOOKAHEAD_H
+# define PRUNE_LOOKAHEAD_H
 
-void	put_char(const char ch);
-void	print_message(const char *str);
-void	print_value(const char *descr, unsigned long long value);
-void	print_error(const char *str);
-void	put_number(unsigned long long nbr);
+# include "puzzle_structs.h"
+# include "strategy_config.h"
+
+void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config);
+void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
+			t_selectivity_level selectivity, int max_depth);
 
 #endif

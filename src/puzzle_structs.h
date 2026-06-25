@@ -12,14 +12,18 @@
 
 #ifndef PUZZLE_STRUCTS_H
 # define PUZZLE_STRUCTS_H
+# include "strategy_config.h"
+
 # define MAX_N_CONSTR_PAIRS 18
 # define MAX_CELL_COUNT 81
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 
-typedef unsigned long long	t_prune_prog;
-typedef unsigned long long	t_sol_count;
-typedef unsigned long long	t_node_count;
+typedef unsigned short		t_u16;
+typedef unsigned long long	t_u64;
+typedef t_u64				t_prune_prog;
+typedef t_u64				t_sol_count;
+typedef t_u64				t_node_count;
 typedef struct s_puzzle		t_puzzle;
 
 typedef struct s_node_transition
@@ -31,6 +35,22 @@ typedef struct s_node_transition
 	int			num_valids_cell;
 	double		score;
 }		t_node_transition;
+
+typedef struct s_node_order
+{
+	t_node_transition	entries[MAX_CELL_COUNT];
+	int					count;
+	t_prune_prog		last_build_prog;
+	int					build_depth;
+}		t_node_order;
+
+# define MAX_STACK_DEPTH 128
+
+typedef struct s_node_orders_stack
+{
+	t_node_order	orders[MAX_STACK_DEPTH];
+	int				top_idx;
+}		t_node_orders_stack;
 
 typedef struct s_grid_state
 {
@@ -45,11 +65,17 @@ typedef struct s_constrs_state
 	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
 }		t_constrs_state;
 
+typedef struct s_lookahead_ctx
+{
+	int						curr_pass;
+	int						curr_index;
+	char					cell_passes[MAX_CELL_COUNT];
+}		t_lookahead_ctx;
+
 typedef struct s_node_state
 {
 	int						size;
 	int						last_prune_nunset;
-	int						cur_prune_nunset;
 	int						cur_depth;
 	int						max_depth;
 	int						last_set_idx;
@@ -58,6 +84,16 @@ typedef struct s_node_state
 	int						sub_node_depth;
 	int						target_nunset;
 	int						num_unset;
+	t_u16					rows_changed_since_prune;
+	t_u16					cols_changed_since_prune;
+	t_u16					rows_invalid_since_prune;
+	t_u16					cols_invalid_since_prune;
+	int						is_in_lookahead_select;
+	t_selectivity_level		lookahead_selectivity;
+	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
+	t_node_order			*order_cache;
+	t_lookahead_ctx			*lookahead_ctx;
+	int						lowest_empty_idx;
 	t_prune_prog			progress_counter;
 	t_prune_prog			last_prune_prog;
 	t_sol_count				max_solutions;
@@ -106,13 +142,17 @@ typedef struct s_puzzle
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_node_count			nodes_visited;
+	t_node_count			main_nodes_visited;
+	int						prune_runs_count;
 	t_constraint_pair		constraint_pairs[MAX_N_CONSTR_PAIRS];
 	int						grid_constr_map[MAX_CELL_COUNT][C_PAIRS_PER_CELL];
-	t_node_state			cur_node_storage;
 	t_node_state			sol_node_storage;
 	t_node_state			*cur_node;
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
+	t_node_orders_stack		order_stack;
+	t_node_state			node_stack[MAX_STACK_DEPTH];
+	int						node_stack_top;
 }		t_puzzle;
 
 #endif

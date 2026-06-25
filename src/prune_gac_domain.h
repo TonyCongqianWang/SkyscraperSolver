@@ -1,23 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   print_utility.h                                    :+:      :+:    :+:   */
+/*   prune_gac_domain.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2025/01/25 11:55:39 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 19:03:37 by towang           ###   ########.fr       */
+/*   Created: 2026/06/09 16:57:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/09 16:57:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PRINT_UTILITY_H
-# define PRINT_UTILITY_H
+#ifndef PRUNE_GAC_DOMAIN_H
+# define PRUNE_GAC_DOMAIN_H
+
 # include "puzzle_structs.h"
 
-void	put_char(const char ch);
-void	print_message(const char *str);
-void	print_value(const char *descr, unsigned long long value);
-void	print_error(const char *str);
-void	put_number(unsigned long long nbr);
+int		count_bits(int bmp);
+void	eliminate_bmp_vals(t_node_state *state, int cell_idx, int u_bmp);
+void	keep_only_values(t_node_state *state, int cell_idx, int keep_mask);
+void	get_value_cells(t_node_state *state, int *cells, int count,
+			int *value_cells);
 
 #endif

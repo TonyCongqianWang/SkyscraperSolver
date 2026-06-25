@@ -6,17 +6,19 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/01/25 11:55:53 by towang            #+#    #+#             */
-/*   Updated: 2025/01/30 21:21:54 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/10 16:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "puzzle_init.h"
 #include "cell_bounds.h"
 #include "solution_storage.h"
+#include "node_selection_cache.h"
 
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
+static void	init_node_order_ptrs(t_node_state *node);
 
 void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 {
@@ -26,8 +28,12 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	puzzle->squared_size = size * size;
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
+	puzzle->main_nodes_visited = 0;
+	puzzle->prune_runs_count = 0;
 	puzzle->constr_bounds.size = size;
-	puzzle->cur_node = &puzzle->cur_node_storage;
+	init_order_stacks(puzzle);
+	puzzle->node_stack_top = 0;
+	puzzle->cur_node = &puzzle->node_stack[0];
 	puzzle->cur_node->puzzle = puzzle;
 	init_root_node(puzzle->cur_node, size);
 	idx = 0;
@@ -70,7 +76,12 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->num_unset = size * size;
 	root_node->target_nunset = 0;
 	root_node->last_prune_nunset = size * size + 1;
-	root_node->cur_prune_nunset = size * size + 1;
+	root_node->rows_changed_since_prune = 0xffff;
+	root_node->cols_changed_since_prune = 0xffff;
+	root_node->rows_invalid_since_prune = 0xffff;
+	root_node->cols_invalid_since_prune = 0xffff;
+	root_node->is_in_lookahead_select = 0;
+	init_node_order_ptrs(root_node);
 	root_node->progress_counter = 0;
 	root_node->last_prune_prog = 0;
 	root_node->solutions_found = 0;
@@ -81,6 +92,7 @@ static void	init_root_node(t_node_state *root_node, int size)
 static void	init_node_grid(t_node_state *node, int size)
 {
 	int		idx;
+	int		v;
 
 	idx = 0;
 	while (idx < size * size)
@@ -89,6 +101,18 @@ static void	init_node_grid(t_node_state *node, int size)
 		node->grid.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(node, idx);
 		node->grid.num_cell_vals[idx] = size;
+		v = 0;
+		while (v < MAX_SIZE + 1)
+		{
+			node->lookahead_scores[idx][v] = 0.0;
+			v++;
+		}
 		idx++;
 	}
+}
+
+static void	init_node_order_ptrs(t_node_state *node)
+{
+	node->order_cache = &node->puzzle->order_stack.orders[0];
+	node->lowest_empty_idx = 0;
 }

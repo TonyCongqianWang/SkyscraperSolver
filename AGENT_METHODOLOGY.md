@@ -83,3 +83,56 @@ To optimize pruning strategy routing hyperparameters efficiently without compili
 4. **Timing-Based Filtering (Phases 2-4)**:
    - Progressively evaluate survivor configurations on larger sets (`S7_SMALL`, `S8_MEDIUM`, `S7_FULL`) to refine timing signals and report the optimal winners. Always preserve the `-s 0` flag for size 7 and size 8.
 
+---
+
+## 🪟 5. Windows & PowerShell Execution Quirks
+
+When working on a Windows environment (especially via PowerShell or CMD), keep the following constraints and troubleshooting techniques in mind:
+
+### 1. File Locks & Permission Denied Errors
+* **The Problem**: If the solver crashes (e.g. exit code `3221225477` / `0xC0000005` Access Violation), Windows Error Reporting (`WerFault.exe`) may suspend the process to write dumps. This keeps a lock on the `skyscraper_solver.exe` binary. Any attempt to recompile or delete the file will fail with `Permission denied` / `UnauthorizedAccessException`.
+* **The Fix**: Force kill any zombie solver processes using PowerShell:
+  ```powershell
+  Stop-Process -Name skyscraper_solver -Force -ErrorAction SilentlyContinue
+  ```
+  Or via standard CMD/PowerShell utilities:
+  ```cmd
+  taskkill /IM skyscraper_solver.exe /F
+  ```
+
+### 2. GDB Argument Quoting Bug
+* **The Problem**: GDB on Windows has a known parsing bug when passing space-separated arguments inside quotes (like clues `"2 4 2 1..."`) via `--args` or `set args`. It splits them on spaces despite the quotes, resulting in `Error: Wrong argument count`.
+* **The Workaround**: Temporarily hardcode argument redirection inside [main.c](file:///C:/Users/Nutzer/.gemini/antigravity/worktrees/SkyscraperSolver/optimize-search-node-memory/src/main.c) when `argc == 1`:
+  ```c
+  char *dummy_argv[] = {
+      argv[0],
+      "-s",
+      "0",
+      "2 4 2 1 2 5 3 2 1 2 2 6 3 2 2 3 2 3 3 3 4 2 3 1 3 1 3 3 2 4 2 4",
+      (void *)0
+  };
+  if (argc == 1)
+  {
+      argv = dummy_argv;
+      argc = 4;
+  }
+  ```
+  This allows running GDB with zero arguments (`gdb ./skyscraper_solver.exe` and then `run`), bypassing the GDB parser bug.
+
+### 3. Compilation & Clean Commands
+* **The Problem**: standard `make clean` commands containing `rm -rf` fail if Windows does not have Unix utils on path. `mkdir -p` can also fail or create folders literally named `-p`.
+* **The Fix**: Use `mingw32-make` instead of `make`, and use standard PowerShell commands to clean build files:
+  ```powershell
+  Remove-Item -Recurse -Force obj -ErrorAction SilentlyContinue
+  Remove-Item -Force skyscraper_solver.exe -ErrorAction SilentlyContinue
+  ```
+  Ensure the Makefile uses a hyphen prefix (`-mkdir $(OBJ_DIR)`) to ignore the folder creation error if the directory already exists.
+
+### 4. Globbing in Linter Execution
+* **The Problem**: Windows shells (CMD/PowerShell) do not expand glob patterns (like `src/*.c`) in the same way Unix shells do, which can cause linter or test commands to fail.
+* **The Fix**: Pass files individually or use standard python module execution:
+  ```bash
+  python -m norminette src/tree_search.c src/tree_search_step.c
+  ```
+
+

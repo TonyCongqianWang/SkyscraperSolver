@@ -17,6 +17,7 @@
 #include "node_selection.h"
 #include "constraint_checking.h"
 #include "solution_info.h"
+#include "node_selection_cache.h"
 
 static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth);
 static int	check_only_constr(t_puzzle *puzzle, t_node_transition next);
@@ -50,12 +51,17 @@ static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
+	t_prune_prog		progress;
 
 	cur_node = puzzle->cur_node;
 	old_state = *(cur_node);
 	transition_node(puzzle, depth);
 	local_sols = tree_recursion(puzzle, next);
+	progress = cur_node->progress_counter - old_state.progress_counter;
+	old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
+		= (double)progress;
 	*(cur_node) = old_state;
+	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);
 }
 
@@ -65,6 +71,8 @@ static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
 	t_node_state		*cur_node;
 
 	cur_node = puzzle->cur_node;
+	if (cur_node->grid.vals[next.cell_idx] != 0)
+		return (0);
 	cur_node->grid.vals[next.cell_idx] = next.cell_val;
 	is_valid = check_constraints(puzzle, next.cell_idx);
 	cur_node->grid.vals[next.cell_idx] = 0;

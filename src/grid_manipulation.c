@@ -21,32 +21,43 @@ static void	update_availability(t_node_state *state, int cell_idx, int val);
 
 void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 {
-	state->progress_counter += 10;
+	if (state->grid.vals[cell_idx] != 0)
+	{
+		state->is_invalid = 1;
+		return ;
+	}
+	state->progress_counter += state->size * state->size;
 	state->grid.vals[cell_idx] = val;
-	check |= (state->num_unset < state->last_prune_nunset);
+	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
+	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
+	(void)check;
 	state->num_unset--;
 	state->last_set_idx = cell_idx;
 	update_availability(state, cell_idx, val);
 	if (state->num_unset == 0)
 		state->is_complete = 1;
-	check |= state->is_complete;
-	if (check && !state->is_invalid)
+	if (!state->is_invalid)
 		state->is_invalid = !check_constraints(state->puzzle, cell_idx);
 }
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)
 {
+	int	n_invalidated;
+
 	if (state->is_invalid)
 		return ;
-	state->progress_counter++;
 	if (state->grid.vals[cell_idx] == val)
 		state->is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
 	{
+		n_invalidated = state->size - state->grid.num_cell_vals[cell_idx];
+		state->progress_counter += 20 + 5 * n_invalidated * n_invalidated;
 		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);
 		decrement_constr_num_valids(state, cell_idx, val);
+		state->rows_invalid_since_prune |= (1 << (cell_idx / state->size));
+		state->cols_invalid_since_prune |= (1 << (cell_idx % state->size));
 	}
 }
 

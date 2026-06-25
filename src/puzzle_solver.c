@@ -14,7 +14,7 @@
 #include "tree_search.h"
 #include "grid_manipulation.h"
 
-int	insert_initial_grid(t_puzzle *puzzle)
+static int	insert_initial_grid(t_puzzle *puzzle)
 {
 	int				idx;
 	int				input_val;
