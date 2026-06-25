@@ -95,4 +95,4 @@ Refactored lookahead node pruning logic and integrated domain-specific type defi
 * Declared custom typedefs (`t_prune_prog`, `t_sol_count`, `t_node_count`) inside `puzzle_structs.h` to replace raw, unwieldy `unsigned long long` types across the codebase, ensuring full Norminette compliance.
 * Added a thread-safe parallel hyperparameter grid search script in `python_scripts/examples/tune_parameters.py` running 48 evaluations in parallel across 8 CPU cores.
 
-Solves the size 9 benchmark set in roughly 2.5 hours on a 2.20GHz Intel Xeon.
+Solves the size 9 benchmark set in roughly 4.5 hours on a 2.20GHz Intel Xeon.
