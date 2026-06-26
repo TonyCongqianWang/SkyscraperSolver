@@ -13,11 +13,13 @@
 #include "prune_strat_shallow.h"
 #include "pruning_routines.h"
 
-static const double	g_gac_unset_threshold = 0.65;
-static const double	g_constr_min_unset = 0.33;
-static const double	g_constr_max_unset = 0.67;
-static const int	g_period_base = 1;
-static const int	g_period_coef = 13089;
+static const double	g_min_unset_threshold = 0.41167205890726744;
+static const double	g_gac_unset_threshold = 0.628986930862801;
+static const double	g_constr_min_unset = 0.49682108776980893;
+static const double	g_constr_max_unset = 0.9425750932165332;
+static const int	g_period_base = 39;
+static const int	g_period_coef1 = 1683;
+static const int	g_period_coef2 = 11533;
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {
@@ -46,10 +48,11 @@ int	prune_strat_shallow(t_puzzle *puzzle)
 	if (node->is_invalid || node->is_complete || node->num_unset == 0)
 		return (0);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	if (unset_ratio < 0.2)
+	if (unset_ratio < g_min_unset_threshold)
 		return (0);
 	x = 1 - unset_ratio;
-	period = (t_prune_prog)(g_period_base + g_period_coef * x * x * x * x);
+	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
+			+ g_period_coef2 * x * x * x * x);
 	if (node->progress_counter > node->last_prog[0] + period / 2)
 		return (run_tier(puzzle, 0, unset_ratio));
 	if (node->progress_counter > node->last_prog[1] + period)
