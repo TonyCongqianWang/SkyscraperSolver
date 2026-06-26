@@ -58,10 +58,8 @@ To prevent compiler warnings and clarify integer scale requirements, the codebas
 
 ## ⚡ 4. Scripting & Tooling Reference
 
-* **Consistency Checking**: The verification script `python_scripts/verify_consistency.py` validates that new solver implementations match baseline solution counts. Ensure `-r` is passed to target the compiled binary:
-  ```bash
-  python python_scripts/verify_consistency.py -r ./skyscraper_solver
-  ```
+* **Consistency Checking**: The verification script `python_scripts/verify_consistency.py` validates that new solver implementations match baseline solution counts. Usually it should be run with NO extra arguments. A shortcut for that is to use make with target `test`.
+
 * **Benchmarking**: Use `python_scripts/run_benchmark.py` to evaluate execution times. The solver binary is specified via `-c` and the benchmark set path is passed as the final argument:
   ```bash
   python python_scripts/run_benchmark.py -c ./skyscraper_solver benchmark_sets/benchmarkSet7.txt

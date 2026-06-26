@@ -43,7 +43,7 @@ fclean: clean
 re: fclean all
 
 test: $(BINARY)
-	python3 python_scripts/verify_consistency.py -r $(BINARY)
+	python python_scripts/verify_consistency.py -r $(BINARY)
 
 -include $(DEPS)
 
