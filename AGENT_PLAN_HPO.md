@@ -21,14 +21,17 @@ A major issue with previous HPO runs was that the benchmark instances were too e
 
 ### Procedure for Calibrating Size 9:
 1. **Load a Large Dataset**: Use a candidate pool of 500–1000 Size 9 instances.
-2. **Dual-Solver Run**: Solve the pool using two baseline configurations:
-   * `baseline_main` (the current production binary).
-   * A "heavy" configuration (e.g., lower GAC threshold, always-on constraints).
+2. **Multi-Solver Run**: Solve the pool using four different solver versions:
+   * `dev` binary
+   * `main` binary
+   * `v08` binary
+   * `current` refactored binary
 3. **Filter Puzzles**:
-   * **Exclude Trivial**: Puzzles solved in $< 0.05$ seconds by both versions.
-   * **Exclude Pathological**: Puzzles that timeout (e.g., $> 5.0$ seconds) or take excessively long on both versions.
-   * **Retain Calibration Set**: Keep puzzles that take between $0.1$ and $2.0$ seconds. These represent the "critical zone" where solver pruning efficiency is highly visible.
-4. **Output**: Save the resulting list to `benchmark_sets/benchmarkSet9_calibrated.txt`.
+   * **Exclude Trivial**: Puzzles solved in $< 0.05$ seconds by any of the versions.
+   * **Exclude Pathological / Timeouts**: Puzzles that timeout (e.g., $> 5.0$ seconds) or take excessively long on any of the versions.
+   * **Retain Calibration Set**: Keep puzzles that take between $0.1$ and $2.0$ seconds across all four versions. This ensures they are in the "critical zone" of difficulty for all heuristics, avoiding optimization bias towards a single version.
+4. **Include Rotations**: For each selected calibration puzzle, generate and include all of its rotated versions (90, 180, and 270 degrees) to control for difficulty variations and reduce single-solution search variance.
+5. **Output**: Save the resulting list to `benchmark_sets/benchmarkSet9_calibrated.txt`.
 
 ---
 
@@ -70,11 +73,13 @@ To ensure parameters generalize well to unseen puzzles:
    * During SPSA/Sweeps, do not run on the entire benchmark set every iteration.
    * Instead, randomly sample a small subset (e.g., 30 instances from Size 7, 20 from Size 8, and 10 from Size 9) at each iteration.
    * Redraw the subset at every iteration/step to prevent the parameters from overfitting to a static list.
-2. **Metrics (Shifted Geometric Mean)**:
+2. **Rotations to Reduce Variance**:
+   * For the single solution search subsets, always include all 4 rotated versions (0, 90, 180, and 270 degrees) of each sampled instance. This controls for difficulty variance based on puzzle orientation.
+3. **Metrics (Shifted Geometric Mean)**:
    * Use SGM to reduce the influence of outlier instances:
      * $\text{SGM}_{\text{time}} = \exp\left(\frac{1}{N}\sum \ln(t_i + 0.1)\right) - 0.1$
      * $\text{SGM}_{\text{nodes}} = \exp\left(\frac{1}{N}\sum \ln(n_i + 1000.0)\right) - 1000.0$
-3. **Timeouts**:
+4. **Timeouts**:
    * Implement a strict timeout (e.g., 2.0s per puzzle). If a configuration times out, assign it a high-penalty score (e.g., 5.0s and $100,000$ nodes) rather than letting the script hang.
 
 ---
@@ -110,8 +115,9 @@ Please implement the Hyperparameter Optimization (HPO) plan described in AGENT_P
 
 Do this step-by-step:
 1. Enable environment/compilation flag overrides in the strategy files so the tuning python scripts can evaluate parameter candidates.
-2. Write a script to calibrate a Size 9 "medium-hard" puzzle set by running the baseline solver and filtering out trivial (<0.05s) and excessively hard (>5.0s) instances.
-3. Write a parameter sweep and SPSA tuning script that uses stochastic instance redrawing and SGM scoring to find optimal values for g_gac_unset_threshold, g_constr_min_unset, g_constr_max_unset, and g_period_base/coef at different depths.
-4. Run the HPO, analyze the outputs, and refine parameter bounds iteratively.
-5. Update the static constants in the source files and verify correctness with verify_consistency.py.
+2. Write a script to calibrate a Size 9 "medium-hard" puzzle set by running dev, main, v08, and current solver binaries, filtering out instances that are trivial (<0.05s) or timeout/take excessively long (>5.0s) on any version.
+3. For each selected calibration puzzle, generate and include all of its rotated versions (90, 180, and 270 degrees) in the benchmark set to reduce variance.
+4. Write a parameter sweep and SPSA tuning script that uses stochastic instance redrawing (subsampling both standard and rotated variants) and SGM scoring to find optimal values for g_gac_unset_threshold, g_constr_min_unset, g_constr_max_unset, and g_period_base/coef at different depths.
+5. Run the HPO, analyze the outputs, and refine parameter bounds iteratively.
+6. Update the static constants in the source files and verify correctness with verify_consistency.py.
 ```
