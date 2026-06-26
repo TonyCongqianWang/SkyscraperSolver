@@ -41,5 +41,6 @@ int		collect_domains(t_node_state *state, int *grid_indices,
 int		prune_candidates(t_prune_args *args);
 int		propagate_single_direction(t_node_state *state, int *grid_indices,
 			int size, int target_clue);
+void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size);
 
 #endif

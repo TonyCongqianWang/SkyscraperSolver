@@ -15,7 +15,7 @@
 #include "string_interface.h"
 #include "rule_checking.h"
 #include "solution_storage.h"
-#include "print_utility.h"
+#include "print_io.h"
 
 #define USAGE_STR "Wrong argument count. Expected use: \
 skyscraper_solver [-s <max_num_solutions>] <constrait_vals> [<grid_vals>]"

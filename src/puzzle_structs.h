@@ -95,7 +95,7 @@ typedef struct s_node_state
 	t_lookahead_ctx			*lookahead_ctx;
 	int						lowest_empty_idx;
 	t_prune_prog			progress_counter;
-	t_prune_prog			last_prune_prog;
+	t_prune_prog			last_prog[4];
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_grid_state			grid;

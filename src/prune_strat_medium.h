@@ -1,20 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   prune_initial.h                                    :+:      :+:    :+:   */
+/*   prune_strat_medium.h                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PRUNE_INITIAL_H
-# define PRUNE_INITIAL_H
+#ifndef PRUNE_STRAT_MEDIUM_H
+# define PRUNE_STRAT_MEDIUM_H
 
 # include "puzzle_structs.h"
 
-void	prune_initial(t_puzzle *puzzle);
+int		prune_strat_medium(t_puzzle *puzzle);
 
 #endif

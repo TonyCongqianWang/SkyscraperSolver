@@ -70,7 +70,7 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	init_sol_info(&frames[d].node_sols, puzzle->squared_size, 0);
 	while (1)
 	{
-		if (process_frame(puzzle, &d, start_d, frames))
+		if (process_frame(puzzle, &d, start_d, frames) == SEARCH_TERMINATE)
 			break ;
 	}
 	return (frames[start_d].node_sols);

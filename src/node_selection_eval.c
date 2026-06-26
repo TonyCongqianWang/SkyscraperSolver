@@ -67,7 +67,8 @@ void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			if (is_br)
 				score_transition_constrs(puzzle->cur_node, &cur);
 			else
-				score_transition_strat(puzzle->cur_node, &cur, config->score_family);
+				score_transition_strat(puzzle->cur_node, &cur,
+					config->score_family);
 			if (is_better_cand(&cur, best, config->criterion))
 				*best = cur;
 		}

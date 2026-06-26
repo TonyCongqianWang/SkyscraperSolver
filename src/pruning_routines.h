@@ -26,11 +26,11 @@ typedef struct s_prune_routine_config
 	t_lookahead_config	lookahead;
 }	t_prune_routine_cfg;
 
-void	get_prune_cfg_vlight(t_prune_routine_cfg *cfg);
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg);
 void	get_prune_cfg_medium(t_prune_routine_cfg *cfg);
 void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg);
 
-void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg);
+int		run_pruning_routine(t_puzzle *puzzle,
+			const t_prune_routine_cfg *cfg, int cfg_idx);
 
 #endif

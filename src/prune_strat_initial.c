@@ -1,21 +1,26 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   prune_medium.h                                     :+:      :+:    :+:   */
+/*   prune_strat_initial.c                              :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/18 16:17:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef PRUNE_MEDIUM_H
-# define PRUNE_MEDIUM_H
+#include "prune_strat_initial.h"
+#include "pruning_routines.h"
 
-# include "puzzle_structs.h"
+int	prune_strat_initial(t_puzzle *puzzle)
+{
+	t_prune_routine_cfg		cfg;
 
-void	prune_medium(t_puzzle *puzzle);
-int		should_skip_prune_medium(t_puzzle *puzzle);
-
-#endif
+	get_prune_cfg_heavy(&cfg);
+	cfg.run_gac = 1;
+	cfg.run_check_constr = 1;
+	cfg.check_constr_selectivity = SELECTIVITY_NONE;
+	cfg.lookahead.selectivity = SELECTIVITY_NONE;
+	return (run_pruning_routine(puzzle, &cfg, 2));
+}

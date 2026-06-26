@@ -15,6 +15,7 @@
 #include "prune_gac_hidden.h"
 #include "prune_gac_domain.h"
 #include "grid_availability.h"
+#include "selectivity.h"
 
 static int	collect_row_cells(t_node_state *state, int r, int *cells)
 {
@@ -108,18 +109,19 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 	int				i;
 
 	state = puzzle->cur_node;
+	if (should_exit_selectivity(state, config->selectivity))
+		return ;
 	i = 0;
 	while (i < state->size)
 	{
-		if (config->selectivity == SELECTIVITY_NONE
-			|| (state->rows_changed_since_prune & (1 << i))
-			|| (config->selectivity == SELECTIVITY_ANY_CHANGE
-				&& (state->rows_invalid_since_prune & (1 << i))))
+		if (should_process_row(state, i, config->selectivity))
 			analyse_row(state, i, config);
-		if (config->selectivity == SELECTIVITY_NONE
-			|| (state->cols_changed_since_prune & (1 << i))
-			|| (config->selectivity == SELECTIVITY_ANY_CHANGE
-				&& (state->cols_invalid_since_prune & (1 << i))))
+		i++;
+	}
+	i = 0;
+	while (i < state->size)
+	{
+		if (should_process_col(state, i, config->selectivity))
 			analyse_col(state, i, config);
 		i++;
 	}

@@ -40,13 +40,13 @@ int		get_max_allowed_pass(t_selectivity_level selectivity);
 void	init_order_stacks(t_puzzle *puzzle);
 int		get_cell_priority_pass(t_node_state *node, int cell_idx, int size);
 
-/* node_selection_cache_helper.c */
+/* node_selection_cache_update.c */
 int		try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 			t_node_order *cache, int i);
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			t_node_select_config *config);
 
-/* node_selection_utils.c */
+/* node_selection_transition.c */
 void	sync_cache_stacks(t_puzzle *puzzle);
 int		check_sel_filter(t_node_state *node, int cell_idx,
 			int size, t_selectivity_level selectivity);

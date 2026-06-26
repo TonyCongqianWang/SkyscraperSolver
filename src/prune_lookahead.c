@@ -17,6 +17,7 @@
 #include "grid_manipulation.h"
 #include "node_selection_cache.h"
 #include "strategy_routing.h"
+#include "selectivity.h"
 #include <stddef.h>
 
 void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
@@ -25,7 +26,7 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 
 	get_prune_cfg_light(&cfg);
 	cfg.lookahead = *config;
-	run_pruning_routine(puzzle, &cfg);
+	run_pruning_routine(puzzle, &cfg, 1);
 }
 
 static void	run_lookahead_transitions(t_puzzle *puzzle, t_node_state *node,
@@ -39,28 +40,37 @@ static void	run_lookahead_transitions(t_puzzle *puzzle, t_node_state *node,
 	}
 }
 
+static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
+				int size)
+{
+	int	i;
+
+	ctx->curr_pass = 1;
+	ctx->curr_index = node->lowest_empty_idx;
+	i = -1;
+	while (++i < node->order_cache->count)
+	{
+		ctx->cell_passes[node->order_cache->entries[i].cell_idx]
+			= get_cell_priority_pass(
+				node, node->order_cache->entries[i].cell_idx, size);
+	}
+}
+
 void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 			t_selectivity_level selectivity, int max_depth)
 {
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
 	t_node_select_config	config;
-	int						i;
 
+	if (should_exit_selectivity(node, selectivity))
+		return ;
 	node->is_in_lookahead_select = 1;
 	node->lookahead_selectivity = selectivity;
 	select_node_select_config(puzzle, &config);
 	config.selectivity = selectivity;
 	rebuild_cache_if_stale(puzzle, &config, 1);
-	ctx.curr_pass = 1;
-	ctx.curr_index = node->lowest_empty_idx;
-	i = -1;
-	while (++i < node->order_cache->count)
-	{
-		ctx.cell_passes[node->order_cache->entries[i].cell_idx]
-			= get_cell_priority_pass(
-				node, node->order_cache->entries[i].cell_idx, puzzle->size);
-	}
+	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
 	run_lookahead_transitions(puzzle, node, &tr, max_depth);
 	node->lookahead_ctx = NULL;

@@ -1,138 +1,82 @@
-# Skyscraper Solver - Agent Methodology
+# Skyscraper Solver - Development & Optimization Methodology
 
-This document outlines the workflows, style compliance standards, verification procedures, and hyperparameter tuning guidelines established during the `refactor-pruning-node-strategies` optimization track.
-
----
-
-## 🛡️ 1. Code Style & Linter Compliance (42 Norminette)
-
-All source code (`src/*.c`, `src/*.h`) must strictly comply with the **42 Norminette** rules. If any modification is made, run the following linter command:
-
-```bash
-norminette src/*.c src/*.h
-```
-
-### Critical Rules to Remember:
-1. **No Mixed Tabs/Spaces**: All indentation must be done exclusively using tabs.
-2. **Function Length**: No function may exceed **25 lines** of executable code. If a function is too long, decompose it into smaller static helper functions.
-3. **Parameter Limit**: No function may accept more than **4 arguments**. If a function requires more context, package arguments inside a helper struct (see `t_hidden_param` in `src/prune_gac_hidden.h`).
-4. **Function Limit per File**: Source files must contain no more than **5 functions**. Files must be modularized accordingly (e.g. splitting GAC into `prune_gac.c`, `prune_gac_domain.c`, `prune_gac_naked.c`, and `prune_gac_hidden.c`).
-5. **Variable Declarations**: 
-   - All variable declarations must be at the very top of a function block.
-   - Declarations cannot be initialized at definition (except in global scopes/constants).
-   - Align variable names at the same column index using tabs (column 21 is the standard for this project).
+This document outlines the software engineering methodologies, correctness verification workflows, benchmarking protocols, and parameter-tuning strategies for the Skyscraper Solver.
 
 ---
 
-## 🔍 2. Correctness & Solution Count Verification
+## ⚙️ 1. Solver Architecture & Pruning Paradigm
 
-Because Skyscraper puzzles can have multiple valid grid solutions depending on clue configurations, comparing solution grids directly across versions is prone to false positives. Correctness must be verified by comparing **exhaustive solution counts** under the `-s 0` flag.
+The Skyscraper Solver is a backtracking constraint satisfaction solver optimized through lookahead techniques, generalized arc consistency (GAC), and dynamic programming (DP) constraint checks.
 
-### Automated Verification Workflow:
-We have created a parallel consistency check script at `python_scripts/verify_consistency.py`. 
+### Pruning Escalation Scheme
+To balance pruning strength and CPU overhead, the solver organizes pruning routines into three primary tiers:
+1. **Light**: Minimum overhead. Primarily runs lookahead under a relaxed selectivity condition (`SELECTIVITY_VALUE_SET`).
+2. **Medium**: Moderate strength. Performs lookahead under a broader selectivity condition (`SELECTIVITY_ANY_CHANGE`).
+3. **Heavy**: High strength. Performs exhaustive lookahead without selectivity filters (`SELECTIVITY_NONE`).
 
-1. **Default Verification**: Run the script without arguments to automatically run the quick verification suites on Size 7 and Size 8 sets against expected solutions:
-   ```bash
-   python3 python_scripts/verify_consistency.py
-   ```
-2. **Checking Specific Benchmark Files**:
-   ```bash
-   python3 python_scripts/verify_consistency.py benchmark_sets/benchmarkSet7.txt
-   ```
-3. **Correctness Conventions**:
-   - **Size 7**: Always verify using the `-s 0` flag (exhaustive search) as size 7 instances are quick.
-   - **Size 8**: Only use `-s 0` on easy sets (e.g. `benchmarkSet8_easy50.txt`). Never run `-s 0` on random or hard size-8 instances as it is computationally prohibitive.
-   - **Size 9**: Never use `-s 0` for verification; verify using standard `-s 1` (single solution) only.
+### Selective Early Exits
+Pruning routines must dynamically inspect the grid state before running expensive operations:
+* If selectivity is `SELECTIVITY_VALUE_SET` and no cell values have changed since the last pass, the solver must immediately return.
+* If selectivity is `SELECTIVITY_ANY_CHANGE` and no cell values have changed or been invalidated, the solver must immediately return.
 
----
-
-## ⚡ 3. Performance & Node Count Benchmarking
-
-To measure how changes affect solver search speed and search space compression:
-
-> [!WARNING]
-> Do NOT use `--binary` or `--set` arguments with `run_benchmark.py`. They are unrecognized and will fail.
-> Always specify the solver binary command using the `-c` flag and pass the benchmark set text file path as the final positional argument.
-
-1. Run the benchmark tool against the random subset of size 7 (`benchmarkSet7_rand100.txt`) or the full suite:
-   ```bash
-   python3 python_scripts/run_benchmark.py -c ./skyscraper_solver benchmark_sets/benchmarkSet7_rand100.txt
-   ```
-2. Compare the **Total Nodes Visited** and **Total Time** metrics against the baseline version (`./skyscraper_solver_main`).
+### Dynamic Activation of Pruning Strategies
+Pruning routines should be dynamically activated based on the node's position in the search tree (depth) and current grid density (`unset_ratio`):
+* **Generalized Arc Consistency (GAC)**: Extremely effective when the search space is broad (shallower nodes/high unset ratios). At deeper nodes, standard backtracking and domain reduction are faster than full GAC sweeps.
+* **DP Check Constraints**: Best utilized in narrow grid density windows (e.g., `unset_ratio` between `0.3` and `0.6`). When the board is too open (high unset ratios), it rarely prunes; when too constrained (low unset ratios), simpler checks suffice.
 
 ---
 
-## 📈 4. Hyperparameter Optimization (HPO) Tuning Gauntlet
+## 🔍 2. Correctness & Solution Verification
 
-To optimize pruning strategy routing hyperparameters efficiently without compiling thousands of binaries, we compile a single binary with conditional environment variable loading (`-DG_PRUNE_NO_ENV=0`) and execute a multi-phase gauntlet script.
+Refactoring pruning strategies or solver internals carries a high risk of introducing correctness bugs (e.g., pruning valid branches). Correctness must be verified before profiling performance.
 
-> [!IMPORTANT]
-> **Exhaustive Search Requirement**: To avoid overfitting, hyperparameter tuning on size-7 and size-8 instances must always use **full enumeration (`-s 0`)** instead of single-solution search (`-s 1`). 
-> - *Why?* If S8 instances are evaluated using single-solution search (`-s 1`), the search is too shallow and lookahead pruning overhead dominates. The HPO will greedily select passive parameters that minimize/disable lookahead pruning. This causes a catastrophic explosion of search nodes (up to 8.3x) when the selected configuration is deployed on harder datasets.
-
-### Workflow & Concepts:
-1. **High-Throughput Pre-Filtering (Phase 1)**:
-   - Evaluate all generated configuration combinations on cheap tiny sets (100 S7 + 50 S8). This is timing-noise independent and runs very fast.
-   - **Exhaustive Search**: S7 and S8 instances must be evaluated under `-s 0`.
-   - **Stratified Filtering**: Filter survivors by keeping the top 20% of configurations by node count within each GAC threshold group. This preserves parameter diversity across GAC thresholds.
-2. **Post-Phase 1 Calibration Deduplication**:
-   - Run deduplication only on Phase 1 survivors using 5 calibration instances (1 size-7 with `-s 0`, 1 size-8 with `-s 0`, 3 hard size-9 with `-s 1`). This avoids executing heavy size-9 instances on thousands of poor configurations.
-   - **High Timeout Safeguard**: Use a 10.0-second timeout for calibration solver runs to prevent temporary CPU noise from falsely timing out and discarding valid configurations.
-3. **Gauntlet Skip Logic**:
-   - If the deduplicated unique survivor count drops below 2,000, skip Phase 1b (tiny sets time filter) entirely and route survivors directly to Phase 2 (small sets time filter) to optimize execution time.
-4. **Timing-Based Filtering (Phases 2-4)**:
-   - Progressively evaluate survivor configurations on larger sets (`S7_SMALL`, `S8_MEDIUM`, `S7_FULL`) to refine timing signals and report the optimal winners. Always preserve the `-s 0` flag for size 7 and size 8.
+### Verification Principles
+1. **Exhaustive Enumeration (`-s 0`)**: Comparing single solutions found is insufficient because multiple valid solutions can exist for a given clue set, and search order changes will produce different grids. Correctness is verified by confirming that the total number of solutions found is identical to the baseline.
+2. **Puzzle Size Constraints**:
+   * **Size 7**: Fast enough to run exhaustive enumeration (`-s 0`) on all instances.
+   * **Size 8**: Exhaustive enumeration is feasible on easy sets (e.g., 50 instances). Avoid running `-s 0` on hard or random Size 8 sets.
+   * **Size 9**: Exhaustive enumeration is computationally infeasible. Correctness must be verified using single-solution search (`-s 1`).
 
 ---
 
-## 🪟 5. Windows & PowerShell Execution Quirks
+## 📊 3. Benchmarking & Evaluation Guidelines
 
-When working on a Windows environment (especially via PowerShell or CMD), keep the following constraints and troubleshooting techniques in mind:
+Performance optimization of constraint solvers requires careful benchmarking due to search-space variance.
 
-### 1. File Locks & Permission Denied Errors
-* **The Problem**: If the solver crashes (e.g. exit code `3221225477` / `0xC0000005` Access Violation), Windows Error Reporting (`WerFault.exe`) may suspend the process to write dumps. This keeps a lock on the `skyscraper_solver.exe` binary. Any attempt to recompile or delete the file will fail with `Permission denied` / `UnauthorizedAccessException`.
-* **The Fix**: Force kill any zombie solver processes using PowerShell:
-  ```powershell
-  Stop-Process -Name skyscraper_solver -Force -ErrorAction SilentlyContinue
-  ```
-  Or via standard CMD/PowerShell utilities:
-  ```cmd
-  taskkill /IM skyscraper_solver.exe /F
-  ```
+### Search Space & Execution Variance
+* **Single Solution Search (`-s 1`)**: High variance. The time to find the first solution is heavily dependent on search order and early branch decisions. A minor configuration change can cause the solver to either stumble upon the solution immediately or get trapped in a large sub-tree.
+* **Aggregated Statistics**: Never rely on a single instance. Run benchmarks over representing test sets (e.g., 35-100 instances) and track:
+  * **Total Wall Time**: The actual end-to-end user latency.
+  * **Mean & Median Instance Time**: Identifies whether speedups are uniform or driven by outliers.
+  * **Mean & Median Nodes Visited**: A timing-independent metric of search-space compression.
+* **Difficulty Distribution**: Evaluate configurations against multiple sets (Easy, Medium, Hard, and Infeasible). A configuration that excels at Easy puzzles (due to low overhead) may cause a catastrophic search-space explosion on Hard puzzles.
 
-### 2. GDB Argument Quoting Bug
-* **The Problem**: GDB on Windows has a known parsing bug when passing space-separated arguments inside quotes (like clues `"2 4 2 1..."`) via `--args` or `set args`. It splits them on spaces despite the quotes, resulting in `Error: Wrong argument count`.
-* **The Workaround**: Temporarily hardcode argument redirection inside [main.c](file:///C:/Users/Nutzer/.gemini/antigravity/worktrees/SkyscraperSolver/optimize-search-node-memory/src/main.c) when `argc == 1`:
-  ```c
-  char *dummy_argv[] = {
-      argv[0],
-      "-s",
-      "0",
-      "2 4 2 1 2 5 3 2 1 2 2 6 3 2 2 3 2 3 3 3 4 2 3 1 3 1 3 3 2 4 2 4",
-      (void *)0
-  };
-  if (argc == 1)
-  {
-      argv = dummy_argv;
-      argc = 4;
-  }
-  ```
-  This allows running GDB with zero arguments (`gdb ./skyscraper_solver.exe` and then `run`), bypassing the GDB parser bug.
+---
 
-### 3. Compilation & Clean Commands
-* **The Problem**: standard `make clean` commands containing `rm -rf` fail if Windows does not have Unix utils on path. `mkdir -p` can also fail or create folders literally named `-p`.
-* **The Fix**: Use `mingw32-make` instead of `make`, and use standard PowerShell commands to clean build files:
-  ```powershell
-  Remove-Item -Recurse -Force obj -ErrorAction SilentlyContinue
-  Remove-Item -Force skyscraper_solver.exe -ErrorAction SilentlyContinue
-  ```
-  Ensure the Makefile uses a hyphen prefix (`-mkdir $(OBJ_DIR)`) to ignore the folder creation error if the directory already exists.
+## 📈 4. Parameter Tuning & Optimization Strategy
 
-### 4. Globbing in Linter Execution
-* **The Problem**: Windows shells (CMD/PowerShell) do not expand glob patterns (like `src/*.c`) in the same way Unix shells do, which can cause linter or test commands to fail.
-* **The Fix**: Pass files individually or use standard python module execution:
-  ```bash
-  python -m norminette src/tree_search.c src/tree_search_step.c
-  ```
+Tuning parameters (periods, unset ratios, selectivity levels) requires a disciplined multi-phase filtering approach to avoid overfitting.
 
+### The Overfitting Trap
+When tuning pruning configurations, optimizing strictly against single-solution search (`-s 1`) on small or easy puzzles is dangerous. Because lookahead is computationally heavy, the optimizer will greedily disable lookahead and GAC to minimize overhead on easy instances. However, when applied to hard or larger puzzles, this lack of pruning leads to search-space explosions.
+* **Remedy**: Use exhaustive search (`-s 0`) during the early tuning phases on Size 7 and Size 8 instances to evaluate actual search-tree reduction, then validate against Size 9 single-solution searches.
 
+### Multi-Phase Filtering Workflow
+1. **Phase 1: High-Throughput Node-Count Filtering**: Evaluate parameter configurations on small datasets using `-s 0` and filter based on *node counts* (which are deterministic and noise-free).
+2. **Phase 2: Deduplication & Calibration**: Calibrate unique survivor configurations on a mixed set (including Size 9 instances under `-s 1`) with high timeouts to discard configurations prone to search traps.
+3. **Phase 3: Timing-Based Evaluation**: Run the top survivors on larger datasets to identify configurations that balance search space reduction with CPU execution time.
+
+---
+
+## 🛡️ 5. Development and Environment Constraints
+
+### Code Style Compliance (42 Norminette)
+Production releases should respect standard formatting conventions to maintain readability:
+* **Function Limits**: Functions should be concise (typically under 25 lines) and focus on a single task.
+* **Argument Limits**: Keep functions under 4 parameters; pass structured configuration objects (e.g., `t_prune_routine_cfg`) if more context is needed.
+* **File Separation**: Group related logic into modular source files (e.g., separating GAC routines, lookahead logic, and check constraints).
+* *Note*: During active exploration and tuning phases, strict compliance can be temporarily relaxed to accelerate iterations.
+
+### Platform-Specific Execution (Windows / MinGW)
+* **File Locking**: Windows locks running executables. If the solver crashes, ensure the process is terminated (e.g., `Stop-Process` or `taskkill`) to allow recompilation.
+* **Environment Paths**: Ensure compiler toolchains (such as GCC/MinGW) are added to the active environment path inside your shell session when compiling.

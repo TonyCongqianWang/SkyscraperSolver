@@ -83,7 +83,10 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->is_in_lookahead_select = 0;
 	init_node_order_ptrs(root_node);
 	root_node->progress_counter = 0;
-	root_node->last_prune_prog = 0;
+	root_node->last_prog[0] = 0;
+	root_node->last_prog[1] = 0;
+	root_node->last_prog[2] = 0;
+	root_node->last_prog[3] = 0;
 	root_node->solutions_found = 0;
 	root_node->max_solutions = root_node->puzzle->max_solutions;
 	init_node_grid(root_node, size);

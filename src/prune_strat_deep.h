@@ -1,24 +1,20 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   prune_initial.c                                    :+:      :+:    :+:   */
+/*   prune_strat_deep.h                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/20 23:59:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "prune_initial.h"
-#include "pruning_routines.h"
+#ifndef PRUNE_STRAT_DEEP_H
+# define PRUNE_STRAT_DEEP_H
 
-void	prune_initial(t_puzzle *puzzle)
-{
-	t_prune_routine_cfg		cfg;
+# include "puzzle_structs.h"
 
-	get_prune_cfg_heavy(&cfg);
-	cfg.check_constr_selectivity = SELECTIVITY_NONE;
-	cfg.lookahead.selectivity = SELECTIVITY_NONE;
-	run_pruning_routine(puzzle, &cfg);
-}
+int		prune_strat_deep(t_puzzle *puzzle);
+
+#endif

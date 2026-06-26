@@ -52,39 +52,42 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 		puzzle->main_nodes_visited++;
 }
 
-int	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
 		t_search_frame *frames)
 {
 	if (*d == start_d)
-		return (1);
+		return (SEARCH_TERMINATE);
 	backtrack_to_parent(puzzle, d, frames);
-	return (0);
+	return (SEARCH_CONTINUE);
 }
 
-static int	check_early_states(t_puzzle *puzzle, int *d, int start_d,
-				t_search_frame *frames)
+static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
+							int start_d, t_search_frame *frames)
 {
 	t_sol_info	rec_sols;
+	int			pruned;
 
 	if (check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 		return (check_backtrack(puzzle, d, start_d, frames));
-	prune_current_step(puzzle);
+	pruned = prune_current_step(puzzle);
 	if (has_reached_terminal_state(puzzle->cur_node))
 	{
 		rec_sols = handle_leaf_node(puzzle);
 		update_sol_info(&rec_sols, &frames[*d].node_sols);
 		return (check_backtrack(puzzle, d, start_d, frames));
 	}
-	return (-1);
+	if (pruned)
+		return (SEARCH_CONTINUE);
+	return (SEARCH_PROCEED_TO_BRANCH);
 }
 
-int	process_frame(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	process_frame(t_puzzle *puzzle, int *d, int start_d,
 		t_search_frame *frames)
 {
-	int	early_res;
+	t_search_result	early_res;
 
 	early_res = check_early_states(puzzle, d, start_d, frames);
-	if (early_res != -1)
+	if (early_res != SEARCH_PROCEED_TO_BRANCH)
 		return (early_res);
 	init_node_transition(&frames[*d].next);
 	if (!try_get_best_transition(puzzle, &frames[*d].next))
@@ -99,5 +102,5 @@ int	process_frame(t_puzzle *puzzle, int *d, int start_d,
 	{
 		init_sol_info(&frames[*d].node_sols, puzzle->squared_size, 0);
 	}
-	return (0);
+	return (SEARCH_CONTINUE);
 }

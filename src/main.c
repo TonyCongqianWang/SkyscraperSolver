@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "print_utility.h"
+#include "print_io.h"
 #include "print_grid.h"
 #include "puzzle_structs.h"
 #include "puzzle_solver.h"

@@ -12,7 +12,7 @@
 
 #include <unistd.h>
 #include "print_grid.h"
-#include "print_utility.h"
+#include "print_io.h"
 #include "grid_availability.h"
 #include "cell_bounds.h"
 #include "puzzle_solver.h"

@@ -1,85 +1,69 @@
-# Skyscraper Solver - Resuming Context & Deep Technical Notes
+# Skyscraper Solver - Resuming Context & Technical Reference
 
-If you are a newly spawned agent inheriting this workspace, read this document carefully. It explains the critical bugs, algorithmic mechanics, and platform-specific behaviors that were addressed in the `v08` performance optimization cycle.
-
----
-
-## 🐞 1. Key Logic Bugs Resolved
-
-### A. The Inverted Skip-Pruning Logic Error
-* **The Bug**: Inside `skip_pruning` (`src/node_pruning.c`), the progress check was originally inverted:
-  ```c
-  if (node->progress_counter >= unset_threshold)
-      return (1); // Skipped pruning when progress was above the threshold!
-  ```
-  This logic skipped pruning precisely when the solver was making massive progress (which is the most beneficial time to prune) and executed lookahead diving when no progress was being made.
-* **The Fix**: Corrected to:
-  ```c
-  if (node->progress_counter < unset_threshold)
-      return (1); // Skip pruning when progress is below threshold
-  ```
-* **Critical Context**: `progress_counter` acts as a measure of search activity. It is incremented in `src/grid_manipulation.c` by `+10` on `set_grid_val` (successful assignment) and `+1` on `set_value_invalid` (invalidation of a value for a cell).
-
-### B. Pruning Call Placement in Backtracking Block
-* **The Bug**: Pruning was previously called redundantly at the beginning of `search_step` (`src/tree_search.c`).
-* **The Fix**: Placed `prune_node` at the bottom of `search_step` immediately inside the backtrack invalidation block:
-  ```c
-  if (update_sol_info(&recursive_sols, node_sols)
-      || !check_sol_target(node_sols, puzzle->cur_node)
-      || recursive_sols.min_nunset == puzzle->squared_size)
-  {
-      set_value_invalid(puzzle->cur_node, next.cell_idx, next.cell_val);
-      prune_node(puzzle); // Called here to propagate failures cleanly
-  }
-  ```
-* **Why This Matters**: Triggers lookahead pruning precisely when branches collapse. If the collapse is minor, `progress_counter` increments slowly, and the corrected `skip_pruning` naturally treats it as a fast no-op. If major branches collapse, full lookahead is triggered to propagate the failures.
+This document contains deep technical references on the solver's algorithmic state tracking, type-safety abstractions, and implementation details for developer reference.
 
 ---
 
-## ⚙️ 2. Pruning Mechanics & Hyperparameters
+## ⏱️ 1. Search Activity & Progress Tracking
 
-### A. Skip Pruning Decay via `unset_ratio`
-* **Mechanic**: The base pruning period `period` is dynamically divided by `unset_ratio`:
-  $$\text{unset\_ratio} = \frac{\text{num\_unset}}{\text{squared\_size}}$$
-  $$\text{period} = \frac{\text{base\_period}}{\text{unset\_ratio}}$$
-* **Behavior**: At the start of the solve, `unset_ratio` is `1.0` (period remains at base). Near the leaf nodes, `unset_ratio` approaches `0.0`, causing the scaled `period` to expand toward infinity. This naturally decays lookahead frequency and avoids expensive dives in highly determined deep nodes.
+The solver uses a progress counter to track search activity and dynamically determine when to trigger pruning routines.
 
-### B. Progress-Based Reiteration
-* **Mechanic**: Inside `prune_node`, lookahead reiterates only if progress exceeds a threshold:
-  $$\text{progress} = \text{progress\_counter}_{\text{post}} - \text{progress\_counter}_{\text{pre}} \ge g\_prune\_reiterate\_threshold$$
-* **Tuning Results**: 
-  Grid search on Size 7 subsets proved that a reiteration threshold $T = 3$ is mathematically optimal (visiting **684,366 nodes** vs. **798,665 nodes** with $T = 2$). 
-  * **Rationale**: Lookahead passes are expensive ($O(S^2 \times N)$). Reiterating for fewer than 3 invalidations incurs more lookahead overhead than the search space compression saves.
+### Progress Metrics
+* **Search Activity (`progress_counter`)**: Measured in arbitrary units of search progress. Inside `src/grid_manipulation.c`, it is incremented:
+  * `+10` when a cell value is successfully assigned (`set_grid_val`).
+  * `+1` when a cell value is marked invalid (`set_value_invalid`).
+* **Period Escalation**: In each pruning strategy routing module (e.g., `prune_root.c`), the solver tracks when the last pruning routine ran using `node->last_prog[tier]`. A pruning routine at a given tier is executed only if:
+  $$\text{node->progress\_counter} > \text{node->last\_prog[tier]} + \text{tier\_period}$$
+* **Tiered Periods**:
+  * **Light**: Runs with a period of `period / 2` (frequent, lightweight lookahead).
+  * **Medium**: Runs with a period of `period` (standard lookahead).
+  * **Heavy**: Runs with a period of `period * 2` (occasional, exhaustive lookahead/GAC sweeps).
+
+### Period Scaling (Search Depth Decay)
+To prevent the solver from wasting CPU cycles running heavy lookahead steps on highly determined states, the base period is dynamically scaled.
+As the search goes deeper (fewer empty cells), the `unset_ratio` drops:
+$$\text{unset\_ratio} = \frac{\text{num\_unset}}{\text{squared\_size}}$$
+The base period for a node is scaled by:
+$$\text{period} \propto \frac{1}{\text{unset\_ratio}^4}$$
+Near the root, `unset_ratio` is high, keeping the period small (frequent pruning). Near leaf nodes, `unset_ratio` approaches 0, scaling the period towards infinity (deactivating lookahead and GAC).
 
 ---
 
-## 🛡️ 3. Strong Type Safety & Variable Alignment (42 Norm)
+## 🧬 2. Selectivity & Early Exit Logic
 
-To clean up unwieldy `unsigned long long` uses, we introduced three typedefs in `src/puzzle_structs.h`:
-* `t_prune_prog`: Tracks node pruning progress.
-* `t_sol_count`: Tracks maximum solutions, solutions found, and solution indices.
-* `t_node_count`: Tracks overall nodes visited.
+Selectivity controls how aggressively lookahead and GAC filters are applied during a solve.
 
-### Variable Alignment under Norminette
-Norminette requires all variable declarations in a block to align their names at the exact same column using tabs. 
-* **The Challenge**: Shorter types like `int` and longer types like `const t_prune_prog` must have their variables aligned.
-* **The Solution**: Align names at column 21.
-  ```c
-  const double		g_min_unset_r_prune = 0.4;     // const double (12 chars) + 2 tabs
-  const int			g_max_p_depth_shallow = 1;     // const int (9 chars) + 3 tabs
-  const t_prune_prog	g_prune_reiterate_threshold = 3; // const t_prune_prog (18 chars) + 1 tab
+### Selectivity Levels
+1. **`SELECTIVITY_NONE`**: Lookahead checks all candidate cell values for all empty cells. GAC and Check Constraints run fully.
+2. **`SELECTIVITY_VALUE_SET`**: Lookahead only runs if values have been successfully assigned since the last prune.
+3. **`SELECTIVITY_ANY_CHANGE`**: Lookahead runs if values have been assigned or marked invalid since the last prune.
+
+### Early Exit Guards
+At the entry points of `prune_gac`, `prune_check_constr`, and `prune_lookahead`, the solver checks the changed and invalid flags:
+* `node->rows_changed_since_prune` / `node->cols_changed_since_prune` (set when values are assigned).
+* `node->rows_invalid_since_prune` / `node->cols_invalid_since_prune` (set when values are marked invalid).
+
+If the current selectivity level's conditions are not met, the routines exit immediately. This avoids scanning unchanged row/column states, preventing CPU overhead in deep search branches.
+
+---
+
+## 🛡️ 3. Type Safety Abstractions
+
+To prevent compiler warnings and clarify integer scale requirements, the codebase defines explicit type aliases:
+* **`t_prune_prog`**: A 64-bit integer (`unsigned long long`) tracking the progression of search activity.
+* **`t_sol_count`**: A 64-bit integer tracking the number of solutions found.
+* **`t_node_count`**: A 64-bit integer tracking the total search nodes visited during search.
+
+---
+
+## ⚡ 4. Scripting & Tooling Reference
+
+* **Consistency Checking**: The verification script `python_scripts/verify_consistency.py` validates that new solver implementations match baseline solution counts. Ensure `-r` is passed to target the compiled binary:
+  ```bash
+  python python_scripts/verify_consistency.py -r ./skyscraper_solver
   ```
-
----
-
-## ⚡ 4. Concurrent Tuning & Compiler Race Conditions (Windows)
-
-The tuning blueprint script [python_scripts/examples/tune_parameters.py](python_scripts/examples/tune_parameters.py) runs a 48-combination grid search concurrently across 8 threads. If you modify or run it:
-
-1. **Avoid `os.listdir` Race Conditions**:
-   Do **not** list `src/` dynamically in the worker threads. Since workers concurrently write `node_pruning_worker_X.c` files, listing `src/` dynamically will cause a thread to capture another thread's temporary file and attempt to compile it, leading to duplicate definitions or compilation crashes when that file is deleted.
-   * **Implementation**: Gather baseline `.c` files once in the master thread (filtering out any `node_pruning_worker_` prefixes) and pass that static list to the threads.
-2. **Binary Locking**:
-   Windows locks running executables. Compile to isolated worker names: `skyscraper_solver_worker_{id}.exe`.
-3. **Environment cleanup**:
-   Always run a pre-tuning cleanup to remove stale `node_pruning_worker_*.c` and `skyscraper_solver_worker_*.exe` files left over from previous interrupted runs.
+* **Benchmarking**: Use `python_scripts/run_benchmark.py` to evaluate execution times. The solver binary is specified via `-c` and the benchmark set path is passed as the final argument:
+  ```bash
+  python python_scripts/run_benchmark.py -c ./skyscraper_solver benchmark_sets/benchmarkSet7.txt
+  ```
+* **Scratch Space**: Place all temporary analysis scripts, experimental results, and transient outputs under the `scratch/` directory, which is excluded from git tracking.

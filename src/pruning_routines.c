@@ -6,7 +6,7 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/20 23:59:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/24 22:52:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,62 +16,85 @@
 #include "prune_check_constr.h"
 #include <stddef.h>
 
-void	get_prune_cfg_vlight(t_prune_routine_cfg *cfg)
+static int	is_only_selectivity_value_set(const t_prune_routine_cfg *cfg)
 {
-	cfg->run_check_constr = 0;
-	cfg->run_gac = 0;
-	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_VALUE_SET;
-	cfg->lookahead.max_depth = 1;
+	if (cfg->run_check_constr
+		&& cfg->check_constr_selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	if (cfg->run_gac && cfg->gac.selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	if (cfg->run_lookahead
+		&& cfg->lookahead.selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	return (1);
 }
 
-void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
+static int	is_max_selectivity_any_change(const t_prune_routine_cfg *cfg)
 {
-	cfg->run_check_constr = 0;
-	cfg->run_gac = 0;
-	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
-	cfg->lookahead.max_depth = 1;
+	if (cfg->run_check_constr
+		&& cfg->check_constr_selectivity == SELECTIVITY_NONE)
+		return (0);
+	if (cfg->run_gac && cfg->gac.selectivity == SELECTIVITY_NONE)
+		return (0);
+	if (cfg->run_lookahead && cfg->lookahead.selectivity == SELECTIVITY_NONE)
+		return (0);
+	return (1);
 }
 
-void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
+static int	check_early_skips(t_node_state *node,
+				const t_prune_routine_cfg *cfg, int cfg_idx)
 {
-	cfg->run_check_constr = 1;
-	cfg->check_constr_selectivity = SELECTIVITY_VALUE_SET;
-	cfg->run_gac = 1;
-	cfg->gac.selectivity = SELECTIVITY_VALUE_SET;
-	cfg->gac.max_k = 3;
-	cfg->gac.analyse_naked = 1;
-	cfg->gac.analyse_hidden = 1;
-	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
-	cfg->lookahead.max_depth = 1;
+	int	only_val_set;
+	int	i;
+
+	only_val_set = is_only_selectivity_value_set(cfg);
+	if (only_val_set && node->rows_changed_since_prune == 0
+		&& node->cols_changed_since_prune == 0)
+	{
+		i = -1;
+		while (++i <= cfg_idx)
+			node->last_prog[i] = node->progress_counter;
+		return (1);
+	}
+	if (is_max_selectivity_any_change(cfg)
+		&& node->rows_changed_since_prune == 0
+		&& node->cols_changed_since_prune == 0
+		&& node->rows_invalid_since_prune == 0
+		&& node->cols_invalid_since_prune == 0)
+	{
+		i = -1;
+		while (++i <= cfg_idx)
+			node->last_prog[i] = node->progress_counter;
+		return (1);
+	}
+	return (0);
 }
 
-void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
+static void	post_prune_update(t_node_state *node, int prev_num_unset,
+				int only_val_set)
 {
-	cfg->run_check_constr = 1;
-	cfg->check_constr_selectivity = SELECTIVITY_ANY_CHANGE;
-	cfg->run_gac = 1;
-	cfg->gac.selectivity = SELECTIVITY_ANY_CHANGE;
-	cfg->gac.max_k = 3;
-	cfg->gac.analyse_naked = 1;
-	cfg->gac.analyse_hidden = 1;
-	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
-	cfg->lookahead.max_depth = 1;
+	node->last_prune_nunset = prev_num_unset;
+	node->rows_changed_since_prune = 0;
+	node->cols_changed_since_prune = 0;
+	if (!only_val_set)
+	{
+		node->rows_invalid_since_prune = 0;
+		node->cols_invalid_since_prune = 0;
+	}
 }
 
-void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg)
+int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
+		int cfg_idx)
 {
 	t_node_state	*node;
 	t_prune_prog	prev_prog;
-	int				prev_num_unset;
+	int				i;
 
-	puzzle->prune_runs_count++;
 	node = puzzle->cur_node;
+	if (check_early_skips(node, cfg, cfg_idx))
+		return (0);
+	puzzle->prune_runs_count++;
 	prev_prog = node->progress_counter;
-	prev_num_unset = node->num_unset;
 	if (cfg->run_check_constr)
 		prune_check_constr(puzzle, cfg->check_constr_selectivity);
 	if (cfg->run_gac)
@@ -79,10 +102,12 @@ void	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg)
 	if (cfg->run_lookahead)
 		run_lookahead_loop(puzzle, node, cfg->lookahead.selectivity,
 			cfg->lookahead.max_depth);
-	node->last_prune_nunset = prev_num_unset;
-	node->last_prune_prog = prev_prog;
-	node->rows_changed_since_prune = 0;
-	node->cols_changed_since_prune = 0;
-	node->rows_invalid_since_prune = 0;
-	node->cols_invalid_since_prune = 0;
+	i = -1;
+	while (++i <= cfg_idx)
+		node->last_prog[i] = prev_prog;
+	post_prune_update(node, node->num_unset,
+		is_only_selectivity_value_set(cfg));
+	if (node->progress_counter == prev_prog)
+		return (0);
+	return (1);
 }
