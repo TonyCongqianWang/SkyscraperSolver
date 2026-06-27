@@ -12,6 +12,8 @@ AI coding agents are prohibited from chain-executing major optimization phases, 
   Whenever a major step is completed (e.g., an SPSA sweep, a validation run, or a dataset calibration), the agent **must immediately stop and report the results** to the user.
 * **No Auto-Resume**:
   Agents must never automatically revert strategy files, clean-rebuild the codebase, or trigger a new sweep based on performance findings without first requesting and receiving **explicit user approval**.
+* **No Wasted Work & Transparency**:
+  If a run, compilation, or sweep is unsuccessful or produces regressions, do **not** hide or silently revert the changes. Report the results transparently to the user. The user is the one who directs the next steps (e.g., to revert, retry, or tweak), unless they have **explicitly ordered** the agent to reiterate until successful.
 
 ---
 
