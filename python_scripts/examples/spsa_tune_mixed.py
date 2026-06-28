@@ -8,12 +8,12 @@ import random
 import math
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
 BIN_CURR = os.path.join(ROOT_DIR, "skyscraper_solver.exe")
 
 PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7_easy500.txt")
-PATH_S8 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet8_medium.txt")
+PATH_S8 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_medium.txt")
 PATH_S9 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
 PATH_S9_HARDER = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
 

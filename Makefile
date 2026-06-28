@@ -29,7 +29,7 @@ $(BINARY): $(OBJS)
 	$(CC) $(CFLAGS) $(OBJS) -o $(BINARY)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -MMD -c $< -o $@
+	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@
 
 $(OBJ_DIR):
 	$(MKDIR_CMD)
@@ -45,6 +45,9 @@ re: fclean all
 test: $(BINARY)
 	python python_scripts/verify_consistency.py -r $(BINARY)
 
+# Skip including dependency files if we are cleaning/rebuilding
+ifeq ($(filter clean fclean re,$(MAKECMDGOALS)),)
 -include $(DEPS)
+endif
 
 .PHONY: all clean fclean re test
