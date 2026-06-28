@@ -140,10 +140,10 @@ def parse_args():
                         help="Timeout for pre-screening. Defaults to (max(0, timeout-0.05)/100) + 0.05.")
     parser.add_argument("--prescreen-sols", type=int, default=10, 
                         help="Maximum solutions to search for during pre-screening (-s argument).")
-    parser.add_argument("--output", type=str, default=None, 
-                        help="Optional filepath to save discovered solvable instances.")
+    parser.add_argument("--output", type=str, required=True, 
+                        help="Filepath to save discovered solvable instances.")
     parser.add_argument("--solutions-output", type=str, default=None,
-                        help="Optional filepath to save solution counts. Defaults to prefixing the --output file name. Empty string or missing --output skips writing.")
+                        help="Optional filepath to save solution counts. Defaults to prefixing the --output file name. Empty string skips writing.")
     parser.add_argument("--max-solved", type=int, default=50, 
                         help="Limit the number of fully solved instances to find before halting.")
     parser.add_argument("--workers", type=int, default=None, 
@@ -241,18 +241,15 @@ def main():
     out_f = None
     sols_f = None
     try:
-        if args.output:
-            os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
-            out_f = open(args.output, "w")
-            print(f"Streaming solvable instances directly to {args.output}...", flush=True)
-            
-            if sols_file_path:
-                if os.path.dirname(sols_file_path):
-                    os.makedirs(os.path.dirname(os.path.abspath(sols_file_path)), exist_ok=True)
-                sols_f = open(sols_file_path, "w")
-                print(f"Streaming solution metrics directly to {sols_file_path}...", flush=True)
-        else:
-            print("No output file specified via --output. Results will only be logged to stdout.", flush=True)
+        os.makedirs(os.path.dirname(os.path.abspath(args.output)), exist_ok=True)
+        out_f = open(args.output, "w")
+        print(f"Streaming solvable instances directly to {args.output}...", flush=True)
+        
+        if sols_file_path:
+            if os.path.dirname(sols_file_path):
+                os.makedirs(os.path.dirname(os.path.abspath(sols_file_path)), exist_ok=True)
+            sols_f = open(sols_file_path, "w")
+            print(f"Streaming solution metrics directly to {sols_file_path}...", flush=True)
 
         with Pool(processes=num_cpus) as pool:
             try:
