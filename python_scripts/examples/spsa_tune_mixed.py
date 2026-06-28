@@ -205,9 +205,14 @@ def main():
     alpha = 0.602
     gamma = 0.101
     c = 0.03
-    a = 0.02
-    A = 10
-    iterations = 180
+    a = 0.005
+    A = 40
+    iterations = 400
+    
+    # Stochastic Weight Averaging (SWA) parameters
+    swa_theta = [0.0] * len(theta)
+    swa_count = 0
+    swa_start = int(iterations * 0.8)  # Start SWA over the last 20% of iterations (e.g. iteration 320)
     
     # Reference baselines for normalization
     ref_scale_s7 = 0.01
@@ -300,6 +305,12 @@ def main():
             theta_next.append(val)
         theta = theta_next
         
+        # Accumulate SWA weights
+        if k >= swa_start:
+            swa_count += 1
+            for i in range(len(theta)):
+                swa_theta[i] += theta[i]
+        
         # Monitor progress
         loss_curr, stats = get_mixed_loss(theta)
         
@@ -310,21 +321,28 @@ def main():
         print(f"Iteration {k:2d} | Loss: {loss_curr:.3f} | Best Loss: {best_loss:.3f} | S9 SGM Nodes: {stats[3]:.1f} | Harder SGM Nodes: {stats[5]:.1f}")
         
     print("\nMulti-task tuning completed!")
-    print(f"Best Loss achieved: {best_loss:.3f}")
+    print(f"Best Loss achieved (single iteration): {best_loss:.3f}")
     
-    phys_best = get_physical_params(best_theta)
-    print("\nOptimal Generalizing Parameter Values:")
+    # Compute SWA averaged parameters
+    if swa_count > 0:
+        theta_final = [x / swa_count for x in swa_theta]
+        print(f"Computed Stochastic Weight Average (SWA) over the last {swa_count} iterations.")
+    else:
+        theta_final = list(theta)
+        
+    phys_best = get_physical_params(theta_final)
+    print("\nOptimal Generalizing Parameter Values (SWA):")
     print("=======================================")
     for name, val in phys_best.items():
         print(f"{name} = {val}")
         
     with open("scratch/spsa_winners_mixed.txt", "w") as f:
-        f.write("SPSA WINNING GENERALIZED HYPERPARAMETERS\n")
-        f.write("========================================\n")
+        f.write("SPSA WINNING GENERALIZED HYPERPARAMETERS (SWA)\n")
+        f.write("==============================================\n")
         for name, val in phys_best.items():
             f.write(f"#define {name} {val}\n")
             
-    print("\nOptimal generalizing definitions written to scratch/spsa_winners_mixed.txt")
+    print("\nOptimal SWA generalizing definitions written to scratch/spsa_winners_mixed.txt")
 
 if __name__ == "__main__":
     main()
