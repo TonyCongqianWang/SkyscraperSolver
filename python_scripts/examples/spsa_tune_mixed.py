@@ -181,8 +181,8 @@ def main():
         s9_harder_groups[key].append(clue)
     s9_harder_groups = list(s9_harder_groups.values())
     
-    # S9 Harder train splits (first 6 groups out of 8)
-    s9_harder_train_groups = s9_harder_groups[:6]
+    # S9 Harder train splits (use 50% of the available groups)
+    s9_harder_train_groups = s9_harder_groups[:int(len(s9_harder_groups) * 0.5)]
     
     print(f"Loaded train datasets:")
     print(f"  S7 Easy:       {len(s7_clues)} puzzles")
@@ -198,7 +198,7 @@ def main():
     c = 0.03
     a = 0.05
     A = 10
-    iterations = 80
+    iterations = 120
     
     # Reference baselines for normalization
     ref_scale_s7 = 0.01
