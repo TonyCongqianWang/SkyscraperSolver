@@ -4,12 +4,23 @@ import time
 import concurrent.futures
 import math
 import os
+import sys
+import argparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
-BIN_BASELINE = os.path.join(ROOT_DIR, "skyscraper_solver_main.exe")
-BIN_OPTIMIZED = os.path.join(ROOT_DIR, "skyscraper_solver.exe")
+def resolve_binary_path(path):
+    if not path:
+        return path
+    if os.name == 'nt' or sys.platform.startswith('win'):
+        if not path.lower().endswith('.exe'):
+            if os.path.exists(path + '.exe'):
+                return path + '.exe'
+    return path
+
+BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
+BIN_OPTIMIZED = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
 
 PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7_easy500.txt")
 PATH_S8 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_medium.txt")
@@ -68,11 +79,17 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_set(clues, opt, label, tuned_env=None):
+def evaluate_set(clues, opt, label, baseline_bin, optimized_bin, extra_bin=None, tuned_env=None):
     print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
+    binaries = [("Baseline", baseline_bin)]
+    if extra_bin:
+        extra_name = os.path.splitext(os.path.basename(extra_bin))[0]
+        binaries.append((extra_name, extra_bin))
+    binaries.append(("Optimized", optimized_bin))
+    
     results = {}
-    for name, binary in [("Baseline", BIN_BASELINE), ("Optimized", BIN_OPTIMIZED)]:
+    for name, binary in binaries:
         times = []
         nodes = []
         env = tuned_env if name == "Optimized" else None
@@ -107,12 +124,27 @@ def evaluate_set(clues, opt, label, tuned_env=None):
     time_diff = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
     sgm_time_diff = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
     
-    print(f"| Metric | Baseline | Optimized | Difference |")
-    print(f"|---|---|---|---|")
-    print(f"| **Total Nodes** | {base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% |")
-    print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% |")
-    print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
-    print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
+    if extra_bin:
+        extra_name = binaries[1][0]
+        ext_res = results[extra_name]
+        nodes_diff_ext = (optz["total_nodes"] - ext_res["total_nodes"]) / ext_res["total_nodes"] * 100 if ext_res["total_nodes"] else 0
+        sgm_nodes_diff_ext = (optz["sgm_nodes"] - ext_res["sgm_nodes"]) / ext_res["sgm_nodes"] * 100 if ext_res["sgm_nodes"] else 0
+        time_diff_ext = (optz["total_time"] - ext_res["total_time"]) / ext_res["total_time"] * 100 if ext_res["total_time"] else 0
+        sgm_time_diff_ext = (optz["sgm_time"] - ext_res["sgm_time"]) / ext_res["sgm_time"] * 100 if ext_res["sgm_time"] else 0
+        
+        print(f"| Metric | Baseline | {extra_name} | Optimized | Diff (vs Base) | Diff (vs {extra_name}) |")
+        print(f"|---|---|---|---|---|---|")
+        print(f"| **Total Nodes** | {base['total_nodes']:,} | {ext_res['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% | {nodes_diff_ext:+.2f}% |")
+        print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {ext_res['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% | {sgm_nodes_diff_ext:+.2f}% |")
+        print(f"| **Total Time** | {base['total_time']:.3f}s | {ext_res['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% | {time_diff_ext:+.2f}% |")
+        print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {ext_res['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% | {sgm_time_diff_ext:+.2f}% |")
+    else:
+        print(f"| Metric | Baseline | Optimized | Difference |")
+        print(f"|---|---|---|---|")
+        print(f"| **Total Nodes** | {base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% |")
+        print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% |")
+        print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
+        print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
 
 def load_tuned_env():
     tuned_env = os.environ.copy()
@@ -131,19 +163,29 @@ def load_tuned_env():
     return tuned_env
 
 def main():
+    parser = argparse.ArgumentParser(description="Compare performance of solver binaries.")
+    parser.add_argument("-b", "--baseline", default=BIN_BASELINE, help="Path to baseline binary")
+    parser.add_argument("-o", "--optimized", default=BIN_OPTIMIZED, help="Path to optimized binary")
+    parser.add_argument("-e", "--extra", default=None, help="Path to an optional third stable binary")
+    args = parser.parse_args()
+    
+    baseline = resolve_binary_path(args.baseline)
+    optimized = resolve_binary_path(args.optimized)
+    extra = resolve_binary_path(args.extra)
+    
     tuned_env = load_tuned_env()
     
     # 1. S7 Held-out Validation (last 100 instances)
     with open(PATH_S7, "r") as f:
         s7_all = [line.strip().strip('"') for line in f if line.strip()]
     s7_val = s7_all[400:]
-    evaluate_set(s7_val, "-s 0", "Size 7 Held-out Validation Set (Full Enumeration)", tuned_env)
+    evaluate_set(s7_val, "-s 0", "Size 7 Held-out Validation Set (Full Enumeration)", baseline, optimized, extra, tuned_env)
     
     # 2. S8 Held-out Validation (last 37 instances)
     with open(PATH_S8, "r") as f:
         s8_all = [line.strip().strip('"') for line in f if line.strip()]
     s8_val = s8_all[146:]
-    evaluate_set(s8_val, "-s 0", "Size 8 Held-out Validation Set (Full Enumeration)", tuned_env)
+    evaluate_set(s8_val, "-s 0", "Size 8 Held-out Validation Set (Full Enumeration)", baseline, optimized, extra, tuned_env)
     
     # 3. S9 Calibrated Validation Groups (last 2 groups)
     with open(PATH_S9, "r") as f:
@@ -159,7 +201,7 @@ def main():
     s9_val = []
     for g in s9_val_groups:
         s9_val.extend(g)
-    evaluate_set(s9_val, "-s 1", "Size 9 Calibrated Validation Groups (Held-out)", tuned_env)
+    evaluate_set(s9_val, "-s 1", "Size 9 Calibrated Validation Groups (Held-out)", baseline, optimized, extra, tuned_env)
     
     # 4. S9 Calibrated Harder Validation Groups (use remaining 50% validation groups)
     with open(PATH_S9_HARDER, "r") as f:
@@ -175,7 +217,7 @@ def main():
     s9_harder_val = []
     for g in s9_harder_val_groups:
         s9_harder_val.extend(g)
-    evaluate_set(s9_harder_val, "-s 1", "Size 9 Harder Calibrated v2 Validation Groups (Held-out)", tuned_env)
+    evaluate_set(s9_harder_val, "-s 1", "Size 9 Harder Calibrated v2 Validation Groups (Held-out)", baseline, optimized, extra, tuned_env)
 
 if __name__ == "__main__":
     main()
