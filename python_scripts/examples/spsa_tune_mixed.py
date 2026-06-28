@@ -336,13 +336,26 @@ def main():
     for name, val in phys_best.items():
         print(f"{name} = {val}")
         
-    with open("scratch/spsa_winners_mixed.txt", "w") as f:
+    # Ensure scratch directory exists
+    os.makedirs("scratch", exist_ok=True)
+    
+    # Resolve a unique filename to prevent overwriting previous SPSA wins
+    base_path = "scratch/spsa_winners_mixed"
+    ext = ".txt"
+    filename = f"{base_path}{ext}"
+    if os.path.exists(filename):
+        idx = 0
+        while os.path.exists(f"{base_path}_{idx}{ext}"):
+            idx += 1
+        filename = f"{base_path}_{idx}{ext}"
+        
+    with open(filename, "w") as f:
         f.write("SPSA WINNING GENERALIZED HYPERPARAMETERS (SWA)\n")
         f.write("==============================================\n")
         for name, val in phys_best.items():
             f.write(f"#define {name} {val}\n")
             
-    print("\nOptimal SWA generalizing definitions written to scratch/spsa_winners_mixed.txt")
+    print(f"\nOptimal SWA generalizing definitions written to {filename}")
 
 if __name__ == "__main__":
     main()
