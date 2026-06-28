@@ -38,7 +38,7 @@ def canonize(clue_str):
     sym_lists = [s[0] + s[1] + s[2] + s[3] for s in symmetries]
     return tuple(min(sym_lists))
 
-def run_solver(binary, opt, clue, timeout=15.0):
+def run_solver(binary, opt, clue, timeout=15.0, env=None):
     t_start = time.perf_counter()
     try:
         proc = subprocess.run(
@@ -46,7 +46,8 @@ def run_solver(binary, opt, clue, timeout=15.0):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True,
-            timeout=timeout
+            timeout=timeout,
+            env=env
         )
         elapsed = time.perf_counter() - t_start
         if proc.returncode != 0:
@@ -67,16 +68,17 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_set(clues, opt, label):
+def evaluate_set(clues, opt, label, tuned_env=None):
     print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
     results = {}
     for name, binary in [("Baseline", BIN_BASELINE), ("Optimized", BIN_OPTIMIZED)]:
         times = []
         nodes = []
+        env = tuned_env if name == "Optimized" else None
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-            futures = [executor.submit(run_solver, binary, opt, clue) for clue in clues]
+            futures = [executor.submit(run_solver, binary, opt, clue, env=env) for clue in clues]
             for fut in futures:
                 t, n = fut.result()
                 if t is not None and n is not None:
@@ -112,18 +114,36 @@ def evaluate_set(clues, opt, label):
     print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
     print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
 
+def load_tuned_env():
+    tuned_env = os.environ.copy()
+    winners_path = os.path.join(ROOT_DIR, "scratch", "spsa_winners_mixed.txt")
+    if not os.path.exists(winners_path):
+        print(f"Warning: Tuned winners file not found at {winners_path}.")
+        return None
+    with open(winners_path, "r") as f:
+        for line in f:
+            if line.startswith("#define"):
+                parts = line.split()
+                if len(parts) >= 3:
+                    name = parts[1]
+                    val = parts[2]
+                    tuned_env[name] = val
+    return tuned_env
+
 def main():
+    tuned_env = load_tuned_env()
+    
     # 1. S7 Held-out Validation (last 100 instances)
     with open(PATH_S7, "r") as f:
         s7_all = [line.strip().strip('"') for line in f if line.strip()]
     s7_val = s7_all[400:]
-    evaluate_set(s7_val, "-s 0", "Size 7 Held-out Validation Set (Full Enumeration)")
+    evaluate_set(s7_val, "-s 0", "Size 7 Held-out Validation Set (Full Enumeration)", tuned_env)
     
     # 2. S8 Held-out Validation (last 37 instances)
     with open(PATH_S8, "r") as f:
         s8_all = [line.strip().strip('"') for line in f if line.strip()]
     s8_val = s8_all[146:]
-    evaluate_set(s8_val, "-s 0", "Size 8 Held-out Validation Set (Full Enumeration)")
+    evaluate_set(s8_val, "-s 0", "Size 8 Held-out Validation Set (Full Enumeration)", tuned_env)
     
     # 3. S9 Calibrated Validation Groups (last 2 groups)
     with open(PATH_S9, "r") as f:
@@ -139,9 +159,9 @@ def main():
     s9_val = []
     for g in s9_val_groups:
         s9_val.extend(g)
-    evaluate_set(s9_val, "-s 1", "Size 9 Calibrated Validation Groups (Held-out)")
+    evaluate_set(s9_val, "-s 1", "Size 9 Calibrated Validation Groups (Held-out)", tuned_env)
     
-    # 4. S9 Calibrated Harder Validation Groups (last 3 groups out of 11)
+    # 4. S9 Calibrated Harder Validation Groups (use remaining 50% validation groups)
     with open(PATH_S9_HARDER, "r") as f:
         s9_harder_raw = [line.strip().strip('"') for line in f if line.strip()]
     s9_harder_groups = {}
@@ -151,11 +171,11 @@ def main():
             s9_harder_groups[key] = []
         s9_harder_groups[key].append(clue)
     s9_harder_groups = list(s9_harder_groups.values())
-    s9_harder_val_groups = s9_harder_groups[6:]
+    s9_harder_val_groups = s9_harder_groups[int(len(s9_harder_groups)*0.5):]
     s9_harder_val = []
     for g in s9_harder_val_groups:
         s9_harder_val.extend(g)
-    evaluate_set(s9_harder_val, "-s 1", "Size 9 Harder Calibrated v2 Validation Groups (Held-out)")
+    evaluate_set(s9_harder_val, "-s 1", "Size 9 Harder Calibrated v2 Validation Groups (Held-out)", tuned_env)
 
 if __name__ == "__main__":
     main()

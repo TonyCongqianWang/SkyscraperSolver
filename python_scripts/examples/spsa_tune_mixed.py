@@ -17,42 +17,42 @@ PATH_S8 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "
 PATH_S9 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
 PATH_S9_HARDER = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
 
-# Parameters Metadata starting from Heavy Pruning config: (name, min, max, default, type)
+# Parameters Metadata starting from SPSA Tuned config: (name, min, max, default, type)
 PARAM_METADATA = [
     # ROUTING
-    ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.05008353583779075, float),
-    ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.2736100962866644, float),
+    ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.05124164111312287, float),
+    ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.3346467565940329, float),
     # ROOT
-    ("ROOT_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.4634853676455628, float),
-    ("ROOT_CONSTR_MIN_UNSET", 0.0, 1.0, 0.820455247534949, float),
-    ("ROOT_CONSTR_MAX_UNSET", 0.0, 1.0, 0.33143801544130486, float),
-    ("ROOT_PERIOD_BASE", 1, 100, 70, int),
-    ("ROOT_PERIOD_COEF1", 0, 10000, 1855, int),
-    ("ROOT_PERIOD_COEF2", 0, 150000, 109817, int),
+    ("ROOT_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.4573468754984318, float),
+    ("ROOT_CONSTR_MIN_UNSET", 0.0, 1.0, 0.6912740782705177, float),
+    ("ROOT_CONSTR_MAX_UNSET", 0.0, 1.0, 0.4639806021442083, float),
+    ("ROOT_PERIOD_BASE", 1, 100, 64, int),
+    ("ROOT_PERIOD_COEF1", 0, 10000, 2558, int),
+    ("ROOT_PERIOD_COEF2", 0, 150000, 133833, int),
     # SHALLOW
-    ("SHALLOW_MIN_UNSET", 0.0, 0.5, 0.41167205890726744, float),
-    ("SHALLOW_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.628986930862801, float),
-    ("SHALLOW_CONSTR_MIN_UNSET", 0.0, 1.0, 0.49682108776980893, float),
-    ("SHALLOW_CONSTR_MAX_UNSET", 0.0, 1.0, 0.9425750932165332, float),
-    ("SHALLOW_PERIOD_BASE", 1, 200, 39, int),
-    ("SHALLOW_PERIOD_COEF1", 0, 15000, 1683, int),
-    ("SHALLOW_PERIOD_COEF2", 0, 150000, 11533, int),
+    ("SHALLOW_MIN_UNSET", 0.0, 0.5, 0.4160997230316314, float),
+    ("SHALLOW_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.6113333594264682, float),
+    ("SHALLOW_CONSTR_MIN_UNSET", 0.0, 1.0, 0.429597122772291, float),
+    ("SHALLOW_CONSTR_MAX_UNSET", 0.0, 1.0, 0.8000990550603081, float),
+    ("SHALLOW_PERIOD_BASE", 1, 200, 6, int),
+    ("SHALLOW_PERIOD_COEF1", 0, 15000, 3692, int),
+    ("SHALLOW_PERIOD_COEF2", 0, 150000, 19237, int),
     # MEDIUM
-    ("MEDIUM_MIN_UNSET", 0.0, 0.5, 0.38779700452737015, float),
-    ("MEDIUM_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.19090341649850168, float),
-    ("MEDIUM_CONSTR_MIN_UNSET", 0.0, 1.0, 0.9771216210974851, float),
-    ("MEDIUM_CONSTR_MAX_UNSET", 0.0, 1.0, 0.8502859539542834, float),
-    ("MEDIUM_PERIOD_BASE", 1, 300, 104, int),
-    ("MEDIUM_PERIOD_COEF1", 0, 10000, 2579, int),
-    ("MEDIUM_PERIOD_COEF2", 0, 150000, 135680, int),
+    ("MEDIUM_MIN_UNSET", 0.0, 0.5, 0.3674707507630957, float),
+    ("MEDIUM_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.1470424520508711, float),
+    ("MEDIUM_CONSTR_MIN_UNSET", 0.0, 1.0, 0.9879694462689003, float),
+    ("MEDIUM_CONSTR_MAX_UNSET", 0.0, 1.0, 0.9151172903633186, float),
+    ("MEDIUM_PERIOD_BASE", 1, 300, 67, int),
+    ("MEDIUM_PERIOD_COEF1", 0, 10000, 3340, int),
+    ("MEDIUM_PERIOD_COEF2", 0, 150000, 116637, int),
     # DEEP
-    ("DEEP_MIN_UNSET", 0.0, 0.5, 0.04487051200407117, float),
-    ("DEEP_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.2938803129321176, float),
+    ("DEEP_MIN_UNSET", 0.0, 0.5, 0.0893668491434967, float),
+    ("DEEP_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.23826264102249042, float),
     ("DEEP_CONSTR_MIN_UNSET", 0.0, 1.0, 1.0, float),
-    ("DEEP_CONSTR_MAX_UNSET", 0.0, 1.0, 0.42472576251042726, float),
-    ("DEEP_PERIOD_BASE", 1, 400, 230, int),
-    ("DEEP_PERIOD_COEF1", 0, 20000, 11401, int),
-    ("DEEP_PERIOD_COEF2", 0, 150000, 116580, int),
+    ("DEEP_CONSTR_MAX_UNSET", 0.0, 1.0, 0.3968727769990099, float),
+    ("DEEP_PERIOD_BASE", 1, 400, 245, int),
+    ("DEEP_PERIOD_COEF1", 0, 20000, 12365, int),
+    ("DEEP_PERIOD_COEF2", 0, 150000, 101540, int),
 ]
 
 def get_symmetries(T, B, L, R):
@@ -196,9 +196,9 @@ def main():
     alpha = 0.602
     gamma = 0.101
     c = 0.03
-    a = 0.05
+    a = 0.02
     A = 10
-    iterations = 120
+    iterations = 180
     
     # Reference baselines for normalization
     ref_scale_s7 = 0.01
@@ -215,11 +215,11 @@ def main():
         ak = a / ((k + A) ** alpha)
         ck = c / (k ** gamma)
         
-        # Sample subsets
-        sampled_s7 = random.sample(s7_clues, 4)
-        sampled_s8 = random.sample(s8_clues, 4)
-        sampled_s9_groups = random.sample(s9_train_groups, 2)
-        sampled_s9_harder_groups = random.sample(s9_harder_train_groups, 2)
+        # Sample subsets (larger batches for stability)
+        sampled_s7 = random.sample(s7_clues, 8)
+        sampled_s8 = random.sample(s8_clues, 8)
+        sampled_s9_groups = random.sample(s9_train_groups, 4)
+        sampled_s9_harder_groups = random.sample(s9_harder_train_groups, 4)
         
         sampled_s9 = []
         for g in sampled_s9_groups:
@@ -246,20 +246,21 @@ def main():
             t9, n9 = evaluate_subset(env, tasks_s9)
             th, nh = evaluate_subset(env, tasks_s9_hard)
             
-            sgm_t7 = shifted_geo_mean(t7, 0.05)
-            sgm_n7 = shifted_geo_mean(n7, 100.0)
+            # SGM with high shift values to weigh more towards arithmetic mean
+            sgm_t7 = shifted_geo_mean(t7, 10.0)
+            sgm_n7 = shifted_geo_mean(n7, 10000.0)
             loss7 = (sgm_t7 + 5e-6 * sgm_n7) / ref_scale_s7
             
-            sgm_t8 = shifted_geo_mean(t8, 0.1)
-            sgm_n8 = shifted_geo_mean(n8, 1000.0)
+            sgm_t8 = shifted_geo_mean(t8, 10.0)
+            sgm_n8 = shifted_geo_mean(n8, 100000.0)
             loss8 = (sgm_t8 + 5e-6 * sgm_n8) / ref_scale_s8
             
-            sgm_t9 = shifted_geo_mean(t9, 0.1)
-            sgm_n9 = shifted_geo_mean(n9, 1000.0)
+            sgm_t9 = shifted_geo_mean(t9, 10.0)
+            sgm_n9 = shifted_geo_mean(n9, 50000.0)
             loss9 = (sgm_t9 + 5e-6 * sgm_n9) / ref_scale_s9
             
-            sgm_th = shifted_geo_mean(th, 0.1)
-            sgm_nh = shifted_geo_mean(nh, 1000.0)
+            sgm_th = shifted_geo_mean(th, 10.0)
+            sgm_nh = shifted_geo_mean(nh, 250000.0)
             loss_hard = (sgm_th + 5e-6 * sgm_nh) / ref_scale_s9_hard
             
             # Weighted loss prioritizing S9 Harder (8.0x weight)
