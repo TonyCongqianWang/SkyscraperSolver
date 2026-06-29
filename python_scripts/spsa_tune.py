@@ -305,6 +305,11 @@ def main():
     ref_scale_s9_harder_time = 1.50
     ref_scale_s9_harder_nodes = 200000.0
     
+    # Gradient Normalization parameters: Exponential Moving Average of Norms
+    ema_time_norm = 1.0
+    ema_nodes_norm = 1.0
+    ema_beta = 0.90
+    
     best_loss = float('inf')
     best_theta = list(theta)
     
@@ -410,15 +415,24 @@ def main():
             LOG_FILE_HANDLE.write(f"Iter {k} grad_time:  {list(grad_time)}\n")
             LOG_FILE_HANDLE.write(f"Iter {k} grad_nodes: {list(grad_nodes)}\n")
             
+        # Compute gradient norms for this iteration
         grad_time_norm = math.sqrt(sum(g**2 for g in grad_time))
         grad_nodes_norm = math.sqrt(sum(g**2 for g in grad_nodes))
         
-        # Parameter updates with step capping (done separately for time and nodes)
+        # Update Exponential Moving Average of norms (ensuring no division by zero)
+        ema_time_norm = ema_beta * ema_time_norm + (1 - ema_beta) * max(1e-5, grad_time_norm)
+        ema_nodes_norm = ema_beta * ema_nodes_norm + (1 - ema_beta) * max(1e-5, grad_nodes_norm)
+        
+        # Scale gradients relative to their moving average norms
+        grad_time_scaled = [g / ema_time_norm for g in grad_time]
+        grad_nodes_scaled = [g / ema_nodes_norm for g in grad_nodes]
+        
+        # Parameter updates with step capping applied to scaled gradients
         max_step = 0.02
         theta_next = []
         for i in range(len(theta)):
-            step_t = ak * grad_time[i]
-            step_n = ak * grad_nodes[i]
+            step_t = ak * grad_time_scaled[i]
+            step_n = ak * grad_nodes_scaled[i]
             step_t_c = max(-max_step, min(max_step, step_t))
             step_n_c = max(-max_step, min(max_step, step_n))
             val = max(0.0, min(1.0, theta[i] - step_t_c - step_n_c))
