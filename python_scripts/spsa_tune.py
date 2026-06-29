@@ -27,7 +27,7 @@ BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
 BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
 
 # Paths to datasets
-PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7_easy500.txt")
+PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7.txt")
 
 # Size 8 calibrated files
 PATH_S8_EASY = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_easy.txt")
@@ -227,6 +227,10 @@ def main():
     parser.add_argument("--iterations", type=int, default=400, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
+    parser.add_argument("--lr", type=float, default=0.005, help="SPSA initial learning rate step size (a)")
+    parser.add_argument("--alpha", type=float, default=0.602, help="SPSA learning rate decay exponent (alpha)")
+    parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
+    parser.add_argument("--gamma", type=float, default=0.101, help="SPSA perturbation decay exponent (gamma)")
     args = parser.parse_args()
     
     global LOG_FILE_HANDLE
@@ -240,7 +244,7 @@ def main():
     
     # 1. Dataset Loading and Splits
     if args.size == 7:
-        s7_all = read_clues(PATH_S7)
+        s7_all = read_clues(PATH_S7)[:1000]
         mid_s7 = len(s7_all) // 2
         s7_train = s7_all[:mid_s7]
         s7_val = s7_all[mid_s7:]
@@ -279,10 +283,10 @@ def main():
         log_print(f"  Harder train:     {len(s9_harder_train)} clues (val: {len(s9_harder_val)})")
 
     # 2. SPSA Hyperparameters
-    alpha = 0.602
-    gamma = 0.101
-    c = 0.03
-    a = 0.005
+    alpha = args.alpha
+    gamma = args.gamma
+    c = args.perturb
+    a = args.lr
     A = 40
     iterations = args.iterations
     
