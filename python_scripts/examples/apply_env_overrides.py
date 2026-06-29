@@ -261,6 +261,44 @@ static void	init_env(void)
 #endif
 	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
 			+ g_period_coef2 * x * x * x * x);"""
+    }),
+    ("src/sel_strat_routing.c", {
+        "target_vars": """static const double			g_sel_rebuild_period = 1000;
+static const double			g_sel_ord2_coeff = 4000;
+static const double			g_sel_ord4_coeff = 80000;""",
+        "replacement_vars": """#include <stdlib.h>
+
+static double			g_sel_rebuild_period = 1000;
+static double			g_sel_ord2_coeff = 4000;
+static double			g_sel_ord4_coeff = 80000;
+
+#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+static void	init_sel_env(void)
+{
+	static int	initialized = 0;
+	char		*val;
+
+	if (initialized)
+		return ;
+	val = getenv("SEL_REBUILD_PERIOD");
+	if (val)
+		g_sel_rebuild_period = atof(val);
+	val = getenv("SEL_ORD2_COEFF");
+	if (val)
+		g_sel_ord2_coeff = atof(val);
+	val = getenv("SEL_ORD4_COEFF");
+	if (val)
+		g_sel_ord4_coeff = atof(val);
+	initialized = 1;
+}
+#endif""",
+        "target_init": """	node = puzzle->cur_node;
+	config->score_family = SCORE_BRANCHING;""",
+        "replacement_init": """#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+	init_sel_env();
+#endif
+	node = puzzle->cur_node;
+	config->score_family = SCORE_BRANCHING;"""
     })
 ]
 

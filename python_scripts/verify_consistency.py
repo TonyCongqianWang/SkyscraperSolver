@@ -36,16 +36,12 @@ def run_solver(binary, options, clues):
         
     return {"solutions": solutions_found, "nodes": nodes_visited}
 
-def verify_instance(idx, clues, binary_refactored, binary_baseline, options, expected_solutions=None):
-    res_ref = run_solver(binary_refactored, options, clues)
-    if expected_solutions is not None:
-        res_base = {"solutions": expected_solutions}
-    else:
-        res_base = run_solver(binary_baseline, options, clues)
-    
-    return idx, clues, res_ref, res_base
+def verify_instance(idx, clues, binary_candidate, binary_reference, options, expected_solutions=None):
+    res_candidate = run_solver(binary_candidate, options, clues)
+    res_reference = run_solver(binary_reference, options, clues) if binary_reference else None
+    return idx, clues, res_candidate, res_reference, expected_solutions
 
-def verify_file(benchmark_file, expected_file, refactored, baseline, options, jobs, num_instances=None):
+def verify_file(benchmark_file, expected_file, candidate, reference, options, jobs, num_instances=None):
     if not os.path.exists(benchmark_file):
         print(f"Error: Benchmark file {benchmark_file} not found.")
         return False
@@ -57,12 +53,10 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
             return False
         with open(expected_file, "r") as f:
             expected_counts = [int(line.strip()) for line in f if line.strip()]
-    else:
-        try:
-            subprocess.run([baseline], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-        except FileNotFoundError:
-            print(f"Error: Baseline binary {baseline} not found.")
-            return False
+            
+    if not reference and not expected_file:
+        print("Error: Must provide either a reference binary (-r) or expected solution counts file (-e).")
+        return False
 
     with open(benchmark_file, "r") as f:
         lines = [line.strip().strip('"') for line in f if line.strip()]
@@ -74,12 +68,12 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
         
     total = len(lines)
     print(f"Starting verification of {total} instances using {options}...")
-    print(f"Benchmark file:    {benchmark_file}")
-    print(f"Refactored binary: {refactored}")
+    print(f"Benchmark file:   {benchmark_file}")
+    print(f"Candidate binary: {candidate}")
+    if reference:
+        print(f"Reference binary: {reference}")
     if expected_file:
         print(f"Expected solutions file: {expected_file}")
-    else:
-        print(f"Baseline binary:   {baseline}")
     print("-" * 60)
     
     mismatches = 0
@@ -92,8 +86,8 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
                 verify_instance, 
                 idx, 
                 line, 
-                refactored, 
-                baseline, 
+                candidate, 
+                reference, 
                 options,
                 expected_counts[idx - 1] if expected_counts is not None else None
             )
@@ -101,31 +95,45 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
         ]
         
         for fut in concurrent.futures.as_completed(futures):
-            idx, clues, res_ref, res_base = fut.result()
+            idx, clues, res_candidate, res_reference, expected_solutions = fut.result()
             
-            if "error" in res_ref or "error" in res_base:
+            if "error" in res_candidate or (res_reference and "error" in res_reference):
                 errors += 1
                 print(f"[ERROR] Instance {idx}:")
-                if "error" in res_ref:
-                    print(f"  Refactored: {res_ref['error']}")
-                if "error" in res_base:
-                    print(f"  Expected/Baseline:   {res_base['error']}")
+                if "error" in res_candidate:
+                    print(f"  Candidate: {res_candidate['error']}")
+                if res_reference and "error" in res_reference:
+                    print(f"  Reference: {res_reference['error']}")
             else:
-                s_ref = res_ref["solutions"]
-                s_base = res_base["solutions"]
-                n_ref = res_ref["nodes"]
-                n_base = res_base.get("nodes", 0)
+                s_candidate = res_candidate["solutions"]
+                n_candidate = res_candidate["nodes"]
                 
-                if s_ref != s_base:
-                    mismatches += 1
-                    print(f"[MISMATCH] Instance {idx} (Clues: {clues[:30]}...):")
-                    print(f"  Refactored solutions: {s_ref} (Nodes: {n_ref})")
-                    print(f"  Expected solutions:   {s_base}")
+                # Check consistency against expected solutions if file was provided
+                if expected_solutions is not None:
+                    if s_candidate != expected_solutions:
+                        mismatches += 1
+                        print(f"[MISMATCH] Instance {idx} (Clues: {clues[:30]}...):")
+                        print(f"  Candidate solutions: {s_candidate} (Nodes: {n_candidate})")
+                        print(f"  Expected solutions:  {expected_solutions}")
+                        continue
+                
+                # Check consistency between candidate and reference solvers if reference is provided
+                if res_reference:
+                    s_reference = res_reference["solutions"]
+                    n_reference = res_reference["nodes"]
+                    if s_candidate != s_reference:
+                        mismatches += 1
+                        print(f"[MISMATCH] Instance {idx} (Clues: {clues[:30]}...):")
+                        print(f"  Candidate solutions: {s_candidate} (Nodes: {n_candidate})")
+                        print(f"  Reference solutions: {s_reference} (Nodes: {n_reference})")
+                        continue
+                    results.append((idx, s_candidate, n_candidate, n_reference))
                 else:
-                    results.append((idx, s_ref, n_ref, n_base))
-                    # Print progress periodically
-                    if len(results) % max(1, total // 10) == 0 or len(results) == total:
-                        print(f"Progress: {len(results)}/{total} verified successfully.")
+                    results.append((idx, s_candidate, n_candidate, 0))
+                    
+                # Print progress periodically
+                if len(results) % max(1, total // 10) == 0 or len(results) == total:
+                    print(f"Progress: {len(results)}/{total} verified successfully.")
                         
     print("-" * 60)
     print(f"Verification completed:")
@@ -137,10 +145,10 @@ def verify_file(benchmark_file, expected_file, refactored, baseline, options, jo
     return mismatches == 0 and errors == 0
 
 def main():
-    parser = argparse.ArgumentParser(description="Verify solution count consistency between refactored and baseline C solvers.")
+    parser = argparse.ArgumentParser(description="Verify solution count consistency between candidate and reference C solvers.")
     parser.add_argument("benchmark_file", nargs="?", default=None, help="Path to the benchmark set file. If omitted, runs default Size 7 and Size 8 tests.")
-    parser.add_argument("-r", "--refactored", default="./skyscraper_solver", help="Path to the refactored binary.")
-    parser.add_argument("-b", "--baseline", default="./skyscraper_solver_main", help="Path to the baseline binary.")
+    parser.add_argument("-c", "--candidate", default="./skyscraper_solver", help="Path to the candidate solver binary.")
+    parser.add_argument("-r", "--reference", default=None, help="Path to the reference solver binary (optional).")
     parser.add_argument("-e", "--expected", default=None, help="Path to the expected solution counts file.")
     parser.add_argument("-o", "--options", default="-s 0", help="Options for both solvers.")
     parser.add_argument("-j", "--jobs", type=int, default=8, help="Number of concurrent verification jobs.")
@@ -148,14 +156,24 @@ def main():
     
     args = parser.parse_args()
     
+    candidate_path = os.path.abspath(args.candidate)
+    reference_path = os.path.abspath(args.reference) if args.reference else None
+    
     try:
-        subprocess.run([args.refactored], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run([candidate_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     except FileNotFoundError:
-        print(f"Error: Refactored binary {args.refactored} not found. Please compile it first.")
+        print(f"Error: Candidate binary {candidate_path} not found. Please compile it first.")
         sys.exit(1)
         
+    if reference_path:
+        try:
+            subprocess.run([reference_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            print(f"Error: Reference binary {reference_path} not found. Please compile it first.")
+            sys.exit(1)
+        
     if args.benchmark_file is not None:
-        success = verify_file(args.benchmark_file, args.expected, args.refactored, args.baseline, args.options, args.jobs, args.num_instances)
+        success = verify_file(args.benchmark_file, args.expected, candidate_path, reference_path, args.options, args.jobs, args.num_instances)
         if not success:
             print("[FAIL] Mismatches or errors were found!")
             sys.exit(1)
@@ -174,7 +192,7 @@ def main():
             print(f"\n============================================================")
             print(f"Running Default Set: {b_file}")
             print(f"============================================================")
-            success = verify_file(b_file, e_file, args.refactored, args.baseline, args.options, args.jobs, args.num_instances)
+            success = verify_file(b_file, e_file, candidate_path, reference_path, args.options, args.jobs, args.num_instances)
             if not success:
                 all_success = False
         
