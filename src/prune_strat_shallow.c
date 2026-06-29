@@ -13,13 +13,48 @@
 #include "prune_strat_shallow.h"
 #include "pruning_routines.h"
 
-static const double	g_min_unset_threshold = 0.41167205890726744;
-static const double	g_gac_unset_threshold = 0.628986930862801;
-static const double	g_constr_min_unset = 0.49682108776980893;
-static const double	g_constr_max_unset = 0.9425750932165332;
-static const int	g_period_base = 39;
-static const int	g_period_coef1 = 1683;
-static const int	g_period_coef2 = 11533;
+#include <stdlib.h>
+
+static double	g_min_unset_threshold = 0.41167205890726744;
+static double	g_gac_unset_threshold = 0.628986930862801;
+static double	g_constr_min_unset = 0.49682108776980893;
+static double	g_constr_max_unset = 0.9425750932165332;
+static int		g_period_base = 39;
+static int		g_period_coef1 = 1683;
+static int		g_period_coef2 = 11533;
+
+#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+static void	init_env(void)
+{
+	static int	initialized = 0;
+	char		*val;
+
+	if (initialized)
+		return ;
+	val = getenv("SHALLOW_MIN_UNSET");
+	if (val)
+		g_min_unset_threshold = atof(val);
+	val = getenv("SHALLOW_GAC_UNSET_THRESHOLD");
+	if (val)
+		g_gac_unset_threshold = atof(val);
+	val = getenv("SHALLOW_CONSTR_MIN_UNSET");
+	if (val)
+		g_constr_min_unset = atof(val);
+	val = getenv("SHALLOW_CONSTR_MAX_UNSET");
+	if (val)
+		g_constr_max_unset = atof(val);
+	val = getenv("SHALLOW_PERIOD_BASE");
+	if (val)
+		g_period_base = atoi(val);
+	val = getenv("SHALLOW_PERIOD_COEF1");
+	if (val)
+		g_period_coef1 = atoi(val);
+	val = getenv("SHALLOW_PERIOD_COEF2");
+	if (val)
+		g_period_coef2 = atoi(val);
+	initialized = 1;
+}
+#endif
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {
@@ -51,6 +86,9 @@ int	prune_strat_shallow(t_puzzle *puzzle)
 	if (unset_ratio < g_min_unset_threshold)
 		return (0);
 	x = 1 - unset_ratio;
+#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+	init_env();
+#endif
 	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
 			+ g_period_coef2 * x * x * x * x);
 	if (node->progress_counter > node->last_prog[0] + period / 2)

@@ -11,7 +11,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
 BIN_BASELINE = os.path.join(ROOT_DIR, "skyscraper_solver_main")
-BIN_OPTIMIZED = os.path.join(ROOT_DIR, "skyscraper_solver")
+BIN_TUNABLE = os.path.join(ROOT_DIR, "skyscraper_solver")
 
 # Paths to datasets
 PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7_easy500.txt")
@@ -65,20 +65,23 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_set(clues, opt, label, baseline_bin, optimized_bin, extra_bin=None, tuned_env=None):
+def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None):
     print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
-    binaries = [("Baseline", baseline_bin)]
-    if extra_bin:
-        extra_name = os.path.splitext(os.path.basename(extra_bin))[0]
-        binaries.append((extra_name, extra_bin))
-    binaries.append(("Optimized", optimized_bin))
+    # 3-Way Comparison Setup
+    # 1. Baseline: Main solver without environment override logic
+    # 2. Env Baseline: Overrides-enabled solver run with default/no environment variables
+    # 3. Optimized: Overrides-enabled solver run with the tuned environment variables
+    binaries = [
+        ("Baseline", baseline_bin, None),
+        ("Env Baseline", tunable_bin, None),
+        ("Optimized", tunable_bin, tuned_env)
+    ]
     
     results = {}
-    for name, binary in binaries:
+    for name, binary, env in binaries:
         times = []
         nodes = []
-        env = tuned_env if name == "Optimized" else None
         
         with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
             futures = [executor.submit(run_solver, binary, opt, clue, env=env) for clue in clues]
@@ -102,34 +105,27 @@ def evaluate_set(clues, opt, label, baseline_bin, optimized_bin, extra_bin=None,
         }
         
     base = results["Baseline"]
+    env_base = results["Env Baseline"]
     optz = results["Optimized"]
     
-    nodes_diff = (optz["total_nodes"] - base["total_nodes"]) / base["total_nodes"] * 100 if base["total_nodes"] else 0
-    sgm_nodes_diff = (optz["sgm_nodes"] - base["sgm_nodes"]) / base["sgm_nodes"] * 100 if base["sgm_nodes"] else 0
-    time_diff = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
-    sgm_time_diff = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
+    # Diff vs Base (end-to-end including overrides overhead)
+    nodes_diff_base = (optz["total_nodes"] - base["total_nodes"]) / base["total_nodes"] * 100 if base["total_nodes"] else 0
+    sgm_nodes_diff_base = (optz["sgm_nodes"] - base["sgm_nodes"]) / base["sgm_nodes"] * 100 if base["sgm_nodes"] else 0
+    time_diff_base = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
+    sgm_time_diff_base = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
     
-    if extra_bin:
-        extra_name = binaries[1][0]
-        ext_res = results[extra_name]
-        nodes_diff_ext = (optz["total_nodes"] - ext_res["total_nodes"]) / ext_res["total_nodes"] * 100 if ext_res["total_nodes"] else 0
-        sgm_nodes_diff_ext = (optz["sgm_nodes"] - ext_res["sgm_nodes"]) / ext_res["sgm_nodes"] * 100 if ext_res["sgm_nodes"] else 0
-        time_diff_ext = (optz["total_time"] - ext_res["total_time"]) / ext_res["total_time"] * 100 if ext_res["total_time"] else 0
-        sgm_time_diff_ext = (optz["sgm_time"] - ext_res["sgm_time"]) / ext_res["sgm_time"] * 100 if ext_res["sgm_time"] else 0
-        
-        print(f"| Metric | Baseline | {extra_name} | Optimized | Diff (vs Base) | Diff (vs {extra_name}) |")
-        print(f"|---|---|---|---|---|---|")
-        print(f"| **Total Nodes** | {base['total_nodes']:,} | {ext_res['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% | {nodes_diff_ext:+.2f}% |")
-        print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {ext_res['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% | {sgm_nodes_diff_ext:+.2f}% |")
-        print(f"| **Total Time** | {base['total_time']:.3f}s | {ext_res['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% | {time_diff_ext:+.2f}% |")
-        print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {ext_res['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% | {sgm_time_diff_ext:+.2f}% |")
-    else:
-        print(f"| Metric | Baseline | Optimized | Difference |")
-        print(f"|---|---|---|---|")
-        print(f"| **Total Nodes** | {base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% |")
-        print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% |")
-        print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
-        print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
+    # Diff vs Env Base (pure algorithmic gain, factoring out getenv queries)
+    nodes_diff_env = (optz["total_nodes"] - env_base["total_nodes"]) / env_base["total_nodes"] * 100 if env_base["total_nodes"] else 0
+    sgm_nodes_diff_env = (optz["sgm_nodes"] - env_base["sgm_nodes"]) / env_base["sgm_nodes"] * 100 if env_base["sgm_nodes"] else 0
+    time_diff_env = (optz["total_time"] - env_base["total_time"]) / env_base["total_time"] * 100 if env_base["total_time"] else 0
+    sgm_time_diff_env = (optz["sgm_time"] - env_base["sgm_time"]) / env_base["sgm_time"] * 100 if env_base["sgm_time"] else 0
+    
+    print(f"| Metric | Baseline | Env Baseline | Optimized | Diff (vs Base) | Diff (vs Env Base) |")
+    print(f"|---|---|---|---|---|---|")
+    print(f"| **Total Nodes** | {base['total_nodes']:,} | {env_base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff_base:+.2f}% | {nodes_diff_env:+.2f}% |")
+    print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {env_base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff_base:+.2f}% | {sgm_nodes_diff_env:+.2f}% |")
+    print(f"| **Total Time** | {base['total_time']:.3f}s | {env_base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff_base:+.2f}% | {time_diff_env:+.2f}% |")
+    print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {env_base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff_base:+.2f}% | {sgm_time_diff_env:+.2f}% |")
 
 def load_tuned_env(winners_path):
     tuned_env = os.environ.copy()
@@ -146,22 +142,21 @@ def load_tuned_env(winners_path):
                     tuned_env[name] = val
     return tuned_env
 
-def run_comparison(validation_tasks, baseline_bin, optimized_bin, extra_bin=None, tuned_env=None):
+def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON"):
     """
     Programmatic entry point to run comparisons.
     validation_tasks: list of tuples (label, options, list_of_clues)
     """
     baseline = resolve_binary_path(baseline_bin)
-    optimized = resolve_binary_path(optimized_bin)
-    extra = resolve_binary_path(extra_bin) if extra_bin else None
+    tunable = resolve_binary_path(tunable_bin)
     
     print("======================================================================")
-    print("                      SOLVER PERFORMANCE COMPARISON                   ")
+    print(f"   {title}   ".center(70))
     print("======================================================================")
     for label, options, clues in validation_tasks:
         if not clues:
             continue
-        evaluate_set(clues, options, label, baseline, optimized, extra, tuned_env)
+        evaluate_set(clues, options, label, baseline, tunable, tuned_env)
     print("======================================================================")
 
 def read_clues(file_path):
@@ -174,8 +169,7 @@ def read_clues(file_path):
 def main():
     parser = argparse.ArgumentParser(description="Compare performance of solver binaries.")
     parser.add_argument("-b", "--baseline", default=BIN_BASELINE, help="Path to baseline binary")
-    parser.add_argument("-o", "--optimized", default=BIN_OPTIMIZED, help="Path to optimized binary")
-    parser.add_argument("-e", "--extra", default=None, help="Path to an optional third stable binary")
+    parser.add_argument("-t", "--tunable", default=BIN_TUNABLE, help="Path to overrides-enabled tunable binary")
     parser.add_argument("-s", "--size", type=int, choices=[7, 8, 9], default=None, help="Specific size to evaluate. Defaults to all.")
     parser.add_argument("-w", "--winners", default=None, help="Path to SPSA winners text file to load env overrides from.")
     args = parser.parse_args()
@@ -230,7 +224,7 @@ def main():
         print("Error: No validation sets loaded.", file=sys.stderr)
         sys.exit(1)
         
-    run_comparison(validation_tasks, args.baseline, args.optimized, args.extra, tuned_env)
+    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env)
 
 if __name__ == "__main__":
     main()

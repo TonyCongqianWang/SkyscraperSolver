@@ -13,12 +13,44 @@
 #include "prune_strat_root.h"
 #include "pruning_routines.h"
 
-static const double	g_gac_unset_threshold = 0.4634853676455628;
-static const double	g_constr_min_unset = 0.820455247534949;
-static const double	g_constr_max_unset = 0.33143801544130486;
-static const int	g_period_base = 70;
-static const int	g_period_coef1 = 1855;
-static const int	g_period_coef2 = 109817;
+#include <stdlib.h>
+
+static double	g_gac_unset_threshold = 0.4634853676455628;
+static double	g_constr_min_unset = 0.820455247534949;
+static double	g_constr_max_unset = 0.33143801544130486;
+static int		g_period_base = 70;
+static int		g_period_coef1 = 1855;
+static int		g_period_coef2 = 109817;
+
+#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+static void	init_env(void)
+{
+	static int	initialized = 0;
+	char		*val;
+
+	if (initialized)
+		return ;
+	val = getenv("ROOT_GAC_UNSET_THRESHOLD");
+	if (val)
+		g_gac_unset_threshold = atof(val);
+	val = getenv("ROOT_CONSTR_MIN_UNSET");
+	if (val)
+		g_constr_min_unset = atof(val);
+	val = getenv("ROOT_CONSTR_MAX_UNSET");
+	if (val)
+		g_constr_max_unset = atof(val);
+	val = getenv("ROOT_PERIOD_BASE");
+	if (val)
+		g_period_base = atoi(val);
+	val = getenv("ROOT_PERIOD_COEF1");
+	if (val)
+		g_period_coef1 = atoi(val);
+	val = getenv("ROOT_PERIOD_COEF2");
+	if (val)
+		g_period_coef2 = atoi(val);
+	initialized = 1;
+}
+#endif
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {
@@ -50,6 +82,9 @@ int	prune_strat_root(t_puzzle *puzzle)
 	if (unset_ratio < 0.2)
 		return (0);
 	x = 1 - unset_ratio;
+#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
+	init_env();
+#endif
 	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
 			+ g_period_coef2 * x * x * x * x);
 	if (node->progress_counter > node->last_prog[0] + period / 2)

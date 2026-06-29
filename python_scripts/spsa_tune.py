@@ -285,7 +285,9 @@ def main():
     theta = get_default_theta()
     swa_theta = [0.0] * len(theta)
     swa_count = 0
-    swa_start = int(iterations * 0.8)
+    
+    # Cap SWA iterations to at most 80 iterations to prevent dilution on very long runs
+    swa_start = max(1, iterations - 80)
     
     # Reference scales
     ref_scale_s7_single_time = 0.005
@@ -498,24 +500,41 @@ def main():
         
     # Call compare solvers automatically unless deactivated
     if not args.no_compare:
+        train_tasks = []
         validation_tasks = []
+        
         if args.size == 7:
+            train_tasks.append(("Size 7 Training Set (Single Solution)", "-s 1", s7_train))
+            train_tasks.append(("Size 7 Training Set (Full Enumeration)", "-s 0", s7_train))
             validation_tasks.append(("Size 7 Validation Set (Single Solution)", "-s 1", s7_val))
             validation_tasks.append(("Size 7 Validation Set (Full Enumeration)", "-s 0", s7_val))
+            
         elif args.size == 8:
+            train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", s8_single_train))
+            train_tasks.append(("Size 8 Training Set (Full Enumeration)", "-s 0", s8_enum_train))
             validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", s8_single_val))
             validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", s8_enum_val))
+            
         elif args.size == 9:
+            train_tasks.append(("Size 9 Calibrated Training Groups", "-s 1", s9_calib_train))
+            train_tasks.append(("Size 9 Harder Calibrated Training Groups", "-s 1", s9_harder_train))
             validation_tasks.append(("Size 9 Calibrated Validation Groups (Held-out)", "-s 1", s9_calib_val))
             validation_tasks.append(("Size 9 Harder Calibrated Validation Groups (Held-out)", "-s 1", s9_harder_val))
             
         import compare_performance
         compare_performance.run_comparison(
+            validation_tasks=train_tasks,
+            baseline_bin=BIN_BASELINE,
+            tunable_bin=BIN_CURR,
+            tuned_env=get_env_for_theta(theta_final),
+            title="TRAINING SET PERFORMANCE COMPARISON"
+        )
+        compare_performance.run_comparison(
             validation_tasks=validation_tasks,
             baseline_bin=BIN_BASELINE,
-            optimized_bin=BIN_CURR,
-            extra_bin=None,
-            tuned_env=get_env_for_theta(theta_final)
+            tunable_bin=BIN_CURR,
+            tuned_env=get_env_for_theta(theta_final),
+            title="VALIDATION SET PERFORMANCE COMPARISON"
         )
 
 if __name__ == "__main__":
