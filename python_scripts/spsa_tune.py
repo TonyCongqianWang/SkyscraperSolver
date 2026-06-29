@@ -224,13 +224,13 @@ def get_default_theta():
 def main():
     parser = argparse.ArgumentParser(description="Run SPSA tuning for a specific board size.")
     parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver puzzle size to optimize")
-    parser.add_argument("--iterations", type=int, default=400, help="Number of SPSA tuning iterations")
+    parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
-    parser.add_argument("--lr", type=float, default=0.005, help="SPSA initial learning rate step size (a)")
-    parser.add_argument("--alpha", type=float, default=0.602, help="SPSA learning rate decay exponent (alpha)")
+    parser.add_argument("--lr", type=float, default=0.002, help="SPSA initial learning rate step size (a)")
+    parser.add_argument("--alpha", type=float, default=0.0, help="SPSA learning rate decay exponent (alpha)")
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
-    parser.add_argument("--gamma", type=float, default=0.101, help="SPSA perturbation decay exponent (gamma)")
+    parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     args = parser.parse_args()
     
     global LOG_FILE_HANDLE
@@ -345,8 +345,8 @@ def main():
                 sgm_t_e = shifted_geo_mean(t_enum, 0.1)
                 sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
                 
-                loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 3.0 * (sgm_t_e / ref_scale_s7_enum_time)
-                loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 3.0 * (sgm_n_e / ref_scale_s7_enum_nodes)
+                loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
+                loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s7_enum_nodes)
                 
                 return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
                 
@@ -374,8 +374,8 @@ def main():
                 sgm_t_e_em = shifted_geo_mean(t_e_em, 0.1)
                 sgm_n_e_em = shifted_geo_mean(n_e_em, 1000.0)
                 
-                loss_time = 0.2 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 4.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
-                loss_nodes = 0.2 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 4.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
+                loss_time = 0.5 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 2.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
+                loss_nodes = 0.5 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 2.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
                 
                 return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
                 
@@ -397,8 +397,8 @@ def main():
                 sgm_t_h = shifted_geo_mean(t_h, 0.1)
                 sgm_n_h = shifted_geo_mean(n_h, 1000.0)
                 
-                loss_time = 1.0 * (sgm_t_c / ref_scale_s9_calib_time) + 8.0 * (sgm_t_h / ref_scale_s9_harder_time)
-                loss_nodes = 1.0 * (sgm_n_c / ref_scale_s9_calib_nodes) + 8.0 * (sgm_n_h / ref_scale_s9_harder_nodes)
+                loss_time = 1.0 * (sgm_t_c / ref_scale_s9_calib_time) + 3.0 * (sgm_t_h / ref_scale_s9_harder_time)
+                loss_nodes = 1.0 * (sgm_n_c / ref_scale_s9_calib_nodes) + 3.0 * (sgm_n_h / ref_scale_s9_harder_nodes)
                 
                 return loss_time, loss_nodes, (sgm_t_c, sgm_n_c, sgm_t_h, sgm_n_h)
                 
@@ -529,20 +529,30 @@ def main():
             validation_tasks.append(("Size 9 Calibrated Validation Groups (Held-out)", "-s 1", s9_calib_val))
             validation_tasks.append(("Size 9 Harder Calibrated Validation Groups (Held-out)", "-s 1", s9_harder_val))
             
+        # Construct comparison log paths if main log is provided
+        train_log_path = None
+        val_log_path = None
+        if args.log:
+            base, ext = os.path.splitext(args.log)
+            train_log_path = f"{base}_train{ext}"
+            val_log_path = f"{base}_val{ext}"
+
         import compare_performance
         compare_performance.run_comparison(
             validation_tasks=train_tasks,
             baseline_bin=BIN_BASELINE,
             tunable_bin=BIN_CURR,
             tuned_env=get_env_for_theta(theta_final),
-            title="TRAINING SET PERFORMANCE COMPARISON"
+            title="TRAINING SET PERFORMANCE COMPARISON",
+            log_path=train_log_path
         )
         compare_performance.run_comparison(
             validation_tasks=validation_tasks,
             baseline_bin=BIN_BASELINE,
             tunable_bin=BIN_CURR,
             tuned_env=get_env_for_theta(theta_final),
-            title="VALIDATION SET PERFORMANCE COMPARISON"
+            title="VALIDATION SET PERFORMANCE COMPARISON",
+            log_path=val_log_path
         )
 
 if __name__ == "__main__":

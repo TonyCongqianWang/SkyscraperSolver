@@ -65,8 +65,8 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None):
-    print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
+def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, log_print=print):
+    log_print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
     # 3-Way Comparison Setup
     # 1. Baseline: Main solver without environment override logic
@@ -120,12 +120,12 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None):
     time_diff_env = (optz["total_time"] - env_base["total_time"]) / env_base["total_time"] * 100 if env_base["total_time"] else 0
     sgm_time_diff_env = (optz["sgm_time"] - env_base["sgm_time"]) / env_base["sgm_time"] * 100 if env_base["sgm_time"] else 0
     
-    print(f"| Metric | Baseline | Env Baseline | Optimized | Diff (vs Base) | Diff (vs Env Base) |")
-    print(f"|---|---|---|---|---|---|")
-    print(f"| **Total Nodes** | {base['total_nodes']:,} | {env_base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff_base:+.2f}% | {nodes_diff_env:+.2f}% |")
-    print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {env_base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff_base:+.2f}% | {sgm_nodes_diff_env:+.2f}% |")
-    print(f"| **Total Time** | {base['total_time']:.3f}s | {env_base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff_base:+.2f}% | {time_diff_env:+.2f}% |")
-    print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {env_base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff_base:+.2f}% | {sgm_time_diff_env:+.2f}% |")
+    log_print(f"| Metric | Baseline | Env Baseline | Optimized | Diff (vs Base) | Diff (vs Env Base) |")
+    log_print(f"|---|---|---|---|---|---|")
+    log_print(f"| **Total Nodes** | {base['total_nodes']:,} | {env_base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff_base:+.2f}% | {nodes_diff_env:+.2f}% |")
+    log_print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {env_base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff_base:+.2f}% | {sgm_nodes_diff_env:+.2f}% |")
+    log_print(f"| **Total Time** | {base['total_time']:.3f}s | {env_base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff_base:+.2f}% | {time_diff_env:+.2f}% |")
+    log_print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {env_base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff_base:+.2f}% | {sgm_time_diff_env:+.2f}% |")
 
 def load_tuned_env(winners_path):
     tuned_env = os.environ.copy()
@@ -142,7 +142,7 @@ def load_tuned_env(winners_path):
                     tuned_env[name] = val
     return tuned_env
 
-def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON"):
+def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON", log_path=None):
     """
     Programmatic entry point to run comparisons.
     validation_tasks: list of tuples (label, options, list_of_clues)
@@ -150,14 +150,30 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, 
     baseline = resolve_binary_path(baseline_bin)
     tunable = resolve_binary_path(tunable_bin)
     
-    print("======================================================================")
-    print(f"   {title}   ".center(70))
-    print("======================================================================")
+    log_file = None
+    if log_path:
+        log_dir = os.path.dirname(log_path)
+        if log_dir:
+            os.makedirs(log_dir, exist_ok=True)
+        log_file = open(log_path, "w")
+        
+    def log_print(*args, **kwargs):
+        print(*args, **kwargs)
+        if log_file:
+            print(*args, **kwargs, file=log_file)
+            log_file.flush()
+            
+    log_print("======================================================================")
+    log_print(f"   {title}   ".center(70))
+    log_print("======================================================================")
     for label, options, clues in validation_tasks:
         if not clues:
             continue
-        evaluate_set(clues, options, label, baseline, tunable, tuned_env)
-    print("======================================================================")
+        evaluate_set(clues, options, label, baseline, tunable, tuned_env, log_print)
+    log_print("======================================================================")
+    
+    if log_file:
+        log_file.close()
 
 def read_clues(file_path):
     if not os.path.exists(file_path):
@@ -172,6 +188,7 @@ def main():
     parser.add_argument("-t", "--tunable", default=BIN_TUNABLE, help="Path to overrides-enabled tunable binary")
     parser.add_argument("-s", "--size", type=int, choices=[7, 8, 9], default=None, help="Specific size to evaluate. Defaults to all.")
     parser.add_argument("-w", "--winners", default=None, help="Path to SPSA winners text file to load env overrides from.")
+    parser.add_argument("-l", "--log", default=None, help="Optional path to write comparison tables to a log file.")
     args = parser.parse_args()
     
     # Auto-resolve winners file path if not provided but size is specified
@@ -224,7 +241,7 @@ def main():
         print("Error: No validation sets loaded.", file=sys.stderr)
         sys.exit(1)
         
-    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env)
+    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env, log_path=args.log)
 
 if __name__ == "__main__":
     main()
