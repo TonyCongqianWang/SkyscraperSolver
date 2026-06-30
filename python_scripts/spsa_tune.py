@@ -7,6 +7,7 @@ import sys
 import random
 import math
 import argparse
+import select
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -185,15 +186,120 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_subset(env, tasks, max_workers=4):
-    times = []
-    nodes = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
-        futures = [executor.submit(run_solver_instance, env, opt, clue) for opt, clue in tasks]
+def read_with_timeout(proc, timeout=10.0):
+    lines = []
+    t_start = time.perf_counter()
+    while True:
+        elapsed = time.perf_counter() - t_start
+        rem = timeout - elapsed
+        if rem <= 0:
+            return None
+        try:
+            r, _, _ = select.select([proc.stdout], [], [], rem)
+            if not r:
+                return None
+            line_bytes = proc.stdout.readline()
+            if not line_bytes:
+                return None
+            line = line_bytes.decode('utf-8')
+            lines.append(line)
+            if line.strip() == "--- END OF RECORD ---":
+                break
+        except Exception:
+            return None
+    return lines
+
+def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
+    if not use_stdin:
+        times = []
+        nodes = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+            futures = [executor.submit(run_solver_instance, env, opt, clue) for opt, clue in tasks]
+            for fut in futures:
+                t, n = fut.result()
+                times.append(t)
+                nodes.append(n)
+        return times, nodes
+    
+    # Stdin batch mode
+    tasks_with_indices = []
+    for i, (opt, clue) in enumerate(tasks):
+        tasks_with_indices.append((i, opt, clue))
+        
+    by_opt_indexed = {}
+    for i, opt, clue in tasks_with_indices:
+        if opt not in by_opt_indexed:
+            by_opt_indexed[opt] = []
+        by_opt_indexed[opt].append((i, clue))
+        
+    times = [0.0] * len(tasks)
+    nodes = [0] * len(tasks)
+    
+    def run_opt_group(opt, clues_with_indices):
+        proc = subprocess.Popen(
+            [BIN_CURR] + opt.split() + ["--stdin"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            bufsize=0,
+            env=env
+        )
+        
+        group_results = []
+        try:
+            for idx, clue in clues_with_indices:
+                t0 = time.perf_counter()
+                proc.stdin.write((clue + "\n").encode('utf-8'))
+                proc.stdin.flush()
+                
+                lines = read_with_timeout(proc, timeout=10.0)
+                elapsed = time.perf_counter() - t0
+                
+                if lines is None:
+                    # Timeout or process crashed: kill and restart
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+                    proc.wait()
+                    proc = subprocess.Popen(
+                        [BIN_CURR] + opt.split() + ["--stdin"],
+                        stdin=subprocess.PIPE,
+                        stdout=subprocess.PIPE,
+                        bufsize=0,
+                        env=env
+                    )
+                    group_results.append((idx, 10.0, 100000))
+                    continue
+                    
+                node_count = 100000
+                for line in lines:
+                    if line.startswith("Nodes visited:"):
+                        node_count = int(line.split(":")[1].strip())
+                        break
+                group_results.append((idx, elapsed, node_count))
+        finally:
+            try:
+                proc.stdin.close()
+            except Exception:
+                pass
+            try:
+                proc.kill()
+            except Exception:
+                pass
+            proc.wait()
+        return group_results
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(by_opt_indexed))) as executor:
+        futures = [
+            executor.submit(run_opt_group, opt, clues)
+            for opt, clues in by_opt_indexed.items()
+        ]
         for fut in futures:
-            t, n = fut.result()
-            times.append(t)
-            nodes.append(n)
+            group_results = fut.result()
+            for idx, elapsed, node_count in group_results:
+                times[idx] = elapsed
+                nodes[idx] = node_count
+                
     return times, nodes
 
 def get_env_for_theta(theta):
@@ -232,6 +338,7 @@ def main():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
+    parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
     args = parser.parse_args()
     
     global LOG_FILE_HANDLE
@@ -349,8 +456,8 @@ def main():
             
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_single, n_single = evaluate_subset(env, tasks_single)
-                t_enum, n_enum = evaluate_subset(env, tasks_enum)
+                t_single, n_single = evaluate_subset(env, tasks_single, use_stdin=args.stdin)
+                t_enum, n_enum = evaluate_subset(env, tasks_enum, use_stdin=args.stdin)
                 
                 sgm_t_s = shifted_geo_mean(t_single, 0.002)
                 sgm_n_s = shifted_geo_mean(n_single, 100.0)
@@ -374,9 +481,9 @@ def main():
             
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med)
-                t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard)
-                t_e_em, n_e_em = evaluate_subset(env, tasks_enum)
+                t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, use_stdin=args.stdin)
+                t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, use_stdin=args.stdin)
+                t_e_em, n_e_em = evaluate_subset(env, tasks_enum, use_stdin=args.stdin)
                 
                 sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
                 sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
@@ -401,8 +508,8 @@ def main():
             
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_c, n_c = evaluate_subset(env, tasks_calib)
-                t_h, n_h = evaluate_subset(env, tasks_harder)
+                t_c, n_c = evaluate_subset(env, tasks_calib, use_stdin=args.stdin)
+                t_h, n_h = evaluate_subset(env, tasks_harder, use_stdin=args.stdin)
                 
                 sgm_t_c = shifted_geo_mean(t_c, 0.500)
                 sgm_n_c = shifted_geo_mean(n_c, 50000.0)
