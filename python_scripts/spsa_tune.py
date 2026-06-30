@@ -231,6 +231,7 @@ def main():
     parser.add_argument("--alpha", type=float, default=0.0, help="SPSA learning rate decay exponent (alpha)")
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
+    parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
     args = parser.parse_args()
     
     global LOG_FILE_HANDLE
@@ -290,6 +291,18 @@ def main():
     A = 40
     iterations = args.iterations
     
+    if args.batch_size is not None:
+        batch_size = args.batch_size
+    else:
+        if args.size == 7:
+            batch_size = 32
+        elif args.size == 8:
+            batch_size = 16
+        else:
+            batch_size = 8
+            
+    log_print(f"SPSA Batch Size configured: {batch_size}")
+    
     theta = get_default_theta()
     swa_theta = [0.0] * len(theta)
     swa_count = 0
@@ -329,8 +342,8 @@ def main():
         
         # Prepare stochastically drawn batches for this step
         if args.size == 7:
-            sampled_single = random.sample(s7_train, min(len(s7_train), 8))
-            sampled_enum = random.sample(s7_train, min(len(s7_train), 8))
+            sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
+            sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
             tasks_single = [("-s 1", clue) for clue in sampled_single]
             tasks_enum = [("-s 0", clue) for clue in sampled_enum]
             
@@ -339,10 +352,10 @@ def main():
                 t_single, n_single = evaluate_subset(env, tasks_single)
                 t_enum, n_enum = evaluate_subset(env, tasks_enum)
                 
-                sgm_t_s = shifted_geo_mean(t_single, 0.1)
-                sgm_n_s = shifted_geo_mean(n_single, 1000.0)
+                sgm_t_s = shifted_geo_mean(t_single, 0.002)
+                sgm_n_s = shifted_geo_mean(n_single, 100.0)
                 
-                sgm_t_e = shifted_geo_mean(t_enum, 0.1)
+                sgm_t_e = shifted_geo_mean(t_enum, 0.005)
                 sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
                 
                 loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
@@ -351,9 +364,9 @@ def main():
                 return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
                 
         elif args.size == 8:
-            sampled_s8_single_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), 4))
-            sampled_s8_single_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), 4))
-            sampled_s8_enum = random.sample(easy_train + med_train, min(len(easy_train + med_train), 8))
+            sampled_s8_single_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 4)))
+            sampled_s8_single_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 4)))
+            sampled_s8_enum = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
             
             tasks_single_easy_med = [("-s 1", clue) for clue in sampled_s8_single_easy_med]
             tasks_single_hard_xhard = [("-s 1", clue) for clue in sampled_s8_single_hard_xhard]
@@ -365,14 +378,14 @@ def main():
                 t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard)
                 t_e_em, n_e_em = evaluate_subset(env, tasks_enum)
                 
-                sgm_t_s_em = shifted_geo_mean(t_s_em, 0.1)
-                sgm_n_s_em = shifted_geo_mean(n_s_em, 1000.0)
+                sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
+                sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
                 
-                sgm_t_s_hx = shifted_geo_mean(t_s_hx, 0.1)
-                sgm_n_s_hx = shifted_geo_mean(n_s_hx, 1000.0)
+                sgm_t_s_hx = shifted_geo_mean(t_s_hx, 0.050)
+                sgm_n_s_hx = shifted_geo_mean(n_s_hx, 3000.0)
                 
-                sgm_t_e_em = shifted_geo_mean(t_e_em, 0.1)
-                sgm_n_e_em = shifted_geo_mean(n_e_em, 1000.0)
+                sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
+                sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
                 
                 loss_time = 0.5 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 2.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
                 loss_nodes = 0.5 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 2.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
@@ -380,8 +393,8 @@ def main():
                 return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
                 
         elif args.size == 9:
-            sampled_calib = random.sample(s9_calib_train, min(len(s9_calib_train), 8))
-            sampled_harder = random.sample(s9_harder_train, min(len(s9_harder_train), 8))
+            sampled_calib = random.sample(s9_calib_train, min(len(s9_calib_train), batch_size))
+            sampled_harder = random.sample(s9_harder_train, min(len(s9_harder_train), batch_size))
             
             tasks_calib = [("-s 1", clue) for clue in sampled_calib]
             tasks_harder = [("-s 1", clue) for clue in sampled_harder]
@@ -391,11 +404,11 @@ def main():
                 t_c, n_c = evaluate_subset(env, tasks_calib)
                 t_h, n_h = evaluate_subset(env, tasks_harder)
                 
-                sgm_t_c = shifted_geo_mean(t_c, 0.1)
-                sgm_n_c = shifted_geo_mean(n_c, 1000.0)
+                sgm_t_c = shifted_geo_mean(t_c, 0.500)
+                sgm_n_c = shifted_geo_mean(n_c, 50000.0)
                 
-                sgm_t_h = shifted_geo_mean(t_h, 0.1)
-                sgm_n_h = shifted_geo_mean(n_h, 1000.0)
+                sgm_t_h = shifted_geo_mean(t_h, 0.500)
+                sgm_n_h = shifted_geo_mean(n_h, 50000.0)
                 
                 loss_time = 1.0 * (sgm_t_c / ref_scale_s9_calib_time) + 3.0 * (sgm_t_h / ref_scale_s9_harder_time)
                 loss_nodes = 1.0 * (sgm_n_c / ref_scale_s9_calib_nodes) + 3.0 * (sgm_n_h / ref_scale_s9_harder_nodes)
