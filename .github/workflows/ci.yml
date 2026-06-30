@@ -7,7 +7,27 @@ on:
       - main
 
 jobs:
-  build:
+  norminette-formatting:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Install norminette package
+        run: |
+          pip install --upgrade pip
+          pip install norminette
+
+      - name: Run norminette formatting check
+        run: python -m norminette src/*.c src/*.h
+
+  verify-correctness:
     runs-on: ubuntu-latest
 
     steps:
