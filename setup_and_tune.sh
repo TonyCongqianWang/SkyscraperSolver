@@ -29,5 +29,5 @@ echo "=========================================================="
 # If arguments were passed to this script, execute spsa_tune.py with them
 if [ "$#" -gt 0 ]; then
     echo "Running SPSA tune with provided arguments..."
-    python3 python_scripts/spsa_tune.py "$@"
+    python3 -u python_scripts/spsa_tune.py "$@"
 fi
