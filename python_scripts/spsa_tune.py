@@ -289,14 +289,21 @@ def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
             proc.wait()
         return group_results
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(by_opt_indexed))) as executor:
-        futures = [
-            executor.submit(run_opt_group, opt, clues)
-            for opt, clues in by_opt_indexed.items()
-        ]
+    num_workers = os.cpu_count() or 4
+    futures = []
+    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+        for opt, clues in by_opt_indexed.items():
+            # Partition clues into num_workers subgroups
+            subgroups = [[] for _ in range(num_workers)]
+            for idx, item in enumerate(clues):
+                subgroups[idx % num_workers].append(item)
+            subgroups = [sg for sg in subgroups if sg]
+            
+            for sg in subgroups:
+                futures.append(executor.submit(run_opt_group, opt, sg))
+                
         for fut in futures:
-            group_results = fut.result()
-            for idx, elapsed, node_count in group_results:
+            for idx, elapsed, node_count in fut.result():
                 times[idx] = elapsed
                 nodes[idx] = node_count
                 
