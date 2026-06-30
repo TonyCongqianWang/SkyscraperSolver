@@ -13,13 +13,13 @@
 #include "prune_strat_deep.h"
 #include "pruning_routines.h"
 
-static const double	g_min_unset_threshold = 0.04487051200407117;
-static const double	g_gac_unset_threshold = 0.2938803129321176;
-static const double	g_constr_min_unset = 1.0;
-static const double	g_constr_max_unset = 0.42472576251042726;
-static const int	g_period_base = 230;
-static const int	g_period_coef1 = 11401;
-static const int	g_period_coef2 = 116580;
+static const double	g_min_unset_threshold = 0.09;
+static const double	g_gac_unset_threshold = 0.22;
+static const double	g_constr_min_unset = 0.49;
+static const double	g_constr_max_unset = 0.57;
+static const int	g_period_base = 240;
+static const int	g_period_coef1 = 12500;
+static const int	g_period_coef2 = 100000;
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {

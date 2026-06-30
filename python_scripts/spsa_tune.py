@@ -46,39 +46,39 @@ PARAM_METADATA = [
     ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.05, float),
     ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.33, float),
     # ROOT
-    ("ROOT_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.05, float),
-    ("ROOT_CONSTR_MIN_UNSET", 0.0, 1.0, 0.10, float),
-    ("ROOT_CONSTR_MAX_UNSET", 0.0, 1.0, 0.90, float),
-    ("ROOT_PERIOD_BASE", 1, 100, 2, int),
-    ("ROOT_PERIOD_COEF1", 0, 10000, 1000, int),
-    ("ROOT_PERIOD_COEF2", 0, 150000, 5000, int),
+    ("ROOT_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.12, float),
+    ("ROOT_CONSTR_MIN_UNSET", 0.0, 1.0, 0.05, float),
+    ("ROOT_CONSTR_MAX_UNSET", 0.0, 1.0, 0.92, float),
+    ("ROOT_PERIOD_BASE", 1, 100, 6, int),
+    ("ROOT_PERIOD_COEF1", 0, 10000, 900, int),
+    ("ROOT_PERIOD_COEF2", 0, 150000, 10000, int),
     # SHALLOW
-    ("SHALLOW_MIN_UNSET", 0.0, 0.5, 0.41, float),
-    ("SHALLOW_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.10, float),
-    ("SHALLOW_CONSTR_MIN_UNSET", 0.0, 1.0, 0.35, float),
-    ("SHALLOW_CONSTR_MAX_UNSET", 0.0, 1.0, 0.75, float),
-    ("SHALLOW_PERIOD_BASE", 1, 200, 6, int),
-    ("SHALLOW_PERIOD_COEF1", 0, 15000, 3000, int),
-    ("SHALLOW_PERIOD_COEF2", 0, 150000, 20000, int),
+    ("SHALLOW_MIN_UNSET", 0.0, 0.5, 0.45, float),
+    ("SHALLOW_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.13, float),
+    ("SHALLOW_CONSTR_MIN_UNSET", 0.0, 1.0, 0.45, float),
+    ("SHALLOW_CONSTR_MAX_UNSET", 0.0, 1.0, 0.78, float),
+    ("SHALLOW_PERIOD_BASE", 1, 200, 4, int),
+    ("SHALLOW_PERIOD_COEF1", 0, 15000, 2500, int),
+    ("SHALLOW_PERIOD_COEF2", 0, 150000, 25000, int),
     # MEDIUM
-    ("MEDIUM_MIN_UNSET", 0.0, 0.5, 0.36, float),
-    ("MEDIUM_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.15, float),
-    ("MEDIUM_CONSTR_MIN_UNSET", 0.0, 1.0, 0.45, float),
-    ("MEDIUM_CONSTR_MAX_UNSET", 0.0, 1.0, 0.65, float),
-    ("MEDIUM_PERIOD_BASE", 1, 300, 60, int),
+    ("MEDIUM_MIN_UNSET", 0.0, 0.5, 0.35, float),
+    ("MEDIUM_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.16, float),
+    ("MEDIUM_CONSTR_MIN_UNSET", 0.0, 1.0, 0.40, float),
+    ("MEDIUM_CONSTR_MAX_UNSET", 0.0, 1.0, 0.76, float),
+    ("MEDIUM_PERIOD_BASE", 1, 300, 65, int),
     ("MEDIUM_PERIOD_COEF1", 0, 10000, 6000, int),
-    ("MEDIUM_PERIOD_COEF2", 0, 150000, 50000, int),
+    ("MEDIUM_PERIOD_COEF2", 0, 150000, 100000, int),
     # DEEP
-    ("DEEP_MIN_UNSET", 0.0, 0.5, 0.089, float),
-    ("DEEP_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.24, float),
-    ("DEEP_CONSTR_MIN_UNSET", 0.0, 1.0, 0.50, float),
-    ("DEEP_CONSTR_MAX_UNSET", 0.0, 1.0, 0.60, float),
+    ("DEEP_MIN_UNSET", 0.0, 0.5, 0.09, float),
+    ("DEEP_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.22, float),
+    ("DEEP_CONSTR_MIN_UNSET", 0.0, 1.0, 0.49, float),
+    ("DEEP_CONSTR_MAX_UNSET", 0.0, 1.0, 0.57, float),
     ("DEEP_PERIOD_BASE", 1, 400, 240, int),
-    ("DEEP_PERIOD_COEF1", 0, 20000, 12000, int),
+    ("DEEP_PERIOD_COEF1", 0, 20000, 12500, int),
     ("DEEP_PERIOD_COEF2", 0, 150000, 100000, int),
     # NODE SELECT SELECTIVITY ROUTING
     ("SEL_REBUILD_PERIOD", 1, 10000, 1000, int),
-    ("SEL_ORD2_COEFF", 0, 50000, 4000, int),
+    ("SEL_ORD2_COEFF", 0, 50000, 2500, int),
     ("SEL_ORD4_COEFF", 0, 500000, 80000, int),
 ]
 
@@ -421,6 +421,10 @@ def main():
     swa_theta = [0.0] * len(theta)
     swa_count = 0
     
+    # Sensitivity tracking: sum of absolute gradients for each parameter
+    grad_time_sum = [0.0] * len(theta)
+    grad_nodes_sum = [0.0] * len(theta)
+    
     # Cap SWA iterations to at most 80 iterations to prevent dilution on very long runs
     swa_start = max(1, iterations - 80)
     
@@ -539,7 +543,6 @@ def main():
         theta_minus = [max(0.0, min(1.0, theta[i] - ck * delta[i])) for i in range(len(theta))]
         loss_time_minus, loss_nodes_minus, _ = get_loss(theta_minus)
         
-        # SPSA Gradients
         grad_time = []
         grad_nodes = []
         for i in range(len(theta)):
@@ -547,6 +550,8 @@ def main():
             gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * delta[i])
             grad_time.append(gt_i)
             grad_nodes.append(gn_i)
+            grad_time_sum[i] += gt_i
+            grad_nodes_sum[i] += gn_i
             
         if LOG_FILE_HANDLE:
             LOG_FILE_HANDLE.write(f"Iter {k} grad_time:  {list(grad_time)}\n")
@@ -610,6 +615,23 @@ def main():
     log_print("=======================================")
     for name, val in phys_best.items():
         log_print(f"{name} = {val}")
+        
+    # Report Sensitivity Analysis
+    log_print("\nParameter Sensitivity Analysis (Average Absolute Gradient):")
+    log_print("==========================================================")
+    log_print(f"{'Parameter Name':<30} | {'Time Loss Sens.':<16} | {'Node Loss Sens.':<16} | {'Total Sens.':<12}")
+    log_print("-" * 82)
+    
+    sens_data = []
+    for i, (name, _, _, _, _) in enumerate(PARAM_METADATA):
+        avg_gt = abs(grad_time_sum[i]) / iterations
+        avg_gn = abs(grad_nodes_sum[i]) / iterations
+        total_sens = avg_gt + avg_gn
+        sens_data.append((name, avg_gt, avg_gn, total_sens))
+        
+    sens_data.sort(key=lambda x: x[3], reverse=True)
+    for name, avg_gt, avg_gn, total_sens in sens_data:
+        log_print(f"{name:<30} | {avg_gt:<16.6f} | {avg_gn:<16.6f} | {total_sens:<12.6f}")
         
     # Write to winners file
     os.makedirs(os.path.join(ROOT_DIR, "scratch"), exist_ok=True)

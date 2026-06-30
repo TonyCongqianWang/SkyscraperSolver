@@ -17,6 +17,9 @@ echo "=== Step 4: Rebuilding tunable solver ==="
 make re
 echo "Saved tunable solver to: ./skyscraper_solver"
 
+echo "=== Step 5: Unapplying environment overrides ==="
+python3 python_scripts/examples/apply_env_overrides.py --unapply
+
 echo "=========================================================="
 echo "Setup Complete!"
 echo "=========================================================="

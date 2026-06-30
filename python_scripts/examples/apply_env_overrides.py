@@ -3,12 +3,12 @@ import os
 
 FILES_CONFIGS = [
     ("src/prune_strat_routing.c", {
-        "target_vars": """static const double	g_routing_shallow_ratio = 0.05008353583779075;
-static const double	g_routing_medium_ratio = 0.2736100962866644;""",
+        "target_vars": """static const double	g_routing_shallow_ratio = 0.05;
+static const double	g_routing_medium_ratio = 0.33;""",
         "replacement_vars": """#include <stdlib.h>
 
-static double	g_routing_shallow_ratio = 0.05008353583779075;
-static double	g_routing_medium_ratio = 0.2736100962866644;
+static double	g_routing_shallow_ratio = 0.05;
+static double	g_routing_medium_ratio = 0.33;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_routing_env(void)
@@ -36,20 +36,20 @@ static void	init_routing_env(void)
 		if (d <= puzzle->squared_size * g_routing_shallow_ratio)"""
     }),
     ("src/prune_strat_root.c", {
-        "target_vars": """static const double	g_gac_unset_threshold = 0.4634853676455628;
-static const double	g_constr_min_unset = 0.820455247534949;
-static const double	g_constr_max_unset = 0.33143801544130486;
-static const int	g_period_base = 70;
-static const int	g_period_coef1 = 1855;
-static const int	g_period_coef2 = 109817;""",
+        "target_vars": """static const double	g_gac_unset_threshold = 0.12;
+static const double	g_constr_min_unset = 0.05;
+static const double	g_constr_max_unset = 0.92;
+static const int	g_period_base = 6;
+static const int	g_period_coef1 = 900;
+static const int	g_period_coef2 = 10000;""",
         "replacement_vars": """#include <stdlib.h>
 
-static double	g_gac_unset_threshold = 0.4634853676455628;
-static double	g_constr_min_unset = 0.820455247534949;
-static double	g_constr_max_unset = 0.33143801544130486;
-static int		g_period_base = 70;
-static int		g_period_coef1 = 1855;
-static int		g_period_coef2 = 109817;
+static double	g_gac_unset_threshold = 0.12;
+static double	g_constr_min_unset = 0.05;
+static double	g_constr_max_unset = 0.92;
+static int		g_period_base = 6;
+static int		g_period_coef1 = 900;
+static int		g_period_coef2 = 10000;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -89,22 +89,22 @@ static void	init_env(void)
 			+ g_period_coef2 * x * x * x * x);"""
     }),
     ("src/prune_strat_shallow.c", {
-        "target_vars": """static const double	g_min_unset_threshold = 0.41167205890726744;
-static const double	g_gac_unset_threshold = 0.628986930862801;
-static const double	g_constr_min_unset = 0.49682108776980893;
-static const double	g_constr_max_unset = 0.9425750932165332;
-static const int	g_period_base = 39;
-static const int	g_period_coef1 = 1683;
-static const int	g_period_coef2 = 11533;""",
+        "target_vars": """static const double	g_min_unset_threshold = 0.45;
+static const double	g_gac_unset_threshold = 0.13;
+static const double	g_constr_min_unset = 0.45;
+static const double	g_constr_max_unset = 0.78;
+static const int	g_period_base = 4;
+static const int	g_period_coef1 = 2500;
+static const int	g_period_coef2 = 25000;""",
         "replacement_vars": """#include <stdlib.h>
 
-static double	g_min_unset_threshold = 0.41167205890726744;
-static double	g_gac_unset_threshold = 0.628986930862801;
-static double	g_constr_min_unset = 0.49682108776980893;
-static double	g_constr_max_unset = 0.9425750932165332;
-static int		g_period_base = 39;
-static int		g_period_coef1 = 1683;
-static int		g_period_coef2 = 11533;
+static double	g_min_unset_threshold = 0.45;
+static double	g_gac_unset_threshold = 0.13;
+static double	g_constr_min_unset = 0.45;
+static double	g_constr_max_unset = 0.78;
+static int		g_period_base = 4;
+static int		g_period_coef1 = 2500;
+static int		g_period_coef2 = 25000;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -147,22 +147,22 @@ static void	init_env(void)
 			+ g_period_coef2 * x * x * x * x);"""
     }),
     ("src/prune_strat_medium.c", {
-        "target_vars": """static const double	g_min_unset_threshold = 0.38779700452737015;
-static const double	g_gac_unset_threshold = 0.19090341649850168;
-static const double	g_constr_min_unset = 0.9771216210974851;
-static const double	g_constr_max_unset = 0.8502859539542834;
-static const int	g_period_base = 104;
-static const int	g_period_coef1 = 2579;
-static const int	g_period_coef2 = 135680;""",
+        "target_vars": """static const double	g_min_unset_threshold = 0.35;
+static const double	g_gac_unset_threshold = 0.16;
+static const double	g_constr_min_unset = 0.40;
+static const double	g_constr_max_unset = 0.76;
+static const int	g_period_base = 65;
+static const int	g_period_coef1 = 6000;
+static const int	g_period_coef2 = 100000;""",
         "replacement_vars": """#include <stdlib.h>
 
-static double	g_min_unset_threshold = 0.38779700452737015;
-static double	g_gac_unset_threshold = 0.19090341649850168;
-static double	g_constr_min_unset = 0.9771216210974851;
-static double	g_constr_max_unset = 0.8502859539542834;
-static int		g_period_base = 104;
-static int		g_period_coef1 = 2579;
-static int		g_period_coef2 = 135680;
+static double	g_min_unset_threshold = 0.35;
+static double	g_gac_unset_threshold = 0.16;
+static double	g_constr_min_unset = 0.40;
+static double	g_constr_max_unset = 0.76;
+static int		g_period_base = 65;
+static int		g_period_coef1 = 6000;
+static int		g_period_coef2 = 100000;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -205,22 +205,22 @@ static void	init_env(void)
 			+ g_period_coef2 * x * x * x * x);"""
     }),
     ("src/prune_strat_deep.c", {
-        "target_vars": """static const double	g_min_unset_threshold = 0.04487051200407117;
-static const double	g_gac_unset_threshold = 0.2938803129321176;
-static const double	g_constr_min_unset = 1.0;
-static const double	g_constr_max_unset = 0.42472576251042726;
-static const int	g_period_base = 230;
-static const int	g_period_coef1 = 11401;
-static const int	g_period_coef2 = 116580;""",
+        "target_vars": """static const double	g_min_unset_threshold = 0.09;
+static const double	g_gac_unset_threshold = 0.22;
+static const double	g_constr_min_unset = 0.49;
+static const double	g_constr_max_unset = 0.57;
+static const int	g_period_base = 240;
+static const int	g_period_coef1 = 12500;
+static const int	g_period_coef2 = 100000;""",
         "replacement_vars": """#include <stdlib.h>
 
-static double	g_min_unset_threshold = 0.04487051200407117;
-static double	g_gac_unset_threshold = 0.2938803129321176;
-static double	g_constr_min_unset = 1.0;
-static double	g_constr_max_unset = 0.42472576251042726;
-static int		g_period_base = 230;
-static int		g_period_coef1 = 11401;
-static int		g_period_coef2 = 116580;
+static double	g_min_unset_threshold = 0.09;
+static double	g_gac_unset_threshold = 0.22;
+static double	g_constr_min_unset = 0.49;
+static double	g_constr_max_unset = 0.57;
+static int		g_period_base = 240;
+static int		g_period_coef1 = 12500;
+static int		g_period_coef2 = 100000;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -264,12 +264,12 @@ static void	init_env(void)
     }),
     ("src/sel_strat_routing.c", {
         "target_vars": """static const double			g_sel_rebuild_period = 1000;
-static const double			g_sel_ord2_coeff = 4000;
+static const double			g_sel_ord2_coeff = 2500;
 static const double			g_sel_ord4_coeff = 80000;""",
         "replacement_vars": """#include <stdlib.h>
 
 static double			g_sel_rebuild_period = 1000;
-static double			g_sel_ord2_coeff = 4000;
+static double			g_sel_ord2_coeff = 2500;
 static double			g_sel_ord4_coeff = 80000;
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
@@ -303,32 +303,65 @@ static void	init_sel_env(void)
 ]
 
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description="Apply or unapply environment overrides to C++ files.")
+    parser.add_argument("--unapply", action="store_true", help="Remove overrides and restore original static const configurations.")
+    args = parser.parse_args()
+    
     for filepath, config in FILES_CONFIGS:
+        if not os.path.exists(filepath):
+            print(f"Warning: file not found: {filepath}")
+            continue
+            
         with open(filepath, "r") as f:
             content = f.read()
-        
-        # Replace variables
-        if config["target_vars"] in content:
-            content = content.replace(config["target_vars"], config["replacement_vars"])
-        else:
-            print(f"Warning: target_vars not found in {filepath}")
             
-        # Replace check threshold if configured
-        if "target_check" in config:
-            if config["target_check"] in content:
-                content = content.replace(config["target_check"], config["replacement_check"])
+        if args.unapply:
+            # Unapply variables
+            if config["replacement_vars"] in content:
+                content = content.replace(config["replacement_vars"], config["target_vars"])
             else:
-                print(f"Warning: target_check not found in {filepath}")
+                print(f"Warning: replacement_vars not found in {filepath} (already unapplied?)")
                 
-        # Replace init call
-        if config["target_init"] in content:
-            content = content.replace(config["target_init"], config["replacement_init"])
+            # Unapply check threshold if configured
+            if "replacement_check" in config:
+                if config["replacement_check"] in content:
+                    content = content.replace(config["replacement_check"], config["target_check"])
+                else:
+                    print(f"Warning: replacement_check not found in {filepath}")
+                    
+            # Unapply init call
+            if config["replacement_init"] in content:
+                content = content.replace(config["replacement_init"], config["target_init"])
+            else:
+                print(f"Warning: replacement_init not found in {filepath}")
+                
+            action_str = "Successfully unapplied overrides from"
         else:
-            print(f"Warning: target_init not found in {filepath}")
+            # Apply variables
+            if config["target_vars"] in content:
+                content = content.replace(config["target_vars"], config["replacement_vars"])
+            else:
+                print(f"Warning: target_vars not found in {filepath} (already applied?)")
+                
+            # Apply check threshold if configured
+            if "target_check" in config:
+                if config["target_check"] in content:
+                    content = content.replace(config["target_check"], config["replacement_check"])
+                else:
+                    print(f"Warning: target_check not found in {filepath}")
+                    
+            # Apply init call
+            if config["target_init"] in content:
+                content = content.replace(config["target_init"], config["replacement_init"])
+            else:
+                print(f"Warning: target_init not found in {filepath}")
+                
+            action_str = "Successfully applied overrides to"
             
         with open(filepath, "w") as f:
             f.write(content)
-        print(f"Successfully applied overrides to {filepath}")
+        print(f"{action_str} {filepath}")
 
 if __name__ == "__main__":
     main()

@@ -6,7 +6,7 @@ import math
 import os
 import sys
 import argparse
-
+import select
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
@@ -25,6 +25,44 @@ PATH_S8_XHARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutio
 # Size 9 calibrated files
 PATH_S9 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
 PATH_S9_HARDER = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
+
+def check_stdin_support(binary):
+    try:
+        proc = subprocess.Popen(
+            [binary, "--stdin"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE
+        )
+        proc.stdin.write(b"\n")
+        proc.stdin.close()
+        ret = proc.wait(timeout=1.0)
+        return ret == 0
+    except Exception:
+        return False
+
+def read_with_timeout(proc, timeout=10.0):
+    lines = []
+    t_start = time.perf_counter()
+    while True:
+        elapsed = time.perf_counter() - t_start
+        rem = timeout - elapsed
+        if rem <= 0:
+            return None
+        try:
+            r, _, _ = select.select([proc.stdout], [], [], rem)
+            if not r:
+                return None
+            line_bytes = proc.stdout.readline()
+            if not line_bytes:
+                return None
+            line = line_bytes.decode('utf-8')
+            lines.append(line)
+            if line.strip() == "--- END_OF_INSTANCE ---":
+                break
+        except Exception:
+            return None
+    return lines
 
 def resolve_binary_path(path):
     if not path:
@@ -65,7 +103,14 @@ def shifted_geo_mean(values, shift):
     sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
     return math.exp(sum_ln / len(values)) - shift
 
-def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, log_print=print):
+STDIN_SUPPORT_CACHE = {}
+
+def check_stdin_support_cached(binary):
+    if binary not in STDIN_SUPPORT_CACHE:
+        STDIN_SUPPORT_CACHE[binary] = check_stdin_support(binary)
+    return STDIN_SUPPORT_CACHE[binary]
+
+def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, log_print=print, use_stdin=True):
     log_print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
     # 3-Way Comparison Setup
@@ -83,14 +128,87 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, l
         times = []
         nodes = []
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-            futures = [executor.submit(run_solver, binary, opt, clue, env=env) for clue in clues]
-            for fut in futures:
-                t, n = fut.result()
-                if t is not None and n is not None:
-                    times.append(t)
-                    nodes.append(n)
-                    
+        # Check if stdin mode is supported and desired
+        stdin_ok = use_stdin and check_stdin_support_cached(binary)
+        
+        if not stdin_ok:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
+                futures = [executor.submit(run_solver, binary, opt, clue, env=env) for clue in clues]
+                for fut in futures:
+                    t, n = fut.result()
+                    if t is not None and n is not None:
+                        times.append(t)
+                        nodes.append(n)
+        else:
+            num_workers = os.cpu_count() or 8
+            
+            def run_subgroup(clues_chunk):
+                proc = subprocess.Popen(
+                    [binary] + opt.split() + ["--stdin"],
+                    stdin=subprocess.PIPE,
+                    stdout=subprocess.PIPE,
+                    bufsize=0,
+                    env=env
+                )
+                chunk_results = []
+                try:
+                    for clue in clues_chunk:
+                        t0 = time.perf_counter()
+                        proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
+                        proc.stdin.flush()
+                        
+                        lines = read_with_timeout(proc, timeout=15.0)
+                        elapsed = time.perf_counter() - t0
+                        
+                        if lines is None:
+                            try:
+                                proc.kill()
+                            except Exception:
+                                pass
+                            proc.wait()
+                            proc = subprocess.Popen(
+                                [binary] + opt.split() + ["--stdin"],
+                                stdin=subprocess.PIPE,
+                                stdout=subprocess.PIPE,
+                                bufsize=0,
+                                env=env
+                            )
+                            chunk_results.append((15.0, 100000))
+                            continue
+                        
+                        node_count = 100000
+                        for line in lines:
+                            if line.startswith("Nodes visited:"):
+                                node_count = int(line.split(":")[1].strip())
+                                break
+                        chunk_results.append((elapsed, node_count))
+                finally:
+                    try:
+                        proc.stdin.close()
+                    except Exception:
+                        pass
+                    try:
+                        proc.kill()
+                    except Exception:
+                        pass
+                    proc.wait()
+                return chunk_results
+
+            subgroups = [[] for _ in range(num_workers)]
+            for idx, clue in enumerate(clues):
+                subgroups[idx % num_workers].append(clue)
+            subgroups = [sg for sg in subgroups if sg]
+            
+            futures = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+                for sg in subgroups:
+                    futures.append(executor.submit(run_subgroup, sg))
+                for fut in futures:
+                    for t, n in fut.result():
+                        if t is not None and n is not None:
+                            times.append(t)
+                            nodes.append(n)
+                            
         tot_nodes = sum(nodes)
         tot_time = sum(times)
         sgm_nodes = shifted_geo_mean(nodes, 1000.0)
@@ -142,7 +260,7 @@ def load_tuned_env(winners_path):
                     tuned_env[name] = val
     return tuned_env
 
-def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON", log_path=None):
+def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON", log_path=None, use_stdin=True):
     """
     Programmatic entry point to run comparisons.
     validation_tasks: list of tuples (label, options, list_of_clues)
@@ -169,7 +287,7 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, 
     for label, options, clues in validation_tasks:
         if not clues:
             continue
-        evaluate_set(clues, options, label, baseline, tunable, tuned_env, log_print)
+        evaluate_set(clues, options, label, baseline, tunable, tuned_env, log_print, use_stdin=use_stdin)
     log_print("======================================================================")
     
     if log_file:
@@ -189,6 +307,7 @@ def main():
     parser.add_argument("-s", "--size", type=int, choices=[7, 8, 9], default=None, help="Specific size to evaluate. Defaults to all.")
     parser.add_argument("-w", "--winners", default=None, help="Path to SPSA winners text file to load env overrides from.")
     parser.add_argument("-l", "--log", default=None, help="Optional path to write comparison tables to a log file.")
+    parser.add_argument("--no-use-stdin", action="store_true", help="Disable stdin mode batching for comparisons.")
     args = parser.parse_args()
     
     # Auto-resolve winners file path if not provided but size is specified
@@ -241,7 +360,7 @@ def main():
         print("Error: No validation sets loaded.", file=sys.stderr)
         sys.exit(1)
         
-    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env, log_path=args.log)
+    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env, log_path=args.log, use_stdin=not args.no_use_stdin)
 
 if __name__ == "__main__":
     main()
