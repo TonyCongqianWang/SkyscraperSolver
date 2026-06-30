@@ -24,6 +24,46 @@
 static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
 static void	partial_solve_cpy_and_print_debug(t_puzzle *puzzle, int max_depth);
 
+static int	tokenize_line(char *line, char **argv, int max_args)
+{
+	int		argc;
+	char	*p;
+
+	argc = 0;
+	p = line;
+	while (*p && argc < max_args)
+	{
+		while (*p == ' ')
+			p++;
+		if (!*p)
+			break ;
+		if (*p == '"')
+		{
+			p++;
+			argv[argc++] = p;
+			while (*p && *p != '"')
+				p++;
+			if (*p == '"')
+			{
+				*p = '\0';
+				p++;
+			}
+		}
+		else
+		{
+			argv[argc++] = p;
+			while (*p && *p != ' ')
+				p++;
+			if (*p == ' ')
+			{
+				*p = '\0';
+				p++;
+			}
+		}
+	}
+	return (argc);
+}
+
 int	main(int argc, char **argv)
 {
 	static t_puzzle	puzzle;
@@ -39,12 +79,14 @@ int	main(int argc, char **argv)
 
 	if (has_stdin)
 	{
+		int		set_max_solutions = 0;
 		for (int i = 1; i < argc - 1; i++)
 		{
 			if (strcmp(argv[i], "-s") == 0)
 			{
 				max_solutions = argv[i + 1];
-				break;
+				set_max_solutions = 1;
+				break ;
 			}
 		}
 		char line[4096];
@@ -54,19 +96,30 @@ int	main(int argc, char **argv)
 			if (len > 0 && line[len - 1] == '\n')
 				line[len - 1] = '\0';
 			if (strlen(line) == 0)
-				continue;
+				continue ;
 			
+			char *fake_argv[MAX_CLI_ARGS + 1] = {0};
+			int fake_argc = 0;
+			fake_argv[fake_argc++] = argv[0];
+			if (set_max_solutions)
+			{
+				fake_argv[fake_argc++] = "-s";
+				fake_argv[fake_argc++] = max_solutions;
+			}
+			fake_argc += tokenize_line(line, &fake_argv[fake_argc], (MAX_CLI_ARGS + 1) - fake_argc);
+
 			memset(&puzzle, 0, sizeof(puzzle));
-			if (!init_puzzle_from_constr_str(&puzzle, line, max_solutions))
+			if (init_puzzle_from_argv(&puzzle, fake_argc, fake_argv) != 0)
 			{
 				print_error("Wrong puzzle constraints format.");
-				printf("--- END OF RECORD ---\n");
+				printf("--- END_OF_INSTANCE ---\n");
 				fflush(stdout);
-				continue;
+				free_solution_storage(&puzzle);
+				continue ;
 			}
 			solve_puzzle(&puzzle, -1);
 			print_value("Nodes visited", puzzle.nodes_visited);
-			printf("--- END OF RECORD ---\n");
+			printf("--- END_OF_INSTANCE ---\n");
 			fflush(stdout);
 			free_solution_storage(&puzzle);
 		}

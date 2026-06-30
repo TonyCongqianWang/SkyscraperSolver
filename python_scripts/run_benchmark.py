@@ -116,6 +116,8 @@ def main(command_name, filename, output_file=None, options="",
     interactive_process = None
     if use_stdin:
         base_args = shlex.split(options)
+        if "--stdin" not in base_args:
+            base_args.append("--stdin")
         try:
             interactive_process = subprocess.Popen(
                 [command_name] + base_args,

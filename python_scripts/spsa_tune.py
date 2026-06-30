@@ -203,7 +203,7 @@ def read_with_timeout(proc, timeout=10.0):
                 return None
             line = line_bytes.decode('utf-8')
             lines.append(line)
-            if line.strip() == "--- END OF RECORD ---":
+            if line.strip() == "--- END_OF_INSTANCE ---":
                 break
         except Exception:
             return None

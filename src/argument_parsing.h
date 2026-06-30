@@ -14,6 +14,8 @@
 # define ARGUMENT_PARSING_H
 # include "puzzle_structs.h"
 
+# define MAX_CLI_ARGS 5
+
 int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv);
 
 #endif

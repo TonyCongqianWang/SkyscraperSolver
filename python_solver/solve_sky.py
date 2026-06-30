@@ -123,11 +123,12 @@ def solve_and_output(p, args, puzzle_id="", f=sys.stdout):
 
 def main():
     parser = argparse.ArgumentParser(description="Skyscraper Puzzle Solver Engine.")
-    parser.add_argument("input", type=str, nargs="*", help="Input properties (Optional. If omitted, reads from stdin).")
+    parser.add_argument("input", type=str, nargs="*", help="Input properties (optional if --stdin is used).")
     parser.add_argument("-b", "--backend", type=str, choices=["z3", "cpsat"], default=None, help="Solver backend to use.")
     parser.add_argument("-s", "--num_solutions", type=int, default=1, help="Max solutions to track.")
     parser.add_argument("-p", "--print_format", type=str, choices=["grid", "string", "all"], default="all")
     parser.add_argument("-o", "--output", type=str, default=None, help="Output destination file path.")
+    parser.add_argument("--stdin", action="store_true", help="Read puzzles sequentially from stdin.")
     args = parser.parse_args()
 
     if args.backend is None:
@@ -136,10 +137,7 @@ def main():
 
     f = open(args.output, "w", encoding="utf-8") if args.output else sys.stdout
 
-    if args.input:
-        p = parse_puzzle_input(args.input)
-        solve_and_output(p, args, f=f)
-    else:
+    if args.stdin:
         for line_no, line in enumerate(sys.stdin, 1):
             line = line.strip()
             if not line: continue
@@ -151,6 +149,12 @@ def main():
                 print(f"Error processing line {line_no}: {e}", file=sys.stderr)
                 print("--- END_OF_INSTANCE ---", file=f)
                 if f == sys.stdout: sys.stdout.flush()
+    elif args.input:
+        p = parse_puzzle_input(args.input)
+        solve_and_output(p, args, f=f)
+    else:
+        parser.print_help()
+        sys.exit(1)
 
     if args.output:
         f.close()

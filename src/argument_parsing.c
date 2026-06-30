@@ -61,7 +61,7 @@ static int	is_correct_argument_count(int argc, char **argv)
 	int		set_max_solutions;
 
 	set_max_solutions = has_set_max_solution_flag(argc, argv);
-	if (argc < 2 + 2 * set_max_solutions || argc > 3 + 2 * set_max_solutions)
+	if (argc > MAX_CLI_ARGS || argc < 2 + 2 * set_max_solutions || argc > 3 + 2 * set_max_solutions)
 	{
 		print_error(USAGE_STR);
 		return (0);
