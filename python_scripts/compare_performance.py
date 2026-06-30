@@ -14,7 +14,7 @@ BIN_BASELINE = os.path.join(ROOT_DIR, "skyscraper_solver_main")
 BIN_TUNABLE = os.path.join(ROOT_DIR, "skyscraper_solver")
 
 # Paths to datasets
-PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7_easy500.txt")
+PATH_S7 = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank7.txt")
 
 # Size 8 calibrated files
 PATH_S8_EASY = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_easy.txt")

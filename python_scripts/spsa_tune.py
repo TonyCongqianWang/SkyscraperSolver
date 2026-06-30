@@ -28,7 +28,7 @@ BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
 BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
 
 # Paths to datasets
-PATH_S7 = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet7.txt")
+PATH_S7 = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank7.txt")
 
 # Size 8 calibrated files
 PATH_S8_EASY = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_easy.txt")
@@ -248,7 +248,7 @@ def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
         try:
             for idx, clue in clues_with_indices:
                 t0 = time.perf_counter()
-                proc.stdin.write((clue + "\n").encode('utf-8'))
+                proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
                 proc.stdin.flush()
                 
                 lines = read_with_timeout(proc, timeout=10.0)
@@ -352,10 +352,10 @@ def main():
     
     # 1. Dataset Loading and Splits
     if args.size == 7:
-        s7_all = read_clues(PATH_S7)[:1000]
-        mid_s7 = len(s7_all) // 2
-        s7_train = s7_all[:mid_s7]
-        s7_val = s7_all[mid_s7:]
+        s7_all = read_clues(PATH_S7)
+        split_idx = int(len(s7_all) * 0.9)
+        s7_train = s7_all[:split_idx]
+        s7_val = s7_all[split_idx:]
         log_print(f"Loaded Size 7 dataset: {len(s7_train)} train clues, {len(s7_val)} validation clues.")
         
     elif args.size == 8:

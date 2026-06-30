@@ -303,8 +303,10 @@ if __name__ == "__main__":
                              'Does not affect output written with -o.')
     parser.add_argument('--print-limit-summary', default=10, type=int,
                         help='Maximum number of instance to print at summary. Negative value to print all.')
-    parser.add_argument('--use-stdin', action='store_true',
-                        help='Pass the puzzle input via stdin interactively.')
+    parser.add_argument('--use-stdin', action='store_true', default=True,
+                        help='Pass the puzzle input via stdin interactively (enabled by default).')
+    parser.add_argument('--no-use-stdin', action='store_false', dest='use_stdin',
+                        help='Disable stdin batching and run instances as individual subprocesses.')
 
     args = parser.parse_args()
 
