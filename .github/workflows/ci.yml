@@ -29,8 +29,20 @@ jobs:
           # Run norminette normally to output human-readable style warnings/errors in the logs
           python -m norminette src/*.c src/*.h || true
           
-          # Return exit code 1 only if there is at least one actual Error
-          python -m norminette -f json src/*.c src/*.h | grep -q '"status":"Error"' && exit 1 || exit 0
+          # Fetch JSON output and count Errors and Notices using bash tools
+          OUTPUT=$(python -m norminette -f json src/*.c src/*.h)
+          ERRORS=$(echo "$OUTPUT" | grep -o '"level":"Error"' | wc -l)
+          NOTICES=$(echo "$OUTPUT" | grep -o '"level":"Notice"' | wc -l)
+          
+          echo "========================================"
+          echo "Norminette Summary:"
+          echo "  Errors:  $ERRORS"
+          echo "  Notices: $NOTICES"
+          echo "========================================"
+          
+          if [ "$ERRORS" -ne 0 ]; then
+            exit 1
+          fi
 
   verify-correctness:
     runs-on: ubuntu-latest
