@@ -20,11 +20,17 @@ def run_solver(binary, options, clues):
     solutions_found = None
     nodes_visited = None
     for line in stdout.splitlines():
-        if line.startswith("Solutions found:"):
+        line_lower = line.lower()
+        if "solutions found" in line_lower or "unique solutions found" in line_lower:
             try:
-                solutions_found = int(line.split(":")[1].strip())
+                if ":" in line:
+                    solutions_found = int(line.split(":")[1].strip())
+                else:
+                    solutions_found = int(line.split()[-1].strip())
             except ValueError:
                 pass
+        elif "unsatisfiable" in line_lower or "no solution found" in line_lower:
+            solutions_found = 0
         elif line.startswith("Nodes visited:"):
             try:
                 nodes_visited = int(line.split(":")[1].strip())

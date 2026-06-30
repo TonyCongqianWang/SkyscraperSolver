@@ -1,7 +1,7 @@
 import sys
 import argparse
 import shlex
-from parser import parse_puzzle_input
+from parser import parse_puzzle_input, PuzzleParseError
 from renderer import render_grid_flat, render_ascii_frame, serialize_to_string
 
 # Persistent global registers to preserve Z3 incremental clause sharing for -s 1
@@ -150,8 +150,12 @@ def main():
                 print("--- END_OF_INSTANCE ---", file=f)
                 if f == sys.stdout: sys.stdout.flush()
     elif args.input:
-        p = parse_puzzle_input(args.input)
-        solve_and_output(p, args, f=f)
+        try:
+            p = parse_puzzle_input(args.input)
+            solve_and_output(p, args, f=f)
+        except PuzzleParseError as e:
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
     else:
         parser.print_help()
         sys.exit(1)
