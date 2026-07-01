@@ -7,7 +7,7 @@ import sys
 import argparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR = os.path.dirname(SCRIPT_DIR)
+ROOT_DIR = os.path.dirname(os.path.dirname(SCRIPT_DIR))
 
 BIN_V07 = os.path.join(ROOT_DIR, "skyscraper_solver_v07")
 BIN_V08 = os.path.join(ROOT_DIR, "skyscraper_solver_v08")
