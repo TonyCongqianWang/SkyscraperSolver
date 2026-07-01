@@ -6,7 +6,9 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
 
 > [!NOTE]
-> Also see [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository for a playable implementation with GUI of the game.
+> To learn the rules or play see online [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
+> A solver-inspired playable offline implementation with C#/.NET GUI can be found at the [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository.
+
 
 Compilation and usage like this (assuming cc is your C compiler):
 
@@ -40,8 +42,6 @@ Solutions (if found) are printed like this:
 7 3 2 8 6 9 5 1 4
 ```
 
-You can find a solver-inspired playable desktop game on my other [repository](https://github.com/TonyCongqianWang/SkyscraperGame) or play online [here](https://www.puzzle-skyscrapers.com/) and [here](https://www.brainbashers.com/skyscrapers.asp).
-
 ### Instances
 
 Some more example inputs of different sizes (more can be found in the benchmark_scripts or generated automatically using the python script):
@@ -52,10 +52,10 @@ Some more example inputs of different sizes (more can be found in the benchmark_
 ./skyscraper_solver "3 1 2 3 2 3 3 3 2 3 5 2 2 3 1 2 3 4 2 4 3 3 1 3 2 5 3 5 1 3 3 2 5 2 3 3"
 ```
 
-## Python Z3 Cross-Checking Solver
-A Python-based Skyscraper solver utilizing the Z3 Theorem Prover is located in the [python_solver/](python_solver/) directory. It serves as a high-fidelity mathematical reference model to cross-check the correctness of the C solver's solution counts and cell assignments.
+## Python Cross-Checking Solver
+A Python-based Skyscraper solver utilizing either the Z3 Theorem Prover or the otrools cpsat solver as backend is located in the [python_solver/](python_solver/) directory. It serves as a high-fidelity mathematical reference model to cross-check the correctness of the C solver's solution counts and cell assignments.
 
-You can run it by installing the Z3 solver dependency (`pip install -r python_solver/requirements.txt`) and executing the solver scripts within the directory for automated verification.
+You can run it by installing the required solver dependencies (`pip install -r python_solver/requirements.txt`) and executing the solver scripts within the directory for automated verification.
 
 ## Changes
 
@@ -84,15 +84,11 @@ Added bugfix in v06b and improved benchmarking. Bugfix has a very significant pe
 ### v07
 Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
 
-First version being able to solve the size 9 benchmarkset in roughly 5.5 hours on a 2.20GHz Intel Xeon.
+First version being able to solve the size 9 benchmarkset in roughly 7:59 on a 2.20GHz Intel Xeon.
 
 ### v08
 Added Python Z3 Cross-Checking Solver.
-Refactored lookahead node pruning logic and integrated domain-specific type definitions:
-* Refactored skip-pruning logic and fixed edge cases when modifying pruning parameters. Moved the pruning trigger to backtracking failure blocks to propagate invalidations immediately when branches collapse.
-* Dynamically scaled the pruning skip-period based on the ratio of remaining unset cells to automatically decay pruning frequency in deep search nodes.
-* Gated lookahead reiteration on search progress to avoid redundant, expensive lookahead passes.
-* Declared custom typedefs (`t_prune_prog`, `t_sol_count`, `t_node_count`) inside `puzzle_structs.h` to replace raw, unwieldy `unsigned long long` types across the codebase, ensuring full Norminette compliance.
-* Added a thread-safe parallel hyperparameter grid search script in `python_scripts/examples/tune_parameters.py` running 48 evaluations in parallel across 8 CPU cores.
+Added more auxiliary python scripts to measure and improve performance.
+Refactored lookahead node pruning logic and integrated domain-specific type definitions and tuned parameters.
 
-Solves the size 9 benchmark set in roughly 4.5 hours on a 2.20GHz Intel Xeon.
+Solves the size 9 benchmark set in roughly 7:48 on a 2.20GHz Intel Xeon.
