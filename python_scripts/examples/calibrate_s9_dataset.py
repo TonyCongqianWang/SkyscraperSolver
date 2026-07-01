@@ -4,18 +4,19 @@ import time
 import concurrent.futures
 import os
 import sys
+import argparse
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
-BIN_DEV = os.path.join(ROOT_DIR, "skyscraper_solver_dev.exe")
-BIN_MAIN = os.path.join(ROOT_DIR, "skyscraper_solver_main.exe")
-BIN_V08 = os.path.join(ROOT_DIR, "skyscraper_solver_v08.exe")
-BIN_CURR = os.path.join(ROOT_DIR, "skyscraper_solver.exe")
+BIN_V07 = os.path.join(ROOT_DIR, "skyscraper_solver_v07")
+BIN_V08 = os.path.join(ROOT_DIR, "skyscraper_solver_v08")
+BIN_MAIN = os.path.join(ROOT_DIR, "skyscraper_solver_main")
 
-BENCHMARK_IN = os.path.join(ROOT_DIR, "benchmark_sets", "benchmarkSet9.txt")
-PATH_OUT_EASY = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
-PATH_OUT_HARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
+BENCHMARK_IN = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank9.txt")
+PATH_OUT_LVL1 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl1.txt")
+PATH_OUT_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl2.txt")
+PATH_OUT_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl3.txt")
 
 def get_symmetries(clue_str):
     nums = list(map(int, clue_str.split()))
@@ -88,7 +89,7 @@ def run_solver(binary, clue, timeout=120.0):
 
 def evaluate_base_clue(clue):
     times = {}
-    for name, bin_path in [("dev", BIN_DEV), ("main", BIN_MAIN), ("v08", BIN_V08), ("current", BIN_CURR)]:
+    for name, bin_path in [("v07", BIN_V07), ("v08", BIN_V08), ("main", BIN_MAIN)]:
         t = run_solver(bin_path, clue, timeout=120.0)
         if t is None:
             return None
@@ -99,7 +100,7 @@ def evaluate_all_symmetries(clue, timeout=120.0):
     rots = get_symmetries(clue)
     tasks = []
     for rot in rots:
-        for name, bin_path in [("dev", BIN_DEV), ("main", BIN_MAIN), ("v08", BIN_V08), ("current", BIN_CURR)]:
+        for name, bin_path in [("v07", BIN_V07), ("v08", BIN_V08), ("main", BIN_MAIN)]:
             tasks.append((bin_path, rot))
             
     times = []
@@ -113,7 +114,16 @@ def evaluate_all_symmetries(clue, timeout=120.0):
     return max(times)
 
 def main():
-    for path in [BIN_DEV, BIN_MAIN, BIN_V08, BIN_CURR]:
+    parser = argparse.ArgumentParser(description="Calibrate Size 9 Skyscraper puzzles into difficulty levels.")
+    parser.add_argument("--target-lvl1", type=int, default=500, help="Target count of unique base puzzles for Level 1 (default: 500)")
+    parser.add_argument("--target-lvl2", type=int, default=250, help="Target count of unique base puzzles for Level 2 (default: 250)")
+    parser.add_argument("--target-lvl3", type=int, default=100, help="Target count of unique base puzzles for Level 3 (default: 100)")
+    parser.add_argument("--scan-start", type=int, default=0, help="Start index of puzzle bank scan (default: 0)")
+    parser.add_argument("--scan-end", type=int, default=10000, help="End index of puzzle bank scan (default: 10000)")
+    parser.add_argument("--max-workers", type=int, default=8, help="Number of concurrent worker threads (default: 8)")
+    args = parser.parse_args()
+
+    for path in [BIN_V07, BIN_V08, BIN_MAIN]:
         if not os.path.exists(path):
             print(f"Error: Binary {path} not found. Please compile it first.")
             sys.exit(1)
@@ -129,13 +139,11 @@ def main():
     # Phase 1: Filter base clues (under 120s)
     print("Phase 1: Broad Base-Clue Filtering...")
     
-    max_workers = 8
-    # We scan a chunk of 3000 puzzles (lines 2000 to 5000)
-    scan_start = 2000
-    scan_end = 5000
+    scan_start = args.scan_start
+    scan_end = min(args.scan_end, len(lines))
     chunk = lines[scan_start:scan_end]
     
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=args.max_workers) as executor:
         futures = {executor.submit(evaluate_base_clue, clue): clue for clue in chunk}
         
         for i, fut in enumerate(concurrent.futures.as_completed(futures)):
@@ -155,8 +163,9 @@ def main():
     # Phase 2: Symmetry Verification and Classification
     print("\nPhase 2: Symmetry Verification & Classification (120s timeout)...")
     
-    verified_easy = []
-    verified_hard = []
+    verified_lvl1 = []
+    verified_lvl2 = []
+    verified_lvl3 = []
     
     candidate_keys = list(candidates.keys())
     for count, key in enumerate(candidate_keys):
@@ -164,53 +173,71 @@ def main():
         t_max = evaluate_all_symmetries(clue, timeout=120.0)
         
         if t_max is not None:
-            if t_max >= 2.0:
-                if len(verified_hard) < 55:
-                    verified_hard.append(clue)
-                    print(f"  [HARD] {len(verified_hard)}/50 Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
-            else:
-                if len(verified_easy) < 105:
-                    verified_easy.append(clue)
-                    print(f"  [EASY] {len(verified_easy)}/100 Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+            if t_max < 2.0:
+                if len(verified_lvl1) < args.target_lvl1 + 5:
+                    verified_lvl1.append(clue)
+                    print(f"  [LVL 1] {len(verified_lvl1)}/{args.target_lvl1} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+            elif 5.0 <= t_max < 25.0:
+                if len(verified_lvl2) < args.target_lvl2 + 5:
+                    verified_lvl2.append(clue)
+                    print(f"  [LVL 2] {len(verified_lvl2)}/{args.target_lvl2} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+            elif t_max >= 25.0:
+                if len(verified_lvl3) < args.target_lvl3 + 5:
+                    verified_lvl3.append(clue)
+                    print(f"  [LVL 3] {len(verified_lvl3)}/{args.target_lvl3} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
                     
-        # Early stop if we have enough of both
-        if len(verified_easy) >= 100 and len(verified_hard) >= 50:
-            print("Successfully verified target counts for both sets!")
+        # Early stop if we have enough of all levels
+        if len(verified_lvl1) >= args.target_lvl1 and len(verified_lvl2) >= args.target_lvl2 and len(verified_lvl3) >= args.target_lvl3:
+            print("Successfully verified target counts for all three levels!")
             break
             
         if (count + 1) % 50 == 0:
-            print(f"  Checked {count+1}/{len(candidate_keys)} candidates... (Easy: {len(verified_easy)}, Hard: {len(verified_hard)})")
+            print(f"  Checked {count+1}/{len(candidate_keys)} candidates... (Lvl 1: {len(verified_lvl1)}, Lvl 2: {len(verified_lvl2)}, Lvl 3: {len(verified_lvl3)})")
             
-    print(f"\nVerification complete. Easy verified: {len(verified_easy)}, Hard verified: {len(verified_hard)}")
+    print(f"\nVerification complete. Lvl 1 verified: {len(verified_lvl1)}, Lvl 2 verified: {len(verified_lvl2)}, Lvl 3 verified: {len(verified_lvl3)}")
     
-    if len(verified_easy) < 100:
-        print(f"Warning: Only verified {len(verified_easy)} easy puzzles (target 100).")
-    if len(verified_hard) < 50:
-        print(f"Warning: Only verified {len(verified_hard)} hard puzzles (target 50).")
+    if len(verified_lvl1) < args.target_lvl1:
+        print(f"Warning: Only verified {len(verified_lvl1)} Lvl 1 puzzles (target {args.target_lvl1}).")
+    if len(verified_lvl2) < args.target_lvl2:
+        print(f"Warning: Only verified {len(verified_lvl2)} Lvl 2 puzzles (target {args.target_lvl2}).")
+    if len(verified_lvl3) < args.target_lvl3:
+        print(f"Warning: Only verified {len(verified_lvl3)} Lvl 3 puzzles (target {args.target_lvl3}).")
         
-    # Expand and save easy puzzles
-    easy_expanded = []
-    for clue in verified_easy[:100]:
-        easy_expanded.extend(get_symmetries(clue))
-    easy_expanded = list(dict.fromkeys(easy_expanded))
+    # Expand and save Lvl 1 puzzles
+    lvl1_expanded = []
+    for clue in verified_lvl1[:args.target_lvl1]:
+        lvl1_expanded.extend(get_symmetries(clue))
+    lvl1_expanded = list(dict.fromkeys(lvl1_expanded))
     
-    os.makedirs(os.path.dirname(PATH_OUT_EASY), exist_ok=True)
-    with open(PATH_OUT_EASY, "w") as f:
-        for clue in easy_expanded:
+    os.makedirs(os.path.dirname(PATH_OUT_LVL1), exist_ok=True)
+    with open(PATH_OUT_LVL1, "w") as f:
+        for clue in lvl1_expanded:
             f.write(f'"{clue}"\n')
-    print(f"Wrote {len(easy_expanded)} easy symmetric variants (100 unique base puzzles) to {PATH_OUT_EASY}")
+    print(f"Wrote {len(lvl1_expanded)} Lvl 1 symmetric variants ({len(verified_lvl1[:args.target_lvl1])} unique base puzzles) to {PATH_OUT_LVL1}")
     
-    # Expand and save hard puzzles
-    hard_expanded = []
-    for clue in verified_hard[:50]:
-        hard_expanded.extend(get_symmetries(clue))
-    hard_expanded = list(dict.fromkeys(hard_expanded))
+    # Expand and save Lvl 2 puzzles
+    lvl2_expanded = []
+    for clue in verified_lvl2[:args.target_lvl2]:
+        lvl2_expanded.extend(get_symmetries(clue))
+    lvl2_expanded = list(dict.fromkeys(lvl2_expanded))
     
-    os.makedirs(os.path.dirname(PATH_OUT_HARD), exist_ok=True)
-    with open(PATH_OUT_HARD, "w") as f:
-        for clue in hard_expanded:
+    os.makedirs(os.path.dirname(PATH_OUT_LVL2), exist_ok=True)
+    with open(PATH_OUT_LVL2, "w") as f:
+        for clue in lvl2_expanded:
             f.write(f'"{clue}"\n')
-    print(f"Wrote {len(hard_expanded)} hard symmetric variants (50 unique base puzzles) to {PATH_OUT_HARD}")
+    print(f"Wrote {len(lvl2_expanded)} Lvl 2 symmetric variants ({len(verified_lvl2[:args.target_lvl2])} unique base puzzles) to {PATH_OUT_LVL2}")
+    
+    # Expand and save Lvl 3 puzzles
+    lvl3_expanded = []
+    for clue in verified_lvl3[:args.target_lvl3]:
+        lvl3_expanded.extend(get_symmetries(clue))
+    lvl3_expanded = list(dict.fromkeys(lvl3_expanded))
+    
+    os.makedirs(os.path.dirname(PATH_OUT_LVL3), exist_ok=True)
+    with open(PATH_OUT_LVL3, "w") as f:
+        for clue in lvl3_expanded:
+            f.write(f'"{clue}"\n')
+    print(f"Wrote {len(lvl3_expanded)} Lvl 3 symmetric variants ({len(verified_lvl3[:args.target_lvl3])} unique base puzzles) to {PATH_OUT_LVL3}")
     
     print("\nSize 9 Dataset Calibration Completed Successfully!")
 
