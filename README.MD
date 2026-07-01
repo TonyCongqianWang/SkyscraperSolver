@@ -6,7 +6,7 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
 
 > [!NOTE]
-> To learn the rules or play see online [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
+> To learn the rules or play online, see [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
 > A solver-inspired playable offline implementation with C#/.NET GUI can be found at the [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository.
 
 
