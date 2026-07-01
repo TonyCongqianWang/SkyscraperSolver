@@ -135,6 +135,8 @@ def main():
     print(f"Loaded {len(lines)} raw puzzles.")
     
     candidates = {}
+    count_timed_out = 0
+    count_trivial_discarded = 0
     
     # Phase 1: Filter base clues (under 120s)
     print("Phase 1: Broad Base-Clue Filtering...")
@@ -154,6 +156,8 @@ def main():
                 key = canonize(clue)
                 if key not in candidates:
                     candidates[key] = clue
+            else:
+                count_timed_out += 1
                         
             if (i + 1) % 500 == 0:
                 print(f"  Processed {i+1}/{len(chunk)} base clues... Candidates: {len(candidates)}")
@@ -173,18 +177,19 @@ def main():
         t_max = evaluate_all_symmetries(clue, timeout=120.0)
         
         if t_max is not None:
-            if t_max < 2.0:
-                if len(verified_lvl1) < args.target_lvl1 + 5:
-                    verified_lvl1.append(clue)
-                    print(f"  [LVL 1] {len(verified_lvl1)}/{args.target_lvl1} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
-            elif 5.0 <= t_max < 25.0:
-                if len(verified_lvl2) < args.target_lvl2 + 5:
-                    verified_lvl2.append(clue)
-                    print(f"  [LVL 2] {len(verified_lvl2)}/{args.target_lvl2} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+            if t_max < 0.1:
+                count_trivial_discarded += 1
+            elif 0.1 <= t_max < 2.0:
+                verified_lvl1.append(clue)
+                print(f"  [LVL 1] {len(verified_lvl1)} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+            elif 2.0 <= t_max < 25.0:
+                verified_lvl2.append(clue)
+                print(f"  [LVL 2] {len(verified_lvl2)} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
             elif t_max >= 25.0:
-                if len(verified_lvl3) < args.target_lvl3 + 5:
-                    verified_lvl3.append(clue)
-                    print(f"  [LVL 3] {len(verified_lvl3)}/{args.target_lvl3} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+                verified_lvl3.append(clue)
+                print(f"  [LVL 3] {len(verified_lvl3)} Verified: t_max = {t_max:.2f}s (Base: {clue[:20]}...)")
+        else:
+            count_timed_out += 1
                     
         # Early stop if we have enough of all levels
         if len(verified_lvl1) >= args.target_lvl1 and len(verified_lvl2) >= args.target_lvl2 and len(verified_lvl3) >= args.target_lvl3:
@@ -192,9 +197,11 @@ def main():
             break
             
         if (count + 1) % 50 == 0:
-            print(f"  Checked {count+1}/{len(candidate_keys)} candidates... (Lvl 1: {len(verified_lvl1)}, Lvl 2: {len(verified_lvl2)}, Lvl 3: {len(verified_lvl3)})")
+            print(f"  Checked {count+1}/{len(candidate_keys)} candidates... (Lvl 1: {len(verified_lvl1)}, Lvl 2: {len(verified_lvl2)}, Lvl 3: {len(verified_lvl3)}, Trivial Discarded: {count_trivial_discarded})")
             
     print(f"\nVerification complete. Lvl 1 verified: {len(verified_lvl1)}, Lvl 2 verified: {len(verified_lvl2)}, Lvl 3 verified: {len(verified_lvl3)}")
+    print(f"Total timed out (too difficult): {count_timed_out}")
+    print(f"Total discarded as trivial: {count_trivial_discarded}")
     
     if len(verified_lvl1) < args.target_lvl1:
         print(f"Warning: Only verified {len(verified_lvl1)} Lvl 1 puzzles (target {args.target_lvl1}).")
@@ -205,7 +212,7 @@ def main():
         
     # Expand and save Lvl 1 puzzles
     lvl1_expanded = []
-    for clue in verified_lvl1[:args.target_lvl1]:
+    for clue in verified_lvl1:
         lvl1_expanded.extend(get_symmetries(clue))
     lvl1_expanded = list(dict.fromkeys(lvl1_expanded))
     
@@ -213,11 +220,11 @@ def main():
     with open(PATH_OUT_LVL1, "w") as f:
         for clue in lvl1_expanded:
             f.write(f'"{clue}"\n')
-    print(f"Wrote {len(lvl1_expanded)} Lvl 1 symmetric variants ({len(verified_lvl1[:args.target_lvl1])} unique base puzzles) to {PATH_OUT_LVL1}")
+    print(f"Wrote {len(lvl1_expanded)} Lvl 1 symmetric variants ({len(verified_lvl1)} unique base puzzles) to {PATH_OUT_LVL1}")
     
     # Expand and save Lvl 2 puzzles
     lvl2_expanded = []
-    for clue in verified_lvl2[:args.target_lvl2]:
+    for clue in verified_lvl2:
         lvl2_expanded.extend(get_symmetries(clue))
     lvl2_expanded = list(dict.fromkeys(lvl2_expanded))
     
@@ -225,11 +232,11 @@ def main():
     with open(PATH_OUT_LVL2, "w") as f:
         for clue in lvl2_expanded:
             f.write(f'"{clue}"\n')
-    print(f"Wrote {len(lvl2_expanded)} Lvl 2 symmetric variants ({len(verified_lvl2[:args.target_lvl2])} unique base puzzles) to {PATH_OUT_LVL2}")
+    print(f"Wrote {len(lvl2_expanded)} Lvl 2 symmetric variants ({len(verified_lvl2)} unique base puzzles) to {PATH_OUT_LVL2}")
     
     # Expand and save Lvl 3 puzzles
     lvl3_expanded = []
-    for clue in verified_lvl3[:args.target_lvl3]:
+    for clue in verified_lvl3:
         lvl3_expanded.extend(get_symmetries(clue))
     lvl3_expanded = list(dict.fromkeys(lvl3_expanded))
     
@@ -237,7 +244,7 @@ def main():
     with open(PATH_OUT_LVL3, "w") as f:
         for clue in lvl3_expanded:
             f.write(f'"{clue}"\n')
-    print(f"Wrote {len(lvl3_expanded)} Lvl 3 symmetric variants ({len(verified_lvl3[:args.target_lvl3])} unique base puzzles) to {PATH_OUT_LVL3}")
+    print(f"Wrote {len(lvl3_expanded)} Lvl 3 symmetric variants ({len(verified_lvl3)} unique base puzzles) to {PATH_OUT_LVL3}")
     
     print("\nSize 9 Dataset Calibration Completed Successfully!")
 
