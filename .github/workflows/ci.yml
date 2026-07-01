@@ -30,7 +30,7 @@ jobs:
           python -m norminette src/*.c src/*.h || true
           
           # Fetch JSON output and count Errors and Notices using bash tools
-          OUTPUT=$(python -m norminette -f json src/*.c src/*.h)
+          OUTPUT=$(python -m norminette -f json src/*.c src/*.h) || true
           ERRORS=$(echo "$OUTPUT" | grep -o '"level":"Error"' | wc -l)
           NOTICES=$(echo "$OUTPUT" | grep -o '"level":"Notice"' | wc -l)
           
