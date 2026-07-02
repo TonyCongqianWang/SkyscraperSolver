@@ -37,8 +37,9 @@ PATH_S8_HARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solution
 PATH_S8_XHARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_xhard.txt")
 
 # Size 9 calibrated files
-PATH_S9 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
-PATH_S9_HARDER = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
+PATH_S9_LVL1 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl1.txt")
+PATH_S9_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl2.txt")
+PATH_S9_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_lvl3.txt")
 
 # Parameters Metadata: (name, min, max, default, type)
 PARAM_METADATA = [
@@ -387,15 +388,18 @@ def main():
         log_print(f"  Enum train pool:   {len(s8_enum_train)} clues (val: {len(s8_enum_val)})")
         
     elif args.size == 9:
-        s9_calib = read_clues(PATH_S9)
-        s9_harder = read_clues(PATH_S9_HARDER)
+        s9_lvl1 = read_clues(PATH_S9_LVL1)
+        s9_lvl2 = read_clues(PATH_S9_LVL2)
+        s9_lvl3 = read_clues(PATH_S9_LVL3)
         
-        s9_calib_train, s9_calib_val = get_deterministic_split(s9_calib, 0.7)
-        s9_harder_train, s9_harder_val = get_deterministic_split(s9_harder, 0.7)
+        s9_lvl1_train, s9_lvl1_val = get_deterministic_split(s9_lvl1, 0.9)
+        s9_lvl2_train, s9_lvl2_val = get_deterministic_split(s9_lvl2, 0.9)
+        s9_lvl3_train, s9_lvl3_val = get_deterministic_split(s9_lvl3, 0.9)
         
         log_print(f"Loaded Size 9 datasets:")
-        log_print(f"  Calibrated train: {len(s9_calib_train)} clues (val: {len(s9_calib_val)})")
-        log_print(f"  Harder train:     {len(s9_harder_train)} clues (val: {len(s9_harder_val)})")
+        log_print(f"  Lvl 1 (Easy/Mod) train: {len(s9_lvl1_train)} clues (val: {len(s9_lvl1_val)})")
+        log_print(f"  Lvl 2 (Hard) train:     {len(s9_lvl2_train)} clues (val: {len(s9_lvl2_val)})")
+        log_print(f"  Lvl 3 (ExHard) train:   {len(s9_lvl3_train)} clues (val: {len(s9_lvl3_val)})")
 
     # 2. SPSA Hyperparameters
     alpha = args.alpha
@@ -441,10 +445,12 @@ def main():
     ref_scale_s8_enum_easy_med_time = 0.40
     ref_scale_s8_enum_easy_med_nodes = 50000.0
     
-    ref_scale_s9_calib_time = 0.20
-    ref_scale_s9_calib_nodes = 20000.0
-    ref_scale_s9_harder_time = 1.50
-    ref_scale_s9_harder_nodes = 200000.0
+    ref_scale_s9_lvl1_time = 0.20
+    ref_scale_s9_lvl1_nodes = 20000.0
+    ref_scale_s9_lvl2_time = 2.00
+    ref_scale_s9_lvl2_nodes = 250000.0
+    ref_scale_s9_lvl3_time = 15.00
+    ref_scale_s9_lvl3_nodes = 1500000.0
     
     # Gradient Normalization parameters: Exponential Moving Average of Norms
     ema_time_norm = 1.0
@@ -511,27 +517,33 @@ def main():
                 return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
                 
         elif args.size == 9:
-            sampled_calib = random.sample(s9_calib_train, min(len(s9_calib_train), batch_size))
-            sampled_harder = random.sample(s9_harder_train, min(len(s9_harder_train), batch_size))
+            sampled_lvl1 = random.sample(s9_lvl1_train, min(len(s9_lvl1_train), max(1, batch_size // 4)))
+            sampled_lvl2 = random.sample(s9_lvl2_train, min(len(s9_lvl2_train), max(1, batch_size // 4)))
+            sampled_lvl3 = random.sample(s9_lvl3_train, min(len(s9_lvl3_train), max(1, batch_size // 2)))
             
-            tasks_calib = [("-s 1", clue) for clue in sampled_calib]
-            tasks_harder = [("-s 1", clue) for clue in sampled_harder]
+            tasks_lvl1 = [("-s 1", clue) for clue in sampled_lvl1]
+            tasks_lvl2 = [("-s 1", clue) for clue in sampled_lvl2]
+            tasks_lvl3 = [("-s 1", clue) for clue in sampled_lvl3]
             
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_c, n_c = evaluate_subset(env, tasks_calib, use_stdin=args.stdin)
-                t_h, n_h = evaluate_subset(env, tasks_harder, use_stdin=args.stdin)
+                t_l1, n_l1 = evaluate_subset(env, tasks_lvl1, use_stdin=args.stdin)
+                t_l2, n_l2 = evaluate_subset(env, tasks_lvl2, use_stdin=args.stdin)
+                t_l3, n_l3 = evaluate_subset(env, tasks_lvl3, use_stdin=args.stdin)
                 
-                sgm_t_c = shifted_geo_mean(t_c, 0.500)
-                sgm_n_c = shifted_geo_mean(n_c, 50000.0)
+                sgm_t_l1 = shifted_geo_mean(t_l1, 0.100)
+                sgm_n_l1 = shifted_geo_mean(n_l1, 10000.0)
                 
-                sgm_t_h = shifted_geo_mean(t_h, 0.500)
-                sgm_n_h = shifted_geo_mean(n_h, 50000.0)
+                sgm_t_l2 = shifted_geo_mean(t_l2, 0.500)
+                sgm_n_l2 = shifted_geo_mean(n_l2, 50000.0)
                 
-                loss_time = 1.0 * (sgm_t_c / ref_scale_s9_calib_time) + 3.0 * (sgm_t_h / ref_scale_s9_harder_time)
-                loss_nodes = 1.0 * (sgm_n_c / ref_scale_s9_calib_nodes) + 3.0 * (sgm_n_h / ref_scale_s9_harder_nodes)
+                sgm_t_l3 = shifted_geo_mean(t_l3, 1.000)
+                sgm_n_l3 = shifted_geo_mean(n_l3, 200000.0)
                 
-                return loss_time, loss_nodes, (sgm_t_c, sgm_n_c, sgm_t_h, sgm_n_h)
+                loss_time = 0.5 * (sgm_t_l1 / ref_scale_s9_lvl1_time) + 1.5 * (sgm_t_l2 / ref_scale_s9_lvl2_time) + 3.0 * (sgm_t_l3 / ref_scale_s9_lvl3_time)
+                loss_nodes = 0.5 * (sgm_n_l1 / ref_scale_s9_lvl1_nodes) + 1.5 * (sgm_n_l2 / ref_scale_s9_lvl2_nodes) + 3.0 * (sgm_n_l3 / ref_scale_s9_lvl3_nodes)
+                
+                return loss_time, loss_nodes, (sgm_t_l3, sgm_n_l3, sgm_t_l2, sgm_n_l2)
                 
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
         
@@ -599,7 +611,7 @@ def main():
         elif args.size == 8:
             log_print(f"Iter {k:3d} | Loss(T/N): {loss_time_curr:.3f}/{loss_nodes_curr:.3f} | GradNorm(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | S8 Hard Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S8 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
         elif args.size == 9:
-            log_print(f"Iter {k:3d} | Loss(T/N): {loss_time_curr:.3f}/{loss_nodes_curr:.3f} | GradNorm(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | S9 Calib t: {stats[0]:.4f}s n: {stats[1]:.0f} | S9 Harder t: {stats[2]:.4f}s n: {stats[3]:.0f}")
+            log_print(f"Iter {k:3d} | Loss(T/N): {loss_time_curr:.3f}/{loss_nodes_curr:.3f} | GradNorm(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | S9 Lvl3 t: {stats[0]:.4f}s n: {stats[1]:.0f} | S9 Lvl2 t: {stats[2]:.4f}s n: {stats[3]:.0f}")
             
     log_print("\nSPSA tuning completed!")
     
@@ -673,10 +685,12 @@ def main():
             validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", s8_enum_val))
             
         elif args.size == 9:
-            train_tasks.append(("Size 9 Calibrated Training Groups", "-s 1", s9_calib_train))
-            train_tasks.append(("Size 9 Harder Calibrated Training Groups", "-s 1", s9_harder_train))
-            validation_tasks.append(("Size 9 Calibrated Validation Groups (Held-out)", "-s 1", s9_calib_val))
-            validation_tasks.append(("Size 9 Harder Calibrated Validation Groups (Held-out)", "-s 1", s9_harder_val))
+            train_tasks.append(("Size 9 Level 1 Training Set", "-s 1", s9_lvl1_train))
+            train_tasks.append(("Size 9 Level 2 Training Set", "-s 1", s9_lvl2_train))
+            train_tasks.append(("Size 9 Level 3 Training Set", "-s 1", s9_lvl3_train))
+            validation_tasks.append(("Size 9 Level 1 Validation Set", "-s 1", s9_lvl1_val))
+            validation_tasks.append(("Size 9 Level 2 Validation Set", "-s 1", s9_lvl2_val))
+            validation_tasks.append(("Size 9 Level 3 Validation Set", "-s 1", s9_lvl3_val))
             
         # Construct comparison log paths if main log is provided
         train_log_path = None
