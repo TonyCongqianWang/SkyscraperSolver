@@ -397,9 +397,9 @@ def main():
         s9_lvl3_train, s9_lvl3_val = get_deterministic_split(s9_lvl3, 0.9)
 
         log_print(f"Loaded Size 9 datasets:")
-        log_print(f"  Lvl 1 (Easy/Mod) train: {len(s9_lvl1_train)} clues (val: {len(s9_lvl1_val)})")
-        log_print(f"  Lvl 2 (Hard) train:     {len(s9_lvl2_train)} clues (val: {len(s9_lvl2_val)})")
-        log_print(f"  Lvl 3 (ExHard) train:   {len(s9_lvl3_train)} clues (val: {len(s9_lvl3_val)})")
+        log_print(f"  Lvl 1 train: {len(s9_lvl1_train)} clues (val: {len(s9_lvl1_val)})")
+        log_print(f"  Lvl 2 train: {len(s9_lvl2_train)} clues (val: {len(s9_lvl2_val)})")
+        log_print(f"  Lvl 3 train: {len(s9_lvl3_train)} clues (val: {len(s9_lvl3_val)})")
 
     # 2. SPSA Hyperparameters
     alpha = args.alpha
