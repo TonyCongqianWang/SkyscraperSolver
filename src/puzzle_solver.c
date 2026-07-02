@@ -13,6 +13,7 @@
 #include "puzzle_solver.h"
 #include "tree_search.h"
 #include "grid_manipulation.h"
+#include "check_node_validity.h"
 
 static int	insert_initial_grid(t_puzzle *puzzle)
 {
@@ -45,6 +46,7 @@ int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 
 	if (!insert_initial_grid(puzzle))
 		return (0);
+	drain_dirty_constraints(puzzle);
 	if (max_depth >= 0)
 	{
 		puzzle->cur_node->target_nunset = puzzle->squared_size - max_depth;

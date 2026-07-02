@@ -16,6 +16,7 @@
 #include "node_selection.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"
+#include "check_node_validity.h"
 
 void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 			t_search_frame *frames)
@@ -69,6 +70,7 @@ static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
 
 	if (check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 		return (check_backtrack(puzzle, d, start_d, frames));
+	drain_dirty_constraints(puzzle);
 	pruned = prune_current_step(puzzle);
 	if (has_reached_terminal_state(puzzle->cur_node))
 	{

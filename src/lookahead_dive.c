@@ -15,19 +15,8 @@
 #include "cell_bounds.h"
 #include "tree_search.h"
 #include "node_selection.h"
-#include "constraint_checking.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"
-
-static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth);
-static int	check_only_constr(t_puzzle *puzzle, t_node_transition next);
-
-int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth)
-{
-	if (depth <= 0)
-		return (check_only_constr(puzzle, next));
-	return (perform_dive(puzzle, next, depth));
-}
 
 static int	transition_node(t_puzzle *puzzle, int depth)
 {
@@ -46,7 +35,7 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	return (0);
 }
 
-static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth)
+int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;
@@ -63,18 +52,4 @@ static int	perform_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 	*(cur_node) = old_state;
 	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);
-}
-
-static int	check_only_constr(t_puzzle *puzzle, t_node_transition next)
-{
-	int					is_valid;
-	t_node_state		*cur_node;
-
-	cur_node = puzzle->cur_node;
-	if (cur_node->grid.vals[next.cell_idx] != 0)
-		return (0);
-	cur_node->grid.vals[next.cell_idx] = next.cell_val;
-	is_valid = check_constraints(puzzle, next.cell_idx);
-	cur_node->grid.vals[next.cell_idx] = 0;
-	return (is_valid);
 }

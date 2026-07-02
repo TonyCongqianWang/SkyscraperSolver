@@ -18,6 +18,7 @@
 # define MAX_CELL_COUNT 81
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
+# define MAX_DIRTY_CONSTRS (MAX_N_CONSTR_PAIRS * 2)
 
 typedef unsigned short		t_u16;
 typedef unsigned long long	t_u64;
@@ -65,6 +66,13 @@ typedef struct s_constrs_state
 	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
 }		t_constrs_state;
 
+typedef struct s_dirty_constr_stack
+{
+	char	entries[MAX_DIRTY_CONSTRS];
+	char	count;
+	t_u64	in_stack_bmp;
+}		t_dirty_constr_stack;
+
 typedef struct s_lookahead_ctx
 {
 	int						curr_pass;
@@ -100,6 +108,7 @@ typedef struct s_node_state
 	t_sol_count				solutions_found;
 	t_grid_state			grid;
 	t_constrs_state			constrs;
+	t_dirty_constr_stack	dirty_constrs;
 	t_puzzle				*puzzle;
 }		t_node_state;
 

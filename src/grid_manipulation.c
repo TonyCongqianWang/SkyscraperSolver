@@ -15,7 +15,7 @@
 #include "grid_update.h"
 #include "cell_bounds.h"
 #include "grid_availability.h"
-#include "constraint_checking.h"
+#include "check_node_validity.h"
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
 
@@ -37,7 +37,10 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 	if (state->num_unset == 0)
 		state->is_complete = 1;
 	if (!state->is_invalid)
-		state->is_invalid = !check_constraints(state->puzzle, cell_idx);
+	{
+		push_dirty_constraints(state, cell_idx);
+		drain_dirty_constraints(state->puzzle);
+	}
 }
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)
