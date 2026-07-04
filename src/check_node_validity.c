@@ -66,3 +66,9 @@ void	drain_dirty_constraints(t_puzzle *puzzle)
 			node->is_invalid = 1;
 	}
 }
+
+int	check_node_validity(t_puzzle *puzzle)
+{
+	drain_dirty_constraints(puzzle);
+	return (!puzzle->cur_node->is_invalid);
+}

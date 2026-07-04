@@ -16,5 +16,6 @@
 
 void	push_dirty_constraints(t_node_state *state, int cell_idx);
 void	drain_dirty_constraints(t_puzzle *puzzle);
+int		check_node_validity(t_puzzle *puzzle);
 
 #endif

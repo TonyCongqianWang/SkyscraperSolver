@@ -47,7 +47,7 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 	puzzle->cur_node = &puzzle->node_stack[*d];
 	set_grid_val(puzzle->cur_node, frames[*d - 1].next.cell_idx,
 		frames[*d - 1].next.cell_val, 0);
-	drain_dirty_constraints(puzzle);
+	check_node_validity(puzzle);
 	puzzle->cur_node->cur_depth++;
 	puzzle->nodes_visited++;
 	if (puzzle->cur_node->sub_node_depth == 0)
@@ -71,10 +71,10 @@ static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
 
 	if (check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 		return (check_backtrack(puzzle, d, start_d, frames));
-	drain_dirty_constraints(puzzle);
+	check_node_validity(puzzle);
 	pruned = prune_current_step(puzzle);
 	if (pruned)
-		drain_dirty_constraints(puzzle);
+		check_node_validity(puzzle);
 	if (has_reached_terminal_state(puzzle->cur_node))
 	{
 		rec_sols = handle_leaf_node(puzzle);

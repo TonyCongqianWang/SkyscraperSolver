@@ -46,7 +46,7 @@ int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 
 	if (!insert_initial_grid(puzzle))
 		return (0);
-	drain_dirty_constraints(puzzle);
+	check_node_validity(puzzle);
 	if (max_depth >= 0)
 	{
 		puzzle->cur_node->target_nunset = puzzle->squared_size - max_depth;

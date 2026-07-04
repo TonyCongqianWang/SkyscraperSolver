@@ -52,7 +52,7 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
 	cur_node = puzzle->cur_node;
 	set_grid_val(cur_node, next.cell_idx, next.cell_val, 0);
 	cur_node->cur_depth++;
-	drain_dirty_constraints(puzzle);
+	check_node_validity(puzzle);
 	return (tree_search(puzzle));
 }
 
