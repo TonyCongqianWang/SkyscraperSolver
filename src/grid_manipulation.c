@@ -37,10 +37,7 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 	if (state->num_unset == 0)
 		state->is_complete = 1;
 	if (!state->is_invalid)
-	{
 		push_dirty_constraints(state, cell_idx);
-		drain_dirty_constraints(state->puzzle);
-	}
 }
 
 void	set_value_invalid(t_node_state *state, int cell_idx, int val)

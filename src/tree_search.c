@@ -17,6 +17,7 @@
 #include "solution_storage.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"
+#include "check_node_validity.h"
 
 int	has_reached_terminal_state(t_node_state *cur_node)
 {
@@ -51,6 +52,7 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
 	cur_node = puzzle->cur_node;
 	set_grid_val(cur_node, next.cell_idx, next.cell_val, 0);
 	cur_node->cur_depth++;
+	drain_dirty_constraints(puzzle);
 	return (tree_search(puzzle));
 }
 
