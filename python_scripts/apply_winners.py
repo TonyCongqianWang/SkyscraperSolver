@@ -4,47 +4,11 @@ import sys
 import re
 import subprocess
 
-# Map SPSA parameter names to C file, variable name, and type
-PARAMETER_MAPPING = {
-    # ROUTING
-    "ROUTING_SHALLOW_RATIO": ("src/prune_strat_routing.c", "g_routing_shallow_ratio", "double"),
-    "ROUTING_MEDIUM_RATIO": ("src/prune_strat_routing.c", "g_routing_medium_ratio", "double"),
-    # ROOT
-    "ROOT_GAC_UNSET_THRESHOLD": ("src/prune_strat_root.c", "g_gac_unset_threshold", "double"),
-    "ROOT_CONSTR_MIN_UNSET": ("src/prune_strat_root.c", "g_constr_min_unset", "double"),
-    "ROOT_CONSTR_MAX_UNSET": ("src/prune_strat_root.c", "g_constr_max_unset", "double"),
-    "ROOT_PERIOD_BASE": ("src/prune_strat_root.c", "g_period_base", "int"),
-    "ROOT_PERIOD_COEF1": ("src/prune_strat_root.c", "g_period_coef1", "int"),
-    "ROOT_PERIOD_COEF2": ("src/prune_strat_root.c", "g_period_coef2", "int"),
-    # SHALLOW
-    "SHALLOW_MIN_UNSET": ("src/prune_strat_shallow.c", "g_min_unset_threshold", "double"),
-    "SHALLOW_GAC_UNSET_THRESHOLD": ("src/prune_strat_shallow.c", "g_gac_unset_threshold", "double"),
-    "SHALLOW_CONSTR_MIN_UNSET": ("src/prune_strat_shallow.c", "g_constr_min_unset", "double"),
-    "SHALLOW_CONSTR_MAX_UNSET": ("src/prune_strat_shallow.c", "g_constr_max_unset", "double"),
-    "SHALLOW_PERIOD_BASE": ("src/prune_strat_shallow.c", "g_period_base", "int"),
-    "SHALLOW_PERIOD_COEF1": ("src/prune_strat_shallow.c", "g_period_coef1", "int"),
-    "SHALLOW_PERIOD_COEF2": ("src/prune_strat_shallow.c", "g_period_coef2", "int"),
-    # MEDIUM
-    "MEDIUM_MIN_UNSET": ("src/prune_strat_medium.c", "g_min_unset_threshold", "double"),
-    "MEDIUM_GAC_UNSET_THRESHOLD": ("src/prune_strat_medium.c", "g_gac_unset_threshold", "double"),
-    "MEDIUM_CONSTR_MIN_UNSET": ("src/prune_strat_medium.c", "g_constr_min_unset", "double"),
-    "MEDIUM_CONSTR_MAX_UNSET": ("src/prune_strat_medium.c", "g_constr_max_unset", "double"),
-    "MEDIUM_PERIOD_BASE": ("src/prune_strat_medium.c", "g_period_base", "int"),
-    "MEDIUM_PERIOD_COEF1": ("src/prune_strat_medium.c", "g_period_coef1", "int"),
-    "MEDIUM_PERIOD_COEF2": ("src/prune_strat_medium.c", "g_period_coef2", "int"),
-    # DEEP
-    "DEEP_MIN_UNSET": ("src/prune_strat_deep.c", "g_min_unset_threshold", "double"),
-    "DEEP_GAC_UNSET_THRESHOLD": ("src/prune_strat_deep.c", "g_gac_unset_threshold", "double"),
-    "DEEP_CONSTR_MIN_UNSET": ("src/prune_strat_deep.c", "g_constr_min_unset", "double"),
-    "DEEP_CONSTR_MAX_UNSET": ("src/prune_strat_deep.c", "g_constr_max_unset", "double"),
-    "DEEP_PERIOD_BASE": ("src/prune_strat_deep.c", "g_period_base", "int"),
-    "DEEP_PERIOD_COEF1": ("src/prune_strat_deep.c", "g_period_coef1", "int"),
-    "DEEP_PERIOD_COEF2": ("src/prune_strat_deep.c", "g_period_coef2", "int"),
-    # SELECTIVITY
-    "SEL_REBUILD_PERIOD": ("src/sel_strat_routing.c", "g_sel_rebuild_period", "double"),
-    "SEL_ORD2_COEFF": ("src/sel_strat_routing.c", "g_sel_ord2_coeff", "double"),
-    "SEL_ORD4_COEFF": ("src/sel_strat_routing.c", "g_sel_ord4_coeff", "double"),
-}
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
+
+from param_metadata import PARAMETER_MAPPING
 
 def parse_winners(winners_path):
     parsed = {}
@@ -72,12 +36,13 @@ def parse_winners(winners_path):
     return parsed
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python3 apply_winners.py <winners_file_path>")
-        sys.exit(1)
-        
-    winners_path = sys.argv[1]
-    winners = parse_winners(winners_path)
+    import argparse
+    parser = argparse.ArgumentParser(description="Apply SPSA winners to C sources and tune script defaults.")
+    parser.add_argument("winners_file", help="Path to the winners file (e.g. scratch/ref_s9_combined.txt)")
+    parser.add_argument("--no-update-tune", action="store_true", help="Do not update the tune script defaults (param_metadata.py).")
+    args = parser.parse_args()
+    
+    winners = parse_winners(args.winners_file)
     if not winners:
         print("No valid parameters found in the winners file.")
         sys.exit(1)
@@ -95,8 +60,7 @@ def main():
                 
     if needs_unapply:
         print("Detected active env overrides in C source files. Unapplying first...")
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        unapply_script = os.path.join(script_dir, "examples", "apply_env_overrides.py")
+        unapply_script = os.path.join(SCRIPT_DIR, "examples", "apply_env_overrides.py")
         if os.path.exists(unapply_script):
             subprocess.run([sys.executable, unapply_script, "--unapply"], check=True)
         else:
@@ -122,10 +86,8 @@ def main():
         for var_name, var_type, raw_val in updates:
             # Format value based on variable type
             if var_type == "int":
-                # Convert to integer
                 formatted_val = str(int(float(raw_val)))
             else:
-                # Retain float representation
                 formatted_val = f"{float(raw_val):.15g}"
                 
             # Regex pattern to match: static [const] type name = value;
@@ -142,6 +104,36 @@ def main():
             with open(filepath, "w") as f:
                 f.write(content)
             print(f"Saved changes to {filepath}")
+
+    # Update param_metadata.py defaults unless disabled
+    if not args.no_update_tune:
+        metadata_path = os.path.join(SCRIPT_DIR, "param_metadata.py")
+        if os.path.exists(metadata_path):
+            with open(metadata_path, "r") as f:
+                meta_content = f.read()
+                
+            meta_original = meta_content
+            for name, value in winners.items():
+                if name not in PARAMETER_MAPPING:
+                    continue
+                _, _, var_type = PARAMETER_MAPPING[name]
+                if var_type == "int":
+                    formatted_val = str(int(float(value)))
+                else:
+                    formatted_val = f"{float(value):.15g}"
+                    
+                # Match: ("NAME", min, max, default, type)
+                pattern = re.compile(rf'(\(\s*"{name}"\s*,\s*[^,]+\s*,\s*[^,]+\s*,\s*)([^,]+)(\s*,\s*\w+\s*\))')
+                if pattern.search(meta_content):
+                    meta_content = pattern.sub(rf'\g<1>{formatted_val}\g<3>', meta_content)
+                    print(f"[param_metadata.py] Updated {name} default -> {formatted_val}")
+                    
+            if meta_content != meta_original:
+                with open(metadata_path, "w") as f:
+                    f.write(meta_content)
+                print(f"Saved changes to {metadata_path}")
+        else:
+            print(f"Warning: param_metadata.py not found at {metadata_path}")
 
 if __name__ == "__main__":
     main()

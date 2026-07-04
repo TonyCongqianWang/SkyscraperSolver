@@ -41,47 +41,8 @@ PATH_S9_LVL1 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solut
 PATH_S9_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl2.txt")
 PATH_S9_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl3.txt")
 
-# Parameters Metadata: (name, min, max, default, type)
-PARAM_METADATA = [
-    # ROUTING
-    ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.05, float),
-    ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.33, float),
-    # ROOT
-    ("ROOT_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.12, float),
-    ("ROOT_CONSTR_MIN_UNSET", 0.0, 1.0, 0.05, float),
-    ("ROOT_CONSTR_MAX_UNSET", 0.0, 1.0, 0.92, float),
-    ("ROOT_PERIOD_BASE", 1, 100, 6, int),
-    ("ROOT_PERIOD_COEF1", 0, 10000, 900, int),
-    ("ROOT_PERIOD_COEF2", 0, 150000, 10000, int),
-    # SHALLOW
-    ("SHALLOW_MIN_UNSET", 0.0, 0.5, 0.45, float),
-    ("SHALLOW_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.13, float),
-    ("SHALLOW_CONSTR_MIN_UNSET", 0.0, 1.0, 0.45, float),
-    ("SHALLOW_CONSTR_MAX_UNSET", 0.0, 1.0, 0.78, float),
-    ("SHALLOW_PERIOD_BASE", 1, 200, 4, int),
-    ("SHALLOW_PERIOD_COEF1", 0, 15000, 2500, int),
-    ("SHALLOW_PERIOD_COEF2", 0, 150000, 25000, int),
-    # MEDIUM
-    ("MEDIUM_MIN_UNSET", 0.0, 0.5, 0.35, float),
-    ("MEDIUM_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.16, float),
-    ("MEDIUM_CONSTR_MIN_UNSET", 0.0, 1.0, 0.40, float),
-    ("MEDIUM_CONSTR_MAX_UNSET", 0.0, 1.0, 0.76, float),
-    ("MEDIUM_PERIOD_BASE", 1, 300, 65, int),
-    ("MEDIUM_PERIOD_COEF1", 0, 10000, 6000, int),
-    ("MEDIUM_PERIOD_COEF2", 0, 150000, 100000, int),
-    # DEEP
-    ("DEEP_MIN_UNSET", 0.0, 0.5, 0.09, float),
-    ("DEEP_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.22, float),
-    ("DEEP_CONSTR_MIN_UNSET", 0.0, 1.0, 0.49, float),
-    ("DEEP_CONSTR_MAX_UNSET", 0.0, 1.0, 0.57, float),
-    ("DEEP_PERIOD_BASE", 1, 400, 240, int),
-    ("DEEP_PERIOD_COEF1", 0, 20000, 12500, int),
-    ("DEEP_PERIOD_COEF2", 0, 150000, 100000, int),
-    # NODE SELECT SELECTIVITY ROUTING
-    ("SEL_REBUILD_PERIOD", 1, 10000, 1000, int),
-    ("SEL_ORD2_COEFF", 0, 50000, 2500, int),
-    ("SEL_ORD4_COEFF", 0, 500000, 80000, int),
-]
+# Parameters Metadata
+from param_metadata import PARAM_METADATA
 
 LOG_FILE_HANDLE = None
 
