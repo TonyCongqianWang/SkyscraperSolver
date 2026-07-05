@@ -18,7 +18,7 @@
 # define MAX_CELL_COUNT 81
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
-# define MAX_DIRTY_CONSTRS (MAX_N_CONSTR_PAIRS * 2)
+# define MAX_DIRTY_CONSTRS 36
 
 typedef unsigned short		t_u16;
 typedef unsigned long long	t_u64;
