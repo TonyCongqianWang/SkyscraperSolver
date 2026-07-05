@@ -17,8 +17,8 @@
 #include "prune_strat_medium.h"
 #include "prune_strat_deep.h"
 
-static const double	g_routing_shallow_ratio = 0.0646461686238843;
-static const double	g_routing_medium_ratio = 0.333318179241799;
+static const double	g_routing_shallow_ratio = 0.105231964035567;
+static const double	g_routing_medium_ratio = 0.352562620956447;
 
 int	prune_current_step(t_puzzle *puzzle)
 {
