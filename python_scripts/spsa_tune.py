@@ -42,7 +42,38 @@ PATH_S9_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solut
 PATH_S9_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl3.txt")
 
 # Parameters Metadata
-from param_metadata import PARAM_METADATA
+from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS
+
+def project_constraints(theta):
+    name_to_idx = {name: idx for idx, (name, *_) in enumerate(PARAM_METADATA)}
+    theta_projected = list(theta)
+    
+    # Run projection loop to resolve boundary clamping conflicts
+    for _ in range(5):
+        changed = False
+        for min_name, max_name, eps in PARAM_CONSTRAINTS:
+            if min_name not in name_to_idx or max_name not in name_to_idx:
+                continue
+            i = name_to_idx[min_name]
+            j = name_to_idx[max_name]
+            
+            _, pmin_i, pmax_i, _, _ = PARAM_METADATA[i]
+            _, pmin_j, pmax_j, _, _ = PARAM_METADATA[j]
+            
+            x = pmin_i + theta_projected[i] * (pmax_i - pmin_i)
+            y = pmin_j + theta_projected[j] * (pmax_j - pmin_j)
+            
+            if x > y + eps:
+                diff = x - y - eps
+                x_new = x - diff / 2.0
+                y_new = y + diff / 2.0
+                
+                theta_projected[i] = max(0.0, min(1.0, (x_new - pmin_i) / (pmax_i - pmin_i)))
+                theta_projected[j] = max(0.0, min(1.0, (y_new - pmin_j) / (pmax_j - pmin_j)))
+                changed = True
+        if not changed:
+            break
+    return theta_projected
 
 LOG_FILE_HANDLE = None
 
@@ -382,7 +413,7 @@ def main():
 
     log_print(f"SPSA Batch Size configured: {batch_size}")
 
-    theta = get_default_theta()
+    theta = project_constraints(get_default_theta())
     swa_theta = [0.0] * len(theta)
     swa_count = 0
 
@@ -509,11 +540,11 @@ def main():
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
 
         # Perturbed plus
-        theta_plus = [max(0.0, min(1.0, theta[i] + ck * delta[i])) for i in range(len(theta))]
+        theta_plus = project_constraints([max(0.0, min(1.0, theta[i] + ck * delta[i])) for i in range(len(theta))])
         loss_time_plus, loss_nodes_plus, _ = get_loss(theta_plus)
 
         # Perturbed minus
-        theta_minus = [max(0.0, min(1.0, theta[i] - ck * delta[i])) for i in range(len(theta))]
+        theta_minus = project_constraints([max(0.0, min(1.0, theta[i] - ck * delta[i])) for i in range(len(theta))])
         loss_time_minus, loss_nodes_minus, _ = get_loss(theta_minus)
 
         grad_time = []
@@ -552,7 +583,7 @@ def main():
             step_n_c = max(-max_step, min(max_step, step_n))
             val = max(0.0, min(1.0, theta[i] - step_t_c - step_n_c))
             theta_next.append(val)
-        theta = theta_next
+        theta = project_constraints(theta_next)
 
         # Stochastic Weight Averaging
         if k >= swa_start:

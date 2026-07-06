@@ -38,6 +38,22 @@ PARAM_METADATA = [
     ("SEL_REBUILD_PERIOD", 1, 10000, 1053, int),
     ("SEL_ORD2_COEFF", 0, 50000, 1565, int),
     ("SEL_ORD4_COEFF", 0, 500000, 65430, int),
+    # ROOT LOOKAHEAD
+    ("ROOT_LOOKAHEAD_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.165274680957807, float),
+    ("ROOT_LOOKAHEAD_CONSTR_MIN_UNSET", 0.0, 1.0, 0.0336582283849937, float),
+    ("ROOT_LOOKAHEAD_CONSTR_MAX_UNSET", 0.0, 1.0, 0.954904903727092, float),
+    # SHALLOW LOOKAHEAD
+    ("SHALLOW_LOOKAHEAD_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.129471248287378, float),
+    ("SHALLOW_LOOKAHEAD_CONSTR_MIN_UNSET", 0.0, 1.0, 0.407682931942645, float),
+    ("SHALLOW_LOOKAHEAD_CONSTR_MAX_UNSET", 0.0, 1.0, 0.817356591876012, float),
+    # MEDIUM LOOKAHEAD
+    ("MEDIUM_LOOKAHEAD_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.183326749800973, float),
+    ("MEDIUM_LOOKAHEAD_CONSTR_MIN_UNSET", 0.0, 1.0, 0.300890167488498, float),
+    ("MEDIUM_LOOKAHEAD_CONSTR_MAX_UNSET", 0.0, 1.0, 0.738752734627329, float),
+    # DEEP LOOKAHEAD
+    ("DEEP_LOOKAHEAD_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.241505401466146, float),
+    ("DEEP_LOOKAHEAD_CONSTR_MIN_UNSET", 0.0, 1.0, 0.497582762441804, float),
+    ("DEEP_LOOKAHEAD_CONSTR_MAX_UNSET", 0.0, 1.0, 0.536472818366295, float),
 ]
 
 # PARAMETER_MAPPING maps each SPSA parameter to (C_filepath, C_variable_name, type)
@@ -80,4 +96,37 @@ PARAMETER_MAPPING = {
     "SEL_REBUILD_PERIOD": ("src/sel_strat_routing.c", "g_sel_rebuild_period", "double"),
     "SEL_ORD2_COEFF": ("src/sel_strat_routing.c", "g_sel_ord2_coeff", "double"),
     "SEL_ORD4_COEFF": ("src/sel_strat_routing.c", "g_sel_ord4_coeff", "double"),
+    # ROOT LOOKAHEAD
+    "ROOT_LOOKAHEAD_GAC_UNSET_THRESHOLD": ("src/prune_strat_root.c", "g_lookahead_gac_unset_threshold", "double"),
+    "ROOT_LOOKAHEAD_CONSTR_MIN_UNSET": ("src/prune_strat_root.c", "g_lookahead_constr_min_unset", "double"),
+    "ROOT_LOOKAHEAD_CONSTR_MAX_UNSET": ("src/prune_strat_root.c", "g_lookahead_constr_max_unset", "double"),
+    # SHALLOW LOOKAHEAD
+    "SHALLOW_LOOKAHEAD_GAC_UNSET_THRESHOLD": ("src/prune_strat_shallow.c", "g_lookahead_gac_unset_threshold", "double"),
+    "SHALLOW_LOOKAHEAD_CONSTR_MIN_UNSET": ("src/prune_strat_shallow.c", "g_lookahead_constr_min_unset", "double"),
+    "SHALLOW_LOOKAHEAD_CONSTR_MAX_UNSET": ("src/prune_strat_shallow.c", "g_lookahead_constr_max_unset", "double"),
+    # MEDIUM LOOKAHEAD
+    "MEDIUM_LOOKAHEAD_GAC_UNSET_THRESHOLD": ("src/prune_strat_medium.c", "g_lookahead_gac_unset_threshold", "double"),
+    "MEDIUM_LOOKAHEAD_CONSTR_MIN_UNSET": ("src/prune_strat_medium.c", "g_lookahead_constr_min_unset", "double"),
+    "MEDIUM_LOOKAHEAD_CONSTR_MAX_UNSET": ("src/prune_strat_medium.c", "g_lookahead_constr_max_unset", "double"),
+    # DEEP LOOKAHEAD
+    "DEEP_LOOKAHEAD_GAC_UNSET_THRESHOLD": ("src/prune_strat_deep.c", "g_lookahead_gac_unset_threshold", "double"),
+    "DEEP_LOOKAHEAD_CONSTR_MIN_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_min_unset", "double"),
+    "DEEP_LOOKAHEAD_CONSTR_MAX_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_max_unset", "double"),
 }
+
+# PARAM_CONSTRAINTS defines linear constraints between parameters.
+# Format: (param_min_name, param_max_name, eps)
+# enforces: physical_value(param_min_name) <= physical_value(param_max_name) + eps
+PARAM_CONSTRAINTS = [
+    # Main Propagation Constraints
+    ("ROOT_CONSTR_MIN_UNSET", "ROOT_CONSTR_MAX_UNSET", 0.05),
+    ("SHALLOW_CONSTR_MIN_UNSET", "SHALLOW_CONSTR_MAX_UNSET", 0.05),
+    ("MEDIUM_CONSTR_MIN_UNSET", "MEDIUM_CONSTR_MAX_UNSET", 0.05),
+    ("DEEP_CONSTR_MIN_UNSET", "DEEP_CONSTR_MAX_UNSET", 0.05),
+
+    # Lookahead Propagation Constraints
+    ("ROOT_LOOKAHEAD_CONSTR_MIN_UNSET", "ROOT_LOOKAHEAD_CONSTR_MAX_UNSET", 0.05),
+    ("SHALLOW_LOOKAHEAD_CONSTR_MIN_UNSET", "SHALLOW_LOOKAHEAD_CONSTR_MAX_UNSET", 0.05),
+    ("MEDIUM_LOOKAHEAD_CONSTR_MIN_UNSET", "MEDIUM_LOOKAHEAD_CONSTR_MAX_UNSET", 0.05),
+    ("DEEP_LOOKAHEAD_CONSTR_MIN_UNSET", "DEEP_LOOKAHEAD_CONSTR_MAX_UNSET", 0.05),
+]
