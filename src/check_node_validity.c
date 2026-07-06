@@ -80,28 +80,21 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 {
 	t_node_state			*node;
-	t_dirty_constr_stack	*stack;
+	t_dirty_constr_stack	local_stack;
 	int						entry;
-	t_u64					initial_bmp;
-	int						i;
 
 	node = puzzle->cur_node;
-	stack = &node->dirty_constrs;
-	initial_bmp = 0;
-	i = 0;
-	while (i < stack->count)
+	while (node->dirty_constrs.count > 0 && !node->is_invalid)
 	{
-		initial_bmp |= (1ULL << stack->entries[i]);
-		i++;
-	}
-	while (stack->count > 0 && !node->is_invalid)
-	{
-		entry = stack->entries[(int)(--stack->count)];
-		stack->in_stack_bmp &= ~(1ULL << entry);
-		if (initial_bmp & (1ULL << entry))
+		local_stack = node->dirty_constrs;
+		node->dirty_constrs.count = 0;
+		node->dirty_constrs.in_stack_bmp = 0;
+		while (local_stack.count > 0 && !node->is_invalid)
+		{
+			entry = local_stack.entries[(int)(--local_stack.count)];
+			local_stack.in_stack_bmp &= ~(1ULL << entry);
 			process_dirty_entry(puzzle, entry, mode);
-		else
-			process_dirty_entry(puzzle, entry, CHECK_CONSTR);
+		}
 	}
 }
 

@@ -12,8 +12,8 @@
 
 #ifndef LOOKAHEAD_DIVE_H
 # define LOOKAHEAD_DIVE_H
-# include "puzzle_structs.h"
+# include "grid_interface.h"
 
-int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth);
+int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode);
 
 #endif

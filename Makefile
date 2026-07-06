@@ -42,6 +42,9 @@ fclean: clean
 
 re: fclean all
 
+debug: CFLAGS += -fsanitize=address,undefined -g
+debug: re
+
 test: $(BINARY)
 	python python_scripts/verify_consistency.py -r $(BINARY)
 
@@ -50,4 +53,4 @@ ifeq ($(filter clean fclean re,$(MAKECMDGOALS)),)
 -include $(DEPS)
 endif
 
-.PHONY: all clean fclean re test
+.PHONY: all clean fclean re debug test

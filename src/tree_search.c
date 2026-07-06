@@ -42,12 +42,11 @@ t_sol_info	handle_leaf_node(t_puzzle *puzzle)
 	return (node_sols);
 }
 
-t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
+t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next, t_check_mode mode)
 {
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
-	set_cell_val(puzzle, next.cell_idx, next.cell_val,
-		(t_check_mode)puzzle->lookahead_check_mode);
+	set_cell_val(puzzle, next.cell_idx, next.cell_val, mode);
 	puzzle->cur_node->cur_depth++;
 	return (tree_search(puzzle));
 }

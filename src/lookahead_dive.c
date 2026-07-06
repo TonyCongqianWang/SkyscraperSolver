@@ -35,7 +35,7 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	return (0);
 }
 
-int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth)
+int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;
@@ -45,7 +45,7 @@ int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth)
 	cur_node = puzzle->cur_node;
 	old_state = *(cur_node);
 	transition_node(puzzle, depth);
-	local_sols = tree_recursion(puzzle, next);
+	local_sols = tree_recursion(puzzle, next, mode);
 	progress = cur_node->progress_counter - old_state.progress_counter;
 	old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
 		= (double)progress;
