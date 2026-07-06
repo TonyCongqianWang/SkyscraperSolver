@@ -29,7 +29,8 @@ typedef struct s_search_frame
 
 /* tree_search.c */
 t_sol_info		tree_search(t_puzzle *puzzle);
-t_sol_info		tree_recursion(t_puzzle *puzzle, t_node_transition next, t_check_mode mode);
+t_sol_info		tree_recursion(t_puzzle *puzzle, t_node_transition next,
+					t_check_mode mode);
 int				has_reached_terminal_state(t_node_state *cur_node);
 t_sol_info		handle_leaf_node(t_puzzle *puzzle);
 

@@ -35,7 +35,8 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	return (0);
 }
 
-int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode)
+int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
+		t_check_mode mode)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;

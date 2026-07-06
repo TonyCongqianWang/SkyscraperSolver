@@ -42,7 +42,8 @@ t_sol_info	handle_leaf_node(t_puzzle *puzzle)
 	return (node_sols);
 }
 
-t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next, t_check_mode mode)
+t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next,
+				t_check_mode mode)
 {
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
