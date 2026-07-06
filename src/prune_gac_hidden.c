@@ -15,7 +15,7 @@
 #include "grid_availability.h"
 
 static void	check_hidden_pair(t_node_state *state, int *cells, int count,
-				int *vals)
+				int *vals, t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	u_cells;
 	int	i;
@@ -29,14 +29,14 @@ static void	check_hidden_pair(t_node_state *state, int *cells, int count,
 		while (i < count)
 		{
 			if (u_cells & (1 << i))
-				keep_only_values(state, cells[i], keep_mask);
+				keep_only_values(state, updates, update_count, cells[i], keep_mask, pruned_masks);
 			i++;
 		}
 	}
 }
 
 void	analyse_hidden_pairs(t_node_state *state, int *cells, int count,
-			int *val_cells)
+			int *val_cells, t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	v1;
 	int	v2;
@@ -53,14 +53,14 @@ void	analyse_hidden_pairs(t_node_state *state, int *cells, int count,
 				vals[0] = v1;
 				vals[1] = v2;
 				vals[2] = val_cells[v1] | val_cells[v2];
-				check_hidden_pair(state, cells, count, vals);
+				check_hidden_pair(state, cells, count, vals, updates, update_count, pruned_masks);
 			}
 		}
 	}
 }
 
 static void	check_hidden_triple(t_node_state *state, int *cells, int count,
-				int *vals)
+				int *vals, t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	u_cells;
 	int	i;
@@ -74,13 +74,14 @@ static void	check_hidden_triple(t_node_state *state, int *cells, int count,
 		while (i < count)
 		{
 			if (u_cells & (1 << i))
-				keep_only_values(state, cells[i], keep_mask);
+				keep_only_values(state, updates, update_count, cells[i], keep_mask, pruned_masks);
 			i++;
 		}
 	}
 }
 
-static void	try_hidden_triple(t_node_state *state, t_hidden_param *p, int *v)
+static void	try_hidden_triple(t_node_state *state, t_hidden_param *p, int *v,
+				t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	vals[4];
 
@@ -92,12 +93,12 @@ static void	try_hidden_triple(t_node_state *state, t_hidden_param *p, int *v)
 		vals[2] = v[2];
 		vals[3] = p->val_cells[v[0]] | p->val_cells[v[1]]
 			| p->val_cells[v[2]];
-		check_hidden_triple(state, p->cells, p->count, vals);
+		check_hidden_triple(state, p->cells, p->count, vals, updates, update_count, pruned_masks);
 	}
 }
 
 void	analyse_hidden_triples(t_node_state *state, int *cells, int count,
-			int *val_cells)
+			int *val_cells, t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	t_hidden_param	p;
 	int				v[3];
@@ -113,7 +114,7 @@ void	analyse_hidden_triples(t_node_state *state, int *cells, int count,
 		{
 			v[2] = v[1];
 			while (++v[2] < state->size)
-				try_hidden_triple(state, &p, v);
+				try_hidden_triple(state, &p, v, updates, update_count, pruned_masks);
 		}
 	}
 }

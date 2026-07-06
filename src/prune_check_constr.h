@@ -25,6 +25,7 @@ typedef struct s_dp_tables
 
 typedef struct s_prune_args
 {
+	t_puzzle		*puzzle;
 	t_node_state	*state;
 	t_dp_tables		*dp;
 	int				*grid_indices;
@@ -39,7 +40,7 @@ void	fill_suff_dp(t_dp_tables *dp, int *cell_domains, int size);
 int		collect_domains(t_node_state *state, int *grid_indices,
 			int size, int *cell_domains);
 int		prune_candidates(t_prune_args *args);
-int		propagate_single_direction(t_node_state *state, int *grid_indices,
+int		propagate_single_direction(t_puzzle *puzzle, t_node_state *state, int *grid_indices,
 			int size, int target_clue);
 void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size);
 

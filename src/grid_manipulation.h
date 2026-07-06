@@ -14,7 +14,7 @@
 # define GRID_MANIPULATION_H
 # include "puzzle_structs.h"
 
-void	set_grid_val(t_node_state *state, int cell_idx, int val, int check);
-void	set_value_invalid(t_node_state *state, int cell_idx, int val);
+void	set_grid_val_internal(t_node_state *state, int cell_idx, int val, int check);
+void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val);
 
 #endif

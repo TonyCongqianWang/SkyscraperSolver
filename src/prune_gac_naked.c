@@ -13,7 +13,8 @@
 #include "prune_gac_naked.h"
 #include "prune_gac_domain.h"
 
-static void	check_pair(t_node_state *state, int *cells, int count, int *pair)
+static void	check_pair(t_node_state *state, int *cells, int count, int *pair,
+				t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	u_bmp;
 	int	c;
@@ -27,13 +28,14 @@ static void	check_pair(t_node_state *state, int *cells, int count, int *pair)
 		while (c < count)
 		{
 			if (c != pair[0] && c != pair[1])
-				eliminate_bmp_vals(state, cells[c], u_bmp);
+				eliminate_bmp_vals(state, updates, update_count, cells[c], u_bmp, pruned_masks);
 			c++;
 		}
 	}
 }
 
-void	analyse_naked_pairs(t_node_state *state, int *cells, int count)
+void	analyse_naked_pairs(t_node_state *state, int *cells, int count,
+			t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	i;
 	int	j;
@@ -47,7 +49,7 @@ void	analyse_naked_pairs(t_node_state *state, int *cells, int count)
 		{
 			pair[0] = i;
 			pair[1] = j;
-			check_pair(state, cells, count, pair);
+			check_pair(state, cells, count, pair, updates, update_count, pruned_masks);
 			j++;
 		}
 		i++;
@@ -55,7 +57,7 @@ void	analyse_naked_pairs(t_node_state *state, int *cells, int count)
 }
 
 static void	check_triple(t_node_state *state, int *cells, int count,
-				int *inds)
+				int *inds, t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	u_bmp;
 	int	c;
@@ -70,13 +72,14 @@ static void	check_triple(t_node_state *state, int *cells, int count,
 		while (c < count)
 		{
 			if (c != inds[0] && c != inds[1] && c != inds[2])
-				eliminate_bmp_vals(state, cells[c], u_bmp);
+				eliminate_bmp_vals(state, updates, update_count, cells[c], u_bmp, pruned_masks);
 			c++;
 		}
 	}
 }
 
-void	analyse_naked_triples(t_node_state *state, int *cells, int count)
+void	analyse_naked_triples(t_node_state *state, int *cells, int count,
+			t_grid_update *updates, int *update_count, int *pruned_masks)
 {
 	int	i;
 	int	j;
@@ -95,7 +98,7 @@ void	analyse_naked_triples(t_node_state *state, int *cells, int count)
 				inds[0] = i;
 				inds[1] = j;
 				inds[2] = l;
-				check_triple(state, cells, count, inds);
+				check_triple(state, cells, count, inds, updates, update_count, pruned_masks);
 				l++;
 			}
 			j++;

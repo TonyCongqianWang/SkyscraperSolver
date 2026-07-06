@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "prune_gac_domain.h"
-#include "grid_manipulation.h"
+#include "grid_interface.h"
 #include "grid_availability.h"
 
 int	count_bits(int bmp)
@@ -28,28 +28,42 @@ int	count_bits(int bmp)
 	return (count);
 }
 
-void	eliminate_bmp_vals(t_node_state *state, int cell_idx, int u_bmp)
+void	eliminate_bmp_vals(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int u_bmp, int *pruned_masks)
 {
 	int	val;
 
 	val = 1;
 	while (val <= state->size)
 	{
-		if (u_bmp & (1 << (val - 1)))
-			set_value_invalid(state, cell_idx, val);
+		if ((u_bmp & (1 << (val - 1)))
+			&& is_valid_value(state, cell_idx, val)
+			&& !(pruned_masks[cell_idx] & (1 << (val - 1))))
+		{
+			pruned_masks[cell_idx] |= (1 << (val - 1));
+			updates[*count].cell_idx = cell_idx;
+			updates[*count].val = val;
+			(*count)++;
+		}
 		val++;
 	}
 }
 
-void	keep_only_values(t_node_state *state, int cell_idx, int keep_mask)
+void	keep_only_values(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int keep_mask, int *pruned_masks)
 {
 	int	val;
 
 	val = 1;
 	while (val <= state->size)
 	{
-		if (!(keep_mask & (1 << (val - 1))))
-			set_value_invalid(state, cell_idx, val);
+		if (!(keep_mask & (1 << (val - 1)))
+			&& is_valid_value(state, cell_idx, val)
+			&& !(pruned_masks[cell_idx] & (1 << (val - 1))))
+		{
+			pruned_masks[cell_idx] |= (1 << (val - 1));
+			updates[*count].cell_idx = cell_idx;
+			updates[*count].val = val;
+			(*count)++;
+		}
 		val++;
 	}
 }

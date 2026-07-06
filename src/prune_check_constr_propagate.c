@@ -25,7 +25,7 @@ void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size)
 	}
 }
 
-int	propagate_single_direction(t_node_state *state, int *grid_indices,
+int	propagate_single_direction(t_puzzle *puzzle, t_node_state *state, int *grid_indices,
 		int size, int target_clue)
 {
 	int				cell_domains[MAX_SIZE];
@@ -37,6 +37,7 @@ int	propagate_single_direction(t_node_state *state, int *grid_indices,
 	init_dp_tables(&dp, size);
 	fill_pref_dp(&dp, cell_domains, size);
 	fill_suff_dp(&dp, cell_domains, size);
+	args.puzzle = puzzle;
 	args.state = state;
 	args.dp = &dp;
 	args.grid_indices = grid_indices;

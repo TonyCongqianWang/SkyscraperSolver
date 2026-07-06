@@ -11,12 +11,11 @@
 /* ************************************************************************** */
 
 #include "tree_search.h"
-#include "grid_manipulation.h"
+#include "grid_interface.h"
 #include "strategy_routing.h"
 #include "node_selection.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"
-#include "check_node_validity.h"
 
 void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 			t_search_frame *frames)
@@ -32,8 +31,8 @@ void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 		|| !check_sol_target(&frames[*d].node_sols, puzzle->cur_node)
 		|| rec_sols.min_nunset == puzzle->squared_size)
 	{
-		set_value_invalid(puzzle->cur_node, frames[*d].next.cell_idx,
-			frames[*d].next.cell_val);
+		set_cell_invalid(puzzle, frames[*d].next.cell_idx,
+			frames[*d].next.cell_val, CHECK_CONSTR);
 	}
 }
 
@@ -45,9 +44,8 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 	puzzle->node_stack_top = *d;
 	puzzle->node_stack[*d] = puzzle->node_stack[*d - 1];
 	puzzle->cur_node = &puzzle->node_stack[*d];
-	set_grid_val(puzzle->cur_node, frames[*d - 1].next.cell_idx,
-		frames[*d - 1].next.cell_val, 0);
-	check_node_validity(puzzle);
+	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
+		frames[*d - 1].next.cell_val, CHECK_CONSTR);
 	puzzle->cur_node->cur_depth++;
 	puzzle->nodes_visited++;
 	if (puzzle->cur_node->sub_node_depth == 0)
@@ -71,10 +69,7 @@ static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
 
 	if (check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 		return (check_backtrack(puzzle, d, start_d, frames));
-	check_node_validity(puzzle);
 	pruned = prune_current_step(puzzle);
-	if (pruned)
-		check_node_validity(puzzle);
 	if (has_reached_terminal_state(puzzle->cur_node))
 	{
 		rec_sols = handle_leaf_node(puzzle);

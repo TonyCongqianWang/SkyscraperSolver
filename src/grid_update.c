@@ -20,7 +20,7 @@ static void	set_valid_val_cell(t_node_state *state, int cell_idx)
 	short	cell_ub;
 
 	get_cell_bounds(state, cell_idx, &cell_lb, &cell_ub);
-	set_grid_val(state, cell_idx, cell_lb, 1);
+	set_grid_val_internal(state, cell_idx, cell_lb, 1);
 }
 
 static void	set_val_in_col(t_node_state *state, int cell_idx, int val)
@@ -35,7 +35,7 @@ static void	set_val_in_col(t_node_state *state, int cell_idx, int val)
 		update_idx %= state->size * state->size;
 		if (is_cell_empty(state, update_idx)
 			&& is_valid_value(state, update_idx, val))
-			set_grid_val(state, update_idx, val, 1);
+			set_grid_val_internal(state, update_idx, val, 1);
 		counter++;
 	}
 }
@@ -52,7 +52,7 @@ static void	set_val_in_row(t_node_state *state, int cell_idx, int val)
 		update_idx += ((cell_idx + counter) % state->size);
 		if (is_cell_empty(state, update_idx)
 			&& is_valid_value(state, update_idx, val))
-			set_grid_val(state, update_idx, val, 1);
+			set_grid_val_internal(state, update_idx, val, 1);
 		counter++;
 	}
 }

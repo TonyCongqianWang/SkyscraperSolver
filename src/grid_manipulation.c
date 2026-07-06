@@ -19,7 +19,7 @@
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
 
-void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
+void	set_grid_val_internal(t_node_state *state, int cell_idx, int val, int check)
 {
 	if (state->grid.vals[cell_idx] != 0)
 	{
@@ -40,7 +40,7 @@ void	set_grid_val(t_node_state *state, int cell_idx, int val, int check)
 		push_dirty_constraints(state, cell_idx);
 }
 
-void	set_value_invalid(t_node_state *state, int cell_idx, int val)
+void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 {
 	int	n_invalidated;
 
@@ -71,7 +71,7 @@ static void	update_column(t_node_state *state, int cell_idx, int val)
 	{
 		update_idx = (cell_idx + counter * state->size);
 		update_idx %= state->size * state->size;
-		set_value_invalid(state, update_idx, val);
+		set_value_invalid_internal(state, update_idx, val);
 		counter++;
 	}
 }
@@ -86,7 +86,7 @@ static void	update_row(t_node_state *state, int cell_idx, int val)
 	{
 		update_idx = (cell_idx / state->size) * state->size;
 		update_idx += ((cell_idx + counter) % state->size);
-		set_value_invalid(state, update_idx, val);
+		set_value_invalid_internal(state, update_idx, val);
 		counter++;
 	}
 }
@@ -98,7 +98,7 @@ static void	update_availability(t_node_state *state, int cell_idx, int val)
 	counter = 0;
 	while (counter < state->size - 1)
 	{
-		set_value_invalid(state, cell_idx, ((val + counter) % state->size) + 1);
+		set_value_invalid_internal(state, cell_idx, ((val + counter) % state->size) + 1);
 		counter++;
 	}
 	update_column(state, cell_idx, val);

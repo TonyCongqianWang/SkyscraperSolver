@@ -12,20 +12,22 @@
 
 #include "puzzle_solver.h"
 #include "tree_search.h"
-#include "grid_manipulation.h"
-#include "check_node_validity.h"
+#include "grid_interface.h"
 
 static int	insert_initial_grid(t_puzzle *puzzle)
 {
 	int				idx;
 	int				input_val;
 	t_node_state	input_state;
+	t_grid_update	updates[MAX_CELL_COUNT];
+	int				count;
 
 	input_state = *(puzzle->cur_node);
 	idx = 0;
 	while (idx < puzzle->squared_size)
 		puzzle->cur_node->grid.vals[idx++] = 0;
 	idx = 0;
+	count = 0;
 	while (idx < puzzle->squared_size)
 	{
 		idx++;
@@ -33,8 +35,17 @@ static int	insert_initial_grid(t_puzzle *puzzle)
 		if (input_val == 0)
 			continue ;
 		if (puzzle->cur_node->grid.vals[idx - 1] == 0)
-			set_grid_val(puzzle->cur_node, idx - 1, input_val, 1);
+		{
+			updates[count].cell_idx = idx - 1;
+			updates[count].val = input_val;
+			count++;
+		}
 		else if (puzzle->cur_node->grid.vals[idx - 1] != input_val)
+			return (0);
+	}
+	if (count > 0)
+	{
+		if (!set_cell_vals_batch(puzzle, updates, count, CHECK_CONSTR))
 			return (0);
 	}
 	return (1);
@@ -46,7 +57,6 @@ int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 
 	if (!insert_initial_grid(puzzle))
 		return (0);
-	check_node_validity(puzzle);
 	if (max_depth >= 0)
 	{
 		puzzle->cur_node->target_nunset = puzzle->squared_size - max_depth;

@@ -13,6 +13,7 @@
 #include "prune_check_constr.h"
 #include "constraint_selection.h"
 #include "selectivity.h"
+#include "check_node_validity.h"
 
 static int	process_constraint(t_puzzle *puzzle, int idx, int size)
 {
@@ -26,12 +27,12 @@ static int	process_constraint(t_puzzle *puzzle, int idx, int size)
 	clues[0] = puzzle->constr_bounds.cur_c_pair.fwd_val;
 	clues[1] = puzzle->constr_bounds.cur_c_pair.bwd_val;
 	copy_indices(puzzle, grid_indices, rev_indices, size);
-	if (clues[0] != 0 && propagate_single_direction(puzzle->cur_node,
+	if (clues[0] != 0 && propagate_single_direction(puzzle, puzzle->cur_node,
 			grid_indices, size, clues[0]))
 		changed = 1;
 	if (puzzle->cur_node->is_invalid)
 		return (changed);
-	if (clues[1] != 0 && propagate_single_direction(puzzle->cur_node,
+	if (clues[1] != 0 && propagate_single_direction(puzzle, puzzle->cur_node,
 			rev_indices, size, clues[1]))
 		changed = 1;
 	return (changed);
@@ -96,4 +97,5 @@ void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity)
 		if (check_constr_rows(puzzle, state, selectivity))
 			changed = 1;
 	}
+	check_node_validity(puzzle);
 }

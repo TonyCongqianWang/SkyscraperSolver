@@ -14,7 +14,7 @@
 #include "pruning_routines.h"
 #include "lookahead_dive.h"
 #include "node_selection.h"
-#include "grid_manipulation.h"
+#include "grid_interface.h"
 #include "node_selection_cache.h"
 #include "strategy_routing.h"
 #include "selectivity.h"
@@ -32,11 +32,12 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 static void	run_lookahead_transitions(t_puzzle *puzzle, t_node_state *node,
 				t_node_transition *tr, int max_depth)
 {
+	(void)node;
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
 	{
 		if (!do_l_ahead_dive(puzzle, *tr, max_depth))
-			set_value_invalid(node, tr->cell_idx, tr->cell_val);
+			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val, CHECK_CONSTR);
 	}
 }
 

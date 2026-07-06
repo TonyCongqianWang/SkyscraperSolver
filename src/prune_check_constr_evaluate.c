@@ -12,7 +12,7 @@
 
 #include "prune_check_constr.h"
 #include "grid_availability.h"
-#include "grid_manipulation.h"
+#include "grid_interface.h"
 
 static int	get_cell_domain(t_node_state *state, int cell_idx, int size)
 {
@@ -80,25 +80,17 @@ static int	check_candidate(t_prune_args *args, int i, int v)
 	return (0);
 }
 
-static int	prune_val(t_prune_args *args, int cell, int i, int v)
-{
-	if (is_valid_value(args->state, cell, v)
-		&& !check_candidate(args, i, v))
-	{
-		set_value_invalid(args->state, cell, v);
-		return (1);
-	}
-	return (0);
-}
-
 int	prune_candidates(t_prune_args *args)
 {
-	int	i;
-	int	v;
-	int	cell;
-	int	changed;
+	t_grid_update	updates[MAX_SIZE * MAX_SIZE];
+	int				count;
+	int				i;
+	int				v;
+	int				cell;
+	int				changed;
 
 	changed = 0;
+	count = 0;
 	i = -1;
 	while (++i < args->size)
 	{
@@ -108,12 +100,20 @@ int	prune_candidates(t_prune_args *args)
 			v = 0;
 			while (++v <= args->size)
 			{
-				if (prune_val(args, cell, i, v))
-					changed = 1;
-				if (args->state->is_invalid)
-					return (changed);
+				if (is_valid_value(args->state, cell, v)
+					&& !check_candidate(args, i, v))
+				{
+					updates[count].cell_idx = cell;
+					updates[count].val = v;
+					count++;
+				}
 			}
 		}
+	}
+	if (count > 0)
+	{
+		set_cells_invalid_batch(args->puzzle, updates, count, CHECK_NONE);
+		changed = 1;
 	}
 	return (changed);
 }
