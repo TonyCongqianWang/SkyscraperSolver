@@ -15,25 +15,39 @@
 #include "selectivity.h"
 #include "check_node_validity.h"
 
+static int	run_propagate(t_prune_args *args, int clue, int *indices)
+{
+	if (clue != 0)
+	{
+		args->grid_indices = indices;
+		args->target_clue = clue;
+		if (propagate_single_direction(args))
+			return (1);
+	}
+	return (0);
+}
+
 static int	process_constraint(t_puzzle *puzzle, int idx, int size)
 {
-	int	grid_indices[MAX_SIZE];
-	int	rev_indices[MAX_SIZE];
-	int	clues[2];
-	int	changed;
+	int				grid_indices[MAX_SIZE];
+	int				rev_indices[MAX_SIZE];
+	int				clues[2];
+	int				changed;
+	t_prune_args	args;
 
 	changed = 0;
 	set_active_constraint(puzzle, idx);
 	clues[0] = puzzle->constr_bounds.cur_c_pair.fwd_val;
 	clues[1] = puzzle->constr_bounds.cur_c_pair.bwd_val;
 	copy_indices(puzzle, grid_indices, rev_indices, size);
-	if (clues[0] != 0 && propagate_single_direction(puzzle, puzzle->cur_node,
-			grid_indices, size, clues[0]))
+	args.puzzle = puzzle;
+	args.state = puzzle->cur_node;
+	args.size = size;
+	if (run_propagate(&args, clues[0], grid_indices))
 		changed = 1;
 	if (puzzle->cur_node->is_invalid)
 		return (changed);
-	if (clues[1] != 0 && propagate_single_direction(puzzle, puzzle->cur_node,
-			rev_indices, size, clues[1]))
+	if (run_propagate(&args, clues[1], rev_indices))
 		changed = 1;
 	return (changed);
 }

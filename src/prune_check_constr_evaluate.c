@@ -80,40 +80,47 @@ static int	check_candidate(t_prune_args *args, int i, int v)
 	return (0);
 }
 
+static void	collect_cell_prunes(t_prune_args *args, int i,
+				t_grid_update *updates, int *count)
+{
+	int	v;
+	int	cell;
+
+	cell = args->grid_indices[i];
+	v = 1;
+	while (v <= args->size)
+	{
+		if (is_valid_value(args->state, cell, v)
+			&& !check_candidate(args, i, v))
+		{
+			updates[*count].cell_idx = cell;
+			updates[*count].val = v;
+			(*count)++;
+		}
+		v++;
+	}
+}
+
 int	prune_candidates(t_prune_args *args)
 {
 	t_grid_update	updates[MAX_SIZE * MAX_SIZE];
 	int				count;
 	int				i;
-	int				v;
 	int				cell;
-	int				changed;
 
-	changed = 0;
 	count = 0;
-	i = -1;
-	while (++i < args->size)
+	i = 0;
+	while (i < args->size)
 	{
 		cell = args->grid_indices[i];
 		if (args->state->grid.vals[cell] == 0)
-		{
-			v = 0;
-			while (++v <= args->size)
-			{
-				if (is_valid_value(args->state, cell, v)
-					&& !check_candidate(args, i, v))
-				{
-					updates[count].cell_idx = cell;
-					updates[count].val = v;
-					count++;
-				}
-			}
-		}
+			collect_cell_prunes(args, i, updates, &count);
+		i++;
 	}
 	if (count > 0)
 	{
 		set_cells_invalid_batch(args->puzzle, updates, count, CHECK_NONE);
-		changed = 1;
+		return (1);
 	}
-	return (changed);
+	return (0);
 }

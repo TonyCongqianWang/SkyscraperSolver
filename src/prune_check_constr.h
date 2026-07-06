@@ -40,8 +40,7 @@ void	fill_suff_dp(t_dp_tables *dp, int *cell_domains, int size);
 int		collect_domains(t_node_state *state, int *grid_indices,
 			int size, int *cell_domains);
 int		prune_candidates(t_prune_args *args);
-int		propagate_single_direction(t_puzzle *puzzle, t_node_state *state, int *grid_indices,
-			int size, int target_clue);
+int		propagate_single_direction(t_prune_args *args);
 void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size);
 
 #endif

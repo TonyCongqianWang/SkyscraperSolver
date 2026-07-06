@@ -12,13 +12,20 @@
 
 #ifndef PRUNE_GAC_DOMAIN_H
 # define PRUNE_GAC_DOMAIN_H
-
 # include "puzzle_structs.h"
 # include "grid_interface.h"
 
+typedef struct s_gac_batch
+{
+	t_node_state	*state;
+	t_grid_update	updates[MAX_CELL_COUNT];
+	int				update_count;
+	int				pruned_masks[MAX_CELL_COUNT];
+}				t_gac_batch;
+
 int		count_bits(int bmp);
-void	eliminate_bmp_vals(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int u_bmp, int *pruned_masks);
-void	keep_only_values(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int keep_mask, int *pruned_masks);
+void	eliminate_bmp_vals(t_gac_batch *batch, int cell_idx, int u_bmp);
+void	keep_only_values(t_gac_batch *batch, int cell_idx, int keep_mask);
 void	get_value_cells(t_node_state *state, int *cells, int count,
 			int *value_cells);
 

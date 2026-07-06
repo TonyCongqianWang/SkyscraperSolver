@@ -19,7 +19,8 @@
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
 
-void	set_grid_val_internal(t_node_state *state, int cell_idx, int val, int check)
+void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
+			int check)
 {
 	if (state->grid.vals[cell_idx] != 0)
 	{
@@ -98,7 +99,8 @@ static void	update_availability(t_node_state *state, int cell_idx, int val)
 	counter = 0;
 	while (counter < state->size - 1)
 	{
-		set_value_invalid_internal(state, cell_idx, ((val + counter) % state->size) + 1);
+		set_value_invalid_internal(state, cell_idx,
+			((val + counter) % state->size) + 1);
 		counter++;
 	}
 	update_column(state, cell_idx, val);

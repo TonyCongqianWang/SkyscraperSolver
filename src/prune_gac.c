@@ -19,102 +19,77 @@
 #include "grid_interface.h"
 #include "check_node_validity.h"
 
-static int	collect_row_cells(t_node_state *state, int r, int *cells)
+static int	collect_line_cells(t_node_state *state, int line_idx, int is_col,
+				int *cells)
 {
 	int	count;
-	int	c;
+	int	i;
+	int	cell;
 
 	count = 0;
-	c = 0;
-	while (c < state->size)
+	i = 0;
+	while (i < state->size)
 	{
-		if (is_cell_empty(state, r * state->size + c))
+		if (is_col)
+			cell = i * state->size + line_idx;
+		else
+			cell = line_idx * state->size + i;
+		if (is_cell_empty(state, cell))
 		{
-			cells[count] = r * state->size + c;
+			cells[count] = cell;
 			count++;
 		}
-		c++;
+		i++;
 	}
 	return (count);
 }
 
-static int	collect_col_cells(t_node_state *state, int col, int *cells)
+static void	run_gac_naked(int *cells, int count,
+				t_gac_config *config, t_gac_batch *batch)
 {
-	int	count;
-	int	r;
-
-	count = 0;
-	r = 0;
-	while (r < state->size)
-	{
-		if (is_cell_empty(state, r * state->size + col))
-		{
-			cells[count] = r * state->size + col;
-			count++;
-		}
-		r++;
-	}
-	return (count);
+	if (config->max_k >= 2)
+		analyse_naked_pairs(cells, count, batch);
+	if (config->max_k >= 3)
+		analyse_naked_triples(cells, count, batch);
 }
 
-static void	analyse_row(t_puzzle *puzzle, t_node_state *state, int r, t_gac_config *config)
+static void	run_gac_hidden(int *cells, int count,
+				t_gac_config *config, t_gac_batch *batch)
 {
-	int				cells[MAX_SIZE];
 	int				val_cells[MAX_SIZE];
-	int				count;
-	t_grid_update	updates[MAX_CELL_COUNT];
-	int				update_count;
-	int				pruned_masks[MAX_CELL_COUNT] = {0};
+	t_hidden_param	p;
 
-	update_count = 0;
-	count = collect_row_cells(state, r, cells);
-	if (config->analyse_naked)
-	{
-		if (config->max_k >= 2)
-			analyse_naked_pairs(state, cells, count, updates, &update_count, pruned_masks);
-		if (config->max_k >= 3)
-			analyse_naked_triples(state, cells, count, updates, &update_count, pruned_masks);
-	}
-	if (config->analyse_hidden)
-	{
-		get_value_cells(state, cells, count, val_cells);
-		if (config->max_k >= 2)
-			analyse_hidden_pairs(state, cells, count, val_cells, updates, &update_count, pruned_masks);
-		if (config->max_k >= 3)
-			analyse_hidden_triples(state, cells, count, val_cells, updates, &update_count, pruned_masks);
-	}
-	if (update_count > 0)
-		set_cells_invalid_batch(puzzle, updates, update_count, CHECK_NONE);
+	get_value_cells(batch->state, cells, count, val_cells);
+	p.cells = cells;
+	p.count = count;
+	p.val_cells = val_cells;
+	if (config->max_k >= 2)
+		analyse_hidden_pairs(batch->state, &p, batch);
+	if (config->max_k >= 3)
+		analyse_hidden_triples(batch->state, &p, batch);
 }
 
-static void	analyse_col(t_puzzle *puzzle, t_node_state *state, int col, t_gac_config *config)
+static void	analyse_line(t_puzzle *puzzle, int idx, int is_col,
+				t_gac_config *config)
 {
 	int				cells[MAX_SIZE];
-	int				val_cells[MAX_SIZE];
 	int				count;
-	t_grid_update	updates[MAX_CELL_COUNT];
-	int				update_count;
-	int				pruned_masks[MAX_CELL_COUNT] = {0};
+	int				i;
+	t_gac_batch		batch;
 
-	update_count = 0;
-	count = collect_col_cells(state, col, cells);
+	batch.state = puzzle->cur_node;
+	batch.update_count = 0;
+	i = 0;
+	while (i < MAX_CELL_COUNT)
+		batch.pruned_masks[i++] = 0;
+	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
 	if (config->analyse_naked)
-	{
-		if (config->max_k >= 2)
-			analyse_naked_pairs(state, cells, count, updates, &update_count, pruned_masks);
-		if (config->max_k >= 3)
-			analyse_naked_triples(state, cells, count, updates, &update_count, pruned_masks);
-	}
+		run_gac_naked(cells, count, config, &batch);
 	if (config->analyse_hidden)
-	{
-		get_value_cells(state, cells, count, val_cells);
-		if (config->max_k >= 2)
-			analyse_hidden_pairs(state, cells, count, val_cells, updates, &update_count, pruned_masks);
-		if (config->max_k >= 3)
-			analyse_hidden_triples(state, cells, count, val_cells, updates, &update_count, pruned_masks);
-	}
-	if (update_count > 0)
-		set_cells_invalid_batch(puzzle, updates, update_count, CHECK_NONE);
+		run_gac_hidden(cells, count, config, &batch);
+	if (batch.update_count > 0)
+		set_cells_invalid_batch(puzzle, batch.updates, batch.update_count,
+			CHECK_NONE);
 }
 
 void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
@@ -129,14 +104,14 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 	while (i < state->size)
 	{
 		if (should_process_row(state, i, config->selectivity))
-			analyse_row(puzzle, state, i, config);
+			analyse_line(puzzle, i, 0, config);
 		i++;
 	}
 	i = 0;
 	while (i < state->size)
 	{
 		if (should_process_col(state, i, config->selectivity))
-			analyse_col(puzzle, state, i, config);
+			analyse_line(puzzle, i, 1, config);
 		i++;
 	}
 	check_node_validity(puzzle);

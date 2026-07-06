@@ -30,14 +30,16 @@ int	set_cell_invalid(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 	return (!puzzle->cur_node->is_invalid);
 }
 
-int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates, int count, t_check_mode mode)
+int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates,
+		int count, t_check_mode mode)
 {
 	int	i;
 
 	i = 0;
 	while (i < count && !puzzle->cur_node->is_invalid)
 	{
-		set_grid_val_internal(puzzle->cur_node, updates[i].cell_idx, updates[i].val, 0);
+		set_grid_val_internal(puzzle->cur_node, updates[i].cell_idx,
+			updates[i].val, 0);
 		i++;
 	}
 	if (mode == CHECK_CONSTR)
@@ -45,14 +47,16 @@ int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates, int coun
 	return (!puzzle->cur_node->is_invalid);
 }
 
-int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates, int count, t_check_mode mode)
+int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates,
+		int count, t_check_mode mode)
 {
 	int	i;
 
 	i = 0;
 	while (i < count && !puzzle->cur_node->is_invalid)
 	{
-		set_value_invalid_internal(puzzle->cur_node, updates[i].cell_idx, updates[i].val);
+		set_value_invalid_internal(puzzle->cur_node, updates[i].cell_idx,
+			updates[i].val);
 		i++;
 	}
 	if (mode == CHECK_CONSTR)

@@ -14,35 +14,52 @@
 #include "tree_search.h"
 #include "grid_interface.h"
 
+static void	clear_grid(t_puzzle *puzzle)
+{
+	int	idx;
+
+	idx = 0;
+	while (idx < puzzle->squared_size)
+		puzzle->cur_node->grid.vals[idx++] = 0;
+}
+
+static int	collect_initial_updates(t_puzzle *puzzle, const t_node_state *input,
+				t_grid_update *updates, int *count)
+{
+	int	idx;
+	int	val;
+
+	idx = 0;
+	*count = 0;
+	while (idx < puzzle->squared_size)
+	{
+		val = input->grid.vals[idx];
+		if (val != 0)
+		{
+			if (puzzle->cur_node->grid.vals[idx] == 0)
+			{
+				updates[*count].cell_idx = idx;
+				updates[*count].val = val;
+				(*count)++;
+			}
+			else if (puzzle->cur_node->grid.vals[idx] != val)
+				return (0);
+		}
+		idx++;
+	}
+	return (1);
+}
+
 static int	insert_initial_grid(t_puzzle *puzzle)
 {
-	int				idx;
-	int				input_val;
 	t_node_state	input_state;
 	t_grid_update	updates[MAX_CELL_COUNT];
 	int				count;
 
 	input_state = *(puzzle->cur_node);
-	idx = 0;
-	while (idx < puzzle->squared_size)
-		puzzle->cur_node->grid.vals[idx++] = 0;
-	idx = 0;
-	count = 0;
-	while (idx < puzzle->squared_size)
-	{
-		idx++;
-		input_val = input_state.grid.vals[idx - 1];
-		if (input_val == 0)
-			continue ;
-		if (puzzle->cur_node->grid.vals[idx - 1] == 0)
-		{
-			updates[count].cell_idx = idx - 1;
-			updates[count].val = input_val;
-			count++;
-		}
-		else if (puzzle->cur_node->grid.vals[idx - 1] != input_val)
-			return (0);
-	}
+	clear_grid(puzzle);
+	if (!collect_initial_updates(puzzle, &input_state, updates, &count))
+		return (0);
 	if (count > 0)
 	{
 		if (!set_cell_vals_batch(puzzle, updates, count, CHECK_CONSTR))

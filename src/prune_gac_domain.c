@@ -28,41 +28,41 @@ int	count_bits(int bmp)
 	return (count);
 }
 
-void	eliminate_bmp_vals(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int u_bmp, int *pruned_masks)
+void	eliminate_bmp_vals(t_gac_batch *batch, int cell_idx, int u_bmp)
 {
 	int	val;
 
 	val = 1;
-	while (val <= state->size)
+	while (val <= batch->state->size)
 	{
 		if ((u_bmp & (1 << (val - 1)))
-			&& is_valid_value(state, cell_idx, val)
-			&& !(pruned_masks[cell_idx] & (1 << (val - 1))))
+			&& is_valid_value(batch->state, cell_idx, val)
+			&& !(batch->pruned_masks[cell_idx] & (1 << (val - 1))))
 		{
-			pruned_masks[cell_idx] |= (1 << (val - 1));
-			updates[*count].cell_idx = cell_idx;
-			updates[*count].val = val;
-			(*count)++;
+			batch->pruned_masks[cell_idx] |= (1 << (val - 1));
+			batch->updates[batch->update_count].cell_idx = cell_idx;
+			batch->updates[batch->update_count].val = val;
+			batch->update_count++;
 		}
 		val++;
 	}
 }
 
-void	keep_only_values(t_node_state *state, t_grid_update *updates, int *count, int cell_idx, int keep_mask, int *pruned_masks)
+void	keep_only_values(t_gac_batch *batch, int cell_idx, int keep_mask)
 {
 	int	val;
 
 	val = 1;
-	while (val <= state->size)
+	while (val <= batch->state->size)
 	{
 		if (!(keep_mask & (1 << (val - 1)))
-			&& is_valid_value(state, cell_idx, val)
-			&& !(pruned_masks[cell_idx] & (1 << (val - 1))))
+			&& is_valid_value(batch->state, cell_idx, val)
+			&& !(batch->pruned_masks[cell_idx] & (1 << (val - 1))))
 		{
-			pruned_masks[cell_idx] |= (1 << (val - 1));
-			updates[*count].cell_idx = cell_idx;
-			updates[*count].val = val;
-			(*count)++;
+			batch->pruned_masks[cell_idx] |= (1 << (val - 1));
+			batch->updates[batch->update_count].cell_idx = cell_idx;
+			batch->updates[batch->update_count].val = val;
+			batch->update_count++;
 		}
 		val++;
 	}

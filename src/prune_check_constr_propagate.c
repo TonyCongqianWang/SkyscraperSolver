@@ -25,23 +25,17 @@ void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size)
 	}
 }
 
-int	propagate_single_direction(t_puzzle *puzzle, t_node_state *state, int *grid_indices,
-		int size, int target_clue)
+int	propagate_single_direction(t_prune_args *args)
 {
-	int				cell_domains[MAX_SIZE];
-	t_dp_tables		dp;
-	t_prune_args	args;
+	int			cell_domains[MAX_SIZE];
+	t_dp_tables	dp;
 
-	if (!collect_domains(state, grid_indices, size, cell_domains))
+	if (!collect_domains(args->state, args->grid_indices, args->size,
+			cell_domains))
 		return (0);
-	init_dp_tables(&dp, size);
-	fill_pref_dp(&dp, cell_domains, size);
-	fill_suff_dp(&dp, cell_domains, size);
-	args.puzzle = puzzle;
-	args.state = state;
-	args.dp = &dp;
-	args.grid_indices = grid_indices;
-	args.size = size;
-	args.target_clue = target_clue;
-	return (prune_candidates(&args));
+	init_dp_tables(&dp, args->size);
+	fill_pref_dp(&dp, cell_domains, args->size);
+	fill_suff_dp(&dp, cell_domains, args->size);
+	args->dp = &dp;
+	return (prune_candidates(args));
 }

@@ -13,29 +13,28 @@
 #include "prune_gac_naked.h"
 #include "prune_gac_domain.h"
 
-static void	check_pair(t_node_state *state, int *cells, int count, int *pair,
-				t_grid_update *updates, int *update_count, int *pruned_masks)
+static void	check_pair(int *cells, int count, int *pair,
+				t_gac_batch *batch)
 {
 	int	u_bmp;
 	int	c;
 
-	u_bmp = state->grid.valid_val_bmps[cells[pair[0]]]
-		| state->grid.valid_val_bmps[cells[pair[1]]];
-	u_bmp &= (1 << state->size) - 1;
+	u_bmp = batch->state->grid.valid_val_bmps[cells[pair[0]]]
+		| batch->state->grid.valid_val_bmps[cells[pair[1]]];
+	u_bmp &= (1 << batch->state->size) - 1;
 	if (count_bits(u_bmp) == 2)
 	{
 		c = 0;
 		while (c < count)
 		{
 			if (c != pair[0] && c != pair[1])
-				eliminate_bmp_vals(state, updates, update_count, cells[c], u_bmp, pruned_masks);
+				eliminate_bmp_vals(batch, cells[c], u_bmp);
 			c++;
 		}
 	}
 }
 
-void	analyse_naked_pairs(t_node_state *state, int *cells, int count,
-			t_grid_update *updates, int *update_count, int *pruned_masks)
+void	analyse_naked_pairs(int *cells, int count, t_gac_batch *batch)
 {
 	int	i;
 	int	j;
@@ -49,37 +48,36 @@ void	analyse_naked_pairs(t_node_state *state, int *cells, int count,
 		{
 			pair[0] = i;
 			pair[1] = j;
-			check_pair(state, cells, count, pair, updates, update_count, pruned_masks);
+			check_pair(cells, count, pair, batch);
 			j++;
 		}
 		i++;
 	}
 }
 
-static void	check_triple(t_node_state *state, int *cells, int count,
-				int *inds, t_grid_update *updates, int *update_count, int *pruned_masks)
+static void	check_triple(int *cells, int count,
+				int *inds, t_gac_batch *batch)
 {
 	int	u_bmp;
 	int	c;
 
-	u_bmp = state->grid.valid_val_bmps[cells[inds[0]]]
-		| state->grid.valid_val_bmps[cells[inds[1]]]
-		| state->grid.valid_val_bmps[cells[inds[2]]];
-	u_bmp &= (1 << state->size) - 1;
+	u_bmp = batch->state->grid.valid_val_bmps[cells[inds[0]]]
+		| batch->state->grid.valid_val_bmps[cells[inds[1]]]
+		| batch->state->grid.valid_val_bmps[cells[inds[2]]];
+	u_bmp &= (1 << batch->state->size) - 1;
 	if (count_bits(u_bmp) == 3)
 	{
 		c = 0;
 		while (c < count)
 		{
 			if (c != inds[0] && c != inds[1] && c != inds[2])
-				eliminate_bmp_vals(state, updates, update_count, cells[c], u_bmp, pruned_masks);
+				eliminate_bmp_vals(batch, cells[c], u_bmp);
 			c++;
 		}
 	}
 }
 
-void	analyse_naked_triples(t_node_state *state, int *cells, int count,
-			t_grid_update *updates, int *update_count, int *pruned_masks)
+void	analyse_naked_triples(int *cells, int count, t_gac_batch *batch)
 {
 	int	i;
 	int	j;
@@ -98,7 +96,7 @@ void	analyse_naked_triples(t_node_state *state, int *cells, int count,
 				inds[0] = i;
 				inds[1] = j;
 				inds[2] = l;
-				check_triple(state, cells, count, inds, updates, update_count, pruned_masks);
+				check_triple(cells, count, inds, batch);
 				l++;
 			}
 			j++;
