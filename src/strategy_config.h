@@ -35,6 +35,7 @@ typedef struct s_lookahead_config
 	int					branching_budget;
 	int					enable_node_select;
 	int					pruning_level;
+	int					check_mode;
 }	t_lookahead_config;
 
 typedef struct s_gac_config

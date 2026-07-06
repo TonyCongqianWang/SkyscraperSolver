@@ -69,8 +69,8 @@ static void	run_gac_hidden(int *cells, int count,
 		analyse_hidden_triples(batch->state, &p, batch);
 }
 
-static void	analyse_line(t_puzzle *puzzle, int idx, int is_col,
-				t_gac_config *config)
+void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
+			t_gac_config *config)
 {
 	int				cells[MAX_SIZE];
 	int				count;
@@ -104,15 +104,15 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 	while (i < state->size)
 	{
 		if (should_process_row(state, i, config->selectivity))
-			analyse_line(puzzle, i, 0, config);
+			analyse_gac_line(puzzle, i, 0, config);
 		i++;
 	}
 	i = 0;
 	while (i < state->size)
 	{
 		if (should_process_col(state, i, config->selectivity))
-			analyse_line(puzzle, i, 1, config);
+			analyse_gac_line(puzzle, i, 1, config);
 		i++;
 	}
-	check_node_validity(puzzle);
+	check_node_validity(puzzle, CHECK_CONSTR);
 }

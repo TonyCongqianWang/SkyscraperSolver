@@ -13,7 +13,7 @@
 #ifndef PRUNING_ROUTINES_H
 # define PRUNING_ROUTINES_H
 
-# include "puzzle_structs.h"
+# include "grid_interface.h"
 # include "strategy_config.h"
 
 typedef struct s_prune_routine_config

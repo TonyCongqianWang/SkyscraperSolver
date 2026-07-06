@@ -17,16 +17,16 @@
 int	set_cell_val(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 {
 	set_grid_val_internal(puzzle->cur_node, cell_idx, val, 0);
-	if (mode == CHECK_CONSTR)
-		return (check_node_validity(puzzle));
+	if (mode != CHECK_NONE)
+		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
 
 int	set_cell_invalid(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 {
 	set_value_invalid_internal(puzzle->cur_node, cell_idx, val);
-	if (mode == CHECK_CONSTR)
-		return (check_node_validity(puzzle));
+	if (mode != CHECK_NONE)
+		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
 
@@ -42,8 +42,8 @@ int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates,
 			updates[i].val, 0);
 		i++;
 	}
-	if (mode == CHECK_CONSTR)
-		return (check_node_validity(puzzle));
+	if (mode != CHECK_NONE)
+		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
 
@@ -59,7 +59,7 @@ int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates,
 			updates[i].val);
 		i++;
 	}
-	if (mode == CHECK_CONSTR)
-		return (check_node_validity(puzzle));
+	if (mode != CHECK_NONE)
+		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }

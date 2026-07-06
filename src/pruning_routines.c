@@ -100,8 +100,7 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	if (cfg->run_gac)
 		prune_gac(puzzle, (t_gac_config *)&cfg->gac);
 	if (cfg->run_lookahead)
-		run_lookahead_loop(puzzle, node, cfg->lookahead.selectivity,
-			cfg->lookahead.max_depth);
+		run_lookahead_loop(puzzle, node, &cfg->lookahead);
 	i = -1;
 	while (++i <= cfg_idx)
 		node->last_prog[i] = prev_prog;

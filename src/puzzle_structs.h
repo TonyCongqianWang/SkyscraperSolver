@@ -162,6 +162,7 @@ typedef struct s_puzzle
 	t_node_orders_stack		order_stack;
 	t_node_state			node_stack[MAX_STACK_DEPTH];
 	int						node_stack_top;
+	int						lookahead_check_mode;
 }		t_puzzle;
 
 #endif

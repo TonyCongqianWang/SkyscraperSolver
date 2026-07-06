@@ -24,6 +24,7 @@ void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_VALUE_SET;
 	cfg->lookahead.max_depth = 1;
+	cfg->lookahead.check_mode = CHECK_CONSTR;
 }
 
 void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
@@ -38,6 +39,7 @@ void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->lookahead.max_depth = 1;
+	cfg->lookahead.check_mode = CHECK_CONSTR;
 }
 
 void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
@@ -52,4 +54,5 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_NONE;
 	cfg->lookahead.max_depth = 1;
+	cfg->lookahead.check_mode = CHECK_CONSTR;
 }

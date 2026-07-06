@@ -27,7 +27,7 @@ static int	run_propagate(t_prune_args *args, int clue, int *indices)
 	return (0);
 }
 
-static int	process_constraint(t_puzzle *puzzle, int idx, int size)
+int	process_constraint(t_puzzle *puzzle, int idx, int size)
 {
 	int				grid_indices[MAX_SIZE];
 	int				rev_indices[MAX_SIZE];
@@ -111,5 +111,5 @@ void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity)
 		if (check_constr_rows(puzzle, state, selectivity))
 			changed = 1;
 	}
-	check_node_validity(puzzle);
+	check_node_validity(puzzle, CHECK_CONSTR);
 }

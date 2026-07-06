@@ -17,8 +17,10 @@
 
 typedef enum e_check_mode
 {
-	CHECK_NONE,
-	CHECK_CONSTR
+	CHECK_NONE = 0,
+	CHECK_CONSTR = 1 << 0,
+	CHECK_PROP = 1 << 1,
+	CHECK_GAC = 1 << 2
 }				t_check_mode;
 
 typedef struct s_grid_update

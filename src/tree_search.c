@@ -46,7 +46,8 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next)
 {
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
-	set_cell_val(puzzle, next.cell_idx, next.cell_val, CHECK_CONSTR);
+	set_cell_val(puzzle, next.cell_idx, next.cell_val,
+		(t_check_mode)puzzle->lookahead_check_mode);
 	puzzle->cur_node->cur_depth++;
 	return (tree_search(puzzle));
 }
