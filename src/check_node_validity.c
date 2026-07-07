@@ -60,13 +60,13 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 	set_active_constraint(puzzle, idx);
 	if (entry % 2)
 		reverse_constr_direction(puzzle);
-	if ((mode & CHECK_CONSTR) && !check_active_constr(puzzle))
+	if (mode.run_constr && !check_active_constr(puzzle))
 		node->is_invalid = 1;
 	if (node->is_invalid)
 		return ;
-	if (mode & CHECK_PROP)
+	if (mode.run_prop)
 		process_constraint(puzzle, idx, node->size);
-	if (!node->is_invalid && (mode & CHECK_GAC))
+	if (!node->is_invalid && mode.run_gac)
 	{
 		gac_cfg.selectivity = SELECTIVITY_NONE;
 		gac_cfg.max_k = 3;
@@ -77,24 +77,42 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 	}
 }
 
+static int	get_max_high_iters(t_node_state *node, double fraction)
+{
+	int	max;
+
+	max = (int)(node->num_unset * fraction);
+	if (max < 1)
+		max = 1;
+	return (max);
+}
+
 void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 {
-	t_node_state			*node;
-	t_dirty_constr_stack	local_stack;
+	t_dirty_constr_stack	local;
 	int						entry;
+	int						iter;
+	int						max;
+	t_check_mode			cur_mode;
 
-	node = puzzle->cur_node;
-	while (node->dirty_constrs.count > 0 && !node->is_invalid)
+	iter = 0;
+	max = get_max_high_iters(puzzle->cur_node, mode.downgrade_fraction);
+	while (puzzle->cur_node->dirty_constrs.count > 0
+		&& !puzzle->cur_node->is_invalid)
 	{
-		local_stack = node->dirty_constrs;
-		node->dirty_constrs.count = 0;
-		node->dirty_constrs.in_stack_bmp = 0;
-		while (local_stack.count > 0 && !node->is_invalid)
+		local = puzzle->cur_node->dirty_constrs;
+		puzzle->cur_node->dirty_constrs.count = 0;
+		puzzle->cur_node->dirty_constrs.in_stack_bmp = 0;
+		cur_mode = g_check_constr;
+		if (iter < max)
+			cur_mode = mode;
+		while (local.count > 0 && !puzzle->cur_node->is_invalid)
 		{
-			entry = local_stack.entries[(int)(--local_stack.count)];
-			local_stack.in_stack_bmp &= ~(1ULL << entry);
-			process_dirty_entry(puzzle, entry, mode);
+			entry = local.entries[(int)(--local.count)];
+			local.in_stack_bmp &= ~(1ULL << entry);
+			process_dirty_entry(puzzle, entry, cur_mode);
 		}
+		iter++;
 	}
 }
 

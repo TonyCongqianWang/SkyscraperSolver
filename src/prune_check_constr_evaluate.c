@@ -119,7 +119,7 @@ int	prune_candidates(t_prune_args *args)
 	}
 	if (count > 0)
 	{
-		set_cells_invalid_batch(args->puzzle, updates, count, CHECK_NONE);
+		set_cells_invalid_batch(args->puzzle, updates, count, g_check_none);
 		return (1);
 	}
 	return (0);

@@ -89,7 +89,7 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 		run_gac_hidden(cells, count, config, &batch);
 	if (batch.update_count > 0)
 		set_cells_invalid_batch(puzzle, batch.updates, batch.update_count,
-			CHECK_NONE);
+			g_check_none);
 }
 
 void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
@@ -114,5 +114,5 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 			analyse_gac_line(puzzle, i, 1, config);
 		i++;
 	}
-	check_node_validity(puzzle, CHECK_CONSTR);
+	check_node_validity(puzzle, g_check_constr);
 }

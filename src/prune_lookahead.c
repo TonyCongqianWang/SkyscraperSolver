@@ -37,7 +37,7 @@ static void	run_lookahead_transitions(t_puzzle *puzzle,
 	{
 		if (!do_l_ahead_dive(puzzle, *tr, max_depth, mode))
 			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
-				CHECK_CONSTR);
+				g_check_constr);
 	}
 }
 

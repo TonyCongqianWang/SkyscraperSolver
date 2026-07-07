@@ -28,6 +28,17 @@ typedef enum e_selectivity_level
 	SELECTIVITY_VALUE_SET
 }	t_selectivity_level;
 
+typedef struct s_check_mode
+{
+	int		run_constr;
+	int		run_prop;
+	int		run_gac;
+	double	downgrade_fraction;
+}				t_check_mode;
+
+extern const t_check_mode	g_check_none;
+extern const t_check_mode	g_check_constr;
+
 typedef struct s_lookahead_config
 {
 	t_selectivity_level	selectivity;
@@ -35,7 +46,7 @@ typedef struct s_lookahead_config
 	int					branching_budget;
 	int					enable_node_select;
 	int					pruning_level;
-	int					check_mode;
+	t_check_mode		check_mode;
 }	t_lookahead_config;
 
 typedef struct s_gac_config

@@ -20,6 +20,7 @@ static const double	g_constr_max_unset = 0.536472818366295;
 static const double	g_lookahead_gac_unset_threshold = 0.241505401466146;
 static const double	g_lookahead_constr_min_unset = 0.497582762441804;
 static const double	g_lookahead_constr_max_unset = 0.536472818366295;
+static const double	g_lookahead_downgrade_fraction = 0.05;
 static const int	g_period_base = 237;
 static const int	g_period_coef1 = 11107;
 static const int	g_period_coef2 = 85321;
@@ -37,12 +38,14 @@ static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 	cfg.run_gac = (unset_ratio >= g_gac_unset_threshold);
 	cfg.run_check_constr = (unset_ratio >= g_constr_min_unset
 			&& unset_ratio <= g_constr_max_unset);
-	cfg.lookahead.check_mode = CHECK_CONSTR;
-	if (unset_ratio >= g_lookahead_gac_unset_threshold)
-		cfg.lookahead.check_mode |= CHECK_GAC;
-	if (unset_ratio >= g_lookahead_constr_min_unset
-		&& unset_ratio <= g_lookahead_constr_max_unset)
-		cfg.lookahead.check_mode |= CHECK_PROP;
+	cfg.lookahead.check_mode.run_constr = 1;
+	cfg.lookahead.check_mode.run_gac = (unset_ratio
+			>= g_lookahead_gac_unset_threshold);
+	cfg.lookahead.check_mode.run_prop = (unset_ratio
+			>= g_lookahead_constr_min_unset
+			&& unset_ratio <= g_lookahead_constr_max_unset);
+	cfg.lookahead.check_mode.downgrade_fraction
+		= g_lookahead_downgrade_fraction;
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 

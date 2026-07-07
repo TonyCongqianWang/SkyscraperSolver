@@ -32,7 +32,7 @@ void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 		|| rec_sols.min_nunset == puzzle->squared_size)
 	{
 		set_cell_invalid(puzzle, frames[*d].next.cell_idx,
-			frames[*d].next.cell_val, CHECK_CONSTR);
+			frames[*d].next.cell_val, g_check_constr);
 	}
 }
 
@@ -45,7 +45,7 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 	puzzle->node_stack[*d] = puzzle->node_stack[*d - 1];
 	puzzle->cur_node = &puzzle->node_stack[*d];
 	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
-		frames[*d - 1].next.cell_val, CHECK_CONSTR);
+		frames[*d - 1].next.cell_val, g_check_constr);
 	puzzle->cur_node->cur_depth++;
 	puzzle->nodes_visited++;
 	if (puzzle->cur_node->sub_node_depth == 0)

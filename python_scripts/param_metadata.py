@@ -54,6 +54,11 @@ PARAM_METADATA = [
     ("DEEP_LOOKAHEAD_GAC_UNSET_THRESHOLD", 0.1, 1.0, 0.241505401466146, float),
     ("DEEP_LOOKAHEAD_CONSTR_MIN_UNSET", 0.0, 1.0, 0.497582762441804, float),
     ("DEEP_LOOKAHEAD_CONSTR_MAX_UNSET", 0.0, 1.0, 0.536472818366295, float),
+    # LOOKAHEAD DOWNGRADE FRACTIONS
+    ("ROOT_LOOKAHEAD_DOWNGRADE_FRACTION", 0.0, 1.0, 0.05, float),
+    ("SHALLOW_LOOKAHEAD_DOWNGRADE_FRACTION", 0.0, 1.0, 0.05, float),
+    ("MEDIUM_LOOKAHEAD_DOWNGRADE_FRACTION", 0.0, 1.0, 0.05, float),
+    ("DEEP_LOOKAHEAD_DOWNGRADE_FRACTION", 0.0, 1.0, 0.05, float),
 ]
 
 # PARAMETER_MAPPING maps each SPSA parameter to (C_filepath, C_variable_name, type)
@@ -112,6 +117,11 @@ PARAMETER_MAPPING = {
     "DEEP_LOOKAHEAD_GAC_UNSET_THRESHOLD": ("src/prune_strat_deep.c", "g_lookahead_gac_unset_threshold", "double"),
     "DEEP_LOOKAHEAD_CONSTR_MIN_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_min_unset", "double"),
     "DEEP_LOOKAHEAD_CONSTR_MAX_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_max_unset", "double"),
+    # LOOKAHEAD DOWNGRADE FRACTIONS
+    "ROOT_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/prune_strat_root.c", "g_lookahead_downgrade_fraction", "double"),
+    "SHALLOW_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/prune_strat_shallow.c", "g_lookahead_downgrade_fraction", "double"),
+    "MEDIUM_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/prune_strat_medium.c", "g_lookahead_downgrade_fraction", "double"),
+    "DEEP_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/prune_strat_deep.c", "g_lookahead_downgrade_fraction", "double"),
 }
 
 # PARAM_CONSTRAINTS defines linear constraints between parameters.

@@ -62,7 +62,7 @@ static int	insert_initial_grid(t_puzzle *puzzle)
 		return (0);
 	if (count > 0)
 	{
-		if (!set_cell_vals_batch(puzzle, updates, count, CHECK_CONSTR))
+		if (!set_cell_vals_batch(puzzle, updates, count, g_check_constr))
 			return (0);
 	}
 	return (1);

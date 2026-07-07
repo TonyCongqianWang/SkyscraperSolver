@@ -14,10 +14,13 @@
 #include "grid_manipulation.h"
 #include "check_node_validity.h"
 
+const t_check_mode	g_check_none = {0, 0, 0, 0.0};
+const t_check_mode	g_check_constr = {1, 0, 0, 0.0};
+
 int	set_cell_val(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 {
 	set_grid_val_internal(puzzle->cur_node, cell_idx, val, 0);
-	if (mode != CHECK_NONE)
+	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
@@ -25,7 +28,7 @@ int	set_cell_val(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 int	set_cell_invalid(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 {
 	set_value_invalid_internal(puzzle->cur_node, cell_idx, val);
-	if (mode != CHECK_NONE)
+	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
@@ -42,7 +45,7 @@ int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates,
 			updates[i].val, 0);
 		i++;
 	}
-	if (mode != CHECK_NONE)
+	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
@@ -59,7 +62,7 @@ int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates,
 			updates[i].val);
 		i++;
 	}
-	if (mode != CHECK_NONE)
+	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
 	return (!puzzle->cur_node->is_invalid);
 }
