@@ -15,7 +15,6 @@
 # include "grid_interface.h"
 
 void	push_dirty_constraints(t_node_state *state, int cell_idx);
-void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode);
 int		check_node_validity(t_puzzle *puzzle, t_check_mode mode);
 
 #endif

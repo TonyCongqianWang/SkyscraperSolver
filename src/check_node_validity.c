@@ -16,39 +16,6 @@
 #include "prune_check_constr.h"
 #include "prune_gac.h"
 
-static void	push_entry(t_dirty_constr_stack *stack, int entry)
-{
-	t_u64	mask;
-
-	mask = 1ULL << entry;
-	if (stack->in_stack_bmp & mask)
-		return ;
-	stack->in_stack_bmp |= mask;
-	stack->entries[(int)stack->count] = entry;
-	stack->count++;
-}
-
-void	push_dirty_constraints(t_node_state *state, int cell_idx)
-{
-	int						constr_idx;
-	t_dirty_constr_stack	*stack;
-	t_constraint_pair		*pair;
-	int						rel;
-
-	stack = &state->dirty_constrs;
-	rel = 0;
-	while (rel < 2)
-	{
-		constr_idx = state->puzzle->grid_constr_map[cell_idx][rel];
-		pair = &state->puzzle->constraint_pairs[constr_idx];
-		if (pair->fwd_val != 0)
-			push_entry(stack, constr_idx * 2);
-		if (pair->bwd_val != 0)
-			push_entry(stack, constr_idx * 2 + 1);
-		rel++;
-	}
-}
-
 static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 {
 	t_node_state	*node;
@@ -87,7 +54,7 @@ static int	get_max_high_iters(t_node_state *node, double fraction)
 	return (max);
 }
 
-void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
+static void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 {
 	t_dirty_constr_stack	local;
 	int						entry;
