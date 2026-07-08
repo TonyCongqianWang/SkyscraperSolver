@@ -31,12 +31,18 @@ static void	init_routing_env(void)
 }}
 #endif""",
         "target_init": """		d = puzzle->cur_node->cur_depth;
-		if (d <= puzzle->squared_size * g_routing_shallow_ratio)""",
+		scaling = 0.0;
+		if (puzzle->size > 7)
+			scaling = (puzzle->size - 7.0) * (puzzle->size - 7.0) / 4.0;
+		if (d <= puzzle->squared_size * g_routing_shallow_ratio * scaling)""",
         "replacement_init": """#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 		init_routing_env();
 #endif
 		d = puzzle->cur_node->cur_depth;
-		if (d <= puzzle->squared_size * g_routing_shallow_ratio)"""
+		scaling = 0.0;
+		if (puzzle->size > 7)
+			scaling = (puzzle->size - 7.0) * (puzzle->size - 7.0) / 4.0;
+		if (d <= puzzle->squared_size * g_routing_shallow_ratio * scaling)"""
     }),
     ("src/prune_strat_root.c", {
         "var_names": [
