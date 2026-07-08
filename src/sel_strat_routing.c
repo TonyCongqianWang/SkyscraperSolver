@@ -12,9 +12,9 @@
 
 #include "strategy_routing.h"
 
-static const double			g_sel_rebuild_period = 1053;
-static const double			g_sel_ord2_coeff = 1565;
-static const double			g_sel_ord4_coeff = 65430;
+static const double			g_sel_rebuild_period = 1319;
+static const double			g_sel_ord2_coeff = 1934;
+static const double			g_sel_ord4_coeff = 70567;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)

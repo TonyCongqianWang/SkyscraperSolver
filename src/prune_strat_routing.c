@@ -17,12 +17,13 @@
 #include "prune_strat_medium.h"
 #include "prune_strat_deep.h"
 
-static const double	g_routing_shallow_ratio = 0.105231964035567;
-static const double	g_routing_medium_ratio = 0.352562620956447;
+static const double	g_routing_shallow_ratio = 0.215855787126784;
+static const double	g_routing_medium_ratio = 0.346520612541537;
 
 int	prune_current_step(t_puzzle *puzzle)
 {
-	int	d;
+	int		d;
+	double	scaling;
 
 	if (puzzle->cur_node->cur_depth == 0)
 	{
@@ -34,7 +35,10 @@ int	prune_current_step(t_puzzle *puzzle)
 	else
 	{
 		d = puzzle->cur_node->cur_depth;
-		if (d <= puzzle->squared_size * g_routing_shallow_ratio)
+		scaling = 0.0;
+		if (puzzle->size > 7)
+			scaling = (puzzle->size - 7.0) * (puzzle->size - 7.0) / 4.0;
+		if (d <= puzzle->squared_size * g_routing_shallow_ratio * scaling)
 			return (prune_strat_shallow(puzzle));
 		else if (d <= puzzle->squared_size * g_routing_medium_ratio)
 			return (prune_strat_medium(puzzle));
