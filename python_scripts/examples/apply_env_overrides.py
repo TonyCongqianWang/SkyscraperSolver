@@ -46,33 +46,52 @@ static void	init_routing_env(void)
     }),
     ("src/prune_strat_root.c", {
         "var_names": [
-            "g_gac_unset_threshold", "g_constr_min_unset", "g_constr_max_unset",
-            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset", "g_lookahead_constr_max_unset",
+            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset",
+            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset",
             "g_lookahead_downgrade_fraction",
-            "g_period_base", "g_period_coef1", "g_period_coef2"
+            "g_period_base", "g_period_coef1", "g_period_coef2",
+            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_local_global_min_unset",
+            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_local_global_min_unset",
+            "g_lookahead_local_min_unset", "g_lookahead_local_max_unset", "g_lookahead_local_global_min_unset"
         ],
-        "target_vars_template": """static const double	g_gac_unset_threshold = {g_gac_unset_threshold};
+        "target_vars_template": """static const double	g_min_unset_threshold = {g_min_unset_threshold};
+static const double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static const double	g_constr_min_unset = {g_constr_min_unset};
-static const double	g_constr_max_unset = {g_constr_max_unset};
 static const double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static const double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static const double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static const double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static const int	g_period_base = {g_period_base};
 static const int	g_period_coef1 = {g_period_coef1};
-static const int	g_period_coef2 = {g_period_coef2};""",
+static const int	g_period_coef2 = {g_period_coef2};
+static const double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static const double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static const double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static const double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static const double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static const double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static const double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static const double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static const double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};""",
         "replacement_vars_template": """#include <stdlib.h>
 
+static double	g_min_unset_threshold = {g_min_unset_threshold};
 static double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static double	g_constr_min_unset = {g_constr_min_unset};
-static double	g_constr_max_unset = {g_constr_max_unset};
 static double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static int		g_period_base = {g_period_base};
 static int		g_period_coef1 = {g_period_coef1};
 static int		g_period_coef2 = {g_period_coef2};
+static double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -82,24 +101,21 @@ static void	init_env(void)
 
 	if (initialized)
 		return ;
+	val = getenv("ROOT_MIN_UNSET");
+	if (val)
+		g_min_unset_threshold = atof(val);
 	val = getenv("ROOT_GAC_UNSET_THRESHOLD");
 	if (val)
 		g_gac_unset_threshold = atof(val);
 	val = getenv("ROOT_CONSTR_MIN_UNSET");
 	if (val)
 		g_constr_min_unset = atof(val);
-	val = getenv("ROOT_CONSTR_MAX_UNSET");
-	if (val)
-		g_constr_max_unset = atof(val);
 	val = getenv("ROOT_LOOKAHEAD_GAC_UNSET_THRESHOLD");
 	if (val)
 		g_lookahead_gac_unset_threshold = atof(val);
 	val = getenv("ROOT_LOOKAHEAD_CONSTR_MIN_UNSET");
 	if (val)
 		g_lookahead_constr_min_unset = atof(val);
-	val = getenv("ROOT_LOOKAHEAD_CONSTR_MAX_UNSET");
-	if (val)
-		g_lookahead_constr_max_unset = atof(val);
 	val = getenv("ROOT_LOOKAHEAD_DOWNGRADE_FRACTION");
 	if (val)
 		g_lookahead_downgrade_fraction = atof(val);
@@ -112,6 +128,33 @@ static void	init_env(void)
 	val = getenv("ROOT_PERIOD_COEF2");
 	if (val)
 		g_period_coef2 = atoi(val);
+	val = getenv("ROOT_GAC_LOCAL_MIN_UNSET");
+	if (val)
+		g_gac_local_min_unset = atof(val);
+	val = getenv("ROOT_GAC_LOCAL_MAX_UNSET");
+	if (val)
+		g_gac_local_max_unset = atof(val);
+	val = getenv("ROOT_GAC_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_gac_local_global_min_unset = atof(val);
+	val = getenv("ROOT_CONSTR_LOCAL_MIN_UNSET");
+	if (val)
+		g_constr_local_min_unset = atof(val);
+	val = getenv("ROOT_CONSTR_LOCAL_MAX_UNSET");
+	if (val)
+		g_constr_local_max_unset = atof(val);
+	val = getenv("ROOT_CONSTR_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_constr_local_global_min_unset = atof(val);
+	val = getenv("ROOT_LOOKAHEAD_LOCAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_min_unset = atof(val);
+	val = getenv("ROOT_LOOKAHEAD_LOCAL_MAX_UNSET");
+	if (val)
+		g_lookahead_local_max_unset = atof(val);
+	val = getenv("ROOT_LOOKAHEAD_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_global_min_unset = atof(val);
 	initialized = 1;
 }}
 #endif""",
@@ -125,35 +168,52 @@ static void	init_env(void)
     }),
     ("src/prune_strat_shallow.c", {
         "var_names": [
-            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset", "g_constr_max_unset",
-            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset", "g_lookahead_constr_max_unset",
+            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset",
+            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset",
             "g_lookahead_downgrade_fraction",
-            "g_period_base", "g_period_coef1", "g_period_coef2"
+            "g_period_base", "g_period_coef1", "g_period_coef2",
+            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_local_global_min_unset",
+            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_local_global_min_unset",
+            "g_lookahead_local_min_unset", "g_lookahead_local_max_unset", "g_lookahead_local_global_min_unset"
         ],
         "target_vars_template": """static const double	g_min_unset_threshold = {g_min_unset_threshold};
 static const double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static const double	g_constr_min_unset = {g_constr_min_unset};
-static const double	g_constr_max_unset = {g_constr_max_unset};
 static const double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static const double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static const double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static const double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static const int	g_period_base = {g_period_base};
 static const int	g_period_coef1 = {g_period_coef1};
-static const int	g_period_coef2 = {g_period_coef2};""",
+static const int	g_period_coef2 = {g_period_coef2};
+static const double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static const double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static const double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static const double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static const double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static const double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static const double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static const double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static const double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};""",
         "replacement_vars_template": """#include <stdlib.h>
 
 static double	g_min_unset_threshold = {g_min_unset_threshold};
 static double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static double	g_constr_min_unset = {g_constr_min_unset};
-static double	g_constr_max_unset = {g_constr_max_unset};
 static double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static int		g_period_base = {g_period_base};
 static int		g_period_coef1 = {g_period_coef1};
 static int		g_period_coef2 = {g_period_coef2};
+static double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -172,18 +232,12 @@ static void	init_env(void)
 	val = getenv("SHALLOW_CONSTR_MIN_UNSET");
 	if (val)
 		g_constr_min_unset = atof(val);
-	val = getenv("SHALLOW_CONSTR_MAX_UNSET");
-	if (val)
-		g_constr_max_unset = atof(val);
 	val = getenv("SHALLOW_LOOKAHEAD_GAC_UNSET_THRESHOLD");
 	if (val)
 		g_lookahead_gac_unset_threshold = atof(val);
 	val = getenv("SHALLOW_LOOKAHEAD_CONSTR_MIN_UNSET");
 	if (val)
 		g_lookahead_constr_min_unset = atof(val);
-	val = getenv("SHALLOW_LOOKAHEAD_CONSTR_MAX_UNSET");
-	if (val)
-		g_lookahead_constr_max_unset = atof(val);
 	val = getenv("SHALLOW_LOOKAHEAD_DOWNGRADE_FRACTION");
 	if (val)
 		g_lookahead_downgrade_fraction = atof(val);
@@ -196,6 +250,33 @@ static void	init_env(void)
 	val = getenv("SHALLOW_PERIOD_COEF2");
 	if (val)
 		g_period_coef2 = atoi(val);
+	val = getenv("SHALLOW_GAC_LOCAL_MIN_UNSET");
+	if (val)
+		g_gac_local_min_unset = atof(val);
+	val = getenv("SHALLOW_GAC_LOCAL_MAX_UNSET");
+	if (val)
+		g_gac_local_max_unset = atof(val);
+	val = getenv("SHALLOW_GAC_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_gac_local_global_min_unset = atof(val);
+	val = getenv("SHALLOW_CONSTR_LOCAL_MIN_UNSET");
+	if (val)
+		g_constr_local_min_unset = atof(val);
+	val = getenv("SHALLOW_CONSTR_LOCAL_MAX_UNSET");
+	if (val)
+		g_constr_local_max_unset = atof(val);
+	val = getenv("SHALLOW_CONSTR_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_constr_local_global_min_unset = atof(val);
+	val = getenv("SHALLOW_LOOKAHEAD_LOCAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_min_unset = atof(val);
+	val = getenv("SHALLOW_LOOKAHEAD_LOCAL_MAX_UNSET");
+	if (val)
+		g_lookahead_local_max_unset = atof(val);
+	val = getenv("SHALLOW_LOOKAHEAD_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_global_min_unset = atof(val);
 	initialized = 1;
 }}
 #endif""",
@@ -209,35 +290,52 @@ static void	init_env(void)
     }),
     ("src/prune_strat_medium.c", {
         "var_names": [
-            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset", "g_constr_max_unset",
-            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset", "g_lookahead_constr_max_unset",
+            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset",
+            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset",
             "g_lookahead_downgrade_fraction",
-            "g_period_base", "g_period_coef1", "g_period_coef2"
+            "g_period_base", "g_period_coef1", "g_period_coef2",
+            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_local_global_min_unset",
+            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_local_global_min_unset",
+            "g_lookahead_local_min_unset", "g_lookahead_local_max_unset", "g_lookahead_local_global_min_unset"
         ],
         "target_vars_template": """static const double	g_min_unset_threshold = {g_min_unset_threshold};
 static const double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static const double	g_constr_min_unset = {g_constr_min_unset};
-static const double	g_constr_max_unset = {g_constr_max_unset};
 static const double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static const double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static const double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static const double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static const int	g_period_base = {g_period_base};
 static const int	g_period_coef1 = {g_period_coef1};
-static const int	g_period_coef2 = {g_period_coef2};""",
+static const int	g_period_coef2 = {g_period_coef2};
+static const double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static const double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static const double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static const double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static const double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static const double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static const double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static const double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static const double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};""",
         "replacement_vars_template": """#include <stdlib.h>
 
 static double	g_min_unset_threshold = {g_min_unset_threshold};
 static double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static double	g_constr_min_unset = {g_constr_min_unset};
-static double	g_constr_max_unset = {g_constr_max_unset};
 static double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static int		g_period_base = {g_period_base};
 static int		g_period_coef1 = {g_period_coef1};
 static int		g_period_coef2 = {g_period_coef2};
+static double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -256,18 +354,12 @@ static void	init_env(void)
 	val = getenv("MEDIUM_CONSTR_MIN_UNSET");
 	if (val)
 		g_constr_min_unset = atof(val);
-	val = getenv("MEDIUM_CONSTR_MAX_UNSET");
-	if (val)
-		g_constr_max_unset = atof(val);
 	val = getenv("MEDIUM_LOOKAHEAD_GAC_UNSET_THRESHOLD");
 	if (val)
 		g_lookahead_gac_unset_threshold = atof(val);
 	val = getenv("MEDIUM_LOOKAHEAD_CONSTR_MIN_UNSET");
 	if (val)
 		g_lookahead_constr_min_unset = atof(val);
-	val = getenv("MEDIUM_LOOKAHEAD_CONSTR_MAX_UNSET");
-	if (val)
-		g_lookahead_constr_max_unset = atof(val);
 	val = getenv("MEDIUM_LOOKAHEAD_DOWNGRADE_FRACTION");
 	if (val)
 		g_lookahead_downgrade_fraction = atof(val);
@@ -280,6 +372,33 @@ static void	init_env(void)
 	val = getenv("MEDIUM_PERIOD_COEF2");
 	if (val)
 		g_period_coef2 = atoi(val);
+	val = getenv("MEDIUM_GAC_LOCAL_MIN_UNSET");
+	if (val)
+		g_gac_local_min_unset = atof(val);
+	val = getenv("MEDIUM_GAC_LOCAL_MAX_UNSET");
+	if (val)
+		g_gac_local_max_unset = atof(val);
+	val = getenv("MEDIUM_GAC_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_gac_local_global_min_unset = atof(val);
+	val = getenv("MEDIUM_CONSTR_LOCAL_MIN_UNSET");
+	if (val)
+		g_constr_local_min_unset = atof(val);
+	val = getenv("MEDIUM_CONSTR_LOCAL_MAX_UNSET");
+	if (val)
+		g_constr_local_max_unset = atof(val);
+	val = getenv("MEDIUM_CONSTR_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_constr_local_global_min_unset = atof(val);
+	val = getenv("MEDIUM_LOOKAHEAD_LOCAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_min_unset = atof(val);
+	val = getenv("MEDIUM_LOOKAHEAD_LOCAL_MAX_UNSET");
+	if (val)
+		g_lookahead_local_max_unset = atof(val);
+	val = getenv("MEDIUM_LOOKAHEAD_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_global_min_unset = atof(val);
 	initialized = 1;
 }}
 #endif""",
@@ -293,35 +412,52 @@ static void	init_env(void)
     }),
     ("src/prune_strat_deep.c", {
         "var_names": [
-            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset", "g_constr_max_unset",
-            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset", "g_lookahead_constr_max_unset",
+            "g_min_unset_threshold", "g_gac_unset_threshold", "g_constr_min_unset",
+            "g_lookahead_gac_unset_threshold", "g_lookahead_constr_min_unset",
             "g_lookahead_downgrade_fraction",
-            "g_period_base", "g_period_coef1", "g_period_coef2"
+            "g_period_base", "g_period_coef1", "g_period_coef2",
+            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_local_global_min_unset",
+            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_local_global_min_unset",
+            "g_lookahead_local_min_unset", "g_lookahead_local_max_unset", "g_lookahead_local_global_min_unset"
         ],
         "target_vars_template": """static const double	g_min_unset_threshold = {g_min_unset_threshold};
 static const double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static const double	g_constr_min_unset = {g_constr_min_unset};
-static const double	g_constr_max_unset = {g_constr_max_unset};
 static const double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static const double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static const double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static const double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static const int	g_period_base = {g_period_base};
 static const int	g_period_coef1 = {g_period_coef1};
-static const int	g_period_coef2 = {g_period_coef2};""",
+static const int	g_period_coef2 = {g_period_coef2};
+static const double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static const double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static const double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static const double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static const double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static const double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static const double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static const double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static const double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};""",
         "replacement_vars_template": """#include <stdlib.h>
 
 static double	g_min_unset_threshold = {g_min_unset_threshold};
 static double	g_gac_unset_threshold = {g_gac_unset_threshold};
 static double	g_constr_min_unset = {g_constr_min_unset};
-static double	g_constr_max_unset = {g_constr_max_unset};
 static double	g_lookahead_gac_unset_threshold = {g_lookahead_gac_unset_threshold};
 static double	g_lookahead_constr_min_unset = {g_lookahead_constr_min_unset};
-static double	g_lookahead_constr_max_unset = {g_lookahead_constr_max_unset};
 static double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
 static int		g_period_base = {g_period_base};
 static int		g_period_coef1 = {g_period_coef1};
 static int		g_period_coef2 = {g_period_coef2};
+static double	g_gac_local_min_unset = {g_gac_local_min_unset};
+static double	g_gac_local_max_unset = {g_gac_local_max_unset};
+static double	g_gac_local_global_min_unset = {g_gac_local_global_min_unset};
+static double	g_constr_local_min_unset = {g_constr_local_min_unset};
+static double	g_constr_local_max_unset = {g_constr_local_max_unset};
+static double	g_constr_local_global_min_unset = {g_constr_local_global_min_unset};
+static double	g_lookahead_local_min_unset = {g_lookahead_local_min_unset};
+static double	g_lookahead_local_max_unset = {g_lookahead_local_max_unset};
+static double	g_lookahead_local_global_min_unset = {g_lookahead_local_global_min_unset};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -340,18 +476,12 @@ static void	init_env(void)
 	val = getenv("DEEP_CONSTR_MIN_UNSET");
 	if (val)
 		g_constr_min_unset = atof(val);
-	val = getenv("DEEP_CONSTR_MAX_UNSET");
-	if (val)
-		g_constr_max_unset = atof(val);
 	val = getenv("DEEP_LOOKAHEAD_GAC_UNSET_THRESHOLD");
 	if (val)
 		g_lookahead_gac_unset_threshold = atof(val);
 	val = getenv("DEEP_LOOKAHEAD_CONSTR_MIN_UNSET");
 	if (val)
 		g_lookahead_constr_min_unset = atof(val);
-	val = getenv("DEEP_LOOKAHEAD_CONSTR_MAX_UNSET");
-	if (val)
-		g_lookahead_constr_max_unset = atof(val);
 	val = getenv("DEEP_LOOKAHEAD_DOWNGRADE_FRACTION");
 	if (val)
 		g_lookahead_downgrade_fraction = atof(val);
@@ -364,6 +494,33 @@ static void	init_env(void)
 	val = getenv("DEEP_PERIOD_COEF2");
 	if (val)
 		g_period_coef2 = atoi(val);
+	val = getenv("DEEP_GAC_LOCAL_MIN_UNSET");
+	if (val)
+		g_gac_local_min_unset = atof(val);
+	val = getenv("DEEP_GAC_LOCAL_MAX_UNSET");
+	if (val)
+		g_gac_local_max_unset = atof(val);
+	val = getenv("DEEP_GAC_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_gac_local_global_min_unset = atof(val);
+	val = getenv("DEEP_CONSTR_LOCAL_MIN_UNSET");
+	if (val)
+		g_constr_local_min_unset = atof(val);
+	val = getenv("DEEP_CONSTR_LOCAL_MAX_UNSET");
+	if (val)
+		g_constr_local_max_unset = atof(val);
+	val = getenv("DEEP_CONSTR_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_constr_local_global_min_unset = atof(val);
+	val = getenv("DEEP_LOOKAHEAD_LOCAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_min_unset = atof(val);
+	val = getenv("DEEP_LOOKAHEAD_LOCAL_MAX_UNSET");
+	if (val)
+		g_lookahead_local_max_unset = atof(val);
+	val = getenv("DEEP_LOOKAHEAD_LOCAL_GLOBAL_MIN_UNSET");
+	if (val)
+		g_lookahead_local_global_min_unset = atof(val);
 	initialized = 1;
 }}
 #endif""",
@@ -376,7 +533,9 @@ static void	init_env(void)
 			+ g_period_coef2 * x * x * x * x);"""
     }),
     ("src/sel_strat_routing.c", {
-        "var_names": ["g_sel_rebuild_period", "g_sel_ord2_coeff", "g_sel_ord4_coeff"],
+        "var_names": [
+            "g_sel_rebuild_period", "g_sel_ord2_coeff", "g_sel_ord4_coeff"
+        ],
         "target_vars_template": """static const double			g_sel_rebuild_period = {g_sel_rebuild_period};
 static const double			g_sel_ord2_coeff = {g_sel_ord2_coeff};
 static const double			g_sel_ord4_coeff = {g_sel_ord4_coeff};""",

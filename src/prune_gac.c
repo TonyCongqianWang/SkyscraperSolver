@@ -76,13 +76,21 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 	int				count;
 	int				i;
 	t_gac_batch		batch;
+	double			global_ratio;
+	double			local_ratio;
 
+	global_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
+	if (global_ratio < config->global_min_unset)
+		return ;
 	batch.state = puzzle->cur_node;
 	batch.update_count = 0;
 	i = 0;
 	while (i < MAX_CELL_COUNT)
 		batch.pruned_masks[i++] = 0;
 	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
+	local_ratio = (double)count / puzzle->cur_node->size;
+	if (local_ratio < config->min_unset || local_ratio > config->max_unset)
+		return ;
 	if (config->analyse_naked)
 		run_gac_naked(cells, count, config, &batch);
 	if (config->analyse_hidden)

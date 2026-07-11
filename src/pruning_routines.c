@@ -96,7 +96,9 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	puzzle->prune_runs_count++;
 	prev_prog = node->progress_counter;
 	if (cfg->run_check_constr)
-		prune_check_constr(puzzle, cfg->check_constr_selectivity);
+		prune_check_constr(puzzle, cfg->check_constr_selectivity,
+			cfg->check_constr_min_unset, cfg->check_constr_max_unset,
+			cfg->check_constr_global_min_unset);
 	if (cfg->run_gac)
 		prune_gac(puzzle, (t_gac_config *)&cfg->gac);
 	if (cfg->run_lookahead)

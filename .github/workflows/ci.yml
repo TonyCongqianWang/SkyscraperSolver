@@ -68,3 +68,6 @@ jobs:
 
       - name: Run consistency verification
         run: python python_scripts/verify_consistency.py
+
+      - name: Verify setup_and_tune
+        run: bash setup_and_tune.sh

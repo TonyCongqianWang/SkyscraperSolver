@@ -14,8 +14,8 @@
 #include "grid_manipulation.h"
 #include "check_node_validity.h"
 
-const t_check_mode	g_check_none = {0, 0, 0, 0.0};
-const t_check_mode	g_check_constr = {1, 0, 0, 0.0};
+const t_check_mode	g_check_none = {0, 0, 0, 0.0, 0.35, 0.70, 0.50};
+const t_check_mode	g_check_constr = {1, 0, 0, 0.0, 0.35, 0.70, 0.50};
 
 int	set_cell_val(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
 {

@@ -12,17 +12,24 @@
 
 #include "prune_strat_root.h"
 #include "pruning_routines.h"
-
+static const double	g_min_unset_threshold = 0.2;
 static const double	g_gac_unset_threshold = 0.133056682040898;
 static const double	g_constr_min_unset = 0.0355884363571201;
-static const double	g_constr_max_unset = 0.94300944626904;
 static const double	g_lookahead_gac_unset_threshold = 0.151932027085723;
 static const double	g_lookahead_constr_min_unset = 0.0291882141965284;
-static const double	g_lookahead_constr_max_unset = 0.957192054459561;
 static const double	g_lookahead_downgrade_fraction = 0.0727673746639766;
-static const int	g_period_base = 3;
-static const int	g_period_coef1 = 941;
-static const int	g_period_coef2 = 11589;
+static const int	g_period_base = 8;
+static const int	g_period_coef1 = 2352;
+static const int	g_period_coef2 = 28972;
+static const double	g_gac_local_min_unset = 0.35;
+static const double	g_gac_local_max_unset = 0.70;
+static const double	g_gac_local_global_min_unset = 0.50;
+static const double	g_constr_local_min_unset = 0.35;
+static const double	g_constr_local_max_unset = 0.70;
+static const double	g_constr_local_global_min_unset = 0.50;
+static const double	g_lookahead_local_min_unset = 0.35;
+static const double	g_lookahead_local_max_unset = 0.70;
+static const double	g_lookahead_local_global_min_unset = 0.50;
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {
@@ -35,16 +42,23 @@ static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 	else
 		get_prune_cfg_heavy(&cfg);
 	cfg.run_gac = (unset_ratio >= g_gac_unset_threshold);
-	cfg.run_check_constr = (unset_ratio >= g_constr_min_unset
-			&& unset_ratio <= g_constr_max_unset);
+	cfg.run_check_constr = (unset_ratio >= g_constr_min_unset);
 	cfg.lookahead.check_mode.run_constr = 1;
 	cfg.lookahead.check_mode.run_gac = (unset_ratio
 			>= g_lookahead_gac_unset_threshold);
 	cfg.lookahead.check_mode.run_prop = (unset_ratio
-			>= g_lookahead_constr_min_unset
-			&& unset_ratio <= g_lookahead_constr_max_unset);
+			>= g_lookahead_constr_min_unset);
 	cfg.lookahead.check_mode.downgrade_fraction
 		= g_lookahead_downgrade_fraction;
+	cfg.gac.min_unset = g_gac_local_min_unset;
+	cfg.gac.max_unset = g_gac_local_max_unset;
+	cfg.gac.global_min_unset = g_gac_local_global_min_unset;
+	cfg.check_constr_min_unset = g_constr_local_min_unset;
+	cfg.check_constr_max_unset = g_constr_local_max_unset;
+	cfg.check_constr_global_min_unset = g_constr_local_global_min_unset;
+	cfg.lookahead.check_mode.min_unset = g_lookahead_local_min_unset;
+	cfg.lookahead.check_mode.max_unset = g_lookahead_local_max_unset;
+	cfg.lookahead.check_mode.global_min_unset = g_lookahead_local_global_min_unset;
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 
@@ -59,7 +73,7 @@ int	prune_strat_root(t_puzzle *puzzle)
 	if (node->is_invalid || node->is_complete || node->num_unset == 0)
 		return (0);
 	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	if (unset_ratio < 0.2)
+	if (unset_ratio < g_min_unset_threshold)
 		return (0);
 	x = 1 - unset_ratio;
 	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x

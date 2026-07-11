@@ -34,6 +34,9 @@ typedef struct s_check_mode
 	int		run_prop;
 	int		run_gac;
 	double	downgrade_fraction;
+	double	min_unset;
+	double	max_unset;
+	double	global_min_unset;
 }				t_check_mode;
 
 extern const t_check_mode	g_check_none;
@@ -55,6 +58,9 @@ typedef struct s_gac_config
 	int					max_k;
 	int					analyse_naked;
 	int					analyse_hidden;
+	double				min_unset;
+	double				max_unset;
+	double				global_min_unset;
 }	t_gac_config;
 
 typedef struct s_prune_config

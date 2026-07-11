@@ -64,4 +64,5 @@ To prevent compiler warnings and clarify integer scale requirements, the codebas
   ```bash
   python python_scripts/run_benchmark.py -c ./skyscraper_solver benchmark_sets/benchmarkSet7.txt
   ```
+* **Tuning Setup Validation**: To ensure that the dynamic parameter inject/restore mechanism is functioning, verify that `./setup_and_tune.sh` compiles and executes correctly without any parameters. It applies overrides, rebuilds the executable, and unapplies overrides. This is also executed in the CI workflow.
 * **Scratch Space**: Place all temporary analysis scripts, experimental results, and transient outputs under the `scratch/` directory, which is excluded from git tracking.

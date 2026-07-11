@@ -62,11 +62,16 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 	int		num_valids_col;
 	int		num_valids_row;
 	int		constr_idx;
+	int		n_inv_col;
+	int		n_inv_row;
 
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
 	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
 	num_valids_row = --(state->constrs.num_val_positions[constr_idx][val - 1]);
+	n_inv_col = state->size - num_valids_col;
+	n_inv_row = state->size - num_valids_row;
+	state->progress_counter += n_inv_col * n_inv_col + n_inv_row * n_inv_row;
 	if (num_valids_col == 0 || num_valids_row == 0)
 	{
 		state->is_invalid = 1;
