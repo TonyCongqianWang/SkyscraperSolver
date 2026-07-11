@@ -13,17 +13,17 @@
 #include "prune_strat_medium.h"
 #include "pruning_routines.h"
 
-static const double	g_min_unset_threshold = 0.361145726672716;
-static const double	g_gac_unset_threshold = 0.151621196461338;
-static const double	g_constr_min_unset = 0.299117826398078;
-static const double	g_constr_max_unset = 0.722050556789232;
-static const double	g_lookahead_gac_unset_threshold = 0.181638091722184;
-static const double	g_lookahead_constr_min_unset = 0.327923762846436;
-static const double	g_lookahead_constr_max_unset = 0.577550735573339;
-static const double	g_lookahead_downgrade_fraction = 0.0140173146554256;
-static const int	g_period_base = 55;
-static const int	g_period_coef1 = 5777;
-static const int	g_period_coef2 = 102451;
+static const double	g_min_unset_threshold = 0.374687478840423;
+static const double	g_gac_unset_threshold = 0.155805632141164;
+static const double	g_constr_min_unset = 0.29774642733366;
+static const double	g_constr_max_unset = 0.74010638181629;
+static const double	g_lookahead_gac_unset_threshold = 0.175898679226146;
+static const double	g_lookahead_constr_min_unset = 0.333628153064668;
+static const double	g_lookahead_constr_max_unset = 0.545293786455046;
+static const double	g_lookahead_downgrade_fraction = 0.0260732799012944;
+static const int	g_period_base = 57;
+static const int	g_period_coef1 = 6338;
+static const int	g_period_coef2 = 121706;
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 {
