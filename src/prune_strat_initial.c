@@ -22,6 +22,6 @@ int	prune_strat_initial(t_puzzle *puzzle)
 	cfg.run_check_constr = 1;
 	cfg.check_constr_selectivity = SELECTIVITY_NONE;
 	cfg.lookahead.selectivity = SELECTIVITY_NONE;
-	cfg.lookahead.check_mode = (t_check_mode){1, 1, 1, 0.05, 0.35, 0.70, 0.50};
+	cfg.lookahead.check_mode = (t_check_mode){1, 1, 1, 0.05, {0.35, 0.70, 0.50}, {0.35, 0.70, 0.50}};
 	return (run_pruning_routine(puzzle, &cfg, 2));
 }

@@ -57,8 +57,8 @@ def project_constraints(theta):
             i = name_to_idx[min_name]
             j = name_to_idx[max_name]
             
-            _, pmin_i, pmax_i, _, _ = PARAM_METADATA[i]
-            _, pmin_j, pmax_j, _, _ = PARAM_METADATA[j]
+            _, pmin_i, pmax_i, _, _, _ = PARAM_METADATA[i]
+            _, pmin_j, pmax_j, _, _, _ = PARAM_METADATA[j]
             
             x = pmin_i + theta_projected[i] * (pmax_i - pmin_i)
             y = pmin_j + theta_projected[j] * (pmax_j - pmin_j)
@@ -304,7 +304,7 @@ def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
 
 def get_env_for_theta(theta):
     env = os.environ.copy()
-    for val, (name, pmin, pmax, default, ptype) in zip(theta, PARAM_METADATA):
+    for val, (name, pmin, pmax, default, ptype, scale) in zip(theta, PARAM_METADATA):
         phys_val = pmin + val * (pmax - pmin)
         if ptype is int:
             phys_val = int(round(phys_val))
@@ -313,7 +313,7 @@ def get_env_for_theta(theta):
 
 def get_physical_params(theta):
     phys = {}
-    for val, (name, pmin, pmax, default, ptype) in zip(theta, PARAM_METADATA):
+    for val, (name, pmin, pmax, default, ptype, scale) in zip(theta, PARAM_METADATA):
         phys_val = pmin + val * (pmax - pmin)
         if ptype is int:
             phys_val = int(round(phys_val))
@@ -322,7 +322,7 @@ def get_physical_params(theta):
 
 def get_default_theta():
     theta = []
-    for name, pmin, pmax, default, ptype in PARAM_METADATA:
+    for name, pmin, pmax, default, ptype, scale in PARAM_METADATA:
         val = (default - pmin) / (pmax - pmin)
         theta.append(val)
     return theta
@@ -335,7 +335,7 @@ def main():
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
     parser.add_argument("--lr", type=float, default=0.002, help="SPSA initial learning rate step size (a)")
     parser.add_argument("--alpha", type=float, default=0.0, help="SPSA learning rate decay exponent (alpha)")
-    parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
+    parser.add_argument("--perturb", type=float, default=0.04, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
     parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
@@ -540,18 +540,27 @@ def main():
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
 
         # Perturbed plus
-        theta_plus = project_constraints([max(0.0, min(1.0, theta[i] + ck * delta[i])) for i in range(len(theta))])
+        theta_plus_raw = []
+        for i in range(len(theta)):
+            perturb_scale = PARAM_METADATA[i][5]
+            theta_plus_raw.append(max(0.0, min(1.0, theta[i] + ck * perturb_scale * delta[i])))
+        theta_plus = project_constraints(theta_plus_raw)
         loss_time_plus, loss_nodes_plus, _ = get_loss(theta_plus)
 
         # Perturbed minus
-        theta_minus = project_constraints([max(0.0, min(1.0, theta[i] - ck * delta[i])) for i in range(len(theta))])
+        theta_minus_raw = []
+        for i in range(len(theta)):
+            perturb_scale = PARAM_METADATA[i][5]
+            theta_minus_raw.append(max(0.0, min(1.0, theta[i] - ck * perturb_scale * delta[i])))
+        theta_minus = project_constraints(theta_minus_raw)
         loss_time_minus, loss_nodes_minus, _ = get_loss(theta_minus)
 
         grad_time = []
         grad_nodes = []
         for i in range(len(theta)):
-            gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * delta[i])
-            gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * delta[i])
+            perturb_scale = PARAM_METADATA[i][5]
+            gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * perturb_scale * delta[i])
+            gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * perturb_scale * delta[i])
             grad_time.append(gt_i)
             grad_nodes.append(gn_i)
             grad_time_sum[i] += gt_i
@@ -627,7 +636,7 @@ def main():
     log_print("-" * 82)
 
     sens_data = []
-    for i, (name, _, _, _, _) in enumerate(PARAM_METADATA):
+    for i, (name, _, _, _, _, _) in enumerate(PARAM_METADATA):
         avg_gt = abs(grad_time_sum[i]) / iterations
         avg_gn = abs(grad_nodes_sum[i]) / iterations
         total_sens = avg_gt + avg_gn

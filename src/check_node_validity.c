@@ -26,9 +26,9 @@ static void	run_gac_analysis(t_puzzle *puzzle, int idx, t_check_mode mode)
 	gac_cfg.max_k = 3;
 	gac_cfg.analyse_naked = 1;
 	gac_cfg.analyse_hidden = 1;
-	gac_cfg.min_unset = mode.min_unset;
-	gac_cfg.max_unset = mode.max_unset;
-	gac_cfg.global_min_unset = mode.global_min_unset;
+	gac_cfg.min_unset = mode.gac.min_unset;
+	gac_cfg.max_unset = mode.gac.max_unset;
+	gac_cfg.global_min_unset = mode.gac.global_min_unset;
 	analyse_gac_line(puzzle, idx % node->size, idx < node->size,
 		&gac_cfg);
 }
@@ -37,7 +37,6 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 {
 	t_node_state	*node;
 	int				idx;
-	t_constr_limits	limits;
 
 	node = puzzle->cur_node;
 	idx = entry / 2;
@@ -48,11 +47,8 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 		node->is_invalid = 1;
 	if (node->is_invalid)
 		return ;
-	limits.min_unset = mode.min_unset;
-	limits.max_unset = mode.max_unset;
-	limits.global_min_unset = mode.global_min_unset;
 	if (mode.run_prop)
-		process_constraint(puzzle, idx, node->size, &limits);
+		process_constraint(puzzle, idx, node->size, &mode.constr);
 	if (!node->is_invalid && mode.run_gac)
 		run_gac_analysis(puzzle, idx, mode);
 }

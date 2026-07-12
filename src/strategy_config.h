@@ -28,15 +28,21 @@ typedef enum e_selectivity_level
 	SELECTIVITY_VALUE_SET
 }	t_selectivity_level;
 
-typedef struct s_check_mode
+typedef struct s_constr_limits
 {
-	int		run_constr;
-	int		run_prop;
-	int		run_gac;
-	double	downgrade_fraction;
 	double	min_unset;
 	double	max_unset;
 	double	global_min_unset;
+}				t_constr_limits;
+
+typedef struct s_check_mode
+{
+	int				run_constr;
+	int				run_prop;
+	int				run_gac;
+	double			downgrade_fraction;
+	t_constr_limits	constr;
+	t_constr_limits	gac;
 }				t_check_mode;
 
 extern const t_check_mode	g_check_none;

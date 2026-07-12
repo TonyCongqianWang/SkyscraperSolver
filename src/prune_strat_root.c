@@ -14,7 +14,7 @@
 #include "pruning_routines.h"
 
 static const double	g_min_unset_threshold = 0.201176982334429;
-static const double	g_gac_unset_threshold = 0.132431740614728;
+static const double	g_gac_min_unset = 0.132431740614728;
 static const double	g_constr_min_unset = 0.0255441138829879;
 static const double	g_lookahead_gac_unset_threshold = 0.143922145770238;
 static const double	g_lookahead_constr_min_unset = 0.0224225088807007;
@@ -28,13 +28,16 @@ static const double	g_gac_local_global_min_unset = 0.495231407740633;
 static const double	g_constr_local_min_unset = 0.356143040960021;
 static const double	g_constr_local_max_unset = 0.701397240553604;
 static const double	g_constr_local_global_min_unset = 0.505964265587367;
-static const double	g_lookahead_local_min_unset = 0.339262188833763;
-static const double	g_lookahead_local_max_unset = 0.691937712171258;
-static const double	g_lookahead_local_global_min_unset = 0.502735349801847;
+static const double	g_lookahead_gac_local_min_unset = 0.339262188833763;
+static const double	g_lookahead_gac_local_max_unset = 0.691937712171258;
+static const double	g_lookahead_gac_local_global_min_unset = 0.502735349801847;
+static const double	g_lookahead_constr_local_min_unset = 0.339262188833763;
+static const double	g_lookahead_constr_local_max_unset = 0.691937712171258;
+static const double	g_lookahead_constr_local_global_min_unset = 0.502735349801847;
 
 static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg, double unset_ratio)
 {
-	cfg->run_gac = (unset_ratio >= g_gac_unset_threshold);
+	cfg->run_gac = (unset_ratio >= g_gac_min_unset);
 	cfg->run_check_constr = (unset_ratio >= g_constr_min_unset);
 	cfg->lookahead.check_mode.run_constr = 1;
 	cfg->lookahead.check_mode.run_gac = (unset_ratio
@@ -54,10 +57,14 @@ static void	setup_cfg_bounds(t_prune_routine_cfg *cfg)
 	cfg->check_constr_max_unset = g_constr_local_max_unset;
 	cfg->check_constr_global_min_unset
 		= g_constr_local_global_min_unset;
-	cfg->lookahead.check_mode.min_unset = g_lookahead_local_min_unset;
-	cfg->lookahead.check_mode.max_unset = g_lookahead_local_max_unset;
-	cfg->lookahead.check_mode.global_min_unset
-		= g_lookahead_local_global_min_unset;
+	cfg->lookahead.check_mode.constr.min_unset = g_lookahead_constr_local_min_unset;
+	cfg->lookahead.check_mode.constr.max_unset = g_lookahead_constr_local_max_unset;
+	cfg->lookahead.check_mode.constr.global_min_unset
+		= g_lookahead_constr_local_global_min_unset;
+	cfg->lookahead.check_mode.gac.min_unset = g_lookahead_gac_local_min_unset;
+	cfg->lookahead.check_mode.gac.max_unset = g_lookahead_gac_local_max_unset;
+	cfg->lookahead.check_mode.gac.global_min_unset
+		= g_lookahead_gac_local_global_min_unset;
 }
 
 static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)

@@ -33,12 +33,6 @@ typedef struct s_prune_args
 	int				target_clue;
 }	t_prune_args;
 
-typedef struct s_constr_limits
-{
-	double	min_unset;
-	double	max_unset;
-	double	global_min_unset;
-}	t_constr_limits;
 
 void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
 			t_constr_limits *limits);
