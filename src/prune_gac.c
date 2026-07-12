@@ -44,53 +44,17 @@ static int	collect_line_cells(t_node_state *state, int line_idx, int is_col,
 	return (count);
 }
 
-static void	run_gac_naked(int *cells, int count,
-				t_gac_config *config, t_gac_batch *batch)
+static void	run_gac_analysis_line(t_puzzle *puzzle, int *cells, int count,
+				t_gac_config *config)
 {
-	if (config->max_k >= 2)
-		analyse_naked_pairs(cells, count, batch);
-	if (config->max_k >= 3)
-		analyse_naked_triples(cells, count, batch);
-}
+	t_gac_batch	batch;
+	int			i;
 
-static void	run_gac_hidden(int *cells, int count,
-				t_gac_config *config, t_gac_batch *batch)
-{
-	int				val_cells[MAX_SIZE];
-	t_hidden_param	p;
-
-	get_value_cells(batch->state, cells, count, val_cells);
-	p.cells = cells;
-	p.count = count;
-	p.val_cells = val_cells;
-	if (config->max_k >= 2)
-		analyse_hidden_pairs(batch->state, &p, batch);
-	if (config->max_k >= 3)
-		analyse_hidden_triples(batch->state, &p, batch);
-}
-
-void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
-			t_gac_config *config)
-{
-	int				cells[MAX_SIZE];
-	int				count;
-	int				i;
-	t_gac_batch		batch;
-	double			global_ratio;
-	double			local_ratio;
-
-	global_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
-	if (global_ratio < config->global_min_unset)
-		return ;
 	batch.state = puzzle->cur_node;
 	batch.update_count = 0;
 	i = 0;
 	while (i < MAX_CELL_COUNT)
 		batch.pruned_masks[i++] = 0;
-	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
-	local_ratio = (double)count / puzzle->cur_node->size;
-	if (local_ratio < config->min_unset || local_ratio > config->max_unset)
-		return ;
 	if (config->analyse_naked)
 		run_gac_naked(cells, count, config, &batch);
 	if (config->analyse_hidden)
@@ -98,6 +62,24 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 	if (batch.update_count > 0)
 		set_cells_invalid_batch(puzzle, batch.updates, batch.update_count,
 			g_check_none);
+}
+
+void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
+			t_gac_config *config)
+{
+	int		cells[MAX_SIZE];
+	int		count;
+	double	global_ratio;
+	double	local_ratio;
+
+	global_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
+	if (global_ratio < config->global_min_unset)
+		return ;
+	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
+	local_ratio = (double)count / puzzle->cur_node->size;
+	if (local_ratio < config->min_unset || local_ratio > config->max_unset)
+		return ;
+	run_gac_analysis_line(puzzle, cells, count, config);
 }
 
 void	prune_gac(t_puzzle *puzzle, t_gac_config *config)

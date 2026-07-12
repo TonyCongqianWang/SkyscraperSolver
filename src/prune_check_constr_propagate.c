@@ -39,3 +39,38 @@ int	propagate_single_direction(t_prune_args *args)
 	args->dp = &dp;
 	return (prune_candidates(args));
 }
+
+int	check_ratios(t_puzzle *puzzle, int *grid_indices, int size,
+		t_constr_limits *limits)
+{
+	int		unset_cnt;
+	int		i;
+	double	local_ratio;
+
+	if ((double)puzzle->cur_node->num_unset / puzzle->squared_size
+		< limits->global_min_unset)
+		return (0);
+	unset_cnt = 0;
+	i = 0;
+	while (i < size)
+	{
+		if (puzzle->cur_node->grid.vals[grid_indices[i]] == 0)
+			unset_cnt++;
+		i++;
+	}
+	local_ratio = (double)unset_cnt / size;
+	return (local_ratio >= limits->min_unset
+		&& local_ratio <= limits->max_unset);
+}
+
+int	run_propagate(t_prune_args *args, int clue, int *indices)
+{
+	if (clue != 0)
+	{
+		args->grid_indices = indices;
+		args->target_clue = clue;
+		if (propagate_single_direction(args))
+			return (1);
+	}
+	return (0);
+}

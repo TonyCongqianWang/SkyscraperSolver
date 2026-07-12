@@ -18,5 +18,7 @@
 
 void	analyse_naked_pairs(int *cells, int count, t_gac_batch *batch);
 void	analyse_naked_triples(int *cells, int count, t_gac_batch *batch);
+void	run_gac_naked(int *cells, int count,
+			t_gac_config *config, t_gac_batch *batch);
 
 #endif

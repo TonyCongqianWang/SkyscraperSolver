@@ -61,7 +61,8 @@ static void	check_triple(int *cells, int count,
 	int	u_bmp;
 	int	c;
 
-	u_bmp = batch->state->grid.valid_val_bmps[cells[inds[0]]]
+	u_bmp = batch->st			t_gac_batch *batch)
+ate->grid.valid_val_bmps[cells[inds[0]]]
 		| batch->state->grid.valid_val_bmps[cells[inds[1]]]
 		| batch->state->grid.valid_val_bmps[cells[inds[2]]];
 	u_bmp &= (1 << batch->state->size) - 1;
@@ -79,7 +80,8 @@ static void	check_triple(int *cells, int count,
 
 void	analyse_naked_triples(int *cells, int count, t_gac_batch *batch)
 {
-	int	i;
+	int	i;			t_gac_batch *batch)
+
 	int	j;
 	int	l;
 	int	inds[3];
@@ -103,4 +105,13 @@ void	analyse_naked_triples(int *cells, int count, t_gac_batch *batch)
 		}
 		i++;
 	}
+}
+
+void	run_gac_naked(int *cells, int count,
+			t_gac_config *config, t_gac_batch *batch)
+{
+	if (config->max_k >= 2)
+		analyse_naked_pairs(cells, count, batch);
+	if (config->max_k >= 3)
+		analyse_naked_triples(cells, count, batch);
 }

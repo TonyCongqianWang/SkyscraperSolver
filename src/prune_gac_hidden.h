@@ -27,5 +27,7 @@ void	analyse_hidden_pairs(t_node_state *state, t_hidden_param *p,
 			t_gac_batch *batch);
 void	analyse_hidden_triples(t_node_state *state, t_hidden_param *p,
 			t_gac_batch *batch);
+void	run_gac_hidden(int *cells, int count,
+			t_gac_config *config, t_gac_batch *batch);
 
 #endif

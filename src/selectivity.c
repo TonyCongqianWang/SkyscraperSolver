@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "selectivity.h"
+#include "pruning_routines.h"
 
 int	should_exit_selectivity(const t_node_state *node,
 		t_selectivity_level selectivity)
@@ -50,4 +51,29 @@ int	should_process_col(const t_node_state *state, int c,
 			&& (state->cols_invalid_since_prune & (1 << c))))
 		return (1);
 	return (0);
+}
+
+int	is_only_selectivity_value_set(const t_prune_routine_cfg *cfg)
+{
+	if (cfg->run_check_constr
+		&& cfg->check_constr_selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	if (cfg->run_gac && cfg->gac.selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	if (cfg->run_lookahead
+		&& cfg->lookahead.selectivity != SELECTIVITY_VALUE_SET)
+		return (0);
+	return (1);
+}
+
+int	is_max_selectivity_any_change(const t_prune_routine_cfg *cfg)
+{
+	if (cfg->run_check_constr
+		&& cfg->check_constr_selectivity == SELECTIVITY_NONE)
+		return (0);
+	if (cfg->run_gac && cfg->gac.selectivity == SELECTIVITY_NONE)
+		return (0);
+	if (cfg->run_lookahead && cfg->lookahead.selectivity == SELECTIVITY_NONE)
+		return (0);
+	return (1);
 }

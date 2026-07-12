@@ -14,31 +14,18 @@
 #include "prune_gac.h"
 #include "prune_lookahead.h"
 #include "prune_check_constr.h"
+#include "selectivity.h"
 #include <stddef.h>
 
-static int	is_only_selectivity_value_set(const t_prune_routine_cfg *cfg)
+static void	run_check_constr_routine(t_puzzle *puzzle,
+				const t_prune_routine_cfg *cfg)
 {
-	if (cfg->run_check_constr
-		&& cfg->check_constr_selectivity != SELECTIVITY_VALUE_SET)
-		return (0);
-	if (cfg->run_gac && cfg->gac.selectivity != SELECTIVITY_VALUE_SET)
-		return (0);
-	if (cfg->run_lookahead
-		&& cfg->lookahead.selectivity != SELECTIVITY_VALUE_SET)
-		return (0);
-	return (1);
-}
+	t_constr_limits	limits;
 
-static int	is_max_selectivity_any_change(const t_prune_routine_cfg *cfg)
-{
-	if (cfg->run_check_constr
-		&& cfg->check_constr_selectivity == SELECTIVITY_NONE)
-		return (0);
-	if (cfg->run_gac && cfg->gac.selectivity == SELECTIVITY_NONE)
-		return (0);
-	if (cfg->run_lookahead && cfg->lookahead.selectivity == SELECTIVITY_NONE)
-		return (0);
-	return (1);
+	limits.min_unset = cfg->check_constr_min_unset;
+	limits.max_unset = cfg->check_constr_max_unset;
+	limits.global_min_unset = cfg->check_constr_global_min_unset;
+	prune_check_constr(puzzle, cfg->check_constr_selectivity, &limits);
 }
 
 static int	check_early_skips(t_node_state *node,
@@ -96,9 +83,7 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	puzzle->prune_runs_count++;
 	prev_prog = node->progress_counter;
 	if (cfg->run_check_constr)
-		prune_check_constr(puzzle, cfg->check_constr_selectivity,
-			cfg->check_constr_min_unset, cfg->check_constr_max_unset,
-			cfg->check_constr_global_min_unset);
+		run_check_constr_routine(puzzle, cfg);
 	if (cfg->run_gac)
 		prune_gac(puzzle, (t_gac_config *)&cfg->gac);
 	if (cfg->run_lookahead)
