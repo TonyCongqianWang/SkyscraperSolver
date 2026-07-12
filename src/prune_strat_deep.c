@@ -13,24 +13,24 @@
 #include "prune_strat_deep.h"
 #include "pruning_routines.h"
 
-static const double	g_min_unset_threshold = 0.14591158774683;
-static const double	g_gac_unset_threshold = 0.235087473816706;
-static const double	g_constr_min_unset = 0.496362077987333;
-static const double	g_lookahead_gac_unset_threshold = 0.218153206877934;
-static const double	g_lookahead_constr_min_unset = 0.501391800430441;
-static const double	g_lookahead_downgrade_fraction = 0.0550035744246513;
-static const int	g_period_base = 655;
-static const int	g_period_coef1 = 27065;
-static const int	g_period_coef2 = 219817;
-static const double	g_gac_local_min_unset = 0.35;
-static const double	g_gac_local_max_unset = 0.70;
-static const double	g_gac_local_global_min_unset = 0.50;
-static const double	g_constr_local_min_unset = 0.35;
-static const double	g_constr_local_max_unset = 0.70;
-static const double	g_constr_local_global_min_unset = 0.50;
-static const double	g_lookahead_local_min_unset = 0.35;
-static const double	g_lookahead_local_max_unset = 0.70;
-static const double	g_lookahead_local_global_min_unset = 0.50;
+static const double	g_min_unset_threshold = 0.147323252537786;
+static const double	g_gac_unset_threshold = 0.25163080557056;
+static const double	g_constr_min_unset = 0.484302699783326;
+static const double	g_lookahead_gac_unset_threshold = 0.224965676901898;
+static const double	g_lookahead_constr_min_unset = 0.509642279393748;
+static const double	g_lookahead_downgrade_fraction = 0.0496186985535093;
+static const int	g_period_base = 657;
+static const int	g_period_coef1 = 27352;
+static const int	g_period_coef2 = 216954;
+static const double	g_gac_local_min_unset = 0.335312411405018;
+static const double	g_gac_local_max_unset = 0.709976949255361;
+static const double	g_gac_local_global_min_unset = 0.507991753163513;
+static const double	g_constr_local_min_unset = 0.348784613258523;
+static const double	g_constr_local_max_unset = 0.697641498524216;
+static const double	g_constr_local_global_min_unset = 0.493074920019733;
+static const double	g_lookahead_local_min_unset = 0.367207746225102;
+static const double	g_lookahead_local_max_unset = 0.690675595985149;
+static const double	g_lookahead_local_global_min_unset = 0.495012833236044;
 
 static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg, double unset_ratio)
 {
