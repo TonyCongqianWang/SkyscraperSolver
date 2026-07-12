@@ -47,7 +47,7 @@ from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS
 def project_constraints(theta):
     name_to_idx = {name: idx for idx, (name, *_) in enumerate(PARAM_METADATA)}
     theta_projected = list(theta)
-    
+
     # Run projection loop to resolve boundary clamping conflicts
     for _ in range(5):
         changed = False
@@ -56,18 +56,18 @@ def project_constraints(theta):
                 continue
             i = name_to_idx[min_name]
             j = name_to_idx[max_name]
-            
+
             _, pmin_i, pmax_i, _, _, _ = PARAM_METADATA[i]
             _, pmin_j, pmax_j, _, _, _ = PARAM_METADATA[j]
-            
+
             x = pmin_i + theta_projected[i] * (pmax_i - pmin_i)
             y = pmin_j + theta_projected[j] * (pmax_j - pmin_j)
-            
+
             if x > y + eps:
                 diff = x - y - eps
                 x_new = x - diff / 2.0
                 y_new = y + diff / 2.0
-                
+
                 theta_projected[i] = max(0.0, min(1.0, (x_new - pmin_i) / (pmax_i - pmin_i)))
                 theta_projected[j] = max(0.0, min(1.0, (y_new - pmin_j) / (pmax_j - pmin_j)))
                 changed = True
@@ -202,7 +202,7 @@ def read_with_timeout(proc, timeout=10.0):
             return None
     return lines
 
-def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
+def evaluate_subset(env, tasks, max_workers, use_stdin=False):
     if not use_stdin:
         times = []
         nodes = []
@@ -282,14 +282,13 @@ def evaluate_subset(env, tasks, max_workers=4, use_stdin=False):
             proc.wait()
         return group_results
 
-    num_workers = os.cpu_count() or 4
     futures = []
-    with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         for opt, clues in by_opt_indexed.items():
-            # Partition clues into num_workers subgroups
-            subgroups = [[] for _ in range(num_workers)]
+            # Partition clues into max_workers subgroups
+            subgroups = [[] for _ in range(max_workers)]
             for idx, item in enumerate(clues):
-                subgroups[idx % num_workers].append(item)
+                subgroups[idx % max_workers].append(item)
             subgroups = [sg for sg in subgroups if sg]
 
             for sg in subgroups:
@@ -335,11 +334,14 @@ def main():
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
     parser.add_argument("--lr", type=float, default=0.002, help="SPSA initial learning rate step size (a)")
     parser.add_argument("--alpha", type=float, default=0.0, help="SPSA learning rate decay exponent (alpha)")
-    parser.add_argument("--perturb", type=float, default=0.04, help="SPSA initial perturbation step size (c)")
+    parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
     parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
+    parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
     args = parser.parse_args()
+
+    max_workers = min(os.cpu_count() or 1, args.max_workers)
 
     global LOG_FILE_HANDLE
     if args.log:
@@ -465,8 +467,8 @@ def main():
 
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_single, n_single = evaluate_subset(env, tasks_single, use_stdin=args.stdin)
-                t_enum, n_enum = evaluate_subset(env, tasks_enum, use_stdin=args.stdin)
+                t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=args.stdin)
+                t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
 
                 sgm_t_s = shifted_geo_mean(t_single, 0.002)
                 sgm_n_s = shifted_geo_mean(n_single, 100.0)
@@ -490,9 +492,9 @@ def main():
 
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, use_stdin=args.stdin)
-                t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, use_stdin=args.stdin)
-                t_e_em, n_e_em = evaluate_subset(env, tasks_enum, use_stdin=args.stdin)
+                t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, max_workers=max_workers, use_stdin=args.stdin)
+                t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, max_workers=max_workers, use_stdin=args.stdin)
+                t_e_em, n_e_em = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
 
                 sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
                 sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
@@ -519,9 +521,9 @@ def main():
 
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
-                t_l1, n_l1 = evaluate_subset(env, tasks_lvl1, use_stdin=args.stdin)
-                t_l2, n_l2 = evaluate_subset(env, tasks_lvl2, use_stdin=args.stdin)
-                t_l3, n_l3 = evaluate_subset(env, tasks_lvl3, use_stdin=args.stdin)
+                t_l1, n_l1 = evaluate_subset(env, tasks_lvl1, max_workers=max_workers, use_stdin=args.stdin)
+                t_l2, n_l2 = evaluate_subset(env, tasks_lvl2, max_workers=max_workers, use_stdin=args.stdin)
+                t_l3, n_l3 = evaluate_subset(env, tasks_lvl3, max_workers=max_workers, use_stdin=args.stdin)
 
                 sgm_t_l1 = shifted_geo_mean(t_l1, 0.100)
                 sgm_n_l1 = shifted_geo_mean(n_l1, 10000.0)
