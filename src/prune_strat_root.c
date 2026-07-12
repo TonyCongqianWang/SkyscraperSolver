@@ -53,12 +53,16 @@ static void	setup_cfg_bounds(t_prune_routine_cfg *cfg)
 	cfg->check_constr_max_unset = g_constr_local_max_unset;
 	cfg->check_constr_global_min_unset
 		= g_constr_global_min_unset;
-	cfg->lookahead.check_mode.constr.min_unset = g_lookahead_constr_local_min_unset;
-	cfg->lookahead.check_mode.constr.max_unset = g_lookahead_constr_local_max_unset;
+	cfg->lookahead.check_mode.constr.min_unset
+		= g_lookahead_constr_local_min_unset;
+	cfg->lookahead.check_mode.constr.max_unset
+		= g_lookahead_constr_local_max_unset;
 	cfg->lookahead.check_mode.constr.global_min_unset
 		= g_lookahead_constr_global_min_unset;
-	cfg->lookahead.check_mode.gac.min_unset = g_lookahead_gac_local_min_unset;
-	cfg->lookahead.check_mode.gac.max_unset = g_lookahead_gac_local_max_unset;
+	cfg->lookahead.check_mode.gac.min_unset
+		= g_lookahead_gac_local_min_unset;
+	cfg->lookahead.check_mode.gac.max_unset
+		= g_lookahead_gac_local_max_unset;
 	cfg->lookahead.check_mode.gac.global_min_unset
 		= g_lookahead_gac_global_min_unset;
 }

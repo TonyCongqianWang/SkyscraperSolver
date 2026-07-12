@@ -33,7 +33,6 @@ typedef struct s_prune_args
 	int				target_clue;
 }	t_prune_args;
 
-
 void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
 			t_constr_limits *limits);
 void	init_dp_tables(t_dp_tables *dp, int size);
