@@ -426,6 +426,24 @@ def main():
     # Cap SWA iterations to at most 80 iterations to prevent dilution on very long runs
     swa_start = max(1, iterations - 80)
 
+    # Resolve winners filename at the start (always attach a suffix starting with _0)
+    os.makedirs(os.path.join(ROOT_DIR, "scratch"), exist_ok=True)
+    base_path = f"scratch/spsa_winners_s{args.size}"
+    ext = ".txt"
+    idx = 0
+    while os.path.exists(os.path.join(ROOT_DIR, f"{base_path}_{idx}{ext}")):
+        idx += 1
+    winners_filename = os.path.join(ROOT_DIR, f"{base_path}_{idx}{ext}")
+    log_print(f"SPSA winners file resolved to: {winners_filename}")
+
+    def save_winners(filename, theta_vals, label):
+        phys = get_physical_params(theta_vals)
+        with open(filename, "w") as f:
+            f.write(f"SPSA WINNING PARAMETERS FOR SIZE {args.size} ({label})\n")
+            f.write("==============================================\n")
+            for name, val in phys.items():
+                f.write(f"#define {name} {val}\n")
+
     # Reference scales
     ref_scale_s7_single_time = 0.005
     ref_scale_s7_single_nodes = 350.0
@@ -616,6 +634,17 @@ def main():
         elif args.size == 9:
             log_print(f"Iter {k:3d} | Loss(T/N): {loss_time_curr:.3f}/{loss_nodes_curr:.3f} | GradNorm(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | S9 Lvl3 t: {stats[0]:.4f}s n: {stats[1]:.0f} | S9 Lvl2 t: {stats[2]:.4f}s n: {stats[3]:.0f}")
 
+        # Write intermediate winners every 100 iterations
+        if k % 100 == 0:
+            if swa_count > 0:
+                current_theta = [x / swa_count for x in swa_theta]
+                label = f"SWA at Iter {k}"
+            else:
+                current_theta = list(theta)
+                label = f"Iter {k}"
+            save_winners(winners_filename, current_theta, label)
+            log_print(f"Iter {k:3d} | Intermediate SPSA winners written to {winners_filename}")
+
     log_print("\nSPSA tuning completed!")
 
     # Compute final theta using SWA if applicable
@@ -648,24 +677,9 @@ def main():
     for name, avg_gt, avg_gn, total_sens in sens_data:
         log_print(f"{name:<30} | {avg_gt:<16.6f} | {avg_gn:<16.6f} | {total_sens:<12.6f}")
 
-    # Write to winners file
-    os.makedirs(os.path.join(ROOT_DIR, "scratch"), exist_ok=True)
-    base_path = f"scratch/spsa_winners_s{args.size}"
-    ext = ".txt"
-    filename = os.path.join(ROOT_DIR, f"{base_path}{ext}")
-    if os.path.exists(filename):
-        idx = 0
-        while os.path.exists(os.path.join(ROOT_DIR, f"{base_path}_{idx}{ext}")):
-            idx += 1
-        filename = os.path.join(ROOT_DIR, f"{base_path}_{idx}{ext}")
-
-    with open(filename, "w") as f:
-        f.write(f"SPSA WINNING PARAMETERS FOR SIZE {args.size} (SWA)\n")
-        f.write("==============================================\n")
-        for name, val in phys_best.items():
-            f.write(f"#define {name} {val}\n")
-
-    log_print(f"\nOptimal generalizing definitions written to {filename}")
+    # Write final winners to resolved file path
+    save_winners(winners_filename, theta_final, "Final SWA" if swa_count > 0 else "Final")
+    log_print(f"\nOptimal generalizing definitions written to {winners_filename}")
 
     if LOG_FILE_HANDLE:
         LOG_FILE_HANDLE.close()
