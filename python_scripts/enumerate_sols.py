@@ -5,30 +5,11 @@ import time
 import argparse
 from multiprocessing import Pool
 
-def get_symmetries(T, B, L, R):
-    s1 = (T, B, L, R)
-    s2 = (L[::-1], R[::-1], B, T)
-    s3 = (B[::-1], T[::-1], R[::-1], L[::-1])
-    s4 = (R, L, T[::-1], B[::-1])
-    s5 = (T[::-1], B[::-1], R, L)
-    s6 = (R[::-1], L[::-1], B[::-1], T[::-1])
-    s7 = (B, T, L[::-1], R[::-1])
-    s8 = (L, R, T, B)
-    return [s1, s2, s3, s4, s5, s6, s7, s8]
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
 
-def canonize(nums):
-    """
-    Dynamically determines board size based on clue count.
-    Standard skyscraper clues have 4 sides, so grid size N = len(nums) // 4.
-    """
-    n = len(nums) // 4
-    T = nums[0:n]
-    B = nums[n:2*n]
-    L = nums[2*n:3*n]
-    R = nums[3*n:4*n]
-    symmetries = get_symmetries(T, B, L, R)
-    sym_lists = [s[0] + s[1] + s[2] + s[3] for s in symmetries]
-    return tuple(min(sym_lists))
+from symmetry import get_symmetries, canonize_nums as canonize
 
 def load_and_canonize_files(filepaths, is_exclude_set=False):
     """Parses files and yields (cmd_str, canonical_key, origin_str) tuples."""

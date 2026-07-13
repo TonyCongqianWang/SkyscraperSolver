@@ -183,27 +183,11 @@ def extract_clues_batch(squares):
     return T, B, L, R
 
 
-def canonize_one(t, b, l, r):
-    """
-    Computes the canonical representation of a clue set (T, B, L, R).
-    Returns the lexicographically smallest flattened tuple of clues across all 8 symmetries.
-    """
-    T_lst = list(t)
-    B_lst = list(b)
-    L_lst = list(l)
-    R_lst = list(r)
-    
-    # 8 symmetries in D_4
-    s1 = T_lst + B_lst + L_lst + R_lst
-    s2 = L_lst[::-1] + R_lst[::-1] + B_lst + T_lst
-    s3 = B_lst[::-1] + T_lst[::-1] + R_lst[::-1] + L_lst[::-1]
-    s4 = R_lst + L_lst + T_lst[::-1] + B_lst[::-1]
-    s5 = T_lst[::-1] + B_lst[::-1] + R_lst + L_lst
-    s6 = R_lst[::-1] + L_lst[::-1] + B_lst[::-1] + T_lst[::-1]
-    s7 = B_lst + T_lst + L_lst[::-1] + R_lst[::-1]
-    s8 = L_lst + R_lst + T_lst + B_lst
-    
-    return tuple(min(s1, s2, s3, s4, s5, s6, s7, s8))
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
+
+from symmetry import canonize_one
 
 
 def generate_unique_instances(n, target_count, burn_in=100000, gap=100):

@@ -59,6 +59,15 @@ You can run it by installing the required solver dependencies (`pip install -r p
 
 ## Version History
 
+### v09
+Large scale refactor and tweakning of entire codebase using agent driven development.
+Improved benchmarking and added scripts to tune parameters automatically using SPSA.
+Added CI tests to allow for easy checking of solver correctness, crucial for fast development.
+
+Solves size 9 benchmarks set in roughly 20 minutes on a 2.20GHz Intel Xeon. A massive improvement!
+
+Slight regression in size 8 enumeration performance.
+
 ### v08
 Added Python Z3 Cross-Checking Solver.
 Added more auxiliary python scripts to measure and improve performance.

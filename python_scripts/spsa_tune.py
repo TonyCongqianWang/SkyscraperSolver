@@ -83,27 +83,11 @@ def log_print(*args, **kwargs):
         print(*args, **kwargs, file=LOG_FILE_HANDLE)
         LOG_FILE_HANDLE.flush()
 
-def get_symmetries(T, B, L, R):
-    s1 = (T, B, L, R)
-    s2 = (L[::-1], R[::-1], B, T)
-    s3 = (B[::-1], T[::-1], R[::-1], L[::-1])
-    s4 = (R, L, T[::-1], B[::-1])
-    s5 = (T[::-1], B[::-1], R, L)
-    s6 = (R[::-1], L[::-1], B[::-1], T[::-1])
-    s7 = (B, T, L[::-1], R[::-1])
-    s8 = (L, R, T, B)
-    return [s1, s2, s3, s4, s5, s6, s7, s8]
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
 
-def canonize(clue_str):
-    nums = list(map(int, clue_str.split()))
-    n = len(nums) // 4
-    T = nums[0:n]
-    B = nums[n:2*n]
-    L = nums[2*n:3*n]
-    R = nums[3*n:4*n]
-    symmetries = get_symmetries(T, B, L, R)
-    sym_lists = [s[0] + s[1] + s[2] + s[3] for s in symmetries]
-    return tuple(min(sym_lists))
+from symmetry import get_symmetries, canonize_clue_str as canonize
 
 def get_deterministic_split(clues, train_ratio):
     """

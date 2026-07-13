@@ -7,6 +7,12 @@ import statistics
 import os
 import argparse
 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+if SCRIPT_DIR not in sys.path:
+    sys.path.append(SCRIPT_DIR)
+
+from symmetry import get_deduplicated_symmetries
+
 
 def format_time(seconds):
     return time.strftime("%H:%M:%S", time.gmtime(seconds)) + f".{int(seconds * 1000) % 1000:03d}"
@@ -56,7 +62,8 @@ def parse_duration(s):
 
 
 def main(command_name, filename, output_file=None, options="",
-         time_limit=None, print_period=None, use_stdin=False, print_summary_limit=-1):
+         time_limit=None, print_period=None, use_stdin=False, print_summary_limit=-1,
+         include_symmetries=False):
     try:
         with open(filename, 'r') as file:
             raw_lines = file.readlines()
@@ -65,6 +72,13 @@ def main(command_name, filename, output_file=None, options="",
         return
 
     lines = [l.strip() for l in raw_lines if l.strip()]
+    
+    if include_symmetries:
+        expanded_lines = []
+        for line in lines:
+            expanded_lines.extend(get_deduplicated_symmetries(line))
+        lines = expanded_lines
+
     total = len(lines)
 
     if output_file and os.path.exists(output_file):
@@ -307,8 +321,31 @@ if __name__ == "__main__":
                         help='Pass the puzzle input via stdin interactively (enabled by default).')
     parser.add_argument('--no-use-stdin', action='store_false', dest='use_stdin',
                         help='Disable stdin batching and run instances as individual subprocesses.')
+    parser.add_argument('--all-sols', action='store_true',
+                        help='Enumerate all solutions (applies -s 0 to the solver options).')
+    parser.add_argument('--include-symmetries', action='store_true', dest='include_symmetries', default=None,
+                        help='Solve all deduplicated symmetries of each instance to reduce variance.')
+    parser.add_argument('--no-include-symmetries', action='store_false', dest='include_symmetries', default=None,
+                        help='Disable solving all symmetries of each instance.')
 
     args = parser.parse_args()
+
+    # Determine default for include_symmetries based on all_sols
+    if args.include_symmetries is None:
+        if args.all_sols:
+            include_symmetries = False
+        else:
+            include_symmetries = True
+    else:
+        include_symmetries = args.include_symmetries
+
+    # Prepend "-s 0" to options if all_sols is requested
+    options = args.options
+    if args.all_sols:
+        if options.strip():
+            options = "-s 0 " + options
+        else:
+            options = "-s 0"
 
     try:
         time_limit   = parse_duration(args.time_limit)
@@ -317,5 +354,6 @@ if __name__ == "__main__":
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
-    main(args.command, args.filename, args.output, args.options,
-         time_limit=time_limit, print_period=print_period, use_stdin=args.use_stdin, print_summary_limit=args.print_limit_summary)
+    main(args.command, args.filename, args.output, options,
+         time_limit=time_limit, print_period=print_period, use_stdin=args.use_stdin,
+         print_summary_limit=args.print_limit_summary, include_symmetries=include_symmetries)
