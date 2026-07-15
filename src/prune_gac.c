@@ -69,11 +69,9 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 {
 	int		cells[MAX_SIZE];
 	int		count;
-	double	global_ratio;
 	double	local_ratio;
 
-	global_ratio = (double)puzzle->cur_node->num_unset / puzzle->squared_size;
-	if (global_ratio < config->global_min_unset)
+	if (puzzle->cur_node->remaining_entropy < config->global_min_entropy)
 		return ;
 	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
 	local_ratio = (double)count / puzzle->cur_node->size;

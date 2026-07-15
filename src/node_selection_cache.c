@@ -113,5 +113,5 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 	}
 	else
 		rebuild_existing_cache(puzzle, cache, config);
-	cache->last_build_prog = n->progress_counter;
+	cache->last_build_entropy = n->remaining_entropy;
 }

@@ -24,7 +24,7 @@ static void	run_check_constr_routine(t_puzzle *puzzle,
 
 	limits.min_unset = cfg->check_constr_min_unset;
 	limits.max_unset = cfg->check_constr_max_unset;
-	limits.global_min_unset = cfg->check_constr_global_min_unset;
+	limits.global_min_entropy = cfg->check_constr_global_min_entropy;
 	prune_check_constr(puzzle, cfg->check_constr_selectivity, &limits);
 }
 
@@ -40,7 +40,7 @@ static int	check_early_skips(t_node_state *node,
 	{
 		i = -1;
 		while (++i <= cfg_idx)
-			node->last_prog[i] = node->progress_counter;
+			node->last_entropy[i] = node->remaining_entropy;
 		return (1);
 	}
 	if (is_max_selectivity_any_change(cfg)
@@ -51,7 +51,7 @@ static int	check_early_skips(t_node_state *node,
 	{
 		i = -1;
 		while (++i <= cfg_idx)
-			node->last_prog[i] = node->progress_counter;
+			node->last_entropy[i] = node->remaining_entropy;
 		return (1);
 	}
 	return (0);
@@ -74,14 +74,14 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 		int cfg_idx)
 {
 	t_node_state	*node;
-	t_prune_prog	prev_prog;
+	int				prev_entropy;
 	int				i;
 
 	node = puzzle->cur_node;
 	if (check_early_skips(node, cfg, cfg_idx))
 		return (0);
 	puzzle->prune_runs_count++;
-	prev_prog = node->progress_counter;
+	prev_entropy = node->remaining_entropy;
 	if (cfg->run_check_constr)
 		run_check_constr_routine(puzzle, cfg);
 	if (cfg->run_gac)
@@ -90,10 +90,10 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 		run_lookahead_loop(puzzle, node, &cfg->lookahead);
 	i = -1;
 	while (++i <= cfg_idx)
-		node->last_prog[i] = prev_prog;
+		node->last_entropy[i] = prev_entropy;
 	post_prune_update(node, node->num_unset,
 		is_only_selectivity_value_set(cfg));
-	if (node->progress_counter == prev_prog)
+	if (node->remaining_entropy == prev_entropy)
 		return (0);
 	return (1);
 }

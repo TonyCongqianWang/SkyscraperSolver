@@ -16,6 +16,7 @@
 #include "cell_bounds.h"
 #include "grid_availability.h"
 #include "check_node_validity.h"
+#include "entropy.h"
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
 
@@ -27,7 +28,6 @@ void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
 		state->is_invalid = 1;
 		return ;
 	}
-	state->progress_counter += state->size * state->size;
 	state->grid.vals[cell_idx] = val;
 	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
 	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
@@ -43,7 +43,7 @@ void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
 
 void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 {
-	int	n_invalidated;
+	int	old_cell_count;
 
 	if (state->is_invalid)
 		return ;
@@ -51,8 +51,8 @@ void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 		state->is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
 	{
-		n_invalidated = state->size - state->grid.num_cell_vals[cell_idx];
-		state->progress_counter += 20 + 5 * n_invalidated * n_invalidated;
+		old_cell_count = state->grid.num_cell_vals[cell_idx];
+		state->remaining_entropy -= entropy_delta_cell(old_cell_count);
 		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);

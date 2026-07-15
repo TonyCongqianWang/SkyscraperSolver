@@ -41,15 +41,15 @@ int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
-	t_prune_prog		progress;
+	int					entropy_reduced;
 
 	cur_node = puzzle->cur_node;
 	old_state = *(cur_node);
 	transition_node(puzzle, depth);
 	local_sols = tree_recursion(puzzle, next, mode);
-	progress = cur_node->progress_counter - old_state.progress_counter;
+	entropy_reduced = old_state.remaining_entropy - cur_node->remaining_entropy;
 	old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
-		= (double)progress;
+		= (double)entropy_reduced;
 	*(cur_node) = old_state;
 	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);

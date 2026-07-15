@@ -28,7 +28,7 @@ static void	run_gac_analysis(t_puzzle *puzzle, int idx, t_check_mode mode)
 	gac_cfg.analyse_hidden = 1;
 	gac_cfg.min_unset = mode.gac.min_unset;
 	gac_cfg.max_unset = mode.gac.max_unset;
-	gac_cfg.global_min_unset = mode.gac.global_min_unset;
+	gac_cfg.global_min_entropy = mode.gac.global_min_entropy;
 	analyse_gac_line(puzzle, idx % node->size, idx < node->size,
 		&gac_cfg);
 }

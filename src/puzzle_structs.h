@@ -22,7 +22,6 @@
 
 typedef unsigned short		t_u16;
 typedef unsigned long long	t_u64;
-typedef t_u64				t_prune_prog;
 typedef t_u64				t_sol_count;
 typedef t_u64				t_node_count;
 typedef struct s_puzzle		t_puzzle;
@@ -41,7 +40,7 @@ typedef struct s_node_order
 {
 	t_node_transition	entries[MAX_CELL_COUNT];
 	int					count;
-	t_prune_prog		last_build_prog;
+	int					last_build_entropy;
 	int					build_depth;
 }		t_node_order;
 
@@ -102,8 +101,8 @@ typedef struct s_node_state
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
 	int						lowest_empty_idx;
-	t_prune_prog			progress_counter;
-	t_prune_prog			last_prog[4];
+	int						remaining_entropy;
+	int						last_entropy[4];
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_grid_state			grid;
@@ -148,6 +147,7 @@ typedef struct s_puzzle
 {
 	int						size;
 	int						squared_size;
+	int						max_entropy;
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_node_count			nodes_visited;

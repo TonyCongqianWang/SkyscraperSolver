@@ -32,7 +32,7 @@ typedef struct s_constr_limits
 {
 	double	min_unset;
 	double	max_unset;
-	double	global_min_unset;
+	int		global_min_entropy;
 }				t_constr_limits;
 
 typedef struct s_check_mode
@@ -66,7 +66,7 @@ typedef struct s_gac_config
 	int					analyse_hidden;
 	double				min_unset;
 	double				max_unset;
-	double				global_min_unset;
+	int					global_min_entropy;
 }	t_gac_config;
 
 typedef struct s_prune_config

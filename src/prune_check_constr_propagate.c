@@ -47,8 +47,8 @@ int	check_ratios(t_puzzle *puzzle, int *grid_indices, int size,
 	int		i;
 	double	local_ratio;
 
-	if ((double)puzzle->cur_node->num_unset / puzzle->squared_size
-		< limits->global_min_unset)
+	if (puzzle->cur_node->remaining_entropy
+		< limits->global_min_entropy)
 		return (0);
 	unset_cnt = 0;
 	i = 0;

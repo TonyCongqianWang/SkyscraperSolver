@@ -14,6 +14,7 @@
 #include "cell_bounds.h"
 #include "solution_storage.h"
 #include "node_selection_cache.h"
+#include "entropy.h"
 
 static void	init_root_node(t_node_state *puzzle, int size);
 static void	init_node_grid(t_node_state *puzzle, int size);
@@ -42,6 +43,13 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 		init_constraint(puzzle, idx, size);
 		idx++;
 	}
+	puzzle->cur_node->remaining_entropy
+		= compute_initial_entropy(puzzle->cur_node, size);
+	puzzle->max_entropy = puzzle->cur_node->remaining_entropy;
+	puzzle->cur_node->last_entropy[0] = puzzle->cur_node->remaining_entropy;
+	puzzle->cur_node->last_entropy[1] = puzzle->cur_node->remaining_entropy;
+	puzzle->cur_node->last_entropy[2] = puzzle->cur_node->remaining_entropy;
+	puzzle->cur_node->last_entropy[3] = puzzle->cur_node->remaining_entropy;
 }
 
 static void	init_constraint(t_puzzle *puzzle, int idx, int size)
@@ -82,11 +90,11 @@ static void	init_root_node(t_node_state *root_node, int size)
 	root_node->cols_invalid_since_prune = 0xffff;
 	root_node->is_in_lookahead_select = 0;
 	init_node_order_ptrs(root_node);
-	root_node->progress_counter = 0;
-	root_node->last_prog[0] = 0;
-	root_node->last_prog[1] = 0;
-	root_node->last_prog[2] = 0;
-	root_node->last_prog[3] = 0;
+	root_node->remaining_entropy = 0;
+	root_node->last_entropy[0] = 0;
+	root_node->last_entropy[1] = 0;
+	root_node->last_entropy[2] = 0;
+	root_node->last_entropy[3] = 0;
 	root_node->solutions_found = 0;
 	root_node->max_solutions = root_node->puzzle->max_solutions;
 	init_node_grid(root_node, size);

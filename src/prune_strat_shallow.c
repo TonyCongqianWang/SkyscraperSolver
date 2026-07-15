@@ -12,31 +12,34 @@
 
 #include "prune_strat_shallow.h"
 #include "pruning_routines.h"
+#include "entropy.h"
 
-static const double	g_min_unset_threshold = 0.499411380852739;
-static const double	g_gac_min_unset = 0.165721508135695;
-static const double	g_constr_min_unset = 0.416153972656079;
+static const int	g_min_entropy_threshold = 512955;
+static const int	g_gac_min_entropy = 170213;
+static const int	g_constr_min_entropy = 427437;
 static const double	g_lookahead_downgrade_fraction = 0.0088915315395742;
-static const int	g_period_base = 35;
-static const int	g_period_coef1 = 334;
-static const int	g_period_coef2 = 2006;
+static const long long	g_period_scale = 1000000;
+static const int	g_period_coef_sqrt = 10;
+static const int	g_period_coef_inv = 0;
+static const int	g_period_coef_unset = 0;
 static const double	g_gac_local_min_unset = 0.1;
 static const double	g_gac_local_max_unset = 0.85;
-static const double	g_gac_global_min_unset = 0.530611449136271;
+static const int	g_gac_global_min_entropy = 545022;
 static const double	g_constr_local_min_unset = 0.1;
 static const double	g_constr_local_max_unset = 0.85;
-static const double	g_constr_global_min_unset = 0.480779253900805;
+static const int	g_constr_global_min_entropy = 494001;
 static const double	g_lookahead_gac_local_min_unset = 0.1;
 static const double	g_lookahead_gac_local_max_unset = 0.85;
-static const double	g_lookahead_gac_global_min_unset = 0.517829297456089;
+static const int	g_lookahead_gac_global_min_entropy = 531892;
 static const double	g_lookahead_constr_local_min_unset = 0.1;
 static const double	g_lookahead_constr_local_max_unset = 0.85;
-static const double	g_lookahead_constr_global_min_unset = 0.515725340096388;
+static const int	g_lookahead_constr_global_min_entropy = 529729;
 
-static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg, double unset_ratio)
+static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
+		int remaining_entropy)
 {
-	cfg->run_gac = (unset_ratio >= g_gac_min_unset);
-	cfg->run_check_constr = (unset_ratio >= g_constr_min_unset);
+	cfg->run_gac = (remaining_entropy >= g_gac_min_entropy);
+	cfg->run_check_constr = (remaining_entropy >= g_constr_min_entropy);
 	cfg->lookahead.check_mode.run_constr = 1;
 	cfg->lookahead.check_mode.run_gac = 1;
 	cfg->lookahead.check_mode.run_prop = 1;
@@ -48,26 +51,26 @@ static void	setup_cfg_bounds(t_prune_routine_cfg *cfg)
 {
 	cfg->gac.min_unset = g_gac_local_min_unset;
 	cfg->gac.max_unset = g_gac_local_max_unset;
-	cfg->gac.global_min_unset = g_gac_global_min_unset;
+	cfg->gac.global_min_entropy = g_gac_global_min_entropy;
 	cfg->check_constr_min_unset = g_constr_local_min_unset;
 	cfg->check_constr_max_unset = g_constr_local_max_unset;
-	cfg->check_constr_global_min_unset
-		= g_constr_global_min_unset;
+	cfg->check_constr_global_min_entropy
+		= g_constr_global_min_entropy;
 	cfg->lookahead.check_mode.constr.min_unset
 		= g_lookahead_constr_local_min_unset;
 	cfg->lookahead.check_mode.constr.max_unset
 		= g_lookahead_constr_local_max_unset;
-	cfg->lookahead.check_mode.constr.global_min_unset
-		= g_lookahead_constr_global_min_unset;
+	cfg->lookahead.check_mode.constr.global_min_entropy
+		= g_lookahead_constr_global_min_entropy;
 	cfg->lookahead.check_mode.gac.min_unset
 		= g_lookahead_gac_local_min_unset;
 	cfg->lookahead.check_mode.gac.max_unset
 		= g_lookahead_gac_local_max_unset;
-	cfg->lookahead.check_mode.gac.global_min_unset
-		= g_lookahead_gac_global_min_unset;
+	cfg->lookahead.check_mode.gac.global_min_entropy
+		= g_lookahead_gac_global_min_entropy;
 }
 
-static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
+static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
 {
 	t_prune_routine_cfg	cfg;
 
@@ -77,7 +80,7 @@ static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 		get_prune_cfg_medium(&cfg);
 	else
 		get_prune_cfg_heavy(&cfg);
-	setup_cfg_thresholds(&cfg, unset_ratio);
+	setup_cfg_thresholds(&cfg, remaining_entropy);
 	setup_cfg_bounds(&cfg);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
@@ -85,24 +88,28 @@ static int	run_tier(t_puzzle *puzzle, int tier, double unset_ratio)
 int	prune_strat_shallow(t_puzzle *puzzle)
 {
 	t_node_state	*node;
-	double			unset_ratio;
-	double			x;
-	t_prune_prog	period;
+	long long		raw;
+	int				rem;
+	int				period;
 
 	node = puzzle->cur_node;
 	if (node->is_invalid || node->is_complete || node->num_unset == 0)
 		return (0);
-	unset_ratio = (double)node->num_unset / puzzle->squared_size;
-	if (unset_ratio < g_min_unset_threshold)
+	if (node->remaining_entropy < g_min_entropy_threshold)
 		return (0);
-	x = 1 - unset_ratio;
-	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
-			+ g_period_coef2 * x * x * x * x);
-	if (node->progress_counter > node->last_prog[0] + period / 2)
-		return (run_tier(puzzle, 0, unset_ratio));
-	if (node->progress_counter > node->last_prog[1] + period)
-		return (run_tier(puzzle, 1, unset_ratio));
-	if (node->progress_counter > node->last_prog[2] + period * 2)
-		return (run_tier(puzzle, 2, unset_ratio));
+	rem = node->remaining_entropy;
+	if (rem < 1)
+		rem = 1;
+	raw = (long long)(puzzle->max_entropy - rem)
+		* g_period_scale / rem;
+	period = g_period_coef_sqrt * isqrt_approx(raw)
+		+ g_period_coef_inv * (int)(raw / 1000)
+		+ g_period_coef_unset * (puzzle->squared_size - node->num_unset);
+	if (node->last_entropy[0] - node->remaining_entropy > period / 2)
+		return (run_tier(puzzle, 0, node->remaining_entropy));
+	if (node->last_entropy[1] - node->remaining_entropy > period)
+		return (run_tier(puzzle, 1, node->remaining_entropy));
+	if (node->last_entropy[2] - node->remaining_entropy > period * 2)
+		return (run_tier(puzzle, 2, node->remaining_entropy));
 	return (0);
 }

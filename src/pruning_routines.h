@@ -22,7 +22,7 @@ typedef struct s_prune_routine_config
 	t_selectivity_level	check_constr_selectivity;
 	double				check_constr_min_unset;
 	double				check_constr_max_unset;
-	double				check_constr_global_min_unset;
+	int					check_constr_global_min_entropy;
 	int					run_gac;
 	t_gac_config		gac;
 	int					run_lookahead;
