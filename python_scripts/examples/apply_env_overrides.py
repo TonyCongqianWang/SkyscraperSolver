@@ -6,54 +6,56 @@ import re
 def make_tier_config(tier_lower, tier_upper):
     return (f"src/prune_strat_{tier_lower}.c", {
         "var_names": [
-            "g_min_unset_threshold", "g_gac_min_unset", "g_constr_min_unset",
+            "g_min_entropy_threshold", "g_gac_min_entropy", "g_constr_min_entropy",
             "g_lookahead_downgrade_fraction",
-            "g_period_base", "g_period_coef1", "g_period_coef2",
-            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_global_min_unset",
-            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_global_min_unset",
-            "g_lookahead_gac_local_min_unset", "g_lookahead_gac_local_max_unset", "g_lookahead_gac_global_min_unset",
-            "g_lookahead_constr_local_min_unset", "g_lookahead_constr_local_max_unset", "g_lookahead_constr_global_min_unset"
+            "g_period_coef_sqrt", "g_period_coef_inv", "g_period_coef_unset",
+            "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_global_min_entropy",
+            "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_global_min_entropy",
+            "g_lookahead_gac_local_min_unset", "g_lookahead_gac_local_max_unset", "g_lookahead_gac_global_min_entropy",
+            "g_lookahead_constr_local_min_unset", "g_lookahead_constr_local_max_unset", "g_lookahead_constr_global_min_entropy"
         ],
-        "target_vars_template": """static const double	g_min_unset_threshold = {g_min_unset_threshold};
-static const double	g_gac_min_unset = {g_gac_min_unset};
-static const double	g_constr_min_unset = {g_constr_min_unset};
+        "target_vars_template": """static const int	g_min_entropy_threshold = {g_min_entropy_threshold};
+static const int	g_gac_min_entropy = {g_gac_min_entropy};
+static const int	g_constr_min_entropy = {g_constr_min_entropy};
 static const double	g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
-static const int	g_period_base = {g_period_base};
-static const int	g_period_coef1 = {g_period_coef1};
-static const int	g_period_coef2 = {g_period_coef2};
+static const long long	g_period_scale = 1000000;
+static const int	g_period_coef_sqrt = {g_period_coef_sqrt};
+static const int	g_period_coef_inv = {g_period_coef_inv};
+static const int	g_period_coef_unset = {g_period_coef_unset};
 static const double	g_gac_local_min_unset = {g_gac_local_min_unset};
 static const double	g_gac_local_max_unset = {g_gac_local_max_unset};
-static const double	g_gac_global_min_unset = {g_gac_global_min_unset};
+static const int	g_gac_global_min_entropy = {g_gac_global_min_entropy};
 static const double	g_constr_local_min_unset = {g_constr_local_min_unset};
 static const double	g_constr_local_max_unset = {g_constr_local_max_unset};
-static const double	g_constr_global_min_unset = {g_constr_global_min_unset};
+static const int	g_constr_global_min_entropy = {g_constr_global_min_entropy};
 static const double	g_lookahead_gac_local_min_unset = {g_lookahead_gac_local_min_unset};
 static const double	g_lookahead_gac_local_max_unset = {g_lookahead_gac_local_max_unset};
-static const double	g_lookahead_gac_global_min_unset = {g_lookahead_gac_global_min_unset};
+static const int	g_lookahead_gac_global_min_entropy = {g_lookahead_gac_global_min_entropy};
 static const double	g_lookahead_constr_local_min_unset = {g_lookahead_constr_local_min_unset};
 static const double	g_lookahead_constr_local_max_unset = {g_lookahead_constr_local_max_unset};
-static const double	g_lookahead_constr_global_min_unset = {g_lookahead_constr_global_min_unset};""",
+static const int	g_lookahead_constr_global_min_entropy = {g_lookahead_constr_global_min_entropy};""",
         "replacement_vars_template": f"""#include <stdlib.h>
 
-static double	g_min_unset_threshold = {{g_min_unset_threshold}};
-static double	g_gac_min_unset = {{g_gac_min_unset}};
-static double	g_constr_min_unset = {{g_constr_min_unset}};
+static int		g_min_entropy_threshold = {{g_min_entropy_threshold}};
+static int		g_gac_min_entropy = {{g_gac_min_entropy}};
+static int		g_constr_min_entropy = {{g_constr_min_entropy}};
 static double	g_lookahead_downgrade_fraction = {{g_lookahead_downgrade_fraction}};
-static int		g_period_base = {{g_period_base}};
-static int		g_period_coef1 = {{g_period_coef1}};
-static int		g_period_coef2 = {{g_period_coef2}};
+static const long long	g_period_scale = 1000000;
+static int		g_period_coef_sqrt = {{g_period_coef_sqrt}};
+static int		g_period_coef_inv = {{g_period_coef_inv}};
+static int		g_period_coef_unset = {{g_period_coef_unset}};
 static double	g_gac_local_min_unset = {{g_gac_local_min_unset}};
 static double	g_gac_local_max_unset = {{g_gac_local_max_unset}};
-static double	g_gac_global_min_unset = {{g_gac_global_min_unset}};
+static int		g_gac_global_min_entropy = {{g_gac_global_min_entropy}};
 static double	g_constr_local_min_unset = {{g_constr_local_min_unset}};
 static double	g_constr_local_max_unset = {{g_constr_local_max_unset}};
-static double	g_constr_global_min_unset = {{g_constr_global_min_unset}};
+static int		g_constr_global_min_entropy = {{g_constr_global_min_entropy}};
 static double	g_lookahead_gac_local_min_unset = {{g_lookahead_gac_local_min_unset}};
 static double	g_lookahead_gac_local_max_unset = {{g_lookahead_gac_local_max_unset}};
-static double	g_lookahead_gac_global_min_unset = {{g_lookahead_gac_global_min_unset}};
+static int		g_lookahead_gac_global_min_entropy = {{g_lookahead_gac_global_min_entropy}};
 static double	g_lookahead_constr_local_min_unset = {{g_lookahead_constr_local_min_unset}};
 static double	g_lookahead_constr_local_max_unset = {{g_lookahead_constr_local_max_unset}};
-static double	g_lookahead_constr_global_min_unset = {{g_lookahead_constr_global_min_unset}};
+static int		g_lookahead_constr_global_min_entropy = {{g_lookahead_constr_global_min_entropy}};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_env(void)
@@ -63,73 +65,71 @@ static void	init_env(void)
 
 	if (initialized)
 		return ;
-	val = getenv("{tier_upper}_MIN_UNSET");
+	val = getenv("{tier_upper}_MIN_ENTROPY");
 	if (val)
-		g_min_unset_threshold = atof(val);
-	val = getenv("{tier_upper}_GAC_MIN_UNSET");
+		g_min_entropy_threshold = atoi(val);
+	val = getenv("{tier_upper}_GAC_MIN_ENTROPY");
 	if (val)
-		g_gac_min_unset = atof(val);
-	val = getenv("{tier_upper}_CONSTR_MIN_UNSET");
+		g_gac_min_entropy = atoi(val);
+	val = getenv("{tier_upper}_CONSTR_MIN_ENTROPY");
 	if (val)
-		g_constr_min_unset = atof(val);
+		g_constr_min_entropy = atoi(val);
 	val = getenv("{tier_upper}_LOOKAHEAD_DOWNGRADE_FRACTION");
 	if (val)
 		g_lookahead_downgrade_fraction = atof(val);
-	val = getenv("{tier_upper}_PERIOD_BASE");
+	val = getenv("{tier_upper}_PERIOD_COEF_SQRT");
 	if (val)
-		g_period_base = atoi(val);
-	val = getenv("{tier_upper}_PERIOD_COEF1");
+		g_period_coef_sqrt = atoi(val);
+	val = getenv("{tier_upper}_PERIOD_COEF_INV");
 	if (val)
-		g_period_coef1 = atoi(val);
-	val = getenv("{tier_upper}_PERIOD_COEF2");
+		g_period_coef_inv = atoi(val);
+	val = getenv("{tier_upper}_PERIOD_COEF_UNSET");
 	if (val)
-		g_period_coef2 = atoi(val);
+		g_period_coef_unset = atoi(val);
 	val = getenv("{tier_upper}_GAC_LOCAL_MIN_UNSET");
 	if (val)
 		g_gac_local_min_unset = atof(val);
 	val = getenv("{tier_upper}_GAC_LOCAL_MAX_UNSET");
 	if (val)
 		g_gac_local_max_unset = atof(val);
-	val = getenv("{tier_upper}_GAC_GLOBAL_MIN_UNSET");
+	val = getenv("{tier_upper}_GAC_GLOBAL_MIN_ENTROPY");
 	if (val)
-		g_gac_global_min_unset = atof(val);
+		g_gac_global_min_entropy = atoi(val);
 	val = getenv("{tier_upper}_CONSTR_LOCAL_MIN_UNSET");
 	if (val)
 		g_constr_local_min_unset = atof(val);
 	val = getenv("{tier_upper}_CONSTR_LOCAL_MAX_UNSET");
 	if (val)
 		g_constr_local_max_unset = atof(val);
-	val = getenv("{tier_upper}_CONSTR_GLOBAL_MIN_UNSET");
+	val = getenv("{tier_upper}_CONSTR_GLOBAL_MIN_ENTROPY");
 	if (val)
-		g_constr_global_min_unset = atof(val);
+		g_constr_global_min_entropy = atoi(val);
 	val = getenv("{tier_upper}_LOOKAHEAD_GAC_LOCAL_MIN_UNSET");
 	if (val)
 		g_lookahead_gac_local_min_unset = atof(val);
 	val = getenv("{tier_upper}_LOOKAHEAD_GAC_LOCAL_MAX_UNSET");
 	if (val)
 		g_lookahead_gac_local_max_unset = atof(val);
-	val = getenv("{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_UNSET");
+	val = getenv("{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY");
 	if (val)
-		g_lookahead_gac_global_min_unset = atof(val);
+		g_lookahead_gac_global_min_entropy = atoi(val);
 	val = getenv("{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MIN_UNSET");
 	if (val)
 		g_lookahead_constr_local_min_unset = atof(val);
 	val = getenv("{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MAX_UNSET");
 	if (val)
 		g_lookahead_constr_local_max_unset = atof(val);
-	val = getenv("{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_UNSET");
+	val = getenv("{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY");
 	if (val)
-		g_lookahead_constr_global_min_unset = atof(val);
+		g_lookahead_constr_global_min_entropy = atoi(val);
 	initialized = 1;
 }}}}
 #endif""",
-        "target_init": """	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
-			+ g_period_coef2 * x * x * x * x);""",
+        "target_init": """	rem = node->remaining_entropy;""",
         "replacement_init": """#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 	init_env();
 #endif
-	period = (t_prune_prog)(g_period_base + g_period_coef1 * x * x
-			+ g_period_coef2 * x * x * x * x);"""
+	rem = node->remaining_entropy;"""
     })
 
 FILES_CONFIGS = [
@@ -179,16 +179,14 @@ static void	init_routing_env(void)
     make_tier_config("deep", "DEEP"),
     ("src/sel_strat_routing.c", {
         "var_names": [
-            "g_sel_rebuild_period", "g_sel_ord2_coeff", "g_sel_ord4_coeff"
+            "g_sel_period_coef_sqrt", "g_sel_period_coef_inv"
         ],
-        "target_vars_template": """static const double			g_sel_rebuild_period = {g_sel_rebuild_period};
-static const double			g_sel_ord2_coeff = {g_sel_ord2_coeff};
-static const double			g_sel_ord4_coeff = {g_sel_ord4_coeff};""",
+        "target_vars_template": """static const int			g_sel_period_coef_sqrt = {g_sel_period_coef_sqrt};
+static const int			g_sel_period_coef_inv = {g_sel_period_coef_inv};""",
         "replacement_vars_template": """#include <stdlib.h>
 
-static double			g_sel_rebuild_period = {g_sel_rebuild_period};
-static double			g_sel_ord2_coeff = {g_sel_ord2_coeff};
-static double			g_sel_ord4_coeff = {g_sel_ord4_coeff};
+static int			g_sel_period_coef_sqrt = {g_sel_period_coef_sqrt};
+static int			g_sel_period_coef_inv = {g_sel_period_coef_inv};
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 static void	init_sel_env(void)
@@ -198,25 +196,20 @@ static void	init_sel_env(void)
 
 	if (initialized)
 		return ;
-	val = getenv("SEL_REBUILD_PERIOD");
+	val = getenv("SEL_PERIOD_COEF_SQRT");
 	if (val)
-		g_sel_rebuild_period = atof(val);
-	val = getenv("SEL_ORD2_COEFF");
+		g_sel_period_coef_sqrt = atoi(val);
+	val = getenv("SEL_PERIOD_COEF_INV");
 	if (val)
-		g_sel_ord2_coeff = atof(val);
-	val = getenv("SEL_ORD4_COEFF");
-	if (val)
-		g_sel_ord4_coeff = atof(val);
+		g_sel_period_coef_inv = atoi(val);
 	initialized = 1;
 }}
 #endif""",
-        "target_init": """	node = puzzle->cur_node;
-	config->score_family = SCORE_BRANCHING;""",
+        "target_init": """	rem = node->remaining_entropy;""",
         "replacement_init": """#if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 	init_sel_env();
 #endif
-	node = puzzle->cur_node;
-	config->score_family = SCORE_BRANCHING;"""
+	rem = node->remaining_entropy;"""
     })
 ]
 
