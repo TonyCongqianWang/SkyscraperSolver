@@ -91,7 +91,7 @@ def get_deduplicated_symmetries(clue_str):
             dedup.append(s_str)
     return dedup
 
-def deduplicate_dataset(clue_lines):
+def deduplicate_dataset(clue_lines, include_symmetries=False):
     """
     Deduplicates an iterable of clue strings modulo D_4 symmetry.
     Returns a list of unique clue strings, preserving the original string's formatting.
@@ -110,6 +110,8 @@ def deduplicate_dataset(clue_lines):
         # Keep only the first instance of any distinct puzzle orbit
         if canon_key not in seen_canonical:
             seen_canonical.add(canon_key)
-            deduped_lines.append(line_clean)
-
+            if include_symmetries:
+                deduped_lines.extend(get_deduplicated_symmetries(line_clean))
+            else:
+                deduped_lines.append(line_clean)
     return deduped_lines

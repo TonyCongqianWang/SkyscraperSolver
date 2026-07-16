@@ -72,9 +72,7 @@ def main(command_name, filename, output_file=None, options="",
         return
 
     lines = [l.strip() for l in raw_lines if l.strip()]
-
-    if include_symmetries:
-        lines = deduplicate_dataset(lines)
+    lines = deduplicate_dataset(lines, include_symmetries)
 
     total = len(lines)
 
