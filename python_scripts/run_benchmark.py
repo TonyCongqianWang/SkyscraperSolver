@@ -11,7 +11,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPT_DIR not in sys.path:
     sys.path.append(SCRIPT_DIR)
 
-from symmetry import get_deduplicated_symmetries
+from symmetry import deduplicate_dataset
 
 
 def format_time(seconds):
@@ -72,12 +72,9 @@ def main(command_name, filename, output_file=None, options="",
         return
 
     lines = [l.strip() for l in raw_lines if l.strip()]
-    
+
     if include_symmetries:
-        expanded_lines = []
-        for line in lines:
-            expanded_lines.extend(get_deduplicated_symmetries(line))
-        lines = expanded_lines
+        lines = deduplicate_dataset(lines)
 
     total = len(lines)
 
