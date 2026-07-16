@@ -14,8 +14,8 @@
 #include "entropy.h"
 
 static const long long		g_sel_period_scale = 1000000;
-static const int			g_sel_period_coef_sqrt = 8;
-static const int			g_sel_period_coef_inv = 8;
+static const int			g_sel_period_coef_sqrt = 4;
+static const int			g_sel_period_coef_inv = 10;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
