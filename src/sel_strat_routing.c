@@ -16,8 +16,8 @@
 #include <math.h>
 
 static const long long		g_sel_period_scale = 1000000;
-static const double			g_sel_period_coef_sqrt = 5;
-static const double			g_sel_period_coef_inv = 13;
+static const double			g_sel_period_coef_sqrt = 6.06833304273319;
+static const double			g_sel_period_coef_inv = 11.6646989171527;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)

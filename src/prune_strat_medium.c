@@ -16,26 +16,26 @@
 #include "math_utils.h"
 #include <math.h>
 
-static const int		g_min_entropy_threshold = 233955;
-static const int		g_gac_min_entropy = 56441;
-static const int		g_constr_min_entropy = 212368;
-static const double		g_lookahead_downgrade_fraction = 0.0164734893989611;
+static const int		g_min_entropy_threshold = 251644;
+static const int		g_gac_min_entropy = 33761;
+static const int		g_constr_min_entropy = 177627;
+static const double		g_lookahead_downgrade_fraction = 0.0331285784575467;
 static const long long	g_period_scale = 1000000;
-static const double		g_period_coef_sqrt = 0;
-static const double		g_period_coef_inv = 0;
-static const double		g_period_coef_unset = 6;
-static const double		g_gac_local_min_unset = 0.270468379794122;
-static const double		g_gac_local_max_unset = 0.881010798419925;
-static const int		g_gac_global_min_entropy = 563915;
-static const double		g_constr_local_min_unset = 0.256301394241828;
-static const double		g_constr_local_max_unset = 0.856315100167345;
-static const int		g_constr_global_min_entropy = 336816;
-static const double		g_lookahead_gac_local_min_unset = 0.24939882657083;
-static const double		g_lookahead_gac_local_max_unset = 0.871298968938874;
-static const int		g_lookahead_gac_global_min_entropy = 511659;
-static const double		g_lookahead_constr_local_min_unset = 0.245653471300598;
-static const double		g_lookahead_constr_local_max_unset = 0.879684318726191;
-static const int		g_lookahead_constr_global_min_entropy = 555690;
+static const double		g_period_coef_sqrt = 0.212216146833401;
+static const double		g_period_coef_inv = 0.481146034568094;
+static const double		g_period_coef_unset = 8.99091756658248;
+static const double		g_gac_local_min_unset = 0.255605893406842;
+static const double		g_gac_local_max_unset = 0.879180186917677;
+static const int		g_gac_global_min_entropy = 543443;
+static const double		g_constr_local_min_unset = 0.253678644885807;
+static const double		g_constr_local_max_unset = 0.856056959336139;
+static const int		g_constr_global_min_entropy = 332842;
+static const double		g_lookahead_gac_local_min_unset = 0.240588053860813;
+static const double		g_lookahead_gac_local_max_unset = 0.866078598479117;
+static const int		g_lookahead_gac_global_min_entropy = 518928;
+static const double		g_lookahead_constr_local_min_unset = 0.254163963068748;
+static const double		g_lookahead_constr_local_max_unset = 0.884542832199825;
+static const int		g_lookahead_constr_global_min_entropy = 549239;
 
 static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 		int remaining_entropy)
