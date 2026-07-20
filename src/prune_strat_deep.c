@@ -14,15 +14,13 @@
 #include "pruning_routines.h"
 #include "entropy.h"
 #include "math_utils.h"
-#include <math.h>
 
 static const int		g_min_entropy_threshold = 172480;
 static const int		g_gac_min_entropy = 239047;
 static const int		g_constr_min_entropy = 535242;
 static const double		g_lookahead_downgrade_fraction = 0.0974373860910821;
-static const long long	g_period_scale = 1000000;
-static const double		g_period_coef_sqrt = 19.6099293174929;
-static const double		g_period_coef_inv = 1.86121787295862;
+static const double		g_period_coef_sqrt = 19609.9293174929;
+static const double		g_period_coef_inv = 1861.21787295862;
 static const double		g_period_coef_unset = 8.11962835391081;
 static const double		g_gac_local_min_unset = 0.280939686694932;
 static const double		g_gac_local_max_unset = 0.861313206259565;
@@ -102,10 +100,9 @@ int	prune_strat_deep(t_puzzle *puzzle)
 	rem = node->remaining_entropy;
 	if (rem < 1)
 		rem = 1;
-	raw = (double)(puzzle->max_entropy - rem)
-		* g_period_scale / rem;
-	period = g_period_coef_sqrt * sqrt(raw)
-		+ g_period_coef_inv * (raw / 1000.0)
+	raw = (double)(puzzle->max_entropy - rem) / rem;
+	period = g_period_coef_sqrt * dsqrt_approx(raw)
+		+ g_period_coef_inv * raw
 		+ g_period_coef_unset * (puzzle->squared_size - node->num_unset);
 	if (node->last_entropy[0] - node->remaining_entropy > period / 2)
 		return (run_tier(puzzle, 0, node->remaining_entropy));

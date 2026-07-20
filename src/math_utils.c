@@ -12,19 +12,39 @@
 
 #include "math_utils.h"
 
-int	isqrt_approx(long long n)
+static double	scale_norm(double *norm)
 {
-	long long	x;
-	long long	y;
+	double	scale;
 
-	if (n <= 1)
-		return ((int)n);
-	x = n;
-	y = (x + 1) / 2;
-	while (y < x)
+	scale = 1.0;
+	while (*norm > 2.0)
 	{
-		x = y;
-		y = (x + n / x) / 2;
+		*norm /= 4.0;
+		scale *= 2.0;
 	}
-	return ((int)x);
+	while (*norm < 0.5)
+	{
+		*norm *= 4.0;
+		scale /= 2.0;
+	}
+	return (scale);
+}
+
+double	dsqrt_approx(double x)
+{
+	double	y;
+	double	scale;
+	int		iter;
+
+	if (x <= 0.0)
+		return (0.0);
+	scale = scale_norm(&x);
+	y = 0.5 * (1.0 + x);
+	iter = 0;
+	while (iter < 4)
+	{
+		y = 0.5 * (y + x / y);
+		iter++;
+	}
+	return (y * scale);
 }

@@ -18,7 +18,6 @@ def make_tier_config(tier_lower, tier_upper):
 static const int		g_gac_min_entropy = {g_gac_min_entropy};
 static const int		g_constr_min_entropy = {g_constr_min_entropy};
 static const double		g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fraction};
-static const long long	g_period_scale = 1000000;
 static const double		g_period_coef_sqrt = {g_period_coef_sqrt};
 static const double		g_period_coef_inv = {g_period_coef_inv};
 static const double		g_period_coef_unset = {g_period_coef_unset};
@@ -40,7 +39,6 @@ static int		g_min_entropy_threshold = {{g_min_entropy_threshold}};
 static int		g_gac_min_entropy = {{g_gac_min_entropy}};
 static int		g_constr_min_entropy = {{g_constr_min_entropy}};
 static double	g_lookahead_downgrade_fraction = {{g_lookahead_downgrade_fraction}};
-static const long long	g_period_scale = 1000000;
 static double	g_period_coef_sqrt = {{g_period_coef_sqrt}};
 static double	g_period_coef_inv = {{g_period_coef_inv}};
 static double	g_period_coef_unset = {{g_period_coef_unset}};

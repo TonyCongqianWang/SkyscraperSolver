@@ -13,6 +13,6 @@
 #ifndef MATH_UTILS_H
 # define MATH_UTILS_H
 
-int		isqrt_approx(long long n);
+double	dsqrt_approx(double x);
 
 #endif

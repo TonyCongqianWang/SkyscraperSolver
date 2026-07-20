@@ -13,11 +13,9 @@
 #include "strategy_routing.h"
 #include "entropy.h"
 #include "math_utils.h"
-#include <math.h>
 
-static const long long		g_sel_period_scale = 1000000;
-static const double			g_sel_period_coef_sqrt = 6.06833304273319;
-static const double			g_sel_period_coef_inv = 11.6646989171527;
+static const double			g_sel_period_coef_sqrt = 6068.33304273319;
+static const double			g_sel_period_coef_inv = 11664.6989171527;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
@@ -35,10 +33,9 @@ void	select_node_select_config(t_puzzle *puzzle,
 	rem = node->remaining_entropy;
 	if (rem < 1)
 		rem = 1;
-	raw = (double)(puzzle->max_entropy - rem)
-		* g_sel_period_scale / rem;
-	term1 = g_sel_period_coef_sqrt * sqrt(raw);
-	term2 = g_sel_period_coef_inv * (raw / 1000.0);
+	raw = (double)(puzzle->max_entropy - rem) / rem;
+	term1 = g_sel_period_coef_sqrt * dsqrt_approx(raw);
+	term2 = g_sel_period_coef_inv * raw;
 	config->rebuild_period = (int)(term1 + term2);
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
