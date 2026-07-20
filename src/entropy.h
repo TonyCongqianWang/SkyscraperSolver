@@ -12,6 +12,7 @@
 
 #ifndef ENTROPY_H
 # define ENTROPY_H
+# include "puzzle_structs.h"
 
 # define ENTROPY_SCALE 1000
 
@@ -33,13 +34,9 @@ static const int	g_log2_table[10] = {
 static const int	g_weight_cell = 2000;
 static const int	g_weight_constr = 1000;
 
-struct s_node_state;
-struct s_puzzle;
-
 int		entropy_delta_cell(int old_count);
 int		entropy_delta_constr(int old_count);
-int		compute_initial_entropy(struct s_node_state *node, int size);
+int		compute_initial_entropy(t_node_state *node, int size);
 int		compute_max_entropy(int size);
-int		isqrt_approx(long long n);
 
 #endif

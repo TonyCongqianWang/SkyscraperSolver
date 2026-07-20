@@ -13,23 +13,13 @@
 #include "entropy.h"
 #include "puzzle_structs.h"
 
-int	entropy_delta_cell(int old_count)
-{
-	return ((g_log2_table[old_count] - g_log2_table[old_count - 1])
-		* g_weight_cell / ENTROPY_SCALE);
-}
+static int	initial_cell_entropy(t_node_state *node, int size);
+static int	initial_constr_entropy(t_node_state *node, int size);
 
-int	entropy_delta_constr(int old_count)
-{
-	return ((g_log2_table[old_count] - g_log2_table[old_count - 1])
-		* g_weight_constr / ENTROPY_SCALE);
-}
-
-int	compute_initial_entropy(t_node_state *node, int size)
+static int	initial_cell_entropy(t_node_state *node, int size)
 {
 	int	entropy;
 	int	i;
-	int	v;
 
 	entropy = 0;
 	i = 0;
@@ -39,6 +29,16 @@ int	compute_initial_entropy(t_node_state *node, int size)
 			* g_weight_cell / ENTROPY_SCALE;
 		i++;
 	}
+	return (entropy);
+}
+
+static int	initial_constr_entropy(t_node_state *node, int size)
+{
+	int	entropy;
+	int	i;
+	int	v;
+
+	entropy = 0;
 	i = 0;
 	while (i < 2 * size)
 	{
@@ -55,25 +55,14 @@ int	compute_initial_entropy(t_node_state *node, int size)
 	return (entropy);
 }
 
+int	compute_initial_entropy(t_node_state *node, int size)
+{
+	return (initial_cell_entropy(node, size)
+		+ initial_constr_entropy(node, size));
+}
+
 int	compute_max_entropy(int size)
 {
 	return (size * size * g_log2_table[size]
 		* (g_weight_cell + 2 * g_weight_constr) / ENTROPY_SCALE);
-}
-
-int	isqrt_approx(long long n)
-{
-	long long	x;
-	long long	y;
-
-	if (n <= 1)
-		return ((int)n);
-	x = n;
-	y = (x + 1) / 2;
-	while (y < x)
-	{
-		x = y;
-		y = (x + n / x) / 2;
-	}
-	return ((int)x);
 }

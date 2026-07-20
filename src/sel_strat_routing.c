@@ -12,6 +12,7 @@
 
 #include "strategy_routing.h"
 #include "entropy.h"
+#include "math_utils.h"
 
 static const long long		g_sel_period_scale = 1000000;
 static const int			g_sel_period_coef_sqrt = 5;
