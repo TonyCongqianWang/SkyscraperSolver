@@ -45,7 +45,7 @@ int		propagate_single_direction(t_prune_args *args);
 int		process_constraint(t_puzzle *puzzle, int idx, int size,
 			t_constr_limits *limits);
 void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size);
-int		check_ratios(t_puzzle *puzzle, int *grid_indices, int size,
+int		check_ratios(t_puzzle *puzzle, int constr_idx, int size,
 			t_constr_limits *limits);
 int		run_propagate(t_prune_args *args, int clue, int *indices);
 

@@ -38,5 +38,7 @@ int		entropy_delta_cell(int old_count);
 int		entropy_delta_constr(int old_count);
 int		compute_initial_entropy(t_node_state *node, int size);
 int		compute_max_entropy(int size);
+int		compute_constr_entropy(t_node_state *node, int idx, int size);
+double	get_relative_constr_entropy(t_node_state *node, int idx, int size);
 
 #endif

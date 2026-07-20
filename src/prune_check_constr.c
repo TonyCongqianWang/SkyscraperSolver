@@ -44,7 +44,7 @@ int	process_constraint(t_puzzle *puzzle, int idx, int size,
 	clues[0] = puzzle->constr_bounds.cur_c_pair.fwd_val;
 	clues[1] = puzzle->constr_bounds.cur_c_pair.bwd_val;
 	copy_indices(puzzle, grid_indices, rev_indices, size);
-	if (!check_ratios(puzzle, grid_indices, size, limits))
+	if (!check_ratios(puzzle, idx, size, limits))
 		return (0);
 	return (do_prop(puzzle, clues, grid_indices, rev_indices));
 }

@@ -26,7 +26,7 @@ endif
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) -o $(BINARY)
+	$(CC) $(CFLAGS) $(OBJS) -o $(BINARY) -lm
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
 	$(CC) $(CFLAGS) -MMD -MP -c $< -o $@

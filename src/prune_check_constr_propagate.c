@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "prune_check_constr.h"
+#include "entropy.h"
 
 void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size)
 {
@@ -40,25 +41,16 @@ int	propagate_single_direction(t_prune_args *args)
 	return (prune_candidates(args));
 }
 
-int	check_ratios(t_puzzle *puzzle, int *grid_indices, int size,
+int	check_ratios(t_puzzle *puzzle, int constr_idx, int size,
 		t_constr_limits *limits)
 {
-	int		unset_cnt;
-	int		i;
 	double	local_ratio;
 
 	if (puzzle->cur_node->remaining_entropy
 		< limits->global_min_entropy)
 		return (0);
-	unset_cnt = 0;
-	i = 0;
-	while (i < size)
-	{
-		if (puzzle->cur_node->grid.vals[grid_indices[i]] == 0)
-			unset_cnt++;
-		i++;
-	}
-	local_ratio = (double)unset_cnt / size;
+	local_ratio = get_relative_constr_entropy(puzzle->cur_node, constr_idx,
+			size);
 	return (local_ratio >= limits->min_unset
 		&& local_ratio <= limits->max_unset);
 }

@@ -13,17 +13,20 @@
 #include "strategy_routing.h"
 #include "entropy.h"
 #include "math_utils.h"
+#include <math.h>
 
 static const long long		g_sel_period_scale = 1000000;
-static const int			g_sel_period_coef_sqrt = 5;
-static const int			g_sel_period_coef_inv = 13;
+static const double			g_sel_period_coef_sqrt = 5;
+static const double			g_sel_period_coef_inv = 13;
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
 {
 	t_node_state	*node;
+	double			raw;
+	double			term1;
+	double			term2;
 	int				rem;
-	long long		raw;
 
 	node = puzzle->cur_node;
 	config->score_family = SCORE_BRANCHING;
@@ -32,10 +35,11 @@ void	select_node_select_config(t_puzzle *puzzle,
 	rem = node->remaining_entropy;
 	if (rem < 1)
 		rem = 1;
-	raw = (long long)(puzzle->max_entropy - rem)
+	raw = (double)(puzzle->max_entropy - rem)
 		* g_sel_period_scale / rem;
-	config->rebuild_period = g_sel_period_coef_sqrt * isqrt_approx(raw)
-		+ g_sel_period_coef_inv * (int)(raw / 1000);
+	term1 = g_sel_period_coef_sqrt * sqrt(raw);
+	term2 = g_sel_period_coef_inv * (raw / 1000.0);
+	config->rebuild_period = (int)(term1 + term2);
 	config->start_cell_idx = -1;
 	config->start_cell_val = 1;
 	config->selectivity = SELECTIVITY_NONE;

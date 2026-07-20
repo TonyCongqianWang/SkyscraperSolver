@@ -14,15 +14,16 @@
 #include "pruning_routines.h"
 #include "entropy.h"
 #include "math_utils.h"
+#include <math.h>
 
 static const int		g_min_entropy_threshold = 347634;
 static const int		g_gac_min_entropy = 169261;
 static const int		g_constr_min_entropy = 417635;
 static const double		g_lookahead_downgrade_fraction = 0.00133481355641504;
 static const long long	g_period_scale = 1000000;
-static const int		g_period_coef_sqrt = 0;
-static const int		g_period_coef_inv = 1;
-static const int		g_period_coef_unset = 2;
+static const double		g_period_coef_sqrt = 0;
+static const double		g_period_coef_inv = 1;
+static const double		g_period_coef_unset = 2;
 static const double		g_gac_local_min_unset = 0.247896825737291;
 static const double		g_gac_local_max_unset = 0.861944827885556;
 static const int		g_gac_global_min_entropy = 585126;
@@ -89,9 +90,9 @@ static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
 int	prune_strat_shallow(t_puzzle *puzzle)
 {
 	t_node_state	*node;
-	long long		raw;
+	double			raw;
+	double			period;
 	int				rem;
-	int				period;
 
 	node = puzzle->cur_node;
 	if (node->is_invalid || node->is_complete || node->num_unset == 0)
@@ -101,10 +102,10 @@ int	prune_strat_shallow(t_puzzle *puzzle)
 	rem = node->remaining_entropy;
 	if (rem < 1)
 		rem = 1;
-	raw = (long long)(puzzle->max_entropy - rem)
+	raw = (double)(puzzle->max_entropy - rem)
 		* g_period_scale / rem;
-	period = g_period_coef_sqrt * isqrt_approx(raw)
-		+ g_period_coef_inv * (int)(raw / 1000)
+	period = g_period_coef_sqrt * sqrt(raw)
+		+ g_period_coef_inv * (raw / 1000.0)
 		+ g_period_coef_unset * (puzzle->squared_size - node->num_unset);
 	if (node->last_entropy[0] - node->remaining_entropy > period / 2)
 		return (run_tier(puzzle, 0, node->remaining_entropy));

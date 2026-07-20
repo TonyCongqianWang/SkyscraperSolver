@@ -18,6 +18,7 @@
 #include "selectivity.h"
 #include "grid_interface.h"
 #include "check_node_validity.h"
+#include "entropy.h"
 
 static int	collect_line_cells(t_node_state *state, int line_idx, int is_col,
 				int *cells)
@@ -69,14 +70,20 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 {
 	int		cells[MAX_SIZE];
 	int		count;
+	int		constr_idx;
 	double	local_ratio;
 
 	if (puzzle->cur_node->remaining_entropy < config->global_min_entropy)
 		return ;
-	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
-	local_ratio = (double)count / puzzle->cur_node->size;
+	if (is_col)
+		constr_idx = idx;
+	else
+		constr_idx = idx + puzzle->cur_node->size;
+	local_ratio = get_relative_constr_entropy(puzzle->cur_node, constr_idx,
+			puzzle->cur_node->size);
 	if (local_ratio < config->min_unset || local_ratio > config->max_unset)
 		return ;
+	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
 	run_gac_analysis_line(puzzle, cells, count, config);
 }
 
