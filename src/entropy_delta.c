@@ -43,11 +43,9 @@ int	compute_constr_entropy(t_node_state *node, int idx, int size)
 double	get_relative_constr_entropy(t_node_state *node, int idx, int size)
 {
 	int	current_entropy;
-	int	max_entropy;
 
 	current_entropy = compute_constr_entropy(node, idx, size);
-	max_entropy = size * g_log2_table[size] * g_weight_constr / ENTROPY_SCALE;
-	if (max_entropy <= 0)
+	if (node->puzzle->constr_max_entropy <= 0)
 		return (0.0);
-	return ((double)current_entropy / max_entropy);
+	return ((double)current_entropy / node->puzzle->constr_max_entropy);
 }

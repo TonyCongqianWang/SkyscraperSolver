@@ -39,6 +39,8 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 
 	puzzle->size = size;
 	puzzle->squared_size = size * size;
+	puzzle->constr_max_entropy = size * g_log2_table[size]
+		* g_weight_constr / ENTROPY_SCALE;
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;
 	puzzle->main_nodes_visited = 0;

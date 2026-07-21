@@ -148,6 +148,7 @@ typedef struct s_puzzle
 	int						size;
 	int						squared_size;
 	int						max_entropy;
+	int						constr_max_entropy;
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
 	t_node_count			nodes_visited;
