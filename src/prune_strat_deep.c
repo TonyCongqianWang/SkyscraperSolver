@@ -15,10 +15,10 @@
 #include "entropy.h"
 #include "math_utils.h"
 
-static const int		g_min_entropy_threshold = 172480;
-static const int		g_gac_min_entropy = 239047;
+static const int		g_min_entropy_threshold = 165000;
+static const int		g_gac_min_entropy = 250000;
 static const int		g_constr_min_entropy = 535242;
-static const double		g_lookahead_downgrade_fraction = 0.0974373860910821;
+static const double		g_lookahead_downgrade_fraction = 0.11;
 static const double		g_period_coef_sqrt = 19609.9293174929;
 static const double		g_period_coef_inv = 1861.21787295862;
 static const double		g_period_coef_unset = 8.11962835391081;

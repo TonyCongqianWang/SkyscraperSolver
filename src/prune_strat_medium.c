@@ -15,8 +15,8 @@
 #include "entropy.h"
 #include "math_utils.h"
 
-static const int		g_min_entropy_threshold = 251644;
-static const int		g_gac_min_entropy = 33761;
+static const int		g_min_entropy_threshold = 225000;
+static const int		g_gac_min_entropy = 15000;
 static const int		g_constr_min_entropy = 177627;
 static const double		g_lookahead_downgrade_fraction = 0.0331285784575467;
 static const double		g_period_coef_sqrt = 212.216146833401;
