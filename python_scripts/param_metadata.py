@@ -4,33 +4,33 @@ PARAM_METADATA = [
     ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.22, float, 1.0),
     ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.35, float, 1.0),
     # ROOT
-    ("ROOT_MIN_ENTROPY", 0, 1027080, 158469, int, 1.0),
+    ("ROOT_MIN_ENTROPY", 0, 1027080, 50000, int, 1.0),
     ("ROOT_GAC_MIN_ENTROPY", 0, 1027080, 58603, int, 1.0),
     ("ROOT_CONSTR_MIN_ENTROPY", 0, 1027080, 70578, int, 1.0),
-    ("ROOT_PERIOD_COEF_SQRT", 0.0, 100000.0, 17552.6224145956, float, 1.0),
-    ("ROOT_PERIOD_COEF_INV", 0.0, 100000.0, 4338.45752938882, float, 1.0),
-    ("ROOT_PERIOD_COEF_UNSET", 0.0, 100.0, 9.08815776601608, float, 1.0),
+    ("ROOT_PERIOD_COEF_SQRT", 0.0, 100000.0, 20.0, float, 1.0),
+    ("ROOT_PERIOD_COEF_INV", 0.0, 100000.0, 10.0, float, 1.0),
+    ("ROOT_PERIOD_COEF_UNSET", 0.0, 100.0, 2.0, float, 1.0),
     # SHALLOW
-    ("SHALLOW_MIN_ENTROPY", 0, 1027080, 310000, int, 1.0),
+    ("SHALLOW_MIN_ENTROPY", 0, 1027080, 100000, int, 1.0),
     ("SHALLOW_GAC_MIN_ENTROPY", 0, 1027080, 186908, int, 1.0),
     ("SHALLOW_CONSTR_MIN_ENTROPY", 0, 1027080, 393682, int, 1.0),
-    ("SHALLOW_PERIOD_COEF_SQRT", 0.0, 100000.0, 97.1054399204143, float, 1.0),
-    ("SHALLOW_PERIOD_COEF_INV", 0.0, 100000.0, 51.1007600690827, float, 1.0),
-    ("SHALLOW_PERIOD_COEF_UNSET", 0.0, 100.0, 4.5, float, 1.0),
+    ("SHALLOW_PERIOD_COEF_SQRT", 0.0, 100000.0, 48.55271996020715, float, 1.0),
+    ("SHALLOW_PERIOD_COEF_INV", 0.0, 100000.0, 25.55038003454135, float, 1.0),
+    ("SHALLOW_PERIOD_COEF_UNSET", 0.0, 100.0, 1.68236572579932, float, 1.0),
     # MEDIUM
-    ("MEDIUM_MIN_ENTROPY", 0, 1027080, 225000, int, 1.0),
+    ("MEDIUM_MIN_ENTROPY", 0, 1027080, 150000, int, 1.0),
     ("MEDIUM_GAC_MIN_ENTROPY", 0, 1027080, 15000, int, 1.0),
     ("MEDIUM_CONSTR_MIN_ENTROPY", 0, 1027080, 177627, int, 1.0),
-    ("MEDIUM_PERIOD_COEF_SQRT", 0.0, 100000.0, 212.216146833401, float, 1.0),
-    ("MEDIUM_PERIOD_COEF_INV", 0.0, 100000.0, 481.146034568094, float, 1.0),
-    ("MEDIUM_PERIOD_COEF_UNSET", 0.0, 100.0, 8.99091756658248, float, 1.0),
+    ("MEDIUM_PERIOD_COEF_SQRT", 0.0, 100000.0, 106.1080734167005, float, 1.0),
+    ("MEDIUM_PERIOD_COEF_INV", 0.0, 100000.0, 240.573017284047, float, 1.0),
+    ("MEDIUM_PERIOD_COEF_UNSET", 0.0, 100.0, 4.49545878329124, float, 1.0),
     # DEEP
-    ("DEEP_MIN_ENTROPY", 0, 1027080, 165000, int, 1.0),
+    ("DEEP_MIN_ENTROPY", 0, 1027080, 200000, int, 1.0),
     ("DEEP_GAC_MIN_ENTROPY", 0, 1027080, 250000, int, 1.0),
     ("DEEP_CONSTR_MIN_ENTROPY", 0, 1027080, 535242, int, 1.0),
-    ("DEEP_PERIOD_COEF_SQRT", 0.0, 100000.0, 19609.9293174929, float, 1.0),
-    ("DEEP_PERIOD_COEF_INV", 0.0, 100000.0, 1861.21787295862, float, 1.0),
-    ("DEEP_PERIOD_COEF_UNSET", 0.0, 100.0, 8.11962835391081, float, 1.0),
+    ("DEEP_PERIOD_COEF_SQRT", 0.0, 100000.0, 500.0, float, 1.0),
+    ("DEEP_PERIOD_COEF_INV", 0.0, 100000.0, 250.0, float, 1.0),
+    ("DEEP_PERIOD_COEF_UNSET", 0.0, 100.0, 4.059814176955405, float, 1.0),
     # NODE SELECT SELECTIVITY ROUTING
     ("SEL_PERIOD_COEF_SQRT", 0.0, 100000.0, 6068.33304273319, float, 1.0),
     ("SEL_PERIOD_COEF_INV", 0.0, 100000.0, 11664.6989171527, float, 1.0),
@@ -91,6 +91,15 @@ PARAM_METADATA = [
     ("DEEP_LOOKAHEAD_CONSTR_LOCAL_MIN_UNSET", 0.0, 1.0, 0.270880899930941, float, 3.0),
     ("DEEP_LOOKAHEAD_CONSTR_LOCAL_MAX_UNSET", 0.0, 1.0, 0.856134411608375, float, 3.0),
     ("DEEP_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", 0, 1027080, 489708, int, 1.0),
+    # TIER MULTIPLIERS
+    ("ROOT_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 2.0, float, 1.0),
+    ("ROOT_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 4.0, float, 1.0),
+    ("SHALLOW_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 2.0, float, 1.0),
+    ("SHALLOW_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 4.0, float, 1.0),
+    ("MEDIUM_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 2.0, float, 1.0),
+    ("MEDIUM_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 4.0, float, 1.0),
+    ("DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 2.0, float, 1.0),
+    ("DEEP_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 4.0, float, 1.0),
 ]
 
 # PARAMETER_MAPPING maps each SPSA parameter to (C_filepath, C_variable_name, type)
@@ -186,6 +195,15 @@ PARAMETER_MAPPING = {
     "DEEP_LOOKAHEAD_CONSTR_LOCAL_MIN_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_local_min_unset", "double"),
     "DEEP_LOOKAHEAD_CONSTR_LOCAL_MAX_UNSET": ("src/prune_strat_deep.c", "g_lookahead_constr_local_max_unset", "double"),
     "DEEP_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY": ("src/prune_strat_deep.c", "g_lookahead_constr_global_min_entropy", "int"),
+    # TIER MULTIPLIERS
+    "ROOT_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/prune_strat_root.c", "g_period_tier_medium_mult", "double"),
+    "ROOT_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/prune_strat_root.c", "g_period_tier_heavy_mult", "double"),
+    "SHALLOW_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/prune_strat_shallow.c", "g_period_tier_medium_mult", "double"),
+    "SHALLOW_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/prune_strat_shallow.c", "g_period_tier_heavy_mult", "double"),
+    "MEDIUM_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/prune_strat_medium.c", "g_period_tier_medium_mult", "double"),
+    "MEDIUM_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/prune_strat_medium.c", "g_period_tier_heavy_mult", "double"),
+    "DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/prune_strat_deep.c", "g_period_tier_medium_mult", "double"),
+    "DEEP_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/prune_strat_deep.c", "g_period_tier_heavy_mult", "double"),
 }
 
 # PARAM_CONSTRAINTS defines linear constraints between parameters.
