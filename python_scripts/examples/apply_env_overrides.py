@@ -9,6 +9,7 @@ def make_tier_config(tier_lower, tier_upper):
             "g_min_entropy_threshold", "g_gac_min_entropy", "g_constr_min_entropy",
             "g_lookahead_downgrade_fraction",
             "g_period_coef_sqrt", "g_period_coef_inv", "g_period_coef_unset",
+            "g_period_tier_medium_mult", "g_period_tier_heavy_mult",
             "g_gac_local_min_unset", "g_gac_local_max_unset", "g_gac_global_min_entropy",
             "g_constr_local_min_unset", "g_constr_local_max_unset", "g_constr_global_min_entropy",
             "g_lookahead_gac_local_min_unset", "g_lookahead_gac_local_max_unset", "g_lookahead_gac_global_min_entropy",
@@ -21,6 +22,8 @@ static const double		g_lookahead_downgrade_fraction = {g_lookahead_downgrade_fra
 static const double		g_period_coef_sqrt = {g_period_coef_sqrt};
 static const double		g_period_coef_inv = {g_period_coef_inv};
 static const double		g_period_coef_unset = {g_period_coef_unset};
+static const double		g_period_tier_medium_mult = {g_period_tier_medium_mult};
+static const double		g_period_tier_heavy_mult = {g_period_tier_heavy_mult};
 static const double		g_gac_local_min_unset = {g_gac_local_min_unset};
 static const double		g_gac_local_max_unset = {g_gac_local_max_unset};
 static const int		g_gac_global_min_entropy = {g_gac_global_min_entropy};
@@ -42,6 +45,8 @@ static double	g_lookahead_downgrade_fraction = {{g_lookahead_downgrade_fraction}
 static double	g_period_coef_sqrt = {{g_period_coef_sqrt}};
 static double	g_period_coef_inv = {{g_period_coef_inv}};
 static double	g_period_coef_unset = {{g_period_coef_unset}};
+static double	g_period_tier_medium_mult = {{g_period_tier_medium_mult}};
+static double	g_period_tier_heavy_mult = {{g_period_tier_heavy_mult}};
 static double	g_gac_local_min_unset = {{g_gac_local_min_unset}};
 static double	g_gac_local_max_unset = {{g_gac_local_max_unset}};
 static int		g_gac_global_min_entropy = {{g_gac_global_min_entropy}};
@@ -84,6 +89,12 @@ static void	init_env(void)
 	val = getenv("{tier_upper}_PERIOD_COEF_UNSET");
 	if (val)
 		g_period_coef_unset = atof(val);
+	val = getenv("{tier_upper}_PERIOD_TIER_MEDIUM_MULTIPLIER");
+	if (val)
+		g_period_tier_medium_mult = atof(val);
+	val = getenv("{tier_upper}_PERIOD_TIER_HEAVY_MULTIPLIER");
+	if (val)
+		g_period_tier_heavy_mult = atof(val);
 	val = getenv("{tier_upper}_GAC_LOCAL_MIN_UNSET");
 	if (val)
 		g_gac_local_min_unset = atof(val);
