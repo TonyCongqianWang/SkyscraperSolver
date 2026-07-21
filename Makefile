@@ -1,7 +1,7 @@
 NAME = skyscraper_solver
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -O2
+CFLAGS = -Wall -Wextra -Werror -O2 -flto
 
 SRC_DIR = src
 OBJ_DIR = obj

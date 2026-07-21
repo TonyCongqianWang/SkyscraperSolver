@@ -13,9 +13,7 @@
 #include "strategy_routing.h"
 #include "entropy.h"
 #include "math_utils.h"
-
-static const double			g_sel_period_coef_sqrt = 7927.92401293205;
-static const double			g_sel_period_coef_inv = 13757.4941371305;
+#include "params_routing.h"
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)
