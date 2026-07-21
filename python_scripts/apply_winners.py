@@ -88,7 +88,10 @@ def main():
             if var_type == "int":
                 formatted_val = str(int(float(raw_val)))
             else:
-                formatted_val = f"{float(raw_val):.15g}"
+                if len(var_name) > 30:
+                    formatted_val = f"{float(raw_val):.8g}"
+                else:
+                    formatted_val = f"{float(raw_val):.15g}"
                 
             # Regex pattern to match: static [const] type name = value;
             pattern = re.compile(rf'(static\s+(?:const\s+)?{var_type}\s+{var_name}\s*=\s*)([^;]+)(;)')
