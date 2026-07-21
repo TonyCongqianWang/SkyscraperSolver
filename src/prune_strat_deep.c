@@ -95,9 +95,8 @@ int	prune_strat_deep(t_puzzle *puzzle)
 	int				rem;
 
 	node = puzzle->cur_node;
-	if (node->is_invalid || node->is_complete || node->num_unset == 0)
-		return (0);
-	if (node->remaining_entropy < g_min_entropy_threshold)
+	if (node->is_invalid || node->is_complete || node->num_unset == 0
+		|| node->remaining_entropy < g_min_entropy_threshold)
 		return (0);
 	rem = node->remaining_entropy;
 	if (rem < 1)
@@ -108,9 +107,11 @@ int	prune_strat_deep(t_puzzle *puzzle)
 		+ g_period_coef_unset * (puzzle->squared_size - node->num_unset);
 	if (node->last_entropy[0] - node->remaining_entropy > period)
 		return (run_tier(puzzle, 0, node->remaining_entropy));
-	if (node->last_entropy[1] - node->remaining_entropy > period * g_period_tier_medium_mult)
+	if (node->last_entropy[1] - node->remaining_entropy
+		> period * g_period_tier_medium_mult)
 		return (run_tier(puzzle, 1, node->remaining_entropy));
-	if (node->last_entropy[2] - node->remaining_entropy > period * g_period_tier_heavy_mult)
+	if (node->last_entropy[2] - node->remaining_entropy
+		> period * g_period_tier_heavy_mult)
 		return (run_tier(puzzle, 2, node->remaining_entropy));
 	return (0);
 }
