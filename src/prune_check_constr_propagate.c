@@ -51,8 +51,8 @@ int	check_ratios(t_puzzle *puzzle, int constr_idx, int size,
 		return (0);
 	local_ratio = get_relative_constr_entropy(puzzle->cur_node, constr_idx,
 			size);
-	return (local_ratio >= limits->min_unset
-		&& local_ratio <= limits->max_unset);
+	return (local_ratio >= limits->min_entropy
+		&& local_ratio <= limits->max_entropy);
 }
 
 int	run_propagate(t_prune_args *args, int clue, int *indices)

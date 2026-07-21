@@ -23,8 +23,8 @@ static void	run_check_constr_routine(t_puzzle *puzzle,
 {
 	t_constr_limits	limits;
 
-	limits.min_unset = cfg->check_constr_min_unset;
-	limits.max_unset = cfg->check_constr_max_unset;
+	limits.min_entropy = cfg->check_constr_min_entropy;
+	limits.max_entropy = cfg->check_constr_max_entropy;
 	limits.global_min_entropy = cfg->check_constr_global_min_entropy;
 	prune_check_constr(puzzle, cfg->check_constr_selectivity, &limits);
 }

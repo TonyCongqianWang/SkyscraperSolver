@@ -82,7 +82,7 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 		constr_idx = idx + puzzle->cur_node->size;
 	local_ratio = get_relative_constr_entropy(puzzle->cur_node, constr_idx,
 			puzzle->cur_node->size);
-	if (local_ratio < config->min_unset || local_ratio > config->max_unset)
+	if (local_ratio < config->min_entropy || local_ratio > config->max_entropy)
 		return ;
 	count = collect_line_cells(puzzle->cur_node, idx, is_col, cells);
 	run_gac_analysis_line(puzzle, cells, count, config);

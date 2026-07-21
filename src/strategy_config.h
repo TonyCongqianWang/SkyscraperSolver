@@ -30,8 +30,8 @@ typedef enum e_selectivity_level
 
 typedef struct s_constr_limits
 {
-	double	min_unset;
-	double	max_unset;
+	double	min_entropy;
+	double	max_entropy;
 	int		global_min_entropy;
 }				t_constr_limits;
 
@@ -64,8 +64,8 @@ typedef struct s_gac_config
 	int					max_k;
 	int					analyse_naked;
 	int					analyse_hidden;
-	double				min_unset;
-	double				max_unset;
+	double				min_entropy;
+	double				max_entropy;
 	int					global_min_entropy;
 }	t_gac_config;
 

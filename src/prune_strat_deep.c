@@ -25,17 +25,17 @@ static const double		g_period_coef_inv = 250.0;
 static const double		g_period_coef_unset = 4.059814176955405;
 static const double		g_period_tier_medium_mult = 2.0;
 static const double		g_period_tier_heavy_mult = 4.0;
-static const double		g_gac_local_min_unset = 0.280939686694932;
-static const double		g_gac_local_max_unset = 0.861313206259565;
+static const double		g_gac_local_min_entropy = 0.280939686694932;
+static const double		g_gac_local_max_entropy = 0.861313206259565;
 static const int		g_gac_global_min_entropy = 518808;
-static const double		g_constr_local_min_unset = 0.272184937236949;
-static const double		g_constr_local_max_unset = 0.876379734709319;
+static const double		g_constr_local_min_entropy = 0.272184937236949;
+static const double		g_constr_local_max_entropy = 0.876379734709319;
 static const int		g_constr_global_min_entropy = 456328;
-static const double		g_lookahead_gac_local_min_unset = 0.246428040617268;
-static const double		g_lookahead_gac_local_max_unset = 0.884211912555805;
+static const double		g_lookahead_gac_local_min_entropy = 0.246428040617268;
+static const double		g_lookahead_gac_local_max_entropy = 0.884211912555805;
 static const int		g_lookahead_gac_global_min_entropy = 425746;
-static const double		g_lookahead_constr_local_min_unset = 0.270880899930941;
-static const double		g_lookahead_constr_local_max_unset = 0.856134411608375;
+static const double		g_lookahead_constr_local_min_entropy = 0.27088090;
+static const double		g_lookahead_constr_local_max_entropy = 0.85613441;
 static const int		g_lookahead_constr_global_min_entropy = 489708;
 
 static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
@@ -52,23 +52,23 @@ static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 
 static void	setup_cfg_bounds(t_prune_routine_cfg *cfg)
 {
-	cfg->gac.min_unset = g_gac_local_min_unset;
-	cfg->gac.max_unset = g_gac_local_max_unset;
+	cfg->gac.min_entropy = g_gac_local_min_entropy;
+	cfg->gac.max_entropy = g_gac_local_max_entropy;
 	cfg->gac.global_min_entropy = g_gac_global_min_entropy;
-	cfg->check_constr_min_unset = g_constr_local_min_unset;
-	cfg->check_constr_max_unset = g_constr_local_max_unset;
+	cfg->check_constr_min_entropy = g_constr_local_min_entropy;
+	cfg->check_constr_max_entropy = g_constr_local_max_entropy;
 	cfg->check_constr_global_min_entropy
 		= g_constr_global_min_entropy;
-	cfg->lookahead.check_mode.constr.min_unset
-		= g_lookahead_constr_local_min_unset;
-	cfg->lookahead.check_mode.constr.max_unset
-		= g_lookahead_constr_local_max_unset;
+	cfg->lookahead.check_mode.constr.min_entropy
+		= g_lookahead_constr_local_min_entropy;
+	cfg->lookahead.check_mode.constr.max_entropy
+		= g_lookahead_constr_local_max_entropy;
 	cfg->lookahead.check_mode.constr.global_min_entropy
 		= g_lookahead_constr_global_min_entropy;
-	cfg->lookahead.check_mode.gac.min_unset
-		= g_lookahead_gac_local_min_unset;
-	cfg->lookahead.check_mode.gac.max_unset
-		= g_lookahead_gac_local_max_unset;
+	cfg->lookahead.check_mode.gac.min_entropy
+		= g_lookahead_gac_local_min_entropy;
+	cfg->lookahead.check_mode.gac.max_entropy
+		= g_lookahead_gac_local_max_entropy;
 	cfg->lookahead.check_mode.gac.global_min_entropy
 		= g_lookahead_gac_global_min_entropy;
 }
