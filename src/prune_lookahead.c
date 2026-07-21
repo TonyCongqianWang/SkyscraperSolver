@@ -11,7 +11,9 @@
 /* ************************************************************************** */
 
 #include "prune_lookahead.h"
+#include "node_selection_transition.h"
 #include "pruning_routines.h"
+#include "pruning_configs.h"
 #include "lookahead_dive.h"
 #include "node_selection.h"
 #include "grid_interface.h"

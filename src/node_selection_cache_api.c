@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "node_selection_cache.h"
+#include "node_selection_transition.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 

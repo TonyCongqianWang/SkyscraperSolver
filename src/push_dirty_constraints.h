@@ -1,19 +1,19 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   check_node_validity.h                              :+:      :+:    :+:   */
+/*   push_dirty_constraints.h                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/02 23:00:00 by towang            #+#    #+#             */
-/*   Updated: 2026/07/02 23:00:00 by towang           ###   ########.fr       */
+/*   Created: 2026/07/21 15:28:00 by towang            #+#    #+#             */
+/*   Updated: 2026/07/21 15:28:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CHECK_NODE_VALIDITY_H
-# define CHECK_NODE_VALIDITY_H
-# include "grid_interface.h"
+#ifndef PUSH_DIRTY_CONSTRAINTS_H
+# define PUSH_DIRTY_CONSTRAINTS_H
+# include "puzzle_structs.h"
 
-int		check_node_validity(t_puzzle *puzzle, t_check_mode mode);
+void	push_dirty_constraints(t_node_state *state, int cell_idx);
 
 #endif

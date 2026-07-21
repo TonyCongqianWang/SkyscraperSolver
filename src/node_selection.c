@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "node_selection.h"
+#include "node_selection_transition.h"
 #include "transition_scoring.h"
 #include "grid_availability.h"
 #include "strategy_routing.h"

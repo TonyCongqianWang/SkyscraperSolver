@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "pruning_routines.h"
+#include "pruning_configs.h"
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {

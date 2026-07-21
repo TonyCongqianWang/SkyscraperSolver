@@ -16,6 +16,7 @@
 #include "cell_bounds.h"
 #include "grid_availability.h"
 #include "check_node_validity.h"
+#include "push_dirty_constraints.h"
 #include "entropy.h"
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "check_node_validity.h"
+#include "push_dirty_constraints.h"
 #include "constraint_selection.h"
 #include "constraint_checking.h"
 #include "prune_check_constr.h"

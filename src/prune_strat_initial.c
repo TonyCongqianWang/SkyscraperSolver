@@ -12,6 +12,7 @@
 
 #include "prune_strat_initial.h"
 #include "pruning_routines.h"
+#include "pruning_configs.h"
 
 int	prune_strat_initial(t_puzzle *puzzle)
 {

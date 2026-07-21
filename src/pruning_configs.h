@@ -1,19 +1,21 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   check_node_validity.h                              :+:      :+:    :+:   */
+/*   pruning_configs.h                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/02 23:00:00 by towang            #+#    #+#             */
-/*   Updated: 2026/07/02 23:00:00 by towang           ###   ########.fr       */
+/*   Created: 2026/07/21 15:28:00 by towang            #+#    #+#             */
+/*   Updated: 2026/07/21 15:28:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef CHECK_NODE_VALIDITY_H
-# define CHECK_NODE_VALIDITY_H
-# include "grid_interface.h"
+#ifndef PRUNING_CONFIGS_H
+# define PRUNING_CONFIGS_H
+# include "pruning_routines.h"
 
-int		check_node_validity(t_puzzle *puzzle, t_check_mode mode);
+void	get_prune_cfg_light(t_prune_routine_cfg *cfg);
+void	get_prune_cfg_medium(t_prune_routine_cfg *cfg);
+void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg);
 
 #endif

@@ -12,6 +12,7 @@
 
 #include "prune_strat_root.h"
 #include "pruning_routines.h"
+#include "pruning_configs.h"
 #include "entropy.h"
 #include "math_utils.h"
 

@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "check_node_validity.h"
+#include "push_dirty_constraints.h"
 
 static void	push_entry(t_dirty_constr_stack *stack, int entry)
 {

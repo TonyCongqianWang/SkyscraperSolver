@@ -17,6 +17,7 @@
 #include "node_selection.h"
 #include "solution_info.h"
 #include "node_selection_cache.h"
+#include "node_selection_transition.h"
 
 static int	transition_node(t_puzzle *puzzle, int depth)
 {

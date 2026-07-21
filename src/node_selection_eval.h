@@ -16,9 +16,6 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-int		get_score_family_idx(t_score_family sf);
-int		check_sel(t_node_state *node, int idx,
-			t_node_select_config *conf);
 int		set_next_valid_val(t_puzzle *puzzle, t_node_transition *next);
 void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config);

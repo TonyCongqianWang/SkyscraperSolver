@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "prune_gac.h"
+#include "node_selection_transition.h"
 #include "prune_gac_naked.h"
 #include "prune_gac_hidden.h"
 #include "prune_gac_domain.h"

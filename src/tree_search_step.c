@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "tree_search.h"
+#include "node_selection_transition.h"
 #include "grid_interface.h"
 #include "strategy_routing.h"
 #include "node_selection.h"
