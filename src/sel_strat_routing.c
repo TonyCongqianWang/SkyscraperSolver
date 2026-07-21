@@ -13,7 +13,7 @@
 #include "strategy_routing.h"
 #include "entropy.h"
 #include "math_utils.h"
-#include "params_routing.h"
+#include "params_double.h"
 
 void	select_node_select_config(t_puzzle *puzzle,
 			t_node_select_config *config)

@@ -3,49 +3,45 @@ import os
 import sys
 import re
 
-# Mapping of file paths to parameter declarations and environment variable names
-TIER_VARS = []
+INT_VARS = []
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
-    TIER_VARS.extend([
+    INT_VARS.extend([
         (f"g_{tier_lower}_min_entropy", f"{tier_upper}_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_gac_min_entropy", f"{tier_upper}_GAC_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_constr_min_entropy", f"{tier_upper}_CONSTR_MIN_ENTROPY", "int"),
+        (f"g_{tier_lower}_gac_global_min_entropy", f"{tier_upper}_GAC_GLOBAL_MIN_ENTROPY", "int"),
+        (f"g_{tier_lower}_constr_global_min_entropy", f"{tier_upper}_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+        (f"g_{tier_lower}_lookahead_gac_global_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
+        (f"g_{tier_lower}_lookahead_constr_global_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+    ])
+
+DOUBLE_VARS = [
+    ("g_routing_shallow_ratio", "ROUTING_SHALLOW_RATIO", "double"),
+    ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
+    ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
+    ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
+]
+for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
+    DOUBLE_VARS.extend([
         (f"g_{tier_lower}_lookahead_downgrade_fraction", f"{tier_upper}_LOOKAHEAD_DOWNGRADE_FRACTION", "double"),
         (f"g_{tier_lower}_period_coef_sqrt", f"{tier_upper}_PERIOD_COEF_SQRT", "double"),
         (f"g_{tier_lower}_period_coef_inv", f"{tier_upper}_PERIOD_COEF_INV", "double"),
         (f"g_{tier_lower}_period_coef_unset", f"{tier_upper}_PERIOD_COEF_UNSET", "double"),
         (f"g_{tier_lower}_period_tier_medium_mult", f"{tier_upper}_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),
         (f"g_{tier_lower}_period_tier_heavy_mult", f"{tier_upper}_PERIOD_TIER_HEAVY_MULTIPLIER", "double"),
-    ])
-
-BOUNDS_VARS = []
-for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
-    BOUNDS_VARS.extend([
         (f"g_{tier_lower}_gac_local_min_entropy", f"{tier_upper}_GAC_LOCAL_MIN_ENTROPY", "double"),
         (f"g_{tier_lower}_gac_local_max_entropy", f"{tier_upper}_GAC_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_gac_global_min_entropy", f"{tier_upper}_GAC_GLOBAL_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_constr_local_min_entropy", f"{tier_upper}_CONSTR_LOCAL_MIN_ENTROPY", "double"),
         (f"g_{tier_lower}_constr_local_max_entropy", f"{tier_upper}_CONSTR_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_constr_global_min_entropy", f"{tier_upper}_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_lookahead_gac_local_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_LOCAL_MIN_ENTROPY", "double"),
         (f"g_{tier_lower}_lookahead_gac_local_max_entropy", f"{tier_upper}_LOOKAHEAD_GAC_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_gac_global_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_lookahead_constr_local_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MIN_ENTROPY", "double"),
         (f"g_{tier_lower}_lookahead_constr_local_max_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_constr_global_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
     ])
 
-ROUTING_VARS = [
-    ("g_routing_shallow_ratio", "ROUTING_SHALLOW_RATIO", "double"),
-    ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
-    ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
-    ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-]
-
 FILES_CONFIGS = [
-    ("src/params_prune_tiers.c", TIER_VARS, "init_prune_tiers_env"),
-    ("src/params_prune_bounds.c", BOUNDS_VARS, "init_prune_bounds_env"),
-    ("src/params_routing.c", ROUTING_VARS, "init_routing_env"),
+    ("src/params_int.c", INT_VARS, "init_params_int_env"),
+    ("src/params_double.c", DOUBLE_VARS, "init_params_double_env"),
 ]
 
 def apply_overrides_to_file(filepath, var_list, func_name):
@@ -56,7 +52,6 @@ def apply_overrides_to_file(filepath, var_list, func_name):
     with open(filepath, "r") as f:
         content = f.read()
 
-    # Parse current values
     var_values = {}
     for var_name, env_name, var_type in var_list:
         pattern = re.compile(rf'(?:const\s+)?(?:double|int)\s+{var_name}\s*=\s*([^;]+);')
@@ -67,7 +62,6 @@ def apply_overrides_to_file(filepath, var_list, func_name):
             print(f"Error: Could not find parameter declaration for '{var_name}' in '{filepath}'", file=sys.stderr)
             sys.exit(1)
 
-    # Build non-const variable declarations
     decl_lines = []
     env_lines = []
 
@@ -123,7 +117,7 @@ def unapply_overrides_from_file(filepath, var_list):
     decl_lines = []
     for var_name, env_name, var_type in var_list:
         val = var_values[var_name]
-        decl_lines.append(f"const {var_type}\t{var_name} = {val};")
+        decl_lines.append(f"{var_type}\t{var_name} = {val};")
 
     header_inc = f'#include "{os.path.basename(filepath).replace(".c", ".h")}"'
     decl_body = "\n".join(decl_lines)

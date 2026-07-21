@@ -15,8 +15,8 @@
 #include "pruning_configs.h"
 #include "entropy.h"
 #include "math_utils.h"
-#include "params_prune_tiers.h"
-#include "params_prune_bounds.h"
+#include "params_int.h"
+#include "params_double.h"
 
 static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 		int remaining_entropy)

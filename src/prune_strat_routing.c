@@ -16,7 +16,7 @@
 #include "prune_strat_shallow.h"
 #include "prune_strat_medium.h"
 #include "prune_strat_deep.h"
-#include "params_routing.h"
+#include "params_double.h"
 
 int	prune_current_step(t_puzzle *puzzle)
 {
