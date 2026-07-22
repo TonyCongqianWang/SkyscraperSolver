@@ -14,5 +14,6 @@
 # define MATH_UTILS_H
 
 double	dsqrt_approx(double x);
+double	dpow075_approx(double x);
 
 #endif

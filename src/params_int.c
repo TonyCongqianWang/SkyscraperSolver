@@ -13,13 +13,13 @@
 #include "params_int.h"
 
 int	g_root_min_entropy = 70188;
-int	g_root_gac_min_entropy = 62796;
+int	g_root_gac_min_entropy = 168548;
 int	g_root_constr_min_entropy = 74412;
 int	g_root_gac_global_min_entropy = 538238;
 int	g_root_constr_global_min_entropy = 540566;
 int	g_root_lookahead_gac_global_min_entropy = 620302;
 int	g_root_lookahead_constr_global_min_entropy = 495280;
-int	g_shallow_min_entropy = 129398;
+int	g_shallow_min_entropy = 171556;
 int	g_shallow_gac_min_entropy = 181264;
 int	g_shallow_constr_min_entropy = 413576;
 int	g_shallow_gac_global_min_entropy = 636174;

@@ -24,8 +24,7 @@ DOUBLE_VARS = [
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([
         (f"g_{tier_lower}_lookahead_downgrade_fraction", f"{tier_upper}_LOOKAHEAD_DOWNGRADE_FRACTION", "double"),
-        (f"g_{tier_lower}_period_coef_sqrt", f"{tier_upper}_PERIOD_COEF_SQRT", "double"),
-        (f"g_{tier_lower}_period_coef_inv", f"{tier_upper}_PERIOD_COEF_INV", "double"),
+        (f"g_{tier_lower}_period_coef_scale", f"{tier_upper}_PERIOD_COEF_SCALE", "double"),
         (f"g_{tier_lower}_period_coef_unset", f"{tier_upper}_PERIOD_COEF_UNSET", "double"),
         (f"g_{tier_lower}_period_tier_medium_mult", f"{tier_upper}_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),
         (f"g_{tier_lower}_period_tier_heavy_mult", f"{tier_upper}_PERIOD_TIER_HEAVY_MULTIPLIER", "double"),

@@ -77,8 +77,7 @@ static double	calc_period(t_puzzle *puzzle, t_node_state *node)
 	if (rem < 1)
 		rem = 1;
 	raw = (double)(puzzle->max_entropy - rem) / rem;
-	return (g_medium_period_coef_sqrt * dsqrt_approx(raw)
-		+ g_medium_period_coef_inv * raw
+	return (g_medium_period_coef_scale * dpow075_approx(raw)
 		+ g_medium_period_coef_unset
 		* (puzzle->squared_size - node->num_unset));
 }

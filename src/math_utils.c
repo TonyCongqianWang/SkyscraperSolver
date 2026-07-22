@@ -48,3 +48,13 @@ double	dsqrt_approx(double x)
 	}
 	return (y * scale);
 }
+
+double	dpow075_approx(double x)
+{
+	double	s;
+
+	if (x <= 0.0)
+		return (0.0);
+	s = dsqrt_approx(x);
+	return (s * dsqrt_approx(s));
+}
