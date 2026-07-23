@@ -16,6 +16,7 @@
 #include "constraint_checking.h"
 #include "prune_check_constr.h"
 #include "prune_gac.h"
+#include "math_utils.h"
 
 static void	run_gac_analysis(t_puzzle *puzzle, int idx, t_check_mode mode)
 {
@@ -58,7 +59,7 @@ static int	get_max_high_iters(t_node_state *node, double fraction)
 {
 	int	max;
 
-	max = (int)(node->num_unset * fraction);
+	max = (int)(dsqrt_approx((double)node->num_unset) * fraction);
 	if (max < 1)
 		max = 1;
 	return (max);
