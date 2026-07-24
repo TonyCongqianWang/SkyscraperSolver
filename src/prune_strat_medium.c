@@ -30,27 +30,32 @@ static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 		= g_medium_lookahead_downgrade_fraction;
 }
 
-static void	setup_cfg_bounds(t_prune_routine_cfg *cfg)
+static void	setup_cfg_bounds(t_prune_routine_cfg *cfg, int num_unset)
 {
 	cfg->gac.min_entropy = g_medium_gac_local_min_entropy;
 	cfg->gac.max_entropy = g_medium_gac_local_max_entropy;
-	cfg->gac.global_min_entropy = g_medium_gac_global_min_entropy;
+	cfg->gac.global_min_entropy
+		= calc_effective_global_min_entropy(g_medium_gac_global_min_entropy,
+			num_unset);
 	cfg->check_constr_min_entropy = g_medium_constr_local_min_entropy;
 	cfg->check_constr_max_entropy = g_medium_constr_local_max_entropy;
 	cfg->check_constr_global_min_entropy
-		= g_medium_constr_global_min_entropy;
+		= calc_effective_global_min_entropy(
+			g_medium_constr_global_min_entropy, num_unset);
 	cfg->lookahead.check_mode.constr.min_entropy
 		= g_medium_lookahead_constr_local_min_entropy;
 	cfg->lookahead.check_mode.constr.max_entropy
 		= g_medium_lookahead_constr_local_max_entropy;
 	cfg->lookahead.check_mode.constr.global_min_entropy
-		= g_medium_lookahead_constr_global_min_entropy;
+		= calc_effective_global_min_entropy(
+			g_medium_lookahead_constr_global_min_entropy, num_unset);
 	cfg->lookahead.check_mode.gac.min_entropy
 		= g_medium_lookahead_gac_local_min_entropy;
 	cfg->lookahead.check_mode.gac.max_entropy
 		= g_medium_lookahead_gac_local_max_entropy;
 	cfg->lookahead.check_mode.gac.global_min_entropy
-		= g_medium_lookahead_gac_global_min_entropy;
+		= calc_effective_global_min_entropy(
+			g_medium_lookahead_gac_global_min_entropy, num_unset);
 }
 
 static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
@@ -64,7 +69,7 @@ static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
 	else
 		get_prune_cfg_heavy(&cfg);
 	setup_cfg_thresholds(&cfg, remaining_entropy);
-	setup_cfg_bounds(&cfg);
+	setup_cfg_bounds(&cfg, puzzle->cur_node->num_unset);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "pruning_configs.h"
+#include "params_double.h"
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {
@@ -73,4 +74,13 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->lookahead.selectivity = SELECTIVITY_NONE;
 	cfg->lookahead.max_depth = 1;
 	cfg->lookahead.check_mode = g_check_constr;
+}
+
+int	calc_effective_global_min_entropy(int base_entropy, int num_unset)
+{
+	double	factor;
+
+	factor = (g_global_entropy_unset_bias + 50.0)
+		/ (g_global_entropy_unset_bias + (double)num_unset);
+	return ((int)(base_entropy * factor));
 }

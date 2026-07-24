@@ -20,6 +20,7 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
+    ("g_global_entropy_unset_bias", "GLOBAL_ENTROPY_UNSET_BIAS", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([
