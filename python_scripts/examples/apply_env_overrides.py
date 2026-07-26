@@ -3,7 +3,10 @@ import os
 import sys
 import re
 
-INT_VARS = []
+INT_VARS = [
+    ("g_weight_cell", "WEIGHT_CELL", "int"),
+    ("g_weight_constr", "WEIGHT_CONSTR", "int"),
+]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     INT_VARS.extend([
         (f"g_{tier_lower}_min_entropy", f"{tier_upper}_MIN_ENTROPY", "int"),

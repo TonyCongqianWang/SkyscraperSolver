@@ -12,6 +12,7 @@
 
 #ifndef ENTROPY_H
 # define ENTROPY_H
+# include "params_int.h"
 # include "puzzle_structs.h"
 
 # define ENTROPY_SCALE 1000
@@ -29,10 +30,6 @@ static const int	g_log2_table[10] = {
 	3000,
 	3170
 };
-
-/* SPSA-tunable weights (scaled by 1000) */
-static const int	g_weight_cell = 2000;
-static const int	g_weight_constr = 1000;
 
 int		entropy_delta_cell(int old_count);
 int		entropy_delta_constr(int old_count);

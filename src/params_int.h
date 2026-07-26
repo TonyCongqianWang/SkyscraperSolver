@@ -13,6 +13,10 @@
 #ifndef PARAMS_INT_H
 # define PARAMS_INT_H
 
+/* Entropy Weight Parameters */
+extern int	g_weight_cell;
+extern int	g_weight_constr;
+
 /* Root Tier Int Parameters */
 extern int	g_root_min_entropy;
 extern int	g_root_gac_min_entropy;
