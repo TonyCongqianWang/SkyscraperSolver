@@ -13,8 +13,6 @@
 #include "entropy.h"
 #include "params_int.h"
 
-
-
 static int	initial_cell_entropy(t_node_state *node, int size)
 {
 	int	entropy;
