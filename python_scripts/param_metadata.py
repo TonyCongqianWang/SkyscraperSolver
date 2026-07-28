@@ -34,11 +34,15 @@ PARAM_METADATA = [
     # NODE SELECT SELECTIVITY ROUTING
     ("SEL_PERIOD_COEF_SQRT", 0.0, 100000.0, 8399.6888064977, float, 1.0),
     ("SEL_PERIOD_COEF_INV", 0.0, 100000.0, 16101.791255324, float, 1.0),
-    # DYNAMIC DYNAMIC ENTROPY LOOKAHEAD CONTINUATION THRESHOLDS
+    # DYNAMIC ENTROPY LOOKAHEAD CONTINUATION THRESHOLDS & ESCALATION SLOPES
     ("ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 80000, int, 1.0),
+    ("ROOT_LOOKAHEAD_CONTINUE_SLOPE", 0.0, 5.0, 0.5, float, 1.0),
     ("SHALLOW_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 180000, int, 1.0),
+    ("SHALLOW_LOOKAHEAD_CONTINUE_SLOPE", 0.0, 5.0, 0.5, float, 1.0),
     ("MEDIUM_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 200000, int, 1.0),
+    ("MEDIUM_LOOKAHEAD_CONTINUE_SLOPE", 0.0, 5.0, 0.5, float, 1.0),
     ("DEEP_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 240000, int, 1.0),
+    ("DEEP_LOOKAHEAD_CONTINUE_SLOPE", 0.0, 5.0, 0.5, float, 1.0),
     # ROOT LOCAL/GLOBAL BOUNDS
     ("ROOT_GAC_LOCAL_MIN_ENTROPY", 0.0, 1.0, 0.26390497401183, float, 3.0),
     ("ROOT_GAC_LOCAL_MAX_ENTROPY", 0.0, 1.0, 0.86548160193232, float, 3.0),
@@ -138,11 +142,15 @@ PARAMETER_MAPPING = {
     # SELECTIVITY
     "SEL_PERIOD_COEF_SQRT": ("src/params_double.c", "g_sel_period_coef_sqrt", "double"),
     "SEL_PERIOD_COEF_INV": ("src/params_double.c", "g_sel_period_coef_inv", "double"),
-    # LOOKAHEAD CONTINUATION THRESHOLDS
+    # LOOKAHEAD CONTINUATION THRESHOLDS & ESCALATION SLOPES
     "ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_root_lookahead_continue_min_entropy", "int"),
+    "ROOT_LOOKAHEAD_CONTINUE_SLOPE": ("src/params_double.c", "g_root_lookahead_continue_slope", "double"),
     "SHALLOW_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_shallow_lookahead_continue_min_entropy", "int"),
+    "SHALLOW_LOOKAHEAD_CONTINUE_SLOPE": ("src/params_double.c", "g_shallow_lookahead_continue_slope", "double"),
     "MEDIUM_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_medium_lookahead_continue_min_entropy", "int"),
+    "MEDIUM_LOOKAHEAD_CONTINUE_SLOPE": ("src/params_double.c", "g_medium_lookahead_continue_slope", "double"),
     "DEEP_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_deep_lookahead_continue_min_entropy", "int"),
+    "DEEP_LOOKAHEAD_CONTINUE_SLOPE": ("src/params_double.c", "g_deep_lookahead_continue_slope", "double"),
     # ROOT LOCAL/GLOBAL BOUNDS
     "ROOT_GAC_LOCAL_MIN_ENTROPY": ("src/params_double.c", "g_root_gac_local_min_entropy", "double"),
     "ROOT_GAC_LOCAL_MAX_ENTROPY": ("src/params_double.c", "g_root_gac_local_max_entropy", "double"),

@@ -21,6 +21,7 @@ extern double	g_sel_period_coef_inv;
 extern double	g_global_entropy_unset_bias;
 
 /* Root Tier Double Parameters */
+extern double	g_root_lookahead_continue_slope;
 extern double	g_root_period_coef_scale;
 extern double	g_root_period_coef_unset;
 extern double	g_root_period_tier_medium_mult;
@@ -35,6 +36,7 @@ extern double	g_root_lookahead_constr_local_min_entropy;
 extern double	g_root_lookahead_constr_local_max_entropy;
 
 /* Shallow Tier Double Parameters */
+extern double	g_shallow_lookahead_continue_slope;
 extern double	g_shallow_period_coef_scale;
 extern double	g_shallow_period_coef_unset;
 extern double	g_shallow_period_tier_medium_mult;
@@ -49,6 +51,7 @@ extern double	g_shallow_lookahead_constr_local_min_entropy;
 extern double	g_shallow_lookahead_constr_local_max_entropy;
 
 /* Medium Tier Double Parameters */
+extern double	g_medium_lookahead_continue_slope;
 extern double	g_medium_period_coef_scale;
 extern double	g_medium_period_coef_unset;
 extern double	g_medium_period_tier_medium_mult;
@@ -63,6 +66,7 @@ extern double	g_medium_lookahead_constr_local_min_entropy;
 extern double	g_medium_lookahead_constr_local_max_entropy;
 
 /* Deep Tier Double Parameters */
+extern double	g_deep_lookahead_continue_slope;
 extern double	g_deep_period_coef_scale;
 extern double	g_deep_period_coef_unset;
 extern double	g_deep_period_tier_medium_mult;

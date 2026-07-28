@@ -41,6 +41,7 @@ typedef struct s_check_mode
 	int				run_prop;
 	int				run_gac;
 	int				lookahead_continue_min_entropy;
+	double			lookahead_continue_slope;
 	t_constr_limits	constr;
 	t_constr_limits	gac;
 }				t_check_mode;

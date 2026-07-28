@@ -28,6 +28,8 @@ static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 	cfg->lookahead.check_mode.run_prop = 1;
 	cfg->lookahead.check_mode.lookahead_continue_min_entropy
 		= g_shallow_lookahead_continue_min_entropy;
+	cfg->lookahead.check_mode.lookahead_continue_slope
+		= g_shallow_lookahead_continue_slope;
 }
 
 static void	setup_cfg_bounds(t_prune_routine_cfg *cfg, int num_unset)
