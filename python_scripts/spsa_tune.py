@@ -60,16 +60,18 @@ def project_constraints(theta):
             _, pmin_i, pmax_i, _, _, _ = PARAM_METADATA[i]
             _, pmin_j, pmax_j, _, _, _ = PARAM_METADATA[j]
 
-            x = pmin_i + theta_projected[i] * (pmax_i - pmin_i)
-            y = pmin_j + theta_projected[j] * (pmax_j - pmin_j)
+            range_i = pmax_i - pmin_i
+            range_j = pmax_j - pmin_j
+            x = pmin_i + theta_projected[i] * range_i
+            y = pmin_j + theta_projected[j] * range_j
 
             if x > y + eps:
                 diff = x - y - eps
                 x_new = x - diff / 2.0
                 y_new = y + diff / 2.0
 
-                theta_projected[i] = max(0.0, min(1.0, (x_new - pmin_i) / (pmax_i - pmin_i)))
-                theta_projected[j] = max(0.0, min(1.0, (y_new - pmin_j) / (pmax_j - pmin_j)))
+                theta_projected[i] = max(0.0, min(1.0, (x_new - pmin_i) / range_i)) if range_i > 0 else 0.0
+                theta_projected[j] = max(0.0, min(1.0, (y_new - pmin_j) / range_j)) if range_j > 0 else 0.0
                 changed = True
         if not changed:
             break
@@ -306,7 +308,7 @@ def get_physical_params(theta):
 def get_default_theta():
     theta = []
     for name, pmin, pmax, default, ptype, scale in PARAM_METADATA:
-        val = (default - pmin) / (pmax - pmin)
+        val = (default - pmin) / (pmax - pmin) if pmax > pmin else 0.0
         theta.append(val)
     return theta
 

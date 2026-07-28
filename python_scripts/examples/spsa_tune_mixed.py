@@ -155,7 +155,7 @@ def get_physical_params(theta):
 def get_default_theta():
     theta = []
     for name, pmin, pmax, default, ptype in PARAM_METADATA:
-        val = (default - pmin) / (pmax - pmin)
+        val = (default - pmin) / (pmax - pmin) if pmax > pmin else 0.0
         theta.append(val)
     return theta
 
