@@ -42,6 +42,11 @@ fclean: clean
 
 re: fclean all
 
+ifeq ($(NO_WARN),1)
+    CFLAGS := $(filter-out -Werror,$(CFLAGS)) -w
+endif
+
+
 debug: CFLAGS += -fsanitize=address,undefined -g
 debug: re
 
@@ -49,8 +54,10 @@ test: $(BINARY)
 	python python_scripts/verify_consistency.py -r $(BINARY)
 
 # Skip including dependency files if we are cleaning/rebuilding
-ifeq ($(filter clean fclean re,$(MAKECMDGOALS)),)
+ifeq ($(filter clean fclean re debug,$(MAKECMDGOALS)),)
 -include $(DEPS)
 endif
 
 .PHONY: all clean fclean re debug test
+
+
