@@ -17,6 +17,20 @@ double	g_routing_medium_ratio = 0.3523645598687041;
 double	g_sel_period_coef_sqrt = 8019.054701543802;
 double	g_sel_period_coef_inv = 15702.781974174368;
 double	g_global_entropy_unset_bias = 516.96;
+double	g_global_entropy_unset_bias_s7 = 516.96;
+double	g_global_entropy_unset_bias_s8 = 516.96;
+double	g_global_entropy_unset_bias_s9 = 516.96;
+
+double	get_global_entropy_unset_bias(int size)
+{
+	if (size == 7)
+		return (g_global_entropy_unset_bias_s7);
+	if (size == 8)
+		return (g_global_entropy_unset_bias_s8);
+	if (size == 9)
+		return (g_global_entropy_unset_bias_s9);
+	return (g_global_entropy_unset_bias);
+}
 double	g_root_lookahead_continue_slope = 0.5;
 double	g_root_period_coef_scale = 4973.038677964758;
 double	g_root_period_coef_unset = 1.2322573182625858;

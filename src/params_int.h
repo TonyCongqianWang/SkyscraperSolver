@@ -15,7 +15,17 @@
 
 /* Entropy Weight Fixed-Point Parameters */
 extern int	g_weight_cell_constr_ratio_fp;
+extern int	g_weight_cell_constr_ratio_fp_s7;
+extern int	g_weight_cell_constr_ratio_fp_s8;
+extern int	g_weight_cell_constr_ratio_fp_s9;
+
 extern int	g_weight_total_scale_fp;
+extern int	g_weight_total_scale_fp_s7;
+extern int	g_weight_total_scale_fp_s8;
+extern int	g_weight_total_scale_fp_s9;
+
+int			get_weight_cell_constr_ratio_fp(int size);
+int			get_weight_total_scale_fp(int size);
 
 /* Root Tier Int Parameters */
 extern int	g_root_min_entropy;

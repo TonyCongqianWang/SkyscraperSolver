@@ -76,11 +76,12 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->lookahead.check_mode = g_check_constr;
 }
 
-int	calc_effective_global_min_entropy(int base_entropy, int num_unset)
+int	calc_effective_global_min_entropy(int base_entropy, int num_unset, int size)
 {
+	double	bias;
 	double	factor;
 
-	factor = (g_global_entropy_unset_bias + 50.0)
-		/ (g_global_entropy_unset_bias + (double)num_unset);
+	bias = get_global_entropy_unset_bias(size);
+	factor = (bias + 50.0) / (bias + (double)num_unset);
 	return ((int)(base_entropy * factor));
 }

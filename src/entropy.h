@@ -32,10 +32,10 @@ static const int	g_log2_table[10] = {
 	3246
 };
 
-int		get_weight_cell(void);
-int		get_weight_constr(void);
-int		entropy_delta_cell(int old_count);
-int		entropy_delta_constr(int old_count);
+int		get_weight_cell(int size);
+int		get_weight_constr(int size);
+int		entropy_delta_cell(int old_count, int size);
+int		entropy_delta_constr(int old_count, int size);
 int		compute_initial_entropy(t_node_state *node, int size);
 int		compute_max_entropy(int size);
 int		compute_constr_entropy(t_node_state *node, int idx, int size);

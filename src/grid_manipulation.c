@@ -53,7 +53,8 @@ void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 	if (is_valid_value(state, cell_idx, val))
 	{
 		old_cell_count = state->grid.num_cell_vals[cell_idx];
-		state->remaining_entropy -= entropy_delta_cell(old_cell_count);
+		state->remaining_entropy -= entropy_delta_cell(old_cell_count,
+				state->size);
 		state->grid.valid_val_bmps[cell_idx] &= ~(1 << (val - 1));
 		update_cell_bounds(state, cell_idx);
 		decrement_cell_num_valids(state, cell_idx);

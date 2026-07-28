@@ -5,7 +5,13 @@ import re
 
 INT_VARS = [
     ("g_weight_cell_constr_ratio_fp", "WEIGHT_CELL_CONSTR_RATIO_FP", "int"),
+    ("g_weight_cell_constr_ratio_fp_s7", "WEIGHT_CELL_CONSTR_RATIO_FP_S7", "int"),
+    ("g_weight_cell_constr_ratio_fp_s8", "WEIGHT_CELL_CONSTR_RATIO_FP_S8", "int"),
+    ("g_weight_cell_constr_ratio_fp_s9", "WEIGHT_CELL_CONSTR_RATIO_FP_S9", "int"),
     ("g_weight_total_scale_fp", "WEIGHT_TOTAL_SCALE_FP", "int"),
+    ("g_weight_total_scale_fp_s7", "WEIGHT_TOTAL_SCALE_FP_S7", "int"),
+    ("g_weight_total_scale_fp_s8", "WEIGHT_TOTAL_SCALE_FP_S8", "int"),
+    ("g_weight_total_scale_fp_s9", "WEIGHT_TOTAL_SCALE_FP_S9", "int"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     INT_VARS.extend([
@@ -25,6 +31,9 @@ DOUBLE_VARS = [
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
     ("g_global_entropy_unset_bias", "GLOBAL_ENTROPY_UNSET_BIAS", "double"),
+    ("g_global_entropy_unset_bias_s7", "GLOBAL_ENTROPY_UNSET_BIAS_S7", "double"),
+    ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
+    ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([

@@ -544,7 +544,10 @@ def main():
 
                 return loss_time, loss_nodes, (sgm_t_l3, sgm_n_l3, sgm_t_l2, sgm_n_l2)
 
-        MATH_NAMES = {"GLOBAL_ENTROPY_UNSET_BIAS", "WEIGHT_CELL_CONSTR_RATIO_FP", "WEIGHT_TOTAL_SCALE_FP"}
+        MATH_NAMES = {
+            "GLOBAL_ENTROPY_UNSET_BIAS", "WEIGHT_CELL_CONSTR_RATIO_FP", "WEIGHT_TOTAL_SCALE_FP",
+            f"GLOBAL_ENTROPY_UNSET_BIAS_S{args.size}", f"WEIGHT_CELL_CONSTR_RATIO_FP_S{args.size}", f"WEIGHT_TOTAL_SCALE_FP_S{args.size}"
+        }
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
 
         # Perturbed plus

@@ -13,19 +13,20 @@
 #include "entropy.h"
 #include "params_int.h"
 
-int	get_weight_cell(void)
+int	get_weight_cell(int size)
 {
 	long long	prod;
 
-	prod = 1000LL * g_weight_cell_constr_ratio_fp * g_weight_total_scale_fp;
+	prod = 1000LL * get_weight_cell_constr_ratio_fp(size)
+		* get_weight_total_scale_fp(size);
 	return ((int)(prod >> 21));
 }
 
-int	get_weight_constr(void)
+int	get_weight_constr(int size)
 {
 	long long	prod;
 
-	prod = 1000LL * g_weight_total_scale_fp;
+	prod = 1000LL * get_weight_total_scale_fp(size);
 	return ((int)(prod >> 10));
 }
 
@@ -39,7 +40,7 @@ static int	initial_cell_entropy(t_node_state *node, int size)
 	while (i < size * size)
 	{
 		entropy += g_log2_table[(int)node->grid.num_cell_vals[i]]
-			* get_weight_cell() / ENTROPY_SCALE;
+			* get_weight_cell(size) / ENTROPY_SCALE;
 		i++;
 	}
 	return (entropy);
@@ -60,7 +61,7 @@ static int	initial_constr_entropy(t_node_state *node, int size)
 		{
 			entropy += g_log2_table[(int)node->constrs
 				.num_val_positions[i][v]]
-				* get_weight_constr() / ENTROPY_SCALE;
+				* get_weight_constr(size) / ENTROPY_SCALE;
 			v++;
 		}
 		i++;
@@ -77,5 +78,6 @@ int	compute_initial_entropy(t_node_state *node, int size)
 int	compute_max_entropy(int size)
 {
 	return (size * size * g_log2_table[size]
-		* (get_weight_cell() + 2 * get_weight_constr()) / ENTROPY_SCALE);
+		* (get_weight_cell(size) + 2 * get_weight_constr(size))
+		/ ENTROPY_SCALE);
 }
