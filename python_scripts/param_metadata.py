@@ -3,8 +3,7 @@ PARAM_METADATA = [
     # ROUTING
     ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.21543283285366, float, 1.0),
     ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.35318448289589, float, 1.0),
-    # FIXED: GLOBAL_ENTROPY_UNSET_BIAS frozen at 30-run tuned median 516.96
-    ("GLOBAL_ENTROPY_UNSET_BIAS", 516.96, 516.96, 516.96, float, 1.0),
+    ("GLOBAL_ENTROPY_UNSET_BIAS", 100.0, 2000.0, 516.96, float, 1.0),
     # ENTROPY WEIGHT REPARAMETERIZATION (Direction & Magnitude in Fixed-Point)
     ("WEIGHT_CELL_CONSTR_RATIO_FP", 1024, 12288, 4096, int, 1.0),
     ("WEIGHT_TOTAL_SCALE_FP", 256, 4096, 1024, int, 1.0),
@@ -35,10 +34,11 @@ PARAM_METADATA = [
     # NODE SELECT SELECTIVITY ROUTING
     ("SEL_PERIOD_COEF_SQRT", 0.0, 100000.0, 8399.6888064977, float, 1.0),
     ("SEL_PERIOD_COEF_INV", 0.0, 100000.0, 16101.791255324, float, 1.0),
-    ("ROOT_LOOKAHEAD_DOWNGRADE_FRACTION", 0.1, 3.0, 1.00000, float, 0.3),
-    ("SHALLOW_LOOKAHEAD_DOWNGRADE_FRACTION", 0.1, 3.0, 0.75000, float, 0.3),
-    ("MEDIUM_LOOKAHEAD_DOWNGRADE_FRACTION", 0.1, 3.0, 0.65000, float, 0.3),
-    ("DEEP_LOOKAHEAD_DOWNGRADE_FRACTION", 0.1, 3.0, 0.70000, float, 0.3),
+    # DYNAMIC DYNAMIC ENTROPY LOOKAHEAD CONTINUATION THRESHOLDS
+    ("ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 80000, int, 1.0),
+    ("SHALLOW_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 180000, int, 1.0),
+    ("MEDIUM_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 200000, int, 1.0),
+    ("DEEP_LOOKAHEAD_CONTINUE_MIN_ENTROPY", 0, 1027080, 240000, int, 1.0),
     # ROOT LOCAL/GLOBAL BOUNDS
     ("ROOT_GAC_LOCAL_MIN_ENTROPY", 0.0, 1.0, 0.26390497401183, float, 3.0),
     ("ROOT_GAC_LOCAL_MAX_ENTROPY", 0.0, 1.0, 0.86548160193232, float, 3.0),
@@ -138,11 +138,11 @@ PARAMETER_MAPPING = {
     # SELECTIVITY
     "SEL_PERIOD_COEF_SQRT": ("src/params_double.c", "g_sel_period_coef_sqrt", "double"),
     "SEL_PERIOD_COEF_INV": ("src/params_double.c", "g_sel_period_coef_inv", "double"),
-    # LOOKAHEAD DOWNGRADE FRACTIONS
-    "ROOT_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/params_double.c", "g_root_lookahead_downgrade_fraction", "double"),
-    "SHALLOW_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/params_double.c", "g_shallow_lookahead_downgrade_fraction", "double"),
-    "MEDIUM_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/params_double.c", "g_medium_lookahead_downgrade_fraction", "double"),
-    "DEEP_LOOKAHEAD_DOWNGRADE_FRACTION": ("src/params_double.c", "g_deep_lookahead_downgrade_fraction", "double"),
+    # LOOKAHEAD CONTINUATION THRESHOLDS
+    "ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_root_lookahead_continue_min_entropy", "int"),
+    "SHALLOW_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_shallow_lookahead_continue_min_entropy", "int"),
+    "MEDIUM_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_medium_lookahead_continue_min_entropy", "int"),
+    "DEEP_LOOKAHEAD_CONTINUE_MIN_ENTROPY": ("src/params_int.c", "g_deep_lookahead_continue_min_entropy", "int"),
     # ROOT LOCAL/GLOBAL BOUNDS
     "ROOT_GAC_LOCAL_MIN_ENTROPY": ("src/params_double.c", "g_root_gac_local_min_entropy", "double"),
     "ROOT_GAC_LOCAL_MAX_ENTROPY": ("src/params_double.c", "g_root_gac_local_max_entropy", "double"),

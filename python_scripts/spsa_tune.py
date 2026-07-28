@@ -325,6 +325,7 @@ def main():
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
     parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
+    parser.add_argument("--tune-mode", choices=["all", "strategy", "math"], default="all", help="Tuning mode: 'all' (all unfrozen parameters), 'strategy' (tune strategy params only, freeze math constants), 'math' (tune math/scale constants only, freeze strategy params)")
     args = parser.parse_args()
 
     max_workers = min(os.cpu_count() or 1, args.max_workers)
@@ -543,30 +544,44 @@ def main():
 
                 return loss_time, loss_nodes, (sgm_t_l3, sgm_n_l3, sgm_t_l2, sgm_n_l2)
 
+        MATH_NAMES = {"GLOBAL_ENTROPY_UNSET_BIAS", "WEIGHT_CELL_CONSTR_RATIO_FP", "WEIGHT_TOTAL_SCALE_FP"}
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
 
         # Perturbed plus
         theta_plus_raw = []
         for i in range(len(theta)):
-            perturb_scale = PARAM_METADATA[i][5]
-            theta_plus_raw.append(max(0.0, min(1.0, theta[i] + ck * perturb_scale * delta[i])))
+            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
+            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            if is_active:
+                theta_plus_raw.append(max(0.0, min(1.0, theta[i] + ck * perturb_scale * delta[i])))
+            else:
+                theta_plus_raw.append(theta[i])
         theta_plus = project_constraints(theta_plus_raw)
         loss_time_plus, loss_nodes_plus, _ = get_loss(theta_plus)
 
         # Perturbed minus
         theta_minus_raw = []
         for i in range(len(theta)):
-            perturb_scale = PARAM_METADATA[i][5]
-            theta_minus_raw.append(max(0.0, min(1.0, theta[i] - ck * perturb_scale * delta[i])))
+            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
+            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            if is_active:
+                theta_minus_raw.append(max(0.0, min(1.0, theta[i] - ck * perturb_scale * delta[i])))
+            else:
+                theta_minus_raw.append(theta[i])
         theta_minus = project_constraints(theta_minus_raw)
         loss_time_minus, loss_nodes_minus, _ = get_loss(theta_minus)
 
         grad_time = []
         grad_nodes = []
         for i in range(len(theta)):
-            perturb_scale = PARAM_METADATA[i][5]
-            gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * perturb_scale * delta[i])
-            gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * perturb_scale * delta[i])
+            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
+            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            if is_active:
+                gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * perturb_scale * delta[i])
+                gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * perturb_scale * delta[i])
+            else:
+                gt_i = 0.0
+                gn_i = 0.0
             grad_time.append(gt_i)
             grad_nodes.append(gn_i)
             grad_time_sum[i] += gt_i
@@ -592,11 +607,16 @@ def main():
         max_step = 0.02
         theta_next = []
         for i in range(len(theta)):
-            step_t = ak * grad_time_scaled[i]
-            step_n = ak * grad_nodes_scaled[i]
-            step_t_c = max(-max_step, min(max_step, step_t))
-            step_n_c = max(-max_step, min(max_step, step_n))
-            val = max(0.0, min(1.0, theta[i] - step_t_c - step_n_c))
+            name, pmin, pmax, _, _, _ = PARAM_METADATA[i]
+            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            if is_active:
+                step_t = ak * grad_time_scaled[i]
+                step_n = ak * grad_nodes_scaled[i]
+                step_t_c = max(-max_step, min(max_step, step_t))
+                step_n_c = max(-max_step, min(max_step, step_n))
+                val = max(0.0, min(1.0, theta[i] - step_t_c - step_n_c))
+            else:
+                val = theta[i]
             theta_next.append(val)
         theta = project_constraints(theta_next)
 

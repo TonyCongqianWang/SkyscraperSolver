@@ -16,6 +16,7 @@ for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("mediu
         (f"g_{tier_lower}_constr_global_min_entropy", f"{tier_upper}_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_lookahead_gac_global_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_lookahead_constr_global_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+        (f"g_{tier_lower}_lookahead_continue_min_entropy", f"{tier_upper}_LOOKAHEAD_CONTINUE_MIN_ENTROPY", "int"),
     ])
 
 DOUBLE_VARS = [
@@ -27,7 +28,6 @@ DOUBLE_VARS = [
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([
-        (f"g_{tier_lower}_lookahead_downgrade_fraction", f"{tier_upper}_LOOKAHEAD_DOWNGRADE_FRACTION", "double"),
         (f"g_{tier_lower}_period_coef_scale", f"{tier_upper}_PERIOD_COEF_SCALE", "double"),
         (f"g_{tier_lower}_period_coef_unset", f"{tier_upper}_PERIOD_COEF_UNSET", "double"),
         (f"g_{tier_lower}_period_tier_medium_mult", f"{tier_upper}_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),

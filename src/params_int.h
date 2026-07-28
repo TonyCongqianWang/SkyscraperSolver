@@ -52,5 +52,9 @@ extern int	g_deep_gac_global_min_entropy;
 extern int	g_deep_constr_global_min_entropy;
 extern int	g_deep_lookahead_gac_global_min_entropy;
 extern int	g_deep_lookahead_constr_global_min_entropy;
+extern int	g_root_lookahead_continue_min_entropy;
+extern int	g_shallow_lookahead_continue_min_entropy;
+extern int	g_medium_lookahead_continue_min_entropy;
+extern int	g_deep_lookahead_continue_min_entropy;
 
 #endif

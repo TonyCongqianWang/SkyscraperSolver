@@ -26,8 +26,8 @@ static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 	cfg->lookahead.check_mode.run_constr = 1;
 	cfg->lookahead.check_mode.run_gac = 1;
 	cfg->lookahead.check_mode.run_prop = 1;
-	cfg->lookahead.check_mode.downgrade_fraction
-		= g_deep_lookahead_downgrade_fraction;
+	cfg->lookahead.check_mode.lookahead_continue_min_entropy
+		= g_deep_lookahead_continue_min_entropy;
 }
 
 static void	setup_cfg_bounds(t_prune_routine_cfg *cfg, int num_unset)

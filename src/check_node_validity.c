@@ -55,28 +55,14 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 		run_gac_analysis(puzzle, idx, mode);
 }
 
-static int	get_max_high_iters(t_node_state *node, double fraction)
-{
-	int		max;
-	double	u4;
-
-	u4 = dsqrt_approx(dsqrt_approx((double)node->num_unset));
-	max = (int)(u4 * fraction);
-	if (max < 1)
-		max = 1;
-	return (max);
-}
-
 static void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 {
 	t_dirty_constr_stack	local;
 	int						entry;
 	int						iter;
-	int						max;
 	t_check_mode			cur_mode;
 
 	iter = 0;
-	max = get_max_high_iters(puzzle->cur_node, mode.downgrade_fraction);
 	while (puzzle->cur_node->dirty_constrs.count > 0
 		&& !puzzle->cur_node->is_invalid)
 	{
@@ -84,7 +70,8 @@ static void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 		puzzle->cur_node->dirty_constrs.count = 0;
 		puzzle->cur_node->dirty_constrs.in_stack_bmp = 0;
 		cur_mode = g_check_constr;
-		if (iter < max)
+		if (iter == 0 || puzzle->cur_node->remaining_entropy
+			>= mode.lookahead_continue_min_entropy)
 			cur_mode = mode;
 		while (local.count > 0 && !puzzle->cur_node->is_invalid)
 		{
