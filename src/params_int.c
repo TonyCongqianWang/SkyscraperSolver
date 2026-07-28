@@ -16,33 +16,10 @@ int	g_weight_cell_constr_ratio_fp = 4441;
 int	g_weight_cell_constr_ratio_fp_s7 = 4441;
 int	g_weight_cell_constr_ratio_fp_s8 = 4441;
 int	g_weight_cell_constr_ratio_fp_s9 = 4441;
-
 int	g_weight_total_scale_fp = 1135;
 int	g_weight_total_scale_fp_s7 = 1135;
 int	g_weight_total_scale_fp_s8 = 1135;
 int	g_weight_total_scale_fp_s9 = 1135;
-
-int	get_weight_cell_constr_ratio_fp(int size)
-{
-	if (size == 7)
-		return (g_weight_cell_constr_ratio_fp_s7);
-	if (size == 8)
-		return (g_weight_cell_constr_ratio_fp_s8);
-	if (size == 9)
-		return (g_weight_cell_constr_ratio_fp_s9);
-	return (g_weight_cell_constr_ratio_fp);
-}
-
-int	get_weight_total_scale_fp(int size)
-{
-	if (size == 7)
-		return (g_weight_total_scale_fp_s7);
-	if (size == 8)
-		return (g_weight_total_scale_fp_s8);
-	if (size == 9)
-		return (g_weight_total_scale_fp_s9);
-	return (g_weight_total_scale_fp);
-}
 int	g_root_min_entropy = 75388;
 int	g_root_gac_min_entropy = 195117;
 int	g_root_constr_min_entropy = 59676;
@@ -75,3 +52,25 @@ int	g_deep_constr_global_min_entropy = 450839;
 int	g_deep_lookahead_gac_global_min_entropy = 399383;
 int	g_deep_lookahead_constr_global_min_entropy = 494737;
 int	g_deep_lookahead_continue_min_entropy = 240000;
+
+int	get_weight_cell_constr_ratio_fp(int size)
+{
+	if (size == 7)
+		return (g_weight_cell_constr_ratio_fp_s7);
+	if (size == 8)
+		return (g_weight_cell_constr_ratio_fp_s8);
+	if (size == 9)
+		return (g_weight_cell_constr_ratio_fp_s9);
+	return (g_weight_cell_constr_ratio_fp);
+}
+
+int	get_weight_total_scale_fp(int size)
+{
+	if (size == 7)
+		return (g_weight_total_scale_fp_s7);
+	if (size == 8)
+		return (g_weight_total_scale_fp_s8);
+	if (size == 9)
+		return (g_weight_total_scale_fp_s9);
+	return (g_weight_total_scale_fp);
+}

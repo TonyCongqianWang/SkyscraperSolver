@@ -20,17 +20,6 @@ double	g_global_entropy_unset_bias = 516.96;
 double	g_global_entropy_unset_bias_s7 = 516.96;
 double	g_global_entropy_unset_bias_s8 = 516.96;
 double	g_global_entropy_unset_bias_s9 = 516.96;
-
-double	get_global_entropy_unset_bias(int size)
-{
-	if (size == 7)
-		return (g_global_entropy_unset_bias_s7);
-	if (size == 8)
-		return (g_global_entropy_unset_bias_s8);
-	if (size == 9)
-		return (g_global_entropy_unset_bias_s9);
-	return (g_global_entropy_unset_bias);
-}
 double	g_root_lookahead_continue_slope = 0.5;
 double	g_root_period_coef_scale = 4973.038677964758;
 double	g_root_period_coef_unset = 1.2322573182625858;
@@ -83,3 +72,14 @@ double	g_deep_lookahead_gac_local_min_entropy = 0.23993727267459564;
 double	g_deep_lookahead_gac_local_max_entropy = 0.8859350540278806;
 double	g_deep_lookahead_constr_local_min_entropy = 0.2739735577902606;
 double	g_deep_lookahead_constr_local_max_entropy = 0.84858201450305;
+
+double	get_global_entropy_unset_bias(int size)
+{
+	if (size == 7)
+		return (g_global_entropy_unset_bias_s7);
+	if (size == 8)
+		return (g_global_entropy_unset_bias_s8);
+	if (size == 9)
+		return (g_global_entropy_unset_bias_s9);
+	return (g_global_entropy_unset_bias);
+}

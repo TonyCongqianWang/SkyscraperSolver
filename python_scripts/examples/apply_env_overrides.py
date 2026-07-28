@@ -99,12 +99,52 @@ static void	{func_name}(void)
 }}
 #endif"""
 
+    getters = ""
+    if "params_int.c" in filepath:
+        getters = """
+int\tget_weight_cell_constr_ratio_fp(int size)
+{
+\tif (size == 7)
+\t\treturn (g_weight_cell_constr_ratio_fp_s7);
+\tif (size == 8)
+\t\treturn (g_weight_cell_constr_ratio_fp_s8);
+\tif (size == 9)
+\t\treturn (g_weight_cell_constr_ratio_fp_s9);
+\treturn (g_weight_cell_constr_ratio_fp);
+}
+
+int\tget_weight_total_scale_fp(int size)
+{
+\tif (size == 7)
+\t\treturn (g_weight_total_scale_fp_s7);
+\tif (size == 8)
+\t\treturn (g_weight_total_scale_fp_s8);
+\tif (size == 9)
+\t\treturn (g_weight_total_scale_fp_s9);
+\treturn (g_weight_total_scale_fp);
+}
+"""
+    elif "params_double.c" in filepath:
+        getters = """
+double\tget_global_entropy_unset_bias(int size)
+{
+\tif (size == 7)
+\t\treturn (g_global_entropy_unset_bias_s7);
+\tif (size == 8)
+\t\treturn (g_global_entropy_unset_bias_s8);
+\tif (size == 9)
+\t\treturn (g_global_entropy_unset_bias_s9);
+\treturn (g_global_entropy_unset_bias);
+}
+"""
+
     header_inc = f'#include "{os.path.basename(filepath).replace(".c", ".h")}"'
     new_content = f"""/* Tunable overrides active */
 {header_inc}
 {func_code}
 
 {decl_body}
+{getters}
 """
     with open(filepath, "w") as f:
         f.write(new_content)
@@ -132,6 +172,45 @@ def unapply_overrides_from_file(filepath, var_list):
         val = var_values[var_name]
         decl_lines.append(f"{var_type}\t{var_name} = {val};")
 
+    getters = ""
+    if "params_int.c" in filepath:
+        getters = """
+int\tget_weight_cell_constr_ratio_fp(int size)
+{
+\tif (size == 7)
+\t\treturn (g_weight_cell_constr_ratio_fp_s7);
+\tif (size == 8)
+\t\treturn (g_weight_cell_constr_ratio_fp_s8);
+\tif (size == 9)
+\t\treturn (g_weight_cell_constr_ratio_fp_s9);
+\treturn (g_weight_cell_constr_ratio_fp);
+}
+
+int\tget_weight_total_scale_fp(int size)
+{
+\tif (size == 7)
+\t\treturn (g_weight_total_scale_fp_s7);
+\tif (size == 8)
+\t\treturn (g_weight_total_scale_fp_s8);
+\tif (size == 9)
+\t\treturn (g_weight_total_scale_fp_s9);
+\treturn (g_weight_total_scale_fp);
+}
+"""
+    elif "params_double.c" in filepath:
+        getters = """
+double\tget_global_entropy_unset_bias(int size)
+{
+\tif (size == 7)
+\t\treturn (g_global_entropy_unset_bias_s7);
+\tif (size == 8)
+\t\treturn (g_global_entropy_unset_bias_s8);
+\tif (size == 9)
+\t\treturn (g_global_entropy_unset_bias_s9);
+\treturn (g_global_entropy_unset_bias);
+}
+"""
+
     header_inc = f'#include "{os.path.basename(filepath).replace(".c", ".h")}"'
     decl_body = "\n".join(decl_lines)
 
@@ -147,7 +226,7 @@ def unapply_overrides_from_file(filepath, var_list):
 /*                                                                            */
 /* ************************************************************************** */"""
 
-    new_content = f"{header_comment}\n\n{header_inc}\n\n{decl_body}\n"
+    new_content = f"{header_comment}\n\n{header_inc}\n\n{decl_body}\n{getters}"
     with open(filepath, "w") as f:
         f.write(new_content)
     print(f"Successfully unapplied overrides from {filepath}")

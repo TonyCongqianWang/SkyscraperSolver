@@ -55,12 +55,25 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 		run_gac_analysis(puzzle, idx, mode);
 }
 
+static t_check_mode	get_pass_mode(t_puzzle *puzzle, t_check_mode mode,
+		int iter)
+{
+	int	req_entropy;
+
+	if (iter == 0)
+		return (mode);
+	req_entropy = (int)((double)mode.lookahead_continue_min_entropy
+			* (1.0 + mode.lookahead_continue_slope * (double)iter));
+	if (puzzle->cur_node->remaining_entropy >= req_entropy)
+		return (mode);
+	return (g_check_constr);
+}
+
 static void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 {
 	t_dirty_constr_stack	local;
 	int						entry;
 	int						iter;
-	int						req_entropy;
 	t_check_mode			cur_mode;
 
 	iter = 0;
@@ -70,18 +83,13 @@ static void	drain_dirty_constraints_mode(t_puzzle *puzzle, t_check_mode mode)
 		local = puzzle->cur_node->dirty_constrs;
 		puzzle->cur_node->dirty_constrs.count = 0;
 		puzzle->cur_node->dirty_constrs.in_stack_bmp = 0;
-		cur_mode = g_check_constr;
-		req_entropy = (int)((double)mode.lookahead_continue_min_entropy
-				* (1.0 + mode.lookahead_continue_slope * (double)iter));
-		if (iter == 0 || puzzle->cur_node->remaining_entropy >= req_entropy)
-			cur_mode = mode;
+		cur_mode = get_pass_mode(puzzle, mode, iter++);
 		while (local.count > 0 && !puzzle->cur_node->is_invalid)
 		{
 			entry = local.entries[(int)(--local.count)];
 			local.in_stack_bmp &= ~(1ULL << entry);
 			process_dirty_entry(puzzle, entry, cur_mode);
 		}
-		iter++;
 	}
 }
 
