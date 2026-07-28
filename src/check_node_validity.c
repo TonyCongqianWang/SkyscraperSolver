@@ -57,9 +57,11 @@ static void	process_dirty_entry(t_puzzle *puzzle, int entry, t_check_mode mode)
 
 static int	get_max_high_iters(t_node_state *node, double fraction)
 {
-	int	max;
+	int		max;
+	double	u4;
 
-	max = (int)(dsqrt_approx((double)node->num_unset) * fraction);
+	u4 = dsqrt_approx(dsqrt_approx((double)node->num_unset));
+	max = (int)(u4 * fraction);
 	if (max < 1)
 		max = 1;
 	return (max);

@@ -4,8 +4,8 @@ import sys
 import re
 
 INT_VARS = [
-    ("g_weight_cell", "WEIGHT_CELL", "int"),
-    ("g_weight_constr", "WEIGHT_CONSTR", "int"),
+    ("g_weight_cell_constr_ratio_fp", "WEIGHT_CELL_CONSTR_RATIO_FP", "int"),
+    ("g_weight_total_scale_fp", "WEIGHT_TOTAL_SCALE_FP", "int"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     INT_VARS.extend([

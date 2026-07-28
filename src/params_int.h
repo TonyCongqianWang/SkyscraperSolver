@@ -13,9 +13,9 @@
 #ifndef PARAMS_INT_H
 # define PARAMS_INT_H
 
-/* Entropy Weight Parameters */
-extern int	g_weight_cell;
-extern int	g_weight_constr;
+/* Entropy Weight Fixed-Point Parameters */
+extern int	g_weight_cell_constr_ratio_fp;
+extern int	g_weight_total_scale_fp;
 
 /* Root Tier Int Parameters */
 extern int	g_root_min_entropy;

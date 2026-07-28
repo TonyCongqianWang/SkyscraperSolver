@@ -11,10 +11,23 @@
 /* ************************************************************************** */
 
 #include "entropy.h"
-#include "puzzle_structs.h"
+#include "params_int.h"
 
-static int	initial_cell_entropy(t_node_state *node, int size);
-static int	initial_constr_entropy(t_node_state *node, int size);
+int	get_weight_cell(void)
+{
+	long long	prod;
+
+	prod = 1000LL * g_weight_cell_constr_ratio_fp * g_weight_total_scale_fp;
+	return ((int)(prod >> 21));
+}
+
+int	get_weight_constr(void)
+{
+	long long	prod;
+
+	prod = 1000LL * g_weight_total_scale_fp;
+	return ((int)(prod >> 10));
+}
 
 static int	initial_cell_entropy(t_node_state *node, int size)
 {
@@ -26,7 +39,7 @@ static int	initial_cell_entropy(t_node_state *node, int size)
 	while (i < size * size)
 	{
 		entropy += g_log2_table[(int)node->grid.num_cell_vals[i]]
-			* g_weight_cell / ENTROPY_SCALE;
+			* get_weight_cell() / ENTROPY_SCALE;
 		i++;
 	}
 	return (entropy);
@@ -47,7 +60,7 @@ static int	initial_constr_entropy(t_node_state *node, int size)
 		{
 			entropy += g_log2_table[(int)node->constrs
 				.num_val_positions[i][v]]
-				* g_weight_constr / ENTROPY_SCALE;
+				* get_weight_constr() / ENTROPY_SCALE;
 			v++;
 		}
 		i++;
@@ -64,5 +77,5 @@ int	compute_initial_entropy(t_node_state *node, int size)
 int	compute_max_entropy(int size)
 {
 	return (size * size * g_log2_table[size]
-		* (g_weight_cell + 2 * g_weight_constr) / ENTROPY_SCALE);
+		* (get_weight_cell() + 2 * get_weight_constr()) / ENTROPY_SCALE);
 }
