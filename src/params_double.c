@@ -68,4 +68,3 @@ double	g_deep_lookahead_gac_local_min_entropy = 0.2549729416593854;
 double	g_deep_lookahead_gac_local_max_entropy = 0.9453609346827506;
 double	g_deep_lookahead_constr_local_min_entropy = 0.256793122046651;
 double	g_deep_lookahead_constr_local_max_entropy = 0.8333665661005059;
-
