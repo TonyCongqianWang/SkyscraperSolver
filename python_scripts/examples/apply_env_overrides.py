@@ -83,7 +83,8 @@ def apply_overrides_to_file(filepath, var_list, func_name):
 
     for var_name, env_name, var_type in var_list:
         val = var_values[var_name]
-        decl_lines.append(f"{var_type}\t{var_name} = {val};")
+        tabs = "\t\t" if var_type == "int" else "\t"
+        decl_lines.append(f"{var_type}{tabs}{var_name} = {val};")
         conv = "atoi" if var_type == "int" else "atof"
         env_lines.append(f'\tval = getenv("{env_name}");\n\tif (val)\n\t\t{var_name} = {conv}(val);')
 
@@ -171,7 +172,8 @@ def unapply_overrides_from_file(filepath, var_list):
     decl_lines = []
     for var_name, env_name, var_type in var_list:
         val = var_values[var_name]
-        decl_lines.append(f"{var_type}\t{var_name} = {val};")
+        tabs = "\t\t" if var_type == "int" else "\t"
+        decl_lines.append(f"{var_type}{tabs}{var_name} = {val};")
 
     getters = ""
     if "params_math.c" in filepath:

@@ -12,14 +12,14 @@
 
 #include "params_math.h"
 
-int	g_weight_cell_constr_ratio_fp = 5561;
-int	g_weight_cell_constr_ratio_fp_s7 = 5561;
-int	g_weight_cell_constr_ratio_fp_s8 = 5408;
-int	g_weight_cell_constr_ratio_fp_s9 = 5349;
-int	g_weight_total_scale_fp = 990;
-int	g_weight_total_scale_fp_s7 = 990;
-int	g_weight_total_scale_fp_s8 = 934;
-int	g_weight_total_scale_fp_s9 = 1092;
+int		g_weight_cell_constr_ratio_fp = 5561;
+int		g_weight_cell_constr_ratio_fp_s7 = 5561;
+int		g_weight_cell_constr_ratio_fp_s8 = 5408;
+int		g_weight_cell_constr_ratio_fp_s9 = 5349;
+int		g_weight_total_scale_fp = 990;
+int		g_weight_total_scale_fp_s7 = 990;
+int		g_weight_total_scale_fp_s8 = 934;
+int		g_weight_total_scale_fp_s9 = 1092;
 double	g_global_entropy_unset_bias = 535.58782;
 double	g_global_entropy_unset_bias_s7 = 535.58782;
 double	g_global_entropy_unset_bias_s8 = 503.709773;
