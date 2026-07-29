@@ -54,11 +54,11 @@ static int	get_next_in_pass(t_puzzle *puzzle, t_node_transition *next,
 		if (is_cell_empty(node, cell_idx)
 			&& get_cell_priority_pass(node, cell_idx, puzzle->size) == pass)
 		{
-			next->cell_idx = cell_idx;
-			next->cell_val = 1;
-			if (set_next_valid_val(puzzle, next)
-				&& is_cell_empty(node, cell_idx))
+			if (is_valid_value(node, cell_idx, cache->entries[*i].cell_val))
+			{
+				*next = cache->entries[*i];
 				return (1);
+			}
 		}
 		(*i)++;
 	}
@@ -76,7 +76,8 @@ static void	get_resume_pos(t_node_state *node, t_node_transition *next,
 	{
 		*pass_out = get_cell_priority_pass(node, next->cell_idx, node->size);
 		i = 0;
-		while (i < cache->count && cache->entries[i].cell_idx != next->cell_idx)
+		while (i < cache->count && (cache->entries[i].cell_idx != next->cell_idx
+				|| cache->entries[i].cell_val != next->cell_val))
 			i++;
 		*i_out = i + 1;
 	}
@@ -98,13 +99,6 @@ int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
 	node = puzzle->cur_node;
 	if (node->lookahead_ctx)
 		return (get_next_lookahead(puzzle, next, config));
-	if (next->cell_idx >= 0)
-	{
-		next->cell_val++;
-		if (set_next_valid_val(puzzle, next)
-			&& is_cell_empty(node, next->cell_idx))
-			return (1);
-	}
 	get_resume_pos(node, next, &curr_pass, &i);
 	max_pass = get_max_allowed_pass(config->selectivity);
 	while (curr_pass <= max_pass)

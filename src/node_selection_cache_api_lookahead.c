@@ -14,35 +14,46 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
-static int	check_lookahead_candidate(t_puzzle *puzzle, t_node_transition *next,
-				int cell_idx)
-{
-	next->cell_idx = cell_idx;
-	next->cell_val = 1;
-	return (set_next_valid_val(puzzle, next)
-		&& is_cell_empty(puzzle->cur_node, cell_idx));
-}
-
 static int	scan_lookahead_pass(t_puzzle *puzzle, t_node_transition *next,
 				int pass)
 {
-	t_node_state	*node;
-	int				cell_idx;
+	t_node_state		*node;
+	int					cell_idx;
+	t_node_transition	entry;
 
 	node = puzzle->cur_node;
 	while (node->lookahead_ctx->curr_index < node->order_cache->count)
 	{
-		cell_idx = node->order_cache->entries[
-			node->lookahead_ctx->curr_index].cell_idx;
+		entry = node->order_cache->entries[node->lookahead_ctx->curr_index];
+		cell_idx = entry.cell_idx;
 		if (is_cell_empty(node, cell_idx)
 			&& node->lookahead_ctx->cell_passes[cell_idx] == pass)
 		{
-			if (check_lookahead_candidate(puzzle, next, cell_idx))
+			if (is_valid_value(node, cell_idx, entry.cell_val))
+			{
+				*next = entry;
 				return (1);
+			}
 		}
 		node->lookahead_ctx->curr_index++;
 	}
+	(void)puzzle;
 	return (0);
+}
+
+static int	find_resume_index(t_node_order *cache, t_node_transition *next)
+{
+	int	i;
+
+	i = 0;
+	while (i < cache->count)
+	{
+		if (cache->entries[i].cell_idx == next->cell_idx
+			&& cache->entries[i].cell_val == next->cell_val)
+			return (i);
+		i++;
+	}
+	return (-1);
 }
 
 int	get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
@@ -50,23 +61,23 @@ int	get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
 {
 	t_node_state	*node;
 	int				max_pass;
+	int				i;
 
 	node = puzzle->cur_node;
 	if (next->cell_idx >= 0)
 	{
-		next->cell_val++;
-		if (set_next_valid_val(puzzle, next)
-			&& is_cell_empty(node, next->cell_idx))
-			return (1);
-		node->lookahead_ctx->curr_index++;
+		i = find_resume_index(node->order_cache, next);
+		node->lookahead_ctx->curr_index = i + 1;
 	}
+	else
+		node->lookahead_ctx->curr_index = 0;
 	max_pass = get_max_allowed_pass(config->selectivity);
 	while (node->lookahead_ctx->curr_pass <= max_pass)
 	{
 		if (scan_lookahead_pass(puzzle, next, node->lookahead_ctx->curr_pass))
 			return (1);
 		node->lookahead_ctx->curr_pass++;
-		node->lookahead_ctx->curr_index = node->lowest_empty_idx;
+		node->lookahead_ctx->curr_index = 0;
 	}
 	return (0);
 }

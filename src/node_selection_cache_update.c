@@ -13,6 +13,8 @@
 #include "node_selection_cache.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
+#include "node_selection_score.h"
+#include "node_selection_transition.h"
 
 int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 		t_node_order *cache, int i)
@@ -33,25 +35,49 @@ int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 		&& is_cell_empty(puzzle->cur_node, next->cell_idx));
 }
 
+static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
+				t_node_select_config *config, int cv)
+{
+	t_node_transition	tr;
+	int					c;
+	int					v;
+
+	init_node_transition(&tr);
+	c = cv >> 8;
+	v = cv & 0xFF;
+	tr.cell_idx = c;
+	tr.cell_val = v;
+	score_transition_strat(puzzle->cur_node, &tr, config->score_family);
+	cache->entries[cache->count] = tr;
+	cache->meta[cache->count].cached_br_score = tr.score;
+	cache->meta[cache->count].entropy_pos = -1;
+	cache->meta[cache->count].entropy_neg = -1;
+	cache->count++;
+}
+
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			t_node_select_config *config)
 {
-	int					cell_idx;
-	t_node_transition	best;
+	int				c;
+	int				v;
+	t_node_state	*state;
 
-	cell_idx = 0;
-	while (cell_idx < puzzle->squared_size)
+	state = puzzle->cur_node;
+	cache->count = 0;
+	c = 0;
+	while (c < puzzle->squared_size)
 	{
-		if (is_cell_empty(puzzle->cur_node, cell_idx))
+		if (is_cell_empty(state, c))
 		{
-			set_best_val_strat(puzzle, cell_idx, &best, config);
-			if (best.cell_idx != -1)
+			v = 1;
+			while (v <= puzzle->size)
 			{
-				cache->entries[cache->count] = best;
-				cache->count++;
+				if (is_valid_value(state, c, v))
+					add_transition(puzzle, cache, config, (c << 8) | v);
+				v++;
 			}
 		}
-		cell_idx++;
+		c++;
 	}
 }
 

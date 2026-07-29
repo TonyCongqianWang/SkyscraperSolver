@@ -16,50 +16,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static void	partition_cache(t_puzzle *puzzle, t_node_order *cache,
-				t_node_state *node)
-{
-	t_node_transition	tmp[MAX_CELL_COUNT];
-	int					i;
-	int					fill_c;
-	int					emp_c;
-
-	i = node->lowest_empty_idx;
-	fill_c = i;
-	emp_c = 0;
-	while (i < cache->count)
-	{
-		if (!is_cell_empty(node, cache->entries[i].cell_idx))
-			cache->entries[fill_c++] = cache->entries[i];
-		else
-			tmp[emp_c++] = cache->entries[i];
-		i++;
-	}
-	i = -1;
-	while (++i < emp_c)
-		cache->entries[fill_c + i] = tmp[i];
-	node->lowest_empty_idx = fill_c;
-	(void)puzzle;
-}
-
-static void	rescore_empty_suffix(t_puzzle *puzzle, t_node_order *cache,
-				t_node_select_config *config)
-{
-	t_node_state	*n;
-	int				i;
-
-	n = puzzle->cur_node;
-	i = n->lowest_empty_idx;
-	while (i < cache->count)
-	{
-		set_best_val_strat(puzzle, cache->entries[i].cell_idx,
-			&cache->entries[i], config);
-		i++;
-	}
-	sort_node_order(&cache->entries[n->lowest_empty_idx],
-		cache->count - n->lowest_empty_idx, config->criterion);
-}
-
 static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 				t_node_select_config *config, int old_top)
 {
@@ -74,22 +30,27 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 		n->lowest_empty_idx = 0;
 		cache->build_depth = n->cur_depth;
 		collect_cache_entries(puzzle, cache, config);
-		sort_node_order(cache->entries, cache->count, config->criterion);
+		sort_node_order_meta(cache->entries, cache->meta,
+			cache->count, config->criterion);
 	}
 	else
 	{
 		*cache = *parent_cache;
 		cache->build_depth = n->cur_depth;
-		partition_cache(puzzle, cache, n);
-		rescore_empty_suffix(puzzle, cache, config);
+		compact_and_sort_cache(n, cache, config->criterion);
 	}
 }
 
 static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
 				t_node_select_config *config)
 {
-	partition_cache(puzzle, cache, puzzle->cur_node);
-	rescore_empty_suffix(puzzle, cache, config);
+	t_node_state	*n;
+
+	n = puzzle->cur_node;
+	cache->build_depth = n->cur_depth;
+	collect_cache_entries(puzzle, cache, config);
+	sort_node_order_meta(cache->entries, cache->meta,
+		cache->count, config->criterion);
 }
 
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)

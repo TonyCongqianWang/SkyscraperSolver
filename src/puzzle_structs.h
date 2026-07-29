@@ -28,21 +28,32 @@ typedef struct s_puzzle		t_puzzle;
 
 typedef struct s_node_transition
 {
-	int			cell_idx;
-	char		cell_val;
-	int			num_valids_col;
-	int			num_valids_row;
-	int			num_valids_cell;
-	double		score;
-}		t_node_transition;
+	int					cell_idx;
+	char				cell_val;
+	int					num_valids_col;
+	int					num_valids_row;
+	int					num_valids_cell;
+	double				score;
+}						t_node_transition;
+
+typedef struct s_transition_meta
+{
+	double				cached_br_score;
+	int					entropy_pos;
+	int					entropy_neg;
+}						t_transition_meta;
+
+# define MAX_TRANSITIONS 729
 
 typedef struct s_node_order
 {
-	t_node_transition	entries[MAX_CELL_COUNT];
+	t_node_transition	entries[MAX_TRANSITIONS];
+	t_transition_meta	meta[MAX_TRANSITIONS];
 	int					count;
+	int					num_valid;
 	int					last_build_entropy;
 	int					build_depth;
-}		t_node_order;
+}						t_node_order;
 
 # define MAX_STACK_DEPTH 128
 

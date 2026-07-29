@@ -28,18 +28,18 @@ jobs:
         run: |
           # Run norminette normally to output human-readable style warnings/errors in the logs
           python -m norminette src/*.c src/*.h || true
-          
+
           # Fetch JSON output and count Errors and Notices using bash tools
           OUTPUT=$(python -m norminette -f json src/*.c src/*.h) || true
           ERRORS=$(echo "$OUTPUT" | grep -o '"level":"Error"' | wc -l)
           NOTICES=$(echo "$OUTPUT" | grep -o '"level":"Notice"' | wc -l)
-          
+
           echo "========================================"
           echo "Norminette Summary:"
           echo "  Errors:  $ERRORS"
           echo "  Notices: $NOTICES"
           echo "========================================"
-          
+
           if [ "$ERRORS" -ne 0 ]; then
             exit 1
           fi
@@ -67,7 +67,7 @@ jobs:
         run: make re
 
       - name: Run consistency verification
-        run: python python_scripts/verify_consistency.py
+        run: make test
 
       - name: Verify setup_and_tune
         run: bash setup_and_tune.sh

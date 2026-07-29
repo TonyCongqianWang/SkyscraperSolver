@@ -21,6 +21,11 @@ void	set_best_val_strat(t_puzzle *puzzle, int idx,
 			t_node_transition *best, t_node_select_config *config);
 void	sort_node_order(t_node_transition *entries, int count,
 			t_selection_criterion criterion);
+void	sort_node_order_meta(t_node_transition *entries,
+			t_transition_meta *meta, int count,
+			t_selection_criterion criterion);
+void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
+			t_selection_criterion criterion);
 int		scan_best_live(t_puzzle *puzzle, t_node_transition *next,
 			t_node_select_config *config);
 
