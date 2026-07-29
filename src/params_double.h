@@ -13,17 +13,13 @@
 #ifndef PARAMS_DOUBLE_H
 # define PARAMS_DOUBLE_H
 
+# include "params_math.h"
+
 /* Routing Double Parameters */
 extern double	g_routing_shallow_ratio;
 extern double	g_routing_medium_ratio;
 extern double	g_sel_period_coef_sqrt;
 extern double	g_sel_period_coef_inv;
-extern double	g_global_entropy_unset_bias;
-extern double	g_global_entropy_unset_bias_s7;
-extern double	g_global_entropy_unset_bias_s8;
-extern double	g_global_entropy_unset_bias_s9;
-
-double			get_global_entropy_unset_bias(int size);
 
 /* Root Tier Double Parameters */
 extern double	g_root_lookahead_continue_slope;

@@ -3,7 +3,7 @@ import os
 import sys
 import re
 
-INT_VARS = [
+MATH_VARS = [
     ("g_weight_cell_constr_ratio_fp", "WEIGHT_CELL_CONSTR_RATIO_FP", "int"),
     ("g_weight_cell_constr_ratio_fp_s7", "WEIGHT_CELL_CONSTR_RATIO_FP_S7", "int"),
     ("g_weight_cell_constr_ratio_fp_s8", "WEIGHT_CELL_CONSTR_RATIO_FP_S8", "int"),
@@ -12,7 +12,13 @@ INT_VARS = [
     ("g_weight_total_scale_fp_s7", "WEIGHT_TOTAL_SCALE_FP_S7", "int"),
     ("g_weight_total_scale_fp_s8", "WEIGHT_TOTAL_SCALE_FP_S8", "int"),
     ("g_weight_total_scale_fp_s9", "WEIGHT_TOTAL_SCALE_FP_S9", "int"),
+    ("g_global_entropy_unset_bias", "GLOBAL_ENTROPY_UNSET_BIAS", "double"),
+    ("g_global_entropy_unset_bias_s7", "GLOBAL_ENTROPY_UNSET_BIAS_S7", "double"),
+    ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
+    ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),
 ]
+
+INT_VARS = []
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     INT_VARS.extend([
         (f"g_{tier_lower}_min_entropy", f"{tier_upper}_MIN_ENTROPY", "int"),
@@ -30,10 +36,6 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_global_entropy_unset_bias", "GLOBAL_ENTROPY_UNSET_BIAS", "double"),
-    ("g_global_entropy_unset_bias_s7", "GLOBAL_ENTROPY_UNSET_BIAS_S7", "double"),
-    ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
-    ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([
@@ -53,6 +55,7 @@ for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("mediu
     ])
 
 FILES_CONFIGS = [
+    ("src/params_math.c", MATH_VARS, "init_params_math_env"),
     ("src/params_int.c", INT_VARS, "init_params_int_env"),
     ("src/params_double.c", DOUBLE_VARS, "init_params_double_env"),
 ]
@@ -91,16 +94,16 @@ def apply_overrides_to_file(filepath, var_list, func_name):
 
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 __attribute__((constructor))
-static void	{func_name}(void)
+static void\t{func_name}(void)
 {{
-	char	*val;
+\tchar\t*val;
 
 {env_body}
 }}
 #endif"""
 
     getters = ""
-    if "params_int.c" in filepath:
+    if "params_math.c" in filepath:
         getters = """
 int\tget_weight_cell_constr_ratio_fp(int size)
 {
@@ -123,9 +126,7 @@ int\tget_weight_total_scale_fp(int size)
 \t\treturn (g_weight_total_scale_fp_s9);
 \treturn (g_weight_total_scale_fp);
 }
-"""
-    elif "params_double.c" in filepath:
-        getters = """
+
 double\tget_global_entropy_unset_bias(int size)
 {
 \tif (size == 7)
@@ -173,7 +174,7 @@ def unapply_overrides_from_file(filepath, var_list):
         decl_lines.append(f"{var_type}\t{var_name} = {val};")
 
     getters = ""
-    if "params_int.c" in filepath:
+    if "params_math.c" in filepath:
         getters = """
 int\tget_weight_cell_constr_ratio_fp(int size)
 {
@@ -196,9 +197,7 @@ int\tget_weight_total_scale_fp(int size)
 \t\treturn (g_weight_total_scale_fp_s9);
 \treturn (g_weight_total_scale_fp);
 }
-"""
-    elif "params_double.c" in filepath:
-        getters = """
+
 double\tget_global_entropy_unset_bias(int size)
 {
 \tif (size == 7)
