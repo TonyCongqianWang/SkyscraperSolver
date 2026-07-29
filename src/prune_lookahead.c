@@ -32,14 +32,24 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 }
 
 static void	run_lookahead_transitions(t_puzzle *puzzle,
-				t_node_transition *tr, int max_depth, t_check_mode mode)
+				t_node_transition *tr, const t_lookahead_config *config)
 {
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
 	{
-		if (!do_l_ahead_dive(puzzle, *tr, max_depth, mode))
+		if (!do_l_ahead_dive(puzzle, *tr, config->max_depth, config->check_mode))
+		{
 			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
 				g_check_constr);
+		}
+		else if (config->enable_complement)
+		{
+			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth, g_check_constr))
+			{
+				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
+					g_check_constr);
+			}
+		}
 	}
 }
 
@@ -75,8 +85,7 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
-	run_lookahead_transitions(puzzle, &tr, config->max_depth,
-		config->check_mode);
+	run_lookahead_transitions(puzzle, &tr, config);
 	node->lookahead_ctx = NULL;
 	node->is_in_lookahead_select = 0;
 }

@@ -16,5 +16,7 @@
 
 int	do_l_ahead_dive(
 		t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode);
+int	do_l_ahead_dive_neg(
+		t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode);
 
 #endif

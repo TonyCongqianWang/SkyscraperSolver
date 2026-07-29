@@ -55,6 +55,7 @@ typedef struct s_lookahead_config
 	int					max_depth;
 	int					branching_budget;
 	int					enable_node_select;
+	int					enable_complement;
 	int					pruning_level;
 	t_check_mode		check_mode;
 }	t_lookahead_config;
