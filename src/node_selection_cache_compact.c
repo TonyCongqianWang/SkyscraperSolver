@@ -43,44 +43,30 @@ void	sort_node_order_meta(t_node_transition *entries,
 	}
 }
 
-static void	copy_valid_back(t_node_order *cache, t_node_transition *tmp_entries,
-				t_transition_meta *tmp_meta, int valid_count)
-{
-	int	i;
-
-	i = 0;
-	while (i < valid_count)
-	{
-		cache->entries[i] = tmp_entries[i];
-		cache->meta[i] = tmp_meta[i];
-		i++;
-	}
-	cache->count = valid_count;
-	cache->num_valid = valid_count;
-}
-
 void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
 			t_selection_criterion criterion)
 {
-	t_node_transition	tmp_entries[MAX_TRANSITIONS];
-	t_transition_meta	tmp_meta[MAX_TRANSITIONS];
-	int					i;
-	int					valid_count;
+	int	read_idx;
+	int	write_idx;
 
-	valid_count = 0;
-	i = 0;
-	while (i < cache->count)
+	write_idx = 0;
+	read_idx = 0;
+	while (read_idx < cache->count)
 	{
-		if (is_cell_empty(node, cache->entries[i].cell_idx)
-			&& is_valid_value(node, cache->entries[i].cell_idx,
-				cache->entries[i].cell_val))
+		if (is_cell_empty(node, cache->entries[read_idx].cell_idx)
+			&& is_valid_value(node, cache->entries[read_idx].cell_idx,
+				cache->entries[read_idx].cell_val))
 		{
-			tmp_entries[valid_count] = cache->entries[i];
-			tmp_meta[valid_count] = cache->meta[i];
-			valid_count++;
+			if (write_idx != read_idx)
+			{
+				cache->entries[write_idx] = cache->entries[read_idx];
+				cache->meta[write_idx] = cache->meta[read_idx];
+			}
+			write_idx++;
 		}
-		i++;
+		read_idx++;
 	}
-	copy_valid_back(cache, tmp_entries, tmp_meta, valid_count);
+	cache->count = write_idx;
+	cache->num_valid = write_idx;
 	sort_node_order_meta(cache->entries, cache->meta, cache->count, criterion);
 }
