@@ -37,14 +37,16 @@ static void	run_lookahead_transitions(t_puzzle *puzzle,
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
 	{
-		if (!do_l_ahead_dive(puzzle, *tr, config->max_depth, config->check_mode))
+		if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
+				config->check_mode))
 		{
 			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
 				g_check_constr);
 		}
 		else if (config->enable_complement)
 		{
-			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth, g_check_constr))
+			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
+					g_check_constr))
 			{
 				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
 					g_check_constr);
