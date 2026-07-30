@@ -14,23 +14,10 @@
 # define ENTROPY_H
 # include "params_int.h"
 # include "puzzle_structs.h"
+# include "math_log.h"
 
 # define ENTROPY_SCALE 1024
 # define ENTROPY_SCALE_SHIFT 10
-
-/* Scaled log2 lookup table: g_log2_table[k] ≈ log2(k) * 1024 */
-static const int	g_log2_table[10] = {
-	0,
-	0,
-	1024,
-	1623,
-	2048,
-	2378,
-	2647,
-	2875,
-	3072,
-	3246
-};
 
 int		get_weight_cell(int size);
 int		get_weight_constr(int size);

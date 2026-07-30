@@ -44,7 +44,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	puzzle->squared_size = size * size;
 	init_selection_lut(get_sel_power(size));
 	init_cell_distance_order(puzzle, size);
-	puzzle->constr_max_entropy = size * g_log2_table[size]
+	puzzle->constr_max_entropy = size * get_log2_scaled(size)
 		* get_weight_constr(size) / ENTROPY_SCALE;
 	init_solution_storage(puzzle, max_sols);
 	puzzle->nodes_visited = 0;

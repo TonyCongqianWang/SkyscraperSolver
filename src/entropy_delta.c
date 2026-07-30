@@ -14,13 +14,13 @@
 
 int	entropy_delta_cell(int old_count, int size)
 {
-	return ((g_log2_table[old_count] - g_log2_table[old_count - 1])
+	return ((get_log2_scaled(old_count) - get_log2_scaled(old_count - 1))
 		* get_weight_cell(size) / ENTROPY_SCALE);
 }
 
 int	entropy_delta_constr(int old_count, int size)
 {
-	return ((g_log2_table[old_count] - g_log2_table[old_count - 1])
+	return ((get_log2_scaled(old_count) - get_log2_scaled(old_count - 1))
 		* get_weight_constr(size) / ENTROPY_SCALE);
 }
 
@@ -28,12 +28,14 @@ int	compute_constr_entropy(t_node_state *node, int idx, int size)
 {
 	int	entropy;
 	int	v;
+	int	pos_count;
 
 	entropy = 0;
 	v = 0;
 	while (v < size)
 	{
-		entropy += g_log2_table[(int)node->constrs.num_val_positions[idx][v]]
+		pos_count = (int)node->constrs.num_val_positions[idx][v];
+		entropy += get_log2_scaled(pos_count)
 			* get_weight_constr(size) / ENTROPY_SCALE;
 		v++;
 	}

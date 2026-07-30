@@ -14,5 +14,6 @@
 # define MATH_LOG_H
 
 double	custom_ln(int x);
+int		get_log2_scaled(int x);
 
 #endif

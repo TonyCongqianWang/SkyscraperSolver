@@ -31,3 +31,23 @@ double	custom_ln(int x)
 		return (0.0);
 	return (g_ln_table[x]);
 }
+
+int	get_log2_scaled(int x)
+{
+	static const int	g_log2_table[10] = {
+		0,
+		0,
+		1024,
+		1623,
+		2048,
+		2378,
+		2647,
+		2875,
+		3072,
+		3246
+	};
+
+	if (x < 1 || x > 9)
+		return (0);
+	return (g_log2_table[x]);
+}
