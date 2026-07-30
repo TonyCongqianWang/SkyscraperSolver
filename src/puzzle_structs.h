@@ -174,6 +174,7 @@ typedef struct s_puzzle
 	t_node_orders_stack		order_stack;
 	t_node_state			node_stack[MAX_STACK_DEPTH];
 	int						node_stack_top;
+	int						cell_distance_order[MAX_CELL_COUNT];
 }		t_puzzle;
 
 #endif

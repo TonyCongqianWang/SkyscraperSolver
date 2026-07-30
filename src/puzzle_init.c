@@ -16,9 +16,60 @@
 #include "node_selection_cache.h"
 #include "entropy.h"
 #include "node_init.h"
+#include "params_double.h"
+#include "node_selection_score.h"
 
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
 static void	init_puzzle_entropy(t_puzzle *puzzle, int size);
+
+static int get_cell_dist_val(int idx, int size)
+{
+	int		x_edge_dist;
+	int		y_edge_dist;
+	int		score_component;
+	int		S;
+
+	x_edge_dist = idx % size;
+	if (x_edge_dist > size / 2)
+		x_edge_dist = size - x_edge_dist;
+	y_edge_dist = idx / size;
+	if (y_edge_dist > size / 2)
+		y_edge_dist = size - y_edge_dist;
+	S = size + 1;
+	score_component = S * S;
+	if (x_edge_dist <= y_edge_dist)
+		score_component -= x_edge_dist * S + y_edge_dist;
+	else
+		score_component -= y_edge_dist * S + x_edge_dist;
+	return (score_component);
+}
+
+static void init_cell_distance_order(t_puzzle *puzzle, int size)
+{
+	int i;
+	int j;
+	int key;
+	int key_score;
+	int temp_scores[MAX_CELL_COUNT];
+
+	for (i = 0; i < puzzle->squared_size; i++)
+	{
+		puzzle->cell_distance_order[i] = i;
+		temp_scores[i] = get_cell_dist_val(i, size);
+	}
+	for (i = 1; i < puzzle->squared_size; i++)
+	{
+		key = puzzle->cell_distance_order[i];
+		key_score = temp_scores[key];
+		j = i - 1;
+		while (j >= 0 && temp_scores[puzzle->cell_distance_order[j]] < key_score)
+		{
+			puzzle->cell_distance_order[j + 1] = puzzle->cell_distance_order[j];
+			j--;
+		}
+		puzzle->cell_distance_order[j + 1] = key;
+	}
+}
 
 static void	init_puzzle_entropy(t_puzzle *puzzle, int size)
 {
@@ -39,6 +90,8 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 
 	puzzle->size = size;
 	puzzle->squared_size = size * size;
+	init_selection_lut(g_sel_power);
+	init_cell_distance_order(puzzle, size);
 	puzzle->constr_max_entropy = size * g_log2_table[size]
 		* get_weight_constr(size) / ENTROPY_SCALE;
 	init_solution_storage(puzzle, max_sols);

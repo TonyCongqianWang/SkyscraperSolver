@@ -16,6 +16,12 @@ PARAM_METADATA = [
     ("WEIGHT_TOTAL_SCALE_FP_S7", 256, 4096, 976, int, 1.0),
     ("WEIGHT_TOTAL_SCALE_FP_S8", 256, 4096, 934, int, 1.0),
     ("WEIGHT_TOTAL_SCALE_FP_S9", 256, 4096, 1082, int, 1.0),
+    # SELECTION HEURISTIC PARAMETERS (Ratio as Math, Power as Strategy)
+    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP", 1024, 15360, 8192, int, 1.0),
+    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S7", 1024, 15360, 8192, int, 1.0),
+    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8", 1024, 15360, 8192, int, 1.0),
+    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9", 1024, 15360, 8192, int, 1.0),
+    ("SEL_POWER", -5.0, 0.0, -2.0, float, 0.2),
     # ROOT
     ("ROOT_MIN_ENTROPY", 0, 1027080, 74286, int, 1.0),
     ("ROOT_GAC_MIN_ENTROPY", 0, 1027080, 193995, int, 1.0),
@@ -120,6 +126,7 @@ PARAMETER_MAPPING = {
     # ROUTING
     "ROUTING_SHALLOW_RATIO": ("src/params_double.c", "g_routing_shallow_ratio", "double"),
     "ROUTING_MEDIUM_RATIO": ("src/params_double.c", "g_routing_medium_ratio", "double"),
+    "SEL_POWER": ("src/params_double.c", "g_sel_power", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS": ("src/params_math.c", "g_global_entropy_unset_bias", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S7": ("src/params_math.c", "g_global_entropy_unset_bias_s7", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S8": ("src/params_math.c", "g_global_entropy_unset_bias_s8", "double"),
@@ -129,6 +136,10 @@ PARAMETER_MAPPING = {
     "WEIGHT_CELL_CONSTR_RATIO_FP_S7": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s7", "int"),
     "WEIGHT_CELL_CONSTR_RATIO_FP_S8": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s8", "int"),
     "WEIGHT_CELL_CONSTR_RATIO_FP_S9": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s9", "int"),
+    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp", "int"),
+    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S7": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s7", "int"),
+    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s8", "int"),
+    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s9", "int"),
     "WEIGHT_TOTAL_SCALE_FP": ("src/params_math.c", "g_weight_total_scale_fp", "int"),
     "WEIGHT_TOTAL_SCALE_FP_S7": ("src/params_math.c", "g_weight_total_scale_fp_s7", "int"),
     "WEIGHT_TOTAL_SCALE_FP_S8": ("src/params_math.c", "g_weight_total_scale_fp_s8", "int"),

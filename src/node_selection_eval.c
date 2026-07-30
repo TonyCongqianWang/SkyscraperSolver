@@ -108,12 +108,14 @@ int	scan_best_live(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_transition	candidate;
+	int					i;
 	int					cell_idx;
 
 	next->cell_idx = -1;
-	cell_idx = 0;
-	while (cell_idx < puzzle->squared_size)
+	i = 0;
+	while (i < puzzle->squared_size)
 	{
+		cell_idx = puzzle->cell_distance_order[i];
 		if (is_cell_empty(puzzle->cur_node, cell_idx))
 		{
 			set_best_val_strat(puzzle, cell_idx, &candidate, config);
@@ -127,7 +129,7 @@ int	scan_best_live(t_puzzle *puzzle, t_node_transition *next,
 					*next = candidate;
 			}
 		}
-		cell_idx++;
+		i++;
 	}
 	return (next->cell_idx != -1);
 }

@@ -58,15 +58,17 @@ static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			t_node_select_config *config)
 {
+	int				i;
 	int				c;
 	int				v;
 	t_node_state	*state;
 
 	state = puzzle->cur_node;
 	cache->count = 0;
-	c = 0;
-	while (c < puzzle->squared_size)
+	i = 0;
+	while (i < puzzle->squared_size)
 	{
+		c = puzzle->cell_distance_order[i];
 		if (is_cell_empty(state, c))
 		{
 			v = 1;
@@ -77,7 +79,7 @@ void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 				v++;
 			}
 		}
-		c++;
+		i++;
 	}
 }
 

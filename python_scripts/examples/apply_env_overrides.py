@@ -8,6 +8,10 @@ MATH_VARS = [
     ("g_weight_cell_constr_ratio_fp_s7", "WEIGHT_CELL_CONSTR_RATIO_FP_S7", "int"),
     ("g_weight_cell_constr_ratio_fp_s8", "WEIGHT_CELL_CONSTR_RATIO_FP_S8", "int"),
     ("g_weight_cell_constr_ratio_fp_s9", "WEIGHT_CELL_CONSTR_RATIO_FP_S9", "int"),
+    ("g_sel_weight_cell_constr_ratio_fp", "SEL_WEIGHT_CELL_CONSTR_RATIO_FP", "int"),
+    ("g_sel_weight_cell_constr_ratio_fp_s7", "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S7", "int"),
+    ("g_sel_weight_cell_constr_ratio_fp_s8", "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8", "int"),
+    ("g_sel_weight_cell_constr_ratio_fp_s9", "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9", "int"),
     ("g_weight_total_scale_fp", "WEIGHT_TOTAL_SCALE_FP", "int"),
     ("g_weight_total_scale_fp_s7", "WEIGHT_TOTAL_SCALE_FP_S7", "int"),
     ("g_weight_total_scale_fp_s8", "WEIGHT_TOTAL_SCALE_FP_S8", "int"),
@@ -36,6 +40,7 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
+    ("g_sel_power", "SEL_POWER", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([

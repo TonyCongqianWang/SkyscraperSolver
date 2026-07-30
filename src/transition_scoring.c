@@ -12,69 +12,29 @@
 
 #include "transition_scoring.h"
 #include "grid_availability.h"
+#include "params_math.h"
+#include "node_selection_score.h"
 
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {
-	double	cell_score;
-	double	col_score;
-	double	row_score;
-	int		size;
+	int		ratio;
+	double	W_cell;
+	double	W_line;
 
 	transition_add_num_valids(state, next);
-	size = state->size;
-	cell_score = next->num_valids_cell * (size + 1);
-	col_score = next->num_valids_col * (size + 1);
-	row_score = next->num_valids_row * (size + 1);
-	if (next->num_valids_cell <= next->num_valids_col)
-		cell_score *= (size + 1);
-	else
-		col_score *= (size + 1);
-	if (next->num_valids_cell <= next->num_valids_col)
-		cell_score *= (size + 1);
-	else
-		row_score *= (size + 1);
-	if (next->num_valids_col <= next->num_valids_row)
-		col_score *= (size + 1);
-	else
-		row_score *= (size + 1);
-	next->score = (size + 1) * (size + 1) * (size + 1) * (size + 1);
-	next->score -= cell_score + col_score + row_score;
-	score_cell_distance(state, next);
-}
-
-void	score_cell_distance(t_node_state *state, t_node_transition *next)
-{
-	double	score_component;
-	int		idx;
-	int		x_edge_dist;
-	int		y_edge_dist;
-
-	idx = next->cell_idx;
-	x_edge_dist = idx % state->size;
-	if (x_edge_dist > state->size / 2)
-		x_edge_dist = state->size - x_edge_dist;
-	y_edge_dist = idx / state->size;
-	if (y_edge_dist > state->size / 2)
-		y_edge_dist = state->size - y_edge_dist;
-	score_component = (state->size + 1) * (state->size + 1);
-	if (x_edge_dist <= y_edge_dist)
-		score_component -= x_edge_dist * (state->size + 1) + y_edge_dist;
-	else
-		score_component -= y_edge_dist * (state->size + 1) + x_edge_dist;
-	next->score += score_component;
+	ratio = get_sel_weight_cell_constr_ratio_fp(state->size);
+	W_cell = (double)ratio / 16384.0;
+	W_line = (16384.0 - (double)ratio) / 16384.0;
+	next->score = W_cell * g_selection_lut[next->num_valids_cell]
+		+ W_line * (g_selection_lut[next->num_valids_col]
+			+ g_selection_lut[next->num_valids_row]);
 }
 
 void	score_transition_constrs(t_node_state *state, t_node_transition *next)
 {
-	int		size;
-
 	transition_add_num_valids(state, next);
-	size = state->size;
-	next->score = (size + 1) * (size + 1);
-	if (next->num_valids_col <= next->num_valids_row)
-		next->score -= next->num_valids_col * (size + 1) + next->num_valids_row;
-	else
-		next->score -= next->num_valids_row * (size + 1) + next->num_valids_col;
+	next->score = g_selection_lut[next->num_valids_col]
+		+ g_selection_lut[next->num_valids_row];
 }
 
 void	transition_add_num_valids(t_node_state *state, t_node_transition *next)
