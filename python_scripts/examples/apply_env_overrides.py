@@ -20,6 +20,10 @@ MATH_VARS = [
     ("g_global_entropy_unset_bias_s7", "GLOBAL_ENTROPY_UNSET_BIAS_S7", "double"),
     ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
     ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),
+    ("g_sel_power", "SEL_POWER", "double"),
+    ("g_sel_power_s7", "SEL_POWER_S7", "double"),
+    ("g_sel_power_s8", "SEL_POWER_S8", "double"),
+    ("g_sel_power_s9", "SEL_POWER_S9", "double"),
 ]
 
 INT_VARS = []
@@ -40,7 +44,6 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_sel_power", "SEL_POWER", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
     DOUBLE_VARS.extend([

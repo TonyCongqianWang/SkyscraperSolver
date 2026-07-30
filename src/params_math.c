@@ -20,6 +20,10 @@ int		g_sel_weight_cell_constr_ratio_fp = 8192;
 int		g_sel_weight_cell_constr_ratio_fp_s7 = 8192;
 int		g_sel_weight_cell_constr_ratio_fp_s8 = 8192;
 int		g_sel_weight_cell_constr_ratio_fp_s9 = 8192;
+double	g_sel_power = -2.0;
+double	g_sel_power_s7 = -2.0;
+double	g_sel_power_s8 = -2.0;
+double	g_sel_power_s9 = -2.0;
 int		g_weight_total_scale_fp = 990;
 int		g_weight_total_scale_fp_s7 = 990;
 int		g_weight_total_scale_fp_s8 = 934;
@@ -49,6 +53,17 @@ int	get_sel_weight_cell_constr_ratio_fp(int size)
 	if (size == 9)
 		return (g_sel_weight_cell_constr_ratio_fp_s9);
 	return (g_sel_weight_cell_constr_ratio_fp);
+}
+
+double	get_sel_power(int size)
+{
+	if (size == 7)
+		return (g_sel_power_s7);
+	if (size == 8)
+		return (g_sel_power_s8);
+	if (size == 9)
+		return (g_sel_power_s9);
+	return (g_sel_power);
 }
 
 int	get_weight_total_scale_fp(int size)

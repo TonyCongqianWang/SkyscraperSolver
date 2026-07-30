@@ -15,5 +15,7 @@
 
 double	dsqrt_approx(double x);
 double	dpow075_approx(double x);
+double	custom_ln(int x);
+double	custom_pow(int x, double p);
 
 #endif
