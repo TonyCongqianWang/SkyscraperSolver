@@ -3,26 +3,21 @@ PARAM_METADATA = [
     # ROUTING
     ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.212514, float, 1.0),
     ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.350725, float, 1.0),
-    ("GLOBAL_ENTROPY_UNSET_BIAS", 100.0, 2000.0, 535.587820, float, 1.0),
-    ("GLOBAL_ENTROPY_UNSET_BIAS_S7", 100.0, 2000.0, 548.952276, float, 1.0),
+    ("GLOBAL_ENTROPY_UNSET_BIAS_LE7", 100.0, 2000.0, 548.952276, float, 1.0),
     ("GLOBAL_ENTROPY_UNSET_BIAS_S8", 100.0, 2000.0, 503.709773, float, 1.0),
     ("GLOBAL_ENTROPY_UNSET_BIAS_S9", 100.0, 2000.0, 508.710530, float, 1.0),
     # ENTROPY WEIGHT REPARAMETERIZATION (Direction & Magnitude in Fixed-Point)
-    ("WEIGHT_CELL_CONSTR_RATIO_FP", 1024, 12288, 5561, int, 1.0),
-    ("WEIGHT_CELL_CONSTR_RATIO_FP_S7", 1024, 12288, 5499, int, 1.0),
+    ("WEIGHT_CELL_CONSTR_RATIO_FP_LE7", 1024, 12288, 5499, int, 1.0),
     ("WEIGHT_CELL_CONSTR_RATIO_FP_S8", 1024, 12288, 5408, int, 1.0),
     ("WEIGHT_CELL_CONSTR_RATIO_FP_S9", 1024, 12288, 5342, int, 1.0),
-    ("WEIGHT_TOTAL_SCALE_FP", 256, 4096, 990, int, 1.0),
-    ("WEIGHT_TOTAL_SCALE_FP_S7", 256, 4096, 976, int, 1.0),
+    ("WEIGHT_TOTAL_SCALE_FP_LE7", 256, 4096, 976, int, 1.0),
     ("WEIGHT_TOTAL_SCALE_FP_S8", 256, 4096, 934, int, 1.0),
     ("WEIGHT_TOTAL_SCALE_FP_S9", 256, 4096, 1082, int, 1.0),
     # SELECTION HEURISTIC PARAMETERS (Ratio as Math, Power as Strategy)
-    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP", 1024, 15360, 8192, int, 1.0),
-    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S7", 1024, 15360, 8192, int, 1.0),
+    ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_LE7", 1024, 15360, 8192, int, 1.0),
     ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8", 1024, 15360, 8192, int, 1.0),
     ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9", 1024, 15360, 8192, int, 1.0),
-    ("SEL_POWER", -5.0, 0.0, -2.0, float, 0.2),
-    ("SEL_POWER_S7", -5.0, 0.0, -2.0, float, 0.2),
+    ("SEL_POWER_LE7", -5.0, 0.0, -2.0, float, 0.2),
     ("SEL_POWER_S8", -5.0, 0.0, -2.0, float, 0.2),
     ("SEL_POWER_S9", -5.0, 0.0, -2.0, float, 0.2),
     # ROOT
@@ -129,25 +124,20 @@ PARAMETER_MAPPING = {
     # ROUTING
     "ROUTING_SHALLOW_RATIO": ("src/params_double.c", "g_routing_shallow_ratio", "double"),
     "ROUTING_MEDIUM_RATIO": ("src/params_double.c", "g_routing_medium_ratio", "double"),
-    "GLOBAL_ENTROPY_UNSET_BIAS": ("src/params_math.c", "g_global_entropy_unset_bias", "double"),
-    "GLOBAL_ENTROPY_UNSET_BIAS_S7": ("src/params_math.c", "g_global_entropy_unset_bias_s7", "double"),
+    "GLOBAL_ENTROPY_UNSET_BIAS_LE7": ("src/params_math.c", "g_global_entropy_unset_bias_le7", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S8": ("src/params_math.c", "g_global_entropy_unset_bias_s8", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S9": ("src/params_math.c", "g_global_entropy_unset_bias_s9", "double"),
     # ENTROPY WEIGHT REPARAMETERIZATION (Direction & Magnitude in Fixed-Point)
-    "WEIGHT_CELL_CONSTR_RATIO_FP": ("src/params_math.c", "g_weight_cell_constr_ratio_fp", "int"),
-    "WEIGHT_CELL_CONSTR_RATIO_FP_S7": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s7", "int"),
+    "WEIGHT_CELL_CONSTR_RATIO_FP_LE7": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_le7", "int"),
     "WEIGHT_CELL_CONSTR_RATIO_FP_S8": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s8", "int"),
     "WEIGHT_CELL_CONSTR_RATIO_FP_S9": ("src/params_math.c", "g_weight_cell_constr_ratio_fp_s9", "int"),
-    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp", "int"),
-    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S7": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s7", "int"),
+    "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_LE7": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_le7", "int"),
     "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s8", "int"),
     "SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9": ("src/params_math.c", "g_sel_weight_cell_constr_ratio_fp_s9", "int"),
-    "SEL_POWER": ("src/params_math.c", "g_sel_power", "double"),
-    "SEL_POWER_S7": ("src/params_math.c", "g_sel_power_s7", "double"),
+    "SEL_POWER_LE7": ("src/params_math.c", "g_sel_power_le7", "double"),
     "SEL_POWER_S8": ("src/params_math.c", "g_sel_power_s8", "double"),
     "SEL_POWER_S9": ("src/params_math.c", "g_sel_power_s9", "double"),
-    "WEIGHT_TOTAL_SCALE_FP": ("src/params_math.c", "g_weight_total_scale_fp", "int"),
-    "WEIGHT_TOTAL_SCALE_FP_S7": ("src/params_math.c", "g_weight_total_scale_fp_s7", "int"),
+    "WEIGHT_TOTAL_SCALE_FP_LE7": ("src/params_math.c", "g_weight_total_scale_fp_le7", "int"),
     "WEIGHT_TOTAL_SCALE_FP_S8": ("src/params_math.c", "g_weight_total_scale_fp_s8", "int"),
     "WEIGHT_TOTAL_SCALE_FP_S9": ("src/params_math.c", "g_weight_total_scale_fp_s9", "int"),
     # ROOT
@@ -274,3 +264,43 @@ PARAM_CONSTRAINTS = [
     ("DEEP_LOOKAHEAD_GAC_LOCAL_MIN_UNSET", "DEEP_LOOKAHEAD_GAC_LOCAL_MAX_UNSET", 0.05),
     ("DEEP_LOOKAHEAD_CONSTR_LOCAL_MIN_UNSET", "DEEP_LOOKAHEAD_CONSTR_LOCAL_MAX_UNSET", 0.05),
 ]
+
+# Dynamically classify parameters to prevent future maintainability issues
+STRATEGY_PARAM_NAMES = set()
+MATH_PARAM_GROUPS = {
+    "all": set(),
+    "7": set(),
+    "8": set(),
+    "9": set()
+}
+
+for name, *etc in PARAM_METADATA:
+    if "_BIAS" in name or "_FP" in name or "SEL_POWER" in name:
+        if name.endswith("_LE7"):
+            MATH_PARAM_GROUPS["7"].add(name)
+        elif name.endswith("_S8"):
+            MATH_PARAM_GROUPS["8"].add(name)
+        elif name.endswith("_S9"):
+            MATH_PARAM_GROUPS["9"].add(name)
+        else:
+            MATH_PARAM_GROUPS["all"].add(name)
+    else:
+        STRATEGY_PARAM_NAMES.add(name)
+
+def get_active_param_names(tune_mode, size):
+    """
+    Returns the set of parameter names that should be active for SPSA tuning
+    based on the tune_mode ('all', 'math', 'strategy') and puzzle size.
+    """
+    active_math = set(MATH_PARAM_GROUPS["all"])
+    if str(size) in MATH_PARAM_GROUPS:
+        active_math.update(MATH_PARAM_GROUPS[str(size)])
+
+    if tune_mode == "math":
+        return active_math
+    elif tune_mode == "strategy":
+        return STRATEGY_PARAM_NAMES
+    else:
+        # tune_mode == "all"
+        return STRATEGY_PARAM_NAMES.union(active_math)
+

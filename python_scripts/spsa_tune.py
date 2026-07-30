@@ -42,7 +42,7 @@ PATH_S9_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solut
 PATH_S9_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl3.txt")
 
 # Parameters Metadata
-from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS
+from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
 
 def project_constraints(theta):
     name_to_idx = {name: idx for idx, (name, *_) in enumerate(PARAM_METADATA)}
@@ -323,7 +323,7 @@ def main():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
-    parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
+    parser.add_argument("--stdin", action="store_true", default=True, help="Use stdin batching to solve puzzles in persistent subprocesses")
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
     parser.add_argument("--tune-mode", choices=["all", "strategy", "math"], default="all", help="Tuning mode: 'all' (all unfrozen parameters), 'strategy' (tune strategy params only, freeze math constants), 'math' (tune math/scale constants only, freeze strategy params)")
     parser.add_argument("--enumeration-only", action="store_true", help="Focus solely on full enumeration benchmarks (-s 0) during tuning")
@@ -585,17 +585,14 @@ def main():
 
                 return loss_time, loss_nodes, (sgm_t_l3, sgm_n_l3, sgm_t_l2, sgm_n_l2)
 
-        MATH_NAMES = {
-            "GLOBAL_ENTROPY_UNSET_BIAS", "WEIGHT_CELL_CONSTR_RATIO_FP", "WEIGHT_TOTAL_SCALE_FP",
-            f"GLOBAL_ENTROPY_UNSET_BIAS_S{args.size}", f"WEIGHT_CELL_CONSTR_RATIO_FP_S{args.size}", f"WEIGHT_TOTAL_SCALE_FP_S{args.size}"
-        }
+        active_names = get_active_param_names(args.tune_mode, args.size)
         delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
 
         # Perturbed plus
         theta_plus_raw = []
         for i in range(len(theta)):
             name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            is_active = (pmax > pmin) and (name in active_names)
             if is_active:
                 theta_plus_raw.append(max(0.0, min(1.0, theta[i] + ck * perturb_scale * delta[i])))
             else:
@@ -607,7 +604,7 @@ def main():
         theta_minus_raw = []
         for i in range(len(theta)):
             name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            is_active = (pmax > pmin) and (name in active_names)
             if is_active:
                 theta_minus_raw.append(max(0.0, min(1.0, theta[i] - ck * perturb_scale * delta[i])))
             else:
@@ -619,7 +616,7 @@ def main():
         grad_nodes = []
         for i in range(len(theta)):
             name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            is_active = (pmax > pmin) and (name in active_names)
             if is_active:
                 gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * perturb_scale * delta[i])
                 gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * perturb_scale * delta[i])
@@ -652,7 +649,7 @@ def main():
         theta_next = []
         for i in range(len(theta)):
             name, pmin, pmax, _, _, _ = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (args.tune_mode == "all" or (args.tune_mode == "math" and name in MATH_NAMES) or (args.tune_mode == "strategy" and name not in MATH_NAMES))
+            is_active = (pmax > pmin) and (name in active_names)
             if is_active:
                 step_t = ak * grad_time_scaled[i]
                 step_n = ak * grad_nodes_scaled[i]

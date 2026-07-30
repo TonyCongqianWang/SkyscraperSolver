@@ -14,55 +14,45 @@
 
 int	get_weight_cell_constr_ratio_fp(int size)
 {
-	if (size == 7)
-		return (g_weight_cell_constr_ratio_fp_s7);
+	if (size <= 7)
+		return (g_weight_cell_constr_ratio_fp_le7);
 	if (size == 8)
 		return (g_weight_cell_constr_ratio_fp_s8);
-	if (size == 9)
-		return (g_weight_cell_constr_ratio_fp_s9);
-	return (g_weight_cell_constr_ratio_fp);
+	return (g_weight_cell_constr_ratio_fp_s9);
 }
 
 int	get_sel_weight_cell_constr_ratio_fp(int size)
 {
-	if (size == 7)
-		return (g_sel_weight_cell_constr_ratio_fp_s7);
+	if (size <= 7)
+		return (g_sel_weight_cell_constr_ratio_fp_le7);
 	if (size == 8)
 		return (g_sel_weight_cell_constr_ratio_fp_s8);
-	if (size == 9)
-		return (g_sel_weight_cell_constr_ratio_fp_s9);
-	return (g_sel_weight_cell_constr_ratio_fp);
+	return (g_sel_weight_cell_constr_ratio_fp_s9);
 }
 
 double	get_sel_power(int size)
 {
-	if (size == 7)
-		return (g_sel_power_s7);
+	if (size <= 7)
+		return (g_sel_power_le7);
 	if (size == 8)
 		return (g_sel_power_s8);
-	if (size == 9)
-		return (g_sel_power_s9);
-	return (g_sel_power);
+	return (g_sel_power_s9);
 }
 
 int	get_weight_total_scale_fp(int size)
 {
-	if (size == 7)
-		return (g_weight_total_scale_fp_s7);
+	if (size <= 7)
+		return (g_weight_total_scale_fp_le7);
 	if (size == 8)
 		return (g_weight_total_scale_fp_s8);
-	if (size == 9)
-		return (g_weight_total_scale_fp_s9);
-	return (g_weight_total_scale_fp);
+	return (g_weight_total_scale_fp_s9);
 }
 
 double	get_global_entropy_unset_bias(int size)
 {
-	if (size == 7)
-		return (g_global_entropy_unset_bias_s7);
+	if (size <= 7)
+		return (g_global_entropy_unset_bias_le7);
 	if (size == 8)
 		return (g_global_entropy_unset_bias_s8);
-	if (size == 9)
-		return (g_global_entropy_unset_bias_s9);
-	return (g_global_entropy_unset_bias);
+	return (g_global_entropy_unset_bias_s9);
 }
