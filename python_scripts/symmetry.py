@@ -1,5 +1,8 @@
 # Shared symmetry functions for Skyscraper solver benchmark scripts
 
+import random
+
+
 def get_symmetries(T, B, L, R):
     """
     Returns the 8 symmetries of a clue set (T, B, L, R) under D_4.
@@ -20,12 +23,65 @@ def get_symmetries(T, B, L, R):
     s8 = (L_lst, R_lst, T_lst, B_lst)
     return [s1, s2, s3, s4, s5, s6, s7, s8]
 
+
 def get_symmetries_flat(T, B, L, R):
     """
     Returns the 8 symmetries as flat lists of length 4*N.
     """
     symmetries = get_symmetries(T, B, L, R)
     return [s[0] + s[1] + s[2] + s[3] for s in symmetries]
+
+
+# --- String-based Adapters for SPSA / Dataset Utilities ---
+
+def _parse_clue_string(clue_str):
+    clean_str = clue_str.strip().strip('"')
+
+    if ' ' in clean_str or ',' in clean_str:
+        delimiter = ' ' if ' ' in clean_str else ','
+        tokens = [t for t in clean_str.replace(',', ' ').split() if t]
+    else:
+        delimiter = ''
+        tokens = list(clean_str)
+
+    n_tokens = len(tokens)
+    if n_tokens % 4 != 0:
+        raise ValueError(f"Invalid clue length {n_tokens}. Must be divisible by 4.")
+
+    side_len = n_tokens // 4
+    T = tokens[0 : side_len]
+    B = tokens[side_len : 2 * side_len]
+    L = tokens[2 * side_len : 3 * side_len]
+    R = tokens[3 * side_len :]
+
+    return T, B, L, R, delimiter
+
+
+def get_symmetries_from_clue_str(clue_str):
+    """
+    Wrapper that accepts a raw string (e.g. '1 2 3 ...' or '123...')
+    and returns its 8 symmetric clue strings using get_symmetries.
+    """
+    T, B, L, R, delimiter = _parse_clue_string(clue_str)
+    sym_tuples = get_symmetries(T, B, L, R)
+    return [delimiter.join(s[0] + s[1] + s[2] + s[3]) for s in sym_tuples]
+
+
+def get_random_symmetry(clue_str):
+    """
+    Returns a single randomly selected symmetric variation of the clue string.
+    Useful for data augmentation during SPSA iterations.
+    """
+    return random.choice(get_symmetries_from_clue_str(clue_str))
+
+
+def canonize_clue_str(clue_str):
+    """
+    Returns the lexicographically smallest clue string among all 8 symmetries.
+    Used for deterministic grouping and train/val splits.
+    """
+    return min(get_symmetries_from_clue_str(clue_str))
+
 
 def canonize_one(T, B, L, R):
     """
@@ -34,6 +90,7 @@ def canonize_one(T, B, L, R):
     """
     flat_syms = get_symmetries_flat(T, B, L, R)
     return tuple(min(flat_syms))
+
 
 def canonize_clue_str(clue_str):
     """
@@ -44,6 +101,7 @@ def canonize_clue_str(clue_str):
     clue_str = clue_str.strip('"\'')
     nums = list(map(int, clue_str.split()))
     return canonize_nums(nums)
+
 
 def canonize_nums(nums):
     """
@@ -56,6 +114,7 @@ def canonize_nums(nums):
     L = nums[2*n:3*n]
     R = nums[3*n:4*n]
     return canonize_one(T, B, L, R)
+
 
 def get_deduplicated_symmetries(clue_str):
     """
@@ -90,6 +149,7 @@ def get_deduplicated_symmetries(clue_str):
                 s_str = f"'{s_str}'"
             dedup.append(s_str)
     return dedup
+
 
 def deduplicate_dataset(clue_lines, include_symmetries=False):
     """
