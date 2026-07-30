@@ -71,12 +71,12 @@ void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 		c = puzzle->cell_distance_order[i];
 		if (is_cell_empty(state, c))
 		{
-			v = 1;
-			while (v <= puzzle->size)
+			v = puzzle->size;
+			while (v >= 1)
 			{
 				if (is_valid_value(state, c, v))
 					add_transition(puzzle, cache, config, (c << 8) | v);
-				v++;
+				v--;
 			}
 		}
 		i++;

@@ -68,51 +68,8 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 	t_node_select_config	config;
 
 	init_select_config(puzzle, next, &config);
-	if (config.enable_cache)
-	{
-		rebuild_cache_if_stale(puzzle, &config, 1);
-		return (get_best_from_cache(puzzle, next, &config));
-	}
-	return (scan_best_live(puzzle, next, &config));
-}
-
-static int	scan_next_live(t_puzzle *puzzle, t_node_transition *next,
-				t_node_select_config *config)
-{
-	t_node_state	*node;
-	int				idx;
-
-	node = puzzle->cur_node;
-	idx = next->cell_idx;
-	if (idx < 0)
-		idx = 0;
-	while (idx < puzzle->squared_size)
-	{
-		if (is_cell_empty(node, idx)
-			&& check_sel(node, idx, config))
-		{
-			next->cell_idx = idx;
-			next->cell_val = 1;
-			if (set_next_valid_val(puzzle, next))
-			{
-				if (is_cell_empty(node, idx))
-					return (1);
-			}
-		}
-		idx++;
-	}
-	return (0);
-}
-
-static int	advance_next_transition(t_puzzle *puzzle, t_node_transition *next)
-{
-	next->cell_val++;
-	if (set_next_valid_val(puzzle, next)
-		&& is_cell_empty(puzzle->cur_node, next->cell_idx))
-		return (1);
-	next->cell_idx++;
-	next->cell_val = 1;
-	return (0);
+	rebuild_cache_if_stale(puzzle, &config, 1);
+	return (get_best_from_cache(puzzle, next, &config));
 }
 
 int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
@@ -124,12 +81,6 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	if (node->is_complete || node->is_invalid)
 		return (0);
 	init_select_config(puzzle, next, &config);
-	if (config.enable_cache)
-	{
-		rebuild_cache_if_stale(puzzle, &config, 0);
-		return (get_next_from_cache(puzzle, next, &config));
-	}
-	if (next->cell_idx >= 0 && advance_next_transition(puzzle, next))
-		return (1);
-	return (scan_next_live(puzzle, next, &config));
+	rebuild_cache_if_stale(puzzle, &config, 0);
+	return (get_next_from_cache(puzzle, next, &config));
 }
