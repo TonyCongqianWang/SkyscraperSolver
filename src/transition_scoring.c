@@ -18,15 +18,15 @@
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {
 	int		ratio;
-	double	W_cell;
-	double	W_line;
+	double	w_cell;
+	double	w_line;
 
 	transition_add_num_valids(state, next);
 	ratio = get_sel_weight_cell_constr_ratio_fp(state->size);
-	W_cell = (double)ratio / 16384.0;
-	W_line = (16384.0 - (double)ratio) / 16384.0;
-	next->score = W_cell * g_selection_lut[next->num_valids_cell]
-		+ W_line * (g_selection_lut[next->num_valids_col]
+	w_cell = (double)ratio / 16384.0;
+	w_line = (16384.0 - (double)ratio) / 16384.0;
+	next->score = w_cell * g_selection_lut[next->num_valids_cell]
+		+ w_line * (g_selection_lut[next->num_valids_col]
 			+ g_selection_lut[next->num_valids_row]);
 }
 

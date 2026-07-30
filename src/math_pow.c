@@ -26,7 +26,8 @@ static double	taylor_approx(double u)
 	u4 = u3 * u;
 	u5 = u4 * u;
 	u6 = u5 * u;
-	return (1.0 + u + u2 / 2.0 + u3 / 6.0 + u4 / 24.0 + u5 / 120.0 + u6 / 720.0);
+	return (1.0 + u + u2 / 2.0 + u3 / 6.0
+		+ u4 / 24.0 + u5 / 120.0 + u6 / 720.0);
 }
 
 static double	custom_exp(double y)
