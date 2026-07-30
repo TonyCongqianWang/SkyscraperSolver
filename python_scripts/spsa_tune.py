@@ -326,6 +326,7 @@ def main():
     parser.add_argument("--stdin", action="store_true", help="Use stdin batching to solve puzzles in persistent subprocesses")
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
     parser.add_argument("--tune-mode", choices=["all", "strategy", "math"], default="all", help="Tuning mode: 'all' (all unfrozen parameters), 'strategy' (tune strategy params only, freeze math constants), 'math' (tune math/scale constants only, freeze strategy params)")
+    parser.add_argument("--enumeration-only", action="store_true", help="Focus solely on full enumeration benchmarks (-s 0) during tuning")
     args = parser.parse_args()
 
     max_workers = min(os.cpu_count() or 1, args.max_workers)
@@ -465,64 +466,104 @@ def main():
 
         # Prepare stochastically drawn batches for this step
         if args.size == 7:
-            sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
-            sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
-            tasks_single = [("-s 1", clue) for clue in sampled_single]
-            tasks_enum = [("-s 0", clue) for clue in sampled_enum]
+            if args.enumeration_only:
+                sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
+                tasks_enum = [("-s 0", clue) for clue in sampled_enum]
 
-            def get_loss(config_theta):
-                env = get_env_for_theta(config_theta)
-                t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=args.stdin)
-                t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
+                def get_loss(config_theta):
+                    env = get_env_for_theta(config_theta)
+                    t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
 
-                sgm_t_s = shifted_geo_mean(t_single, 0.002)
-                sgm_n_s = shifted_geo_mean(n_single, 100.0)
+                    sgm_t_e = shifted_geo_mean(t_enum, 0.005)
+                    sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
 
-                sgm_t_e = shifted_geo_mean(t_enum, 0.005)
-                sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
+                    loss_time = 1.0 * (sgm_t_e / ref_scale_s7_enum_time)
+                    loss_nodes = 1.0 * (sgm_n_e / ref_scale_s7_enum_nodes)
 
-                loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
-                loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s7_enum_nodes)
+                    return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
+            else:
+                sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
+                sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
+                tasks_single = [("-s 1", clue) for clue in sampled_single]
+                tasks_enum = [("-s 0", clue) for clue in sampled_enum]
 
-                return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
+                def get_loss(config_theta):
+                    env = get_env_for_theta(config_theta)
+                    t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=args.stdin)
+                    t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
+
+                    sgm_t_s = shifted_geo_mean(t_single, 0.002)
+                    sgm_n_s = shifted_geo_mean(n_single, 100.0)
+
+                    sgm_t_e = shifted_geo_mean(t_enum, 0.005)
+                    sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
+
+                    loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
+                    loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s7_enum_nodes)
+
+                    return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
 
         elif args.size == 8:
-            sampled_s8_single_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 4)))
-            sampled_s8_single_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 4)))
-            sampled_s8_enum = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
+            if args.enumeration_only:
+                sampled_s8_enum_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
+                sampled_s8_enum_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 2)))
 
-            tasks_single_easy_med = [("-s 1", clue) for clue in sampled_s8_single_easy_med]
-            tasks_single_hard_xhard = [("-s 1", clue) for clue in sampled_s8_single_hard_xhard]
-            tasks_enum = [("-s 0", clue) for clue in sampled_s8_enum]
+                tasks_enum_easy_med = [("-s 0", clue) for clue in sampled_s8_enum_easy_med]
+                tasks_enum_hard_xhard = [("-s 0", clue) for clue in sampled_s8_enum_hard_xhard]
 
-            def get_loss(config_theta):
-                env = get_env_for_theta(config_theta)
-                t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, max_workers=max_workers, use_stdin=args.stdin)
-                t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, max_workers=max_workers, use_stdin=args.stdin)
-                t_e_em, n_e_em = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
+                def get_loss(config_theta):
+                    env = get_env_for_theta(config_theta)
+                    t_e_em, n_e_em = evaluate_subset(env, tasks_enum_easy_med, max_workers=max_workers, use_stdin=args.stdin)
+                    t_e_hx, n_e_hx = evaluate_subset(env, tasks_enum_hard_xhard, max_workers=max_workers, use_stdin=args.stdin)
 
-                sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
-                sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
+                    sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
+                    sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
 
-                sgm_t_s_hx = shifted_geo_mean(t_s_hx, 0.050)
-                sgm_n_s_hx = shifted_geo_mean(n_s_hx, 3000.0)
+                    sgm_t_e_hx = shifted_geo_mean(t_e_hx, 1.000)
+                    sgm_n_e_hx = shifted_geo_mean(n_e_hx, 50000.0)
 
-                sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
-                sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
+                    loss_time = 1.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time) + 2.0 * (sgm_t_e_hx / (ref_scale_s8_enum_easy_med_time * 5.0))
+                    loss_nodes = 1.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes) + 2.0 * (sgm_n_e_hx / (ref_scale_s8_enum_easy_med_nodes * 5.0))
 
-                loss_time = 0.5 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 2.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
-                loss_nodes = 0.5 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 2.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
+                    return loss_time, loss_nodes, (sgm_t_e_hx, sgm_n_e_hx, sgm_t_e_em, sgm_n_e_em)
+            else:
+                sampled_s8_single_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 4)))
+                sampled_s8_single_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 4)))
+                sampled_s8_enum = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
 
-                return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
+                tasks_single_easy_med = [("-s 1", clue) for clue in sampled_s8_single_easy_med]
+                tasks_single_hard_xhard = [("-s 1", clue) for clue in sampled_s8_single_hard_xhard]
+                tasks_enum = [("-s 0", clue) for clue in sampled_s8_enum]
+
+                def get_loss(config_theta):
+                    env = get_env_for_theta(config_theta)
+                    t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, max_workers=max_workers, use_stdin=args.stdin)
+                    t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, max_workers=max_workers, use_stdin=args.stdin)
+                    t_e_em, n_e_em = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=args.stdin)
+
+                    sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
+                    sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
+
+                    sgm_t_s_hx = shifted_geo_mean(t_s_hx, 0.050)
+                    sgm_n_s_hx = shifted_geo_mean(n_s_hx, 3000.0)
+
+                    sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
+                    sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
+
+                    loss_time = 0.5 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 2.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
+                    loss_nodes = 0.5 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 2.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
+
+                    return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
 
         elif args.size == 9:
             sampled_lvl1 = random.sample(s9_lvl1_train, min(len(s9_lvl1_train), max(1, batch_size // 4)))
             sampled_lvl2 = random.sample(s9_lvl2_train, min(len(s9_lvl2_train), max(1, batch_size // 4)))
             sampled_lvl3 = random.sample(s9_lvl3_train, min(len(s9_lvl3_train), max(1, batch_size // 2)))
 
-            tasks_lvl1 = [("-s 1", clue) for clue in sampled_lvl1]
-            tasks_lvl2 = [("-s 1", clue) for clue in sampled_lvl2]
-            tasks_lvl3 = [("-s 1", clue) for clue in sampled_lvl3]
+            opt_flag = "-s 0" if args.enumeration_only else "-s 1"
+            tasks_lvl1 = [(opt_flag, clue) for clue in sampled_lvl1]
+            tasks_lvl2 = [(opt_flag, clue) for clue in sampled_lvl2]
+            tasks_lvl3 = [(opt_flag, clue) for clue in sampled_lvl3]
 
             def get_loss(config_theta):
                 env = get_env_for_theta(config_theta)
@@ -699,24 +740,28 @@ def main():
         validation_tasks = []
 
         if args.size == 7:
-            train_tasks.append(("Size 7 Training Set (Single Solution)", "-s 1", s7_train))
+            if not args.enumeration_only:
+                train_tasks.append(("Size 7 Training Set (Single Solution)", "-s 1", s7_train))
+                validation_tasks.append(("Size 7 Validation Set (Single Solution)", "-s 1", s7_val))
             train_tasks.append(("Size 7 Training Set (Full Enumeration)", "-s 0", s7_train))
-            validation_tasks.append(("Size 7 Validation Set (Single Solution)", "-s 1", s7_val))
             validation_tasks.append(("Size 7 Validation Set (Full Enumeration)", "-s 0", s7_val))
 
         elif args.size == 8:
-            train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", s8_single_train))
+            if not args.enumeration_only:
+                train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", s8_single_train))
+                validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", s8_single_val))
             train_tasks.append(("Size 8 Training Set (Full Enumeration)", "-s 0", s8_enum_train))
-            validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", s8_single_val))
             validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", s8_enum_val))
 
         elif args.size == 9:
-            train_tasks.append(("Size 9 Level 1 Training Set", "-s 1", s9_lvl1_train))
-            train_tasks.append(("Size 9 Level 2 Training Set", "-s 1", s9_lvl2_train))
-            train_tasks.append(("Size 9 Level 3 Training Set", "-s 1", s9_lvl3_train))
-            validation_tasks.append(("Size 9 Level 1 Validation Set", "-s 1", s9_lvl1_val))
-            validation_tasks.append(("Size 9 Level 2 Validation Set", "-s 1", s9_lvl2_val))
-            validation_tasks.append(("Size 9 Level 3 Validation Set", "-s 1", s9_lvl3_val))
+            mode_flag = "-s 0" if args.enumeration_only else "-s 1"
+            mode_lbl = " (Full Enumeration)" if args.enumeration_only else ""
+            train_tasks.append((f"Size 9 Level 1 Training Set{mode_lbl}", mode_flag, s9_lvl1_train))
+            train_tasks.append((f"Size 9 Level 2 Training Set{mode_lbl}", mode_flag, s9_lvl2_train))
+            train_tasks.append((f"Size 9 Level 3 Training Set{mode_lbl}", mode_flag, s9_lvl3_train))
+            validation_tasks.append((f"Size 9 Level 1 Validation Set{mode_lbl}", mode_flag, s9_lvl1_val))
+            validation_tasks.append((f"Size 9 Level 2 Validation Set{mode_lbl}", mode_flag, s9_lvl2_val))
+            validation_tasks.append((f"Size 9 Level 3 Validation Set{mode_lbl}", mode_flag, s9_lvl3_val))
 
         # Construct comparison log paths if main log is provided
         train_log_path = None
