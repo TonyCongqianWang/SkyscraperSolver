@@ -16,9 +16,7 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-extern double	g_selection_lut[10];
-
-void	init_selection_lut(double p);
+t_selection_lut	make_selection_lut(double p);
 void	score_transition_strat(t_node_state *state, t_node_transition *next,
 			t_score_family family);
 

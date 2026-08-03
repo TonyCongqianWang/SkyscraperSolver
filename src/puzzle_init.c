@@ -42,7 +42,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 
 	puzzle->size = size;
 	puzzle->squared_size = size * size;
-	init_selection_lut(get_sel_power(size));
+	puzzle->selection_lut = make_selection_lut(get_sel_power(size));
 	init_cell_distance_order(puzzle, size);
 	puzzle->constr_max_entropy = size * get_log2_scaled(size)
 		* get_weight_constr(size) / ENTROPY_SCALE;

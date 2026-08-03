@@ -154,6 +154,11 @@ typedef struct s_node_pruning_state
 	int		max_pruning_depth;
 }		t_node_pruning_state;
 
+typedef struct s_selection_lut
+{
+	double					values[10];
+}		t_selection_lut;
+
 typedef struct s_puzzle
 {
 	int						size;
@@ -175,6 +180,7 @@ typedef struct s_puzzle
 	t_node_state			node_stack[MAX_STACK_DEPTH];
 	int						node_stack_top;
 	int						cell_distance_order[MAX_CELL_COUNT];
+	t_selection_lut			selection_lut;
 }		t_puzzle;
 
 #endif
