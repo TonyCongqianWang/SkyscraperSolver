@@ -56,19 +56,29 @@ static int	find_resume_index(t_node_order *cache, t_node_transition *next)
 	return (-1);
 }
 
+static void	update_resume_index(t_node_state *node, t_node_transition *next)
+{
+	int	i;
+
+	i = node->lookahead_ctx->curr_index;
+	if (i >= 0 && i < node->order_cache->count
+		&& node->order_cache->entries[i].cell_idx == next->cell_idx
+		&& node->order_cache->entries[i].cell_val == next->cell_val)
+		node->lookahead_ctx->curr_index = i + 1;
+	else
+		node->lookahead_ctx->curr_index
+			= find_resume_index(node->order_cache, next) + 1;
+}
+
 int	get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_state	*node;
 	int				max_pass;
-	int				i;
 
 	node = puzzle->cur_node;
 	if (next->cell_idx >= 0)
-	{
-		i = find_resume_index(node->order_cache, next);
-		node->lookahead_ctx->curr_index = i + 1;
-	}
+		update_resume_index(node, next);
 	else
 		node->lookahead_ctx->curr_index = 0;
 	max_pass = get_max_allowed_pass(config->selectivity);
