@@ -17,7 +17,7 @@
 # include "strategy_config.h"
 
 t_selection_lut	make_selection_lut(double p);
-void	score_transition_strat(t_node_state *state, t_node_transition *next,
-			t_score_family family);
+void			score_transition_strat(t_node_state *state,
+					t_node_transition *next, t_score_family family);
 
 #endif
