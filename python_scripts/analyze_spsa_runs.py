@@ -77,9 +77,11 @@ def main():
         for _, _, pdict in runs:
             all_keys.update(pdict.keys())
 
-        # Filter keys: keep keys that either end in _S{s} or don't end in _S7/_S8/_S9
+        # Filter keys: keep keys that belong to this size group
         size_filtered_keys = []
         for k in sorted(all_keys):
+            if s != 7 and k.endswith("_LE7"):
+                continue
             if any(k.endswith(f"_S{other_s}") for other_s in [7, 8, 9] if other_s != s):
                 continue
             size_filtered_keys.append(k)

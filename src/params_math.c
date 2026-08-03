@@ -12,18 +12,18 @@
 
 #include "params_math.h"
 
-int		g_weight_cell_constr_ratio_fp_le7 = 5561;
-int		g_weight_cell_constr_ratio_fp_s8 = 5408;
-int		g_weight_cell_constr_ratio_fp_s9 = 5349;
-int		g_sel_weight_cell_constr_ratio_fp_le7 = 8192;
-int		g_sel_weight_cell_constr_ratio_fp_s8 = 8192;
-int		g_sel_weight_cell_constr_ratio_fp_s9 = 8192;
-int		g_weight_total_scale_fp_le7 = 990;
-int		g_weight_total_scale_fp_s8 = 934;
-int		g_weight_total_scale_fp_s9 = 1092;
-double	g_global_entropy_unset_bias_le7 = 535.58782;
-double	g_global_entropy_unset_bias_s8 = 503.709773;
-double	g_global_entropy_unset_bias_s9 = 515.614181;
-double	g_sel_power_le7 = -2.0;
-double	g_sel_power_s8 = -2.0;
-double	g_sel_power_s9 = -2.0;
+int		g_weight_cell_constr_ratio_fp_le7 = 8805;
+int		g_weight_cell_constr_ratio_fp_s8 = 10359;
+int		g_weight_cell_constr_ratio_fp_s9 = 4963;
+int		g_sel_weight_cell_constr_ratio_fp_le7 = 2634;
+int		g_sel_weight_cell_constr_ratio_fp_s8 = 2886;
+int		g_sel_weight_cell_constr_ratio_fp_s9 = 3565;
+int		g_weight_total_scale_fp_le7 = 820;
+int		g_weight_total_scale_fp_s8 = 663;
+int		g_weight_total_scale_fp_s9 = 925;
+double	g_global_entropy_unset_bias_le7 = 589.21814;
+double	g_global_entropy_unset_bias_s8 = 468.026069475894;
+double	g_global_entropy_unset_bias_s9 = 484.251982673356;
+double	g_sel_power_le7 = -1.19920433433856;
+double	g_sel_power_s8 = -1.6795280213774;
+double	g_sel_power_s9 = -2.68107366910565;

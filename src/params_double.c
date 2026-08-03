@@ -12,8 +12,8 @@
 
 #include "params_double.h"
 
-double	g_routing_shallow_ratio = 0.21150434795739578;
-double	g_routing_medium_ratio = 0.3498467688222415;
+double	g_routing_shallow_ratio = 0.212514;
+double	g_routing_medium_ratio = 0.350725;
 double	g_sel_period_coef_sqrt = 8503.516944948424;
 double	g_sel_period_coef_inv = 14696.975829462683;
 double	g_root_lookahead_continue_slope = 0.5097499112748529;
