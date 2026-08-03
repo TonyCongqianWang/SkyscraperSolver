@@ -93,8 +93,8 @@ def main():
                 else:
                     formatted_val = f"{float(raw_val):.15g}"
                 
-            # Regex pattern to match: static [const] type name = value;
-            pattern = re.compile(rf'(static\s+(?:const\s+)?{var_type}\s+{var_name}\s*=\s*)([^;]+)(;)')
+            # Regex pattern to match: [static] [const] type name = value;
+            pattern = re.compile(rf'((?:static\s+)?(?:const\s+)?{var_type}\s+{var_name}\s*=\s*)([^;]+)(;)')
             match = pattern.search(content)
             if match:
                 old_val = match.group(2).strip()
