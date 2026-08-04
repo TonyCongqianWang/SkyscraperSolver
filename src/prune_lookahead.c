@@ -31,35 +31,36 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	run_pruning_routine(puzzle, &cfg, 1);
 }
 
+static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
+				const t_lookahead_config *config, int is_neg)
+{
+	init_node_transition(tr);
+	while (try_get_next_transition(puzzle, tr))
+	{
+		if (is_neg)
+		{
+			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
+					g_check_constr))
+				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
+					g_check_constr);
+		}
+		else
+		{
+			if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
+					config->check_mode))
+				set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
+					g_check_constr);
+		}
+	}
+}
+
 static void	run_lookahead_transitions(t_puzzle *puzzle,
 				t_node_transition *tr, const t_lookahead_config *config)
 {
 	if (config->lookahead_side != LOOKAHEAD_SIDE_NEG)
-	{
-		init_node_transition(tr);
-		while (try_get_next_transition(puzzle, tr))
-		{
-			if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
-					config->check_mode))
-			{
-				set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
-					g_check_constr);
-			}
-		}
-	}
+		run_dive_transitions(puzzle, tr, config, 0);
 	if (config->lookahead_side != LOOKAHEAD_SIDE_POS)
-	{
-		init_node_transition(tr);
-		while (try_get_next_transition(puzzle, tr))
-		{
-			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
-					g_check_constr))
-			{
-				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
-					g_check_constr);
-			}
-		}
-	}
+		run_dive_transitions(puzzle, tr, config, 1);
 }
 
 static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,

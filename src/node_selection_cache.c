@@ -71,31 +71,37 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 	}
 }
 
-static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
-				t_node_select_config *config)
+static void	backup_cache(t_node_order *cache,
+				t_node_transition *old_entries,
+				t_transition_meta *old_meta, int *old_count)
 {
-	t_node_state		*n;
-	t_transition_meta	old_meta[MAX_TRANSITIONS];
-	t_node_transition	old_entries[MAX_TRANSITIONS];
-	int					old_count;
-	int					old_lh_entropy;
-	int					i;
+	int	i;
 
-	n = puzzle->cur_node;
-	old_count = cache->count;
-	old_lh_entropy = cache->lookahead_build_entropy;
+	*old_count = cache->count;
 	i = -1;
-	while (++i < old_count)
+	while (++i < *old_count)
 	{
 		old_meta[i] = cache->meta[i];
 		old_entries[i] = cache->entries[i];
 	}
-	cache->build_depth = n->cur_depth;
+}
+
+static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
+				t_node_select_config *config)
+{
+	t_transition_meta	old_meta[MAX_TRANSITIONS];
+	t_node_transition	old_entries[MAX_TRANSITIONS];
+	int					old_count;
+	int					old_lh_entropy;
+
+	old_lh_entropy = cache->lookahead_build_entropy;
+	backup_cache(cache, old_entries, old_meta, &old_count);
+	cache->build_depth = puzzle->cur_node->cur_depth;
 	collect_cache_entries(puzzle, cache, config);
 	cache->lookahead_build_entropy = old_lh_entropy;
 	cache->needs_rebuild = 0;
 	restore_lookahead_meta(cache, old_entries, old_meta, old_count);
-	recalculate_cache_scores(n, cache);
+	recalculate_cache_scores(puzzle->cur_node, cache);
 	sort_node_order_meta(cache->entries, cache->meta,
 		cache->count, config->criterion);
 }
@@ -123,4 +129,3 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 		rebuild_existing_cache(puzzle, cache, config);
 	cache->last_build_entropy = n->remaining_entropy;
 }
-
