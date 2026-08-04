@@ -39,10 +39,9 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_lookahead_score_w0", "LOOKAHEAD_SCORE_W0", "double"),
-    ("g_lookahead_score_w1", "LOOKAHEAD_SCORE_W1", "double"),
-    ("g_lookahead_score_w3", "LOOKAHEAD_SCORE_W3", "double"),
-    ("g_lookahead_score_w4", "LOOKAHEAD_SCORE_W4", "double"),
+    ("g_lookahead_score_weight_split0", "LOOKAHEAD_SCORE_WEIGHT_SPLIT0", "double"),
+    ("g_lookahead_score_weight_split1", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1", "double"),
+    ("g_lookahead_score_age_limit", "LOOKAHEAD_SCORE_AGE_LIMIT", "double"),
     ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
