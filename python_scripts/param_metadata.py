@@ -17,9 +17,9 @@ PARAM_METADATA = [
     ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_LE7", 1024, 15360, 2634, int, 1.0),
     ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S8", 1024, 15360, 2886, int, 1.0),
     ("SEL_WEIGHT_CELL_CONSTR_RATIO_FP_S9", 1024, 15360, 2297, int, 1.0),
-    ("SEL_POWER_LE7", -5.0, 0.0, -0.5651936, float, 0.2),
-    ("SEL_POWER_S8", -5.0, 0.0, -0.5651936, float, 0.2),
-    ("SEL_POWER_S9", -5.0, 0.0, -0.5651936, float, 0.2),
+    ("SEL_POWER_LE7", -2.0, 1.0, -0.826815, float, 0.1),
+    ("SEL_POWER_S8", -2.0, 1.0, -0.826815, float, 0.1),
+    ("SEL_POWER_S9", -2.0, 1.0, -0.826815, float, 0.1),
     # ROOT
     ("ROOT_MIN_ENTROPY", 0, 1027080, 80010, int, 1.0),
     ("ROOT_GAC_MIN_ENTROPY", 0, 1027080, 193995, int, 1.0),

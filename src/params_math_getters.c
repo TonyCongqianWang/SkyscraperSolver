@@ -32,11 +32,15 @@ int	get_sel_weight_cell_constr_ratio_fp(int size)
 
 double	get_sel_power(int size)
 {
+	double	u;
+
 	if (size <= 7)
-		return (g_sel_power_le7);
-	if (size == 8)
-		return (g_sel_power_s8);
-	return (g_sel_power_s9);
+		u = g_sel_power_le7;
+	else if (size == 8)
+		u = g_sel_power_s8;
+	else
+		u = g_sel_power_s9;
+	return (u * u * u);
 }
 
 int	get_weight_total_scale_fp(int size)
