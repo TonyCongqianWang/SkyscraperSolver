@@ -19,6 +19,12 @@ MATH_VARS = [
     ("g_sel_power_le7", "SEL_POWER_LE7", "double"),
     ("g_sel_power_s8", "SEL_POWER_S8", "double"),
     ("g_sel_power_s9", "SEL_POWER_S9", "double"),
+    ("g_lookahead_score_weight_split0_le7", "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_LE7", "double"),
+    ("g_lookahead_score_weight_split0_s8", "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S8", "double"),
+    ("g_lookahead_score_weight_split0_s9", "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S9", "double"),
+    ("g_lookahead_score_weight_split1_le7", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7", "double"),
+    ("g_lookahead_score_weight_split1_s8", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8", "double"),
+    ("g_lookahead_score_weight_split1_s9", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9", "double"),
 ]
 
 INT_VARS = []
@@ -39,8 +45,6 @@ DOUBLE_VARS = [
     ("g_routing_medium_ratio", "ROUTING_MEDIUM_RATIO", "double"),
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_lookahead_score_weight_split0", "LOOKAHEAD_SCORE_WEIGHT_SPLIT0", "double"),
-    ("g_lookahead_score_weight_split1", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1", "double"),
     ("g_lookahead_score_age_limit", "LOOKAHEAD_SCORE_AGE_LIMIT", "double"),
     ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
 ]

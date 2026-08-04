@@ -60,3 +60,21 @@ double	get_global_entropy_unset_bias(int size)
 		return (g_global_entropy_unset_bias_s8);
 	return (g_global_entropy_unset_bias_s9);
 }
+
+double	get_lookahead_score_weight_split0(int size)
+{
+	if (size <= 7)
+		return (g_lookahead_score_weight_split0_le7);
+	if (size == 8)
+		return (g_lookahead_score_weight_split0_s8);
+	return (g_lookahead_score_weight_split0_s9);
+}
+
+double	get_lookahead_score_weight_split1(int size)
+{
+	if (size <= 7)
+		return (g_lookahead_score_weight_split1_le7);
+	if (size == 8)
+		return (g_lookahead_score_weight_split1_s8);
+	return (g_lookahead_score_weight_split1_s9);
+}

@@ -39,10 +39,10 @@ void	score_transition_strat(t_node_state *state, t_node_transition *next,
 		score_progress(state, next);
 }
 
-static void	get_clamped_splits(double *s0, double *s1)
+static void	get_clamped_splits(t_node_state *node, double *s0, double *s1)
 {
-	*s0 = g_lookahead_score_weight_split0;
-	*s1 = g_lookahead_score_weight_split1;
+	*s0 = get_lookahead_score_weight_split0(node->puzzle->size);
+	*s1 = get_lookahead_score_weight_split1(node->puzzle->size);
 	if (*s0 < 0.0)
 		*s0 = 0.0;
 	if (*s1 < *s0)
@@ -64,7 +64,7 @@ double	calculate_blended_score(t_node_state *node,
 
 	if (cache->lookahead_build_entropy < 0)
 		return (cache->meta[idx].cached_br_score);
-	get_clamped_splits(&s0, &s1);
+	get_clamped_splits(node, &s0, &s1);
 	max_e = (double)node->puzzle->max_entropy;
 	e_pos = (double)node->remaining_entropy / max_e;
 	if (cache->meta[idx].entropy_pos >= 0)

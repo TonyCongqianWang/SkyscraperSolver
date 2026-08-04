@@ -20,6 +20,12 @@ PARAM_METADATA = [
     ("SEL_POWER_LE7", -2.0, 1.0, -0.826815, float, 0.1),
     ("SEL_POWER_S8", -2.0, 1.0, -0.826815, float, 0.1),
     ("SEL_POWER_S9", -2.0, 1.0, -0.826815, float, 0.1),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_LE7", 0.0, 1.0, 0.15, float, 0.05),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S8", 0.0, 1.0, 0.15, float, 0.05),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S9", 0.0, 1.0, 0.15, float, 0.05),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7", 0.0, 1.0, 0.20, float, 0.05),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8", 0.0, 1.0, 0.20, float, 0.05),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9", 0.0, 1.0, 0.20, float, 0.05),
     # ROOT
     ("ROOT_MIN_ENTROPY", 0, 1027080, 80010, int, 1.0),
     ("ROOT_GAC_MIN_ENTROPY", 0, 1027080, 193995, int, 1.0),
@@ -118,8 +124,6 @@ PARAM_METADATA = [
     ("DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 1.951078, float, 1.0),
     ("DEEP_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 3.399984, float, 1.0),
     # Lookahead score blending weights & complement multiplier
-    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0", 0.0, 1.0, 0.15, float, 0.05),
-    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1", 0.0, 1.0, 0.20, float, 0.05),
     ("LOOKAHEAD_SCORE_AGE_LIMIT", 0.0, 50000.0, 15000.0, float, 2000.0),
     ("ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", 1.0, 20.0, 3.58449, float, 0.5),
 ]
@@ -242,8 +246,12 @@ PARAMETER_MAPPING = {
     "MEDIUM_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/params_double.c", "g_medium_period_tier_heavy_mult", "double"),
     "DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/params_double.c", "g_deep_period_tier_medium_mult", "double"),
     "DEEP_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/params_double.c", "g_deep_period_tier_heavy_mult", "double"),
-    "LOOKAHEAD_SCORE_WEIGHT_SPLIT0": ("src/params_double.c", "g_lookahead_score_weight_split0", "double"),
-    "LOOKAHEAD_SCORE_WEIGHT_SPLIT1": ("src/params_double.c", "g_lookahead_score_weight_split1", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_LE7": ("src/params_math.c", "g_lookahead_score_weight_split0_le7", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S8": ("src/params_math.c", "g_lookahead_score_weight_split0_s8", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S9": ("src/params_math.c", "g_lookahead_score_weight_split0_s9", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7": ("src/params_math.c", "g_lookahead_score_weight_split1_le7", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8": ("src/params_math.c", "g_lookahead_score_weight_split1_s8", "double"),
+    "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9": ("src/params_math.c", "g_lookahead_score_weight_split1_s9", "double"),
     "LOOKAHEAD_SCORE_AGE_LIMIT": ("src/params_double.c", "g_lookahead_score_age_limit", "double"),
     "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER": ("src/params_double.c", "g_root_period_tier_complement_mult", "double"),
 }
@@ -252,7 +260,9 @@ PARAMETER_MAPPING = {
 # Format: (param_min_name, param_max_name, eps)
 # enforces: physical_value(param_min_name) <= physical_value(param_max_name) + eps
 PARAM_CONSTRAINTS = [
-    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1", 0.0),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_LE7", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7", 0.0),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S8", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8", 0.0),
+    ("LOOKAHEAD_SCORE_WEIGHT_SPLIT0_S9", "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9", 0.0),
     # ROOT
     ("ROOT_GAC_LOCAL_MIN_UNSET", "ROOT_GAC_LOCAL_MAX_UNSET", 0.05),
     ("ROOT_CONSTR_LOCAL_MIN_UNSET", "ROOT_CONSTR_LOCAL_MAX_UNSET", 0.05),
