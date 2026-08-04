@@ -17,6 +17,7 @@
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg);
 void	get_prune_cfg_medium(t_prune_routine_cfg *cfg);
 void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg);
+void	get_prune_cfg_complement(t_prune_routine_cfg *cfg);
 int		calc_effective_global_min_entropy(int base_entropy, int num_unset,
 			int size);
 

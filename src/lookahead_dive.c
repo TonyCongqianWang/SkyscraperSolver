@@ -36,13 +36,35 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	return (0);
 }
 
+static void	update_cache_entropy(t_node_order *cache, t_node_transition next,
+				int rem_entropy, int is_neg)
+{
+	int	i;
+
+	if (!cache)
+		return ;
+	i = 0;
+	while (i < cache->count)
+	{
+		if (cache->entries[i].cell_idx == next.cell_idx
+			&& cache->entries[i].cell_val == next.cell_val)
+		{
+			if (is_neg)
+				cache->meta[i].entropy_neg = rem_entropy;
+			else
+				cache->meta[i].entropy_pos = rem_entropy;
+			break ;
+		}
+		i++;
+	}
+}
+
 static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 		int depth, t_check_mode mode)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
-	int					entropy_reduced;
 	int					is_neg;
 
 	is_neg = (depth < 0);
@@ -52,12 +74,14 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 	old_state = *(cur_node);
 	transition_node(puzzle, depth);
 	local_sols = tree_recursion(puzzle, next, mode, is_neg);
+	if (local_sols.solutions_found > 0)
+		update_cache_entropy(old_state.order_cache, next,
+			cur_node->remaining_entropy, is_neg);
 	if (!is_neg)
 	{
-		entropy_reduced = old_state.remaining_entropy
-			- cur_node->remaining_entropy;
 		old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
-			= (double)entropy_reduced;
+			= (double)(old_state.remaining_entropy
+				- cur_node->remaining_entropy);
 	}
 	*(cur_node) = old_state;
 	sync_cache_stacks(puzzle);

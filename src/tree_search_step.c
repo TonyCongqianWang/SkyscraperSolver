@@ -90,6 +90,8 @@ t_search_result	process_frame(t_puzzle *puzzle, int *d, int start_d,
 	early_res = check_early_states(puzzle, d, start_d, frames);
 	if (early_res != SEARCH_PROCEED_TO_BRANCH)
 		return (early_res);
+	if (puzzle->cur_node->is_in_neg_lookahead)
+		return (check_backtrack(puzzle, d, start_d, frames));
 	init_node_transition(&frames[*d].next);
 	if (!try_get_best_transition(puzzle, &frames[*d].next))
 		return (check_backtrack(puzzle, d, start_d, frames));

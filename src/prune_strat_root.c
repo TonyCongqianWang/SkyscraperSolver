@@ -26,7 +26,6 @@ static void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 	cfg->lookahead.check_mode.run_constr = 1;
 	cfg->lookahead.check_mode.run_gac = 1;
 	cfg->lookahead.check_mode.run_prop = 1;
-	cfg->lookahead.enable_complement = 1;
 	cfg->lookahead.check_mode.lookahead_continue_min_entropy
 		= g_root_lookahead_continue_min_entropy;
 	cfg->lookahead.check_mode.lookahead_continue_slope
@@ -59,6 +58,23 @@ static void	setup_cfg_bounds(t_prune_routine_cfg *cfg, int num_unset, int size)
 	cfg->lookahead.check_mode.gac.global_min_entropy
 		= calc_effective_global_min_entropy(
 			g_root_lookahead_gac_global_min_entropy, num_unset, size);
+}
+
+static int	run_tier_complement(t_puzzle *puzzle, int remaining_entropy)
+{
+	t_prune_routine_cfg	cfg;
+
+	get_prune_cfg_complement(&cfg);
+	cfg.lookahead.check_mode.run_constr = 1;
+	cfg.lookahead.check_mode.run_gac = 1;
+	cfg.lookahead.check_mode.run_prop = 1;
+	cfg.lookahead.check_mode.lookahead_continue_min_entropy
+		= g_root_lookahead_continue_min_entropy;
+	cfg.lookahead.check_mode.lookahead_continue_slope
+		= g_root_lookahead_continue_slope;
+	setup_cfg_bounds(&cfg, puzzle->cur_node->num_unset, puzzle->size);
+	(void)remaining_entropy;
+	return (run_pruning_routine(puzzle, &cfg, 3));
 }
 
 static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
@@ -94,19 +110,26 @@ int	prune_strat_root(t_puzzle *puzzle)
 {
 	t_node_state	*node;
 	double			period;
+	int				pruned;
 
 	node = puzzle->cur_node;
 	if (node->is_invalid || node->is_complete || node->num_unset == 0
 		|| node->remaining_entropy < g_root_min_entropy)
 		return (0);
 	period = calc_period(puzzle, node);
+	pruned = 0;
 	if (node->last_entropy[0] - node->remaining_entropy > period)
-		return (run_tier(puzzle, 0, node->remaining_entropy));
-	if (node->last_entropy[1] - node->remaining_entropy
+		pruned = run_tier(puzzle, 0, node->remaining_entropy);
+	else if (node->last_entropy[1] - node->remaining_entropy
 		> period * g_root_period_tier_medium_mult)
-		return (run_tier(puzzle, 1, node->remaining_entropy));
-	if (node->last_entropy[2] - node->remaining_entropy
+		pruned = run_tier(puzzle, 1, node->remaining_entropy);
+	else if (node->last_entropy[2] - node->remaining_entropy
 		> period * g_root_period_tier_heavy_mult)
-		return (run_tier(puzzle, 2, node->remaining_entropy));
+		pruned = run_tier(puzzle, 2, node->remaining_entropy);
+	if (pruned)
+		return (1);
+	if (node->last_entropy[3] - node->remaining_entropy
+		> period * g_root_period_tier_complement_mult)
+		return (run_tier_complement(puzzle, node->remaining_entropy));
 	return (0);
 }

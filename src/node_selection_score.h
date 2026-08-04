@@ -19,5 +19,9 @@
 t_selection_lut	make_selection_lut(double p);
 void			score_transition_strat(t_node_state *state,
 					t_node_transition *next, t_score_family family);
+double			calculate_blended_score(t_node_state *node,
+					t_node_order *cache, int idx);
+void			recalculate_cache_scores(t_node_state *node,
+					t_node_order *cache);
 
 #endif

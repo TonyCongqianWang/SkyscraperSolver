@@ -117,6 +117,12 @@ PARAM_METADATA = [
     ("MEDIUM_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 4.771514, float, 1.0),
     ("DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 1.951078, float, 1.0),
     ("DEEP_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 3.399984, float, 1.0),
+    # Lookahead score blending weights & complement multiplier
+    ("LOOKAHEAD_SCORE_W0", -10.0, 10.0, -1.0, float, 0.5),
+    ("LOOKAHEAD_SCORE_W1", -10.0, 10.0, -0.5, float, 0.5),
+    ("LOOKAHEAD_SCORE_W3", -10.0, 10.0, 0.0, float, 0.5),
+    ("LOOKAHEAD_SCORE_W4", 0.0, 2.0, 0.2, float, 0.1),
+    ("ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", 1.0, 30.0, 5.0, float, 1.0),
 ]
 
 # PARAMETER_MAPPING maps each SPSA parameter to (C_filepath, C_variable_name, type)
@@ -237,6 +243,11 @@ PARAMETER_MAPPING = {
     "MEDIUM_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/params_double.c", "g_medium_period_tier_heavy_mult", "double"),
     "DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER": ("src/params_double.c", "g_deep_period_tier_medium_mult", "double"),
     "DEEP_PERIOD_TIER_HEAVY_MULTIPLIER": ("src/params_double.c", "g_deep_period_tier_heavy_mult", "double"),
+    "LOOKAHEAD_SCORE_W0": ("src/params_double.c", "g_lookahead_score_w0", "double"),
+    "LOOKAHEAD_SCORE_W1": ("src/params_double.c", "g_lookahead_score_w1", "double"),
+    "LOOKAHEAD_SCORE_W3": ("src/params_double.c", "g_lookahead_score_w3", "double"),
+    "LOOKAHEAD_SCORE_W4": ("src/params_double.c", "g_lookahead_score_w4", "double"),
+    "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER": ("src/params_double.c", "g_root_period_tier_complement_mult", "double"),
 }
 
 # PARAM_CONSTRAINTS defines linear constraints between parameters.

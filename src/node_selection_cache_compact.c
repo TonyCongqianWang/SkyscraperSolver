@@ -12,6 +12,7 @@
 
 #include "node_selection_eval.h"
 #include "grid_availability.h"
+#include "node_selection_score.h"
 
 void	sort_node_order_meta(t_node_transition *entries,
 			t_transition_meta *meta, int count,
@@ -68,5 +69,6 @@ void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
 	}
 	cache->count = write_idx;
 	cache->num_valid = write_idx;
+	recalculate_cache_scores(node, cache);
 	sort_node_order_meta(cache->entries, cache->meta, cache->count, criterion);
 }

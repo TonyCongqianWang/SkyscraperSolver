@@ -52,6 +52,8 @@ typedef struct s_node_order
 	int					count;
 	int					num_valid;
 	int					last_build_entropy;
+	int					lookahead_build_entropy;
+	int					needs_rebuild;
 	int					build_depth;
 }						t_node_order;
 
@@ -107,6 +109,7 @@ typedef struct s_node_state
 	t_u16					rows_invalid_since_prune;
 	t_u16					cols_invalid_since_prune;
 	int						is_in_lookahead_select;
+	int						is_in_neg_lookahead;
 	t_selectivity_level		lookahead_selectivity;
 	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
 	t_node_order			*order_cache;

@@ -35,12 +35,31 @@ int	try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
 		&& is_cell_empty(puzzle->cur_node, next->cell_idx));
 }
 
+static int	find_transition_in_cache(t_node_order *cache, int cell, int val)
+{
+	int	i;
+
+	if (!cache)
+		return (-1);
+	i = 0;
+	while (i < cache->count)
+	{
+		if (cache->entries[i].cell_idx == cell
+			&& cache->entries[i].cell_val == val)
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
 static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
 				t_node_select_config *config, int cv)
 {
 	t_node_transition	tr;
 	int					c;
 	int					v;
+	int					parent_top;
+	int					old_idx;
 
 	init_node_transition(&tr);
 	c = cv >> 8;
@@ -50,8 +69,20 @@ static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
 	score_transition_strat(puzzle->cur_node, &tr, config->score_family);
 	cache->entries[cache->count] = tr;
 	cache->meta[cache->count].cached_br_score = tr.score;
+	parent_top = puzzle->order_stack.top_idx - 1;
+	old_idx = -1;
+	if (parent_top >= 0)
+		old_idx = find_transition_in_cache(
+				&puzzle->order_stack.orders[parent_top], c, v);
 	cache->meta[cache->count].entropy_pos = -1;
 	cache->meta[cache->count].entropy_neg = -1;
+	if (old_idx >= 0)
+	{
+		cache->meta[cache->count].entropy_pos = puzzle->order_stack
+			.orders[parent_top].meta[old_idx].entropy_pos;
+		cache->meta[cache->count].entropy_neg = puzzle->order_stack
+			.orders[parent_top].meta[old_idx].entropy_neg;
+	}
 	cache->count++;
 }
 
@@ -94,6 +125,8 @@ void	init_order_stacks(t_puzzle *puzzle)
 	{
 		order = &puzzle->order_stack.orders[stack_idx];
 		order->last_build_entropy = -1;
+		order->lookahead_build_entropy = -1;
+		order->needs_rebuild = 0;
 		order->build_depth = -1;
 		stack_idx++;
 	}
@@ -108,7 +141,7 @@ void	rebuild_cache_if_stale(t_puzzle *puzzle,
 
 	node = puzzle->cur_node;
 	cache = node->order_cache;
-	if (cache->last_build_entropy == -1)
+	if (cache->needs_rebuild || cache->last_build_entropy == -1)
 		is_stale = 1;
 	else if (!allow_stale_rebuild)
 		is_stale = 0;

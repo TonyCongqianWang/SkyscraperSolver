@@ -49,13 +49,20 @@ typedef struct s_check_mode
 extern const t_check_mode	g_check_none;
 extern const t_check_mode	g_check_constr;
 
+typedef enum e_lookahead_side
+{
+	LOOKAHEAD_SIDE_POS,
+	LOOKAHEAD_SIDE_NEG,
+	LOOKAHEAD_SIDE_BOTH
+}	t_lookahead_side;
+
 typedef struct s_lookahead_config
 {
 	t_selectivity_level	selectivity;
 	int					max_depth;
 	int					branching_budget;
 	int					enable_node_select;
-	int					enable_complement;
+	t_lookahead_side	lookahead_side;
 	int					pruning_level;
 	t_check_mode		check_mode;
 }	t_lookahead_config;
