@@ -752,8 +752,8 @@ def run_spsa(args, datasets, max_workers):
             name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
             is_active = (pmax > pmin) and (name in active_names)
             if is_active:
-                gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * perturb_scale * delta[i])
-                gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * perturb_scale * delta[i])
+                gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * delta[i])
+                gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * delta[i])
             else:
                 gt_i = 0.0
                 gn_i = 0.0

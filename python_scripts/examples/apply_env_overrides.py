@@ -34,6 +34,9 @@ MATH_VARS = [
     ("g_routing_medium_ratio_le7", "ROUTING_MEDIUM_RATIO_LE7", "double"),
     ("g_routing_medium_ratio_s8", "ROUTING_MEDIUM_RATIO_S8", "double"),
     ("g_routing_medium_ratio_s9", "ROUTING_MEDIUM_RATIO_S9", "double"),
+    ("g_lookahead_score_age_limit_ratio_le7", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_LE7", "double"),
+    ("g_lookahead_score_age_limit_ratio_s8", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S8", "double"),
+    ("g_lookahead_score_age_limit_ratio_s9", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S9", "double"),
 ]
 
 INT_VARS = []
@@ -52,7 +55,6 @@ for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("mediu
 DOUBLE_VARS = [
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_lookahead_score_age_limit_ratio", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO", "double"),
     ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
 ]
 for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
