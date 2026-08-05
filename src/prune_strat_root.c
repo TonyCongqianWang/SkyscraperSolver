@@ -6,12 +6,12 @@
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
+/*   Updated: 2026/08/04 17:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "prune_strat_root.h"
-#include "prune_strat_root_helpers.h"
+#include "prune_strat_cfg_setup.h"
 #include "pruning_routines.h"
 #include "pruning_configs.h"
 #include "entropy.h"
@@ -19,35 +19,53 @@
 #include "params_int.h"
 #include "params_double.h"
 
-static int	run_tier_complement(t_puzzle *puzzle, int remaining_entropy)
+static void	populate_limits(t_prune_limits *lim)
 {
-	t_prune_routine_cfg	cfg;
-
-	get_prune_cfg_complement(&cfg);
-	cfg.lookahead.check_mode.run_constr = 1;
-	cfg.lookahead.check_mode.run_gac = 1;
-	cfg.lookahead.check_mode.run_prop = 1;
-	cfg.lookahead.check_mode.lookahead_continue_min_entropy
-		= g_root_lookahead_continue_min_entropy;
-	cfg.lookahead.check_mode.lookahead_continue_slope
-		= g_root_lookahead_continue_slope;
-	setup_cfg_bounds(&cfg, puzzle->cur_node->num_unset, puzzle->size);
-	(void)remaining_entropy;
-	return (run_pruning_routine(puzzle, &cfg, 3));
+	lim->gac_min_entropy = g_root_gac_min_entropy;
+	lim->constr_min_entropy = g_root_constr_min_entropy;
+	lim->lh_continue_min_entropy = g_root_lookahead_continue_min_entropy;
+	lim->lh_continue_slope = g_root_lookahead_continue_slope;
+	lim->gac_local_min_entropy = g_root_gac_local_min_entropy;
+	lim->gac_local_max_entropy = g_root_gac_local_max_entropy;
+	lim->gac_global_min_entropy = g_root_gac_global_min_entropy;
+	lim->constr_local_min_entropy = g_root_constr_local_min_entropy;
+	lim->constr_local_max_entropy = g_root_constr_local_max_entropy;
+	lim->constr_global_min_entropy = g_root_constr_global_min_entropy;
+	lim->lh_constr_local_min_entropy
+		= g_root_lookahead_constr_local_min_entropy;
+	lim->lh_constr_local_max_entropy
+		= g_root_lookahead_constr_local_max_entropy;
+	lim->lh_constr_global_min_entropy
+		= g_root_lookahead_constr_global_min_entropy;
+	lim->lh_gac_local_min_entropy
+		= g_root_lookahead_gac_local_min_entropy;
+	lim->lh_gac_local_max_entropy
+		= g_root_lookahead_gac_local_max_entropy;
+	lim->lh_gac_global_min_entropy
+		= g_root_lookahead_gac_global_min_entropy;
 }
 
 static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
 {
 	t_prune_routine_cfg	cfg;
+	t_prune_limits		lim;
 
 	if (tier == 0)
 		get_prune_cfg_light(&cfg);
 	else if (tier == 1)
 		get_prune_cfg_medium(&cfg);
-	else
+	else if (tier == 2)
 		get_prune_cfg_heavy(&cfg);
-	setup_cfg_thresholds(&cfg, remaining_entropy);
-	setup_cfg_bounds(&cfg, puzzle->cur_node->num_unset, puzzle->size);
+	else
+		get_prune_cfg_complement(&cfg);
+	populate_limits(&lim);
+	setup_cfg_thresholds(&cfg, &lim, remaining_entropy);
+	if (tier == 3)
+	{
+		cfg.run_gac = 0;
+		cfg.run_check_constr = 0;
+	}
+	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->num_unset, puzzle->size);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 
@@ -89,6 +107,6 @@ int	prune_strat_root(t_puzzle *puzzle)
 		return (1);
 	if (node->last_entropy[3] - node->remaining_entropy
 		> period * g_root_period_tier_complement_mult)
-		return (run_tier_complement(puzzle, node->remaining_entropy));
+		return (run_tier(puzzle, 3, node->remaining_entropy));
 	return (0);
 }
