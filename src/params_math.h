@@ -21,6 +21,7 @@ extern int		g_sel_weight_cell_constr_ratio_fp_le7;
 extern double	g_sel_power_le7;
 extern double	g_lookahead_score_weight_split0_le7;
 extern double	g_lookahead_score_weight_split1_le7;
+extern double	g_lookahead_entropy_weight_le7;
 
 /* Size 8 Math Parameters */
 extern int		g_weight_cell_constr_ratio_fp_s8;
@@ -30,6 +31,7 @@ extern int		g_sel_weight_cell_constr_ratio_fp_s8;
 extern double	g_sel_power_s8;
 extern double	g_lookahead_score_weight_split0_s8;
 extern double	g_lookahead_score_weight_split1_s8;
+extern double	g_lookahead_entropy_weight_s8;
 
 /* Size 9 Math Parameters */
 extern int		g_weight_cell_constr_ratio_fp_s9;
@@ -39,6 +41,7 @@ extern int		g_sel_weight_cell_constr_ratio_fp_s9;
 extern double	g_sel_power_s9;
 extern double	g_lookahead_score_weight_split0_s9;
 extern double	g_lookahead_score_weight_split1_s9;
+extern double	g_lookahead_entropy_weight_s9;
 
 /* Size-indexed Accessors */
 int				get_weight_cell_constr_ratio_fp(int size);
@@ -48,5 +51,6 @@ int				get_sel_weight_cell_constr_ratio_fp(int size);
 double			get_sel_power(int size);
 double			get_lookahead_score_weight_split0(int size);
 double			get_lookahead_score_weight_split1(int size);
+double			get_lookahead_entropy_weight(int size);
 
 #endif

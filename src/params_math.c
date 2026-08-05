@@ -33,3 +33,6 @@ double	g_lookahead_score_weight_split0_s9 = 0.15;
 double	g_lookahead_score_weight_split1_le7 = 0.20;
 double	g_lookahead_score_weight_split1_s8 = 0.20;
 double	g_lookahead_score_weight_split1_s9 = 0.20;
+double	g_lookahead_entropy_weight_le7 = 1.0;
+double	g_lookahead_entropy_weight_s8 = 1.0;
+double	g_lookahead_entropy_weight_s9 = 1.0;

@@ -12,6 +12,7 @@
 
 #include "node_selection_score.h"
 #include "params_double.h"
+#include "params_math.h"
 
 static void	get_clamped_splits(t_node_state *node, double *s0, double *s1)
 {
@@ -60,8 +61,9 @@ double	calculate_blended_score(t_node_state *node,
 				- (cache->lookahead_build_entropy - node->remaining_entropy))
 			/ g_lookahead_score_age_limit;
 	}
-	return (age_factor * -(s0 * e_pos + (1.0 - s1) * e_neg
-			+ (s1 - s0) * e_pos * e_neg) + cache->meta[idx].cached_br_score);
+	return (age_factor * get_lookahead_entropy_weight(node->puzzle->size)
+		* -(s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos * e_neg)
+		+ cache->meta[idx].cached_br_score);
 }
 
 void	recalculate_cache_scores(t_node_state *node, t_node_order *cache)

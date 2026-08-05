@@ -26,6 +26,9 @@ PARAM_METADATA = [
     ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7", 0.0, 1.0, 0.20, float, 0.05),
     ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8", 0.0, 1.0, 0.20, float, 0.05),
     ("LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9", 0.0, 1.0, 0.20, float, 0.05),
+    ("LOOKAHEAD_ENTROPY_WEIGHT_LE7", 0.0, 50.0, 1.0, float, 0.5),
+    ("LOOKAHEAD_ENTROPY_WEIGHT_S8", 0.0, 50.0, 1.0, float, 0.5),
+    ("LOOKAHEAD_ENTROPY_WEIGHT_S9", 0.0, 50.0, 1.0, float, 0.5),
     # ROOT
     ("ROOT_MIN_ENTROPY", 0, 1027080, 80010, int, 1.0),
     ("ROOT_GAC_MIN_ENTROPY", 0, 1027080, 193995, int, 1.0),
@@ -295,7 +298,7 @@ MATH_PARAM_GROUPS = {
 }
 
 for name, *etc in PARAM_METADATA:
-    if "_BIAS" in name or "_FP" in name or "SEL_POWER" in name:
+    if "_BIAS" in name or "_FP" in name or "SEL_POWER" in name or "SPLIT" in name or "ENTROPY_WEIGHT" in name:
         if name.endswith("_LE7"):
             MATH_PARAM_GROUPS["7"].add(name)
         elif name.endswith("_S8"):
