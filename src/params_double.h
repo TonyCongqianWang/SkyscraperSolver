@@ -16,8 +16,6 @@
 # include "params_math.h"
 
 /* Routing Double Parameters */
-extern double	g_routing_shallow_ratio;
-extern double	g_routing_medium_ratio;
 extern double	g_sel_period_coef_sqrt;
 extern double	g_sel_period_coef_inv;
 
@@ -82,7 +80,7 @@ extern double	g_deep_lookahead_constr_local_min_entropy;
 extern double	g_deep_lookahead_constr_local_max_entropy;
 
 /* Lookahead score blending & complement parameters */
-extern double	g_lookahead_score_age_limit;
+extern double	g_lookahead_score_age_limit_ratio;
 extern double	g_root_period_tier_complement_mult;
 
 #endif

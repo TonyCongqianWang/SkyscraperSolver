@@ -38,3 +38,21 @@ double	get_lookahead_entropy_weight(int size)
 		return (g_lookahead_entropy_weight_s8);
 	return (g_lookahead_entropy_weight_s9);
 }
+
+double	get_routing_shallow_ratio(int size)
+{
+	if (size <= 7)
+		return (g_routing_shallow_ratio_le7);
+	if (size == 8)
+		return (g_routing_shallow_ratio_s8);
+	return (g_routing_shallow_ratio_s9);
+}
+
+double	get_routing_medium_ratio(int size)
+{
+	if (size <= 7)
+		return (g_routing_medium_ratio_le7);
+	if (size == 8)
+		return (g_routing_medium_ratio_s8);
+	return (g_routing_medium_ratio_s9);
+}

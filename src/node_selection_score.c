@@ -47,21 +47,19 @@ double	calculate_blended_score(t_node_state *node,
 	double	s1;
 	double	e_pos;
 	double	e_neg;
-	double	age_factor;
+	double	age_lim;
 
 	if (cache->lookahead_build_entropy < 0)
 		return (cache->meta[idx].cached_br_score);
 	get_clamped_splits(node, &s0, &s1);
 	get_normalized_entropies(node, &cache->meta[idx], &e_pos, &e_neg);
-	age_factor = 0.0;
-	if (cache->lookahead_build_entropy - node->remaining_entropy
-		< g_lookahead_score_age_limit && g_lookahead_score_age_limit > 0.0)
-	{
-		age_factor = (g_lookahead_score_age_limit
-				- (cache->lookahead_build_entropy - node->remaining_entropy))
-			/ g_lookahead_score_age_limit;
-	}
-	return (age_factor * get_lookahead_entropy_weight(node->puzzle->size)
+	age_lim = g_lookahead_score_age_limit_ratio * node->puzzle->max_entropy;
+	if (cache->lookahead_build_entropy - node->remaining_entropy >= age_lim
+		|| age_lim <= 0.0)
+		return (cache->meta[idx].cached_br_score);
+	age_lim = (age_lim - (cache->lookahead_build_entropy
+				- node->remaining_entropy)) / age_lim;
+	return (age_lim * get_lookahead_entropy_weight(node->puzzle->size)
 		* -(s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos * e_neg)
 		+ cache->meta[idx].cached_br_score);
 }

@@ -1,8 +1,12 @@
 # PARAM_METADATA maps each SPSA parameter to (name, min_val, max_val, default_val, type, perturb_scale)
 PARAM_METADATA = [
     # ROUTING
-    ("ROUTING_SHALLOW_RATIO", 0.0, 0.3, 0.2123164, float, 1.0),
-    ("ROUTING_MEDIUM_RATIO", 0.0, 0.5, 0.35049047, float, 1.0),
+    ("ROUTING_SHALLOW_RATIO_LE7", 0.0, 0.5, 0.0, float, 0.02),
+    ("ROUTING_SHALLOW_RATIO_S8", 0.0, 0.5, 0.0530791, float, 0.02),
+    ("ROUTING_SHALLOW_RATIO_S9", 0.0, 0.5, 0.2123164, float, 0.02),
+    ("ROUTING_MEDIUM_RATIO_LE7", 0.0, 0.7, 0.35049047, float, 0.02),
+    ("ROUTING_MEDIUM_RATIO_S8", 0.0, 0.7, 0.35049047, float, 0.02),
+    ("ROUTING_MEDIUM_RATIO_S9", 0.0, 0.7, 0.35049047, float, 0.02),
     ("GLOBAL_ENTROPY_UNSET_BIAS_LE7", 100.0, 2000.0, 589.21814, float, 1.0),
     ("GLOBAL_ENTROPY_UNSET_BIAS_S8", 100.0, 2000.0, 469.79873, float, 1.0),
     ("GLOBAL_ENTROPY_UNSET_BIAS_S9", 100.0, 2000.0, 476.95816, float, 1.0),
@@ -127,15 +131,18 @@ PARAM_METADATA = [
     ("DEEP_PERIOD_TIER_MEDIUM_MULTIPLIER", 1.0, 10.0, 1.9466372, float, 1.0),
     ("DEEP_PERIOD_TIER_HEAVY_MULTIPLIER", 1.0, 20.0, 3.3343315, float, 1.0),
     # Lookahead score blending weights & complement multiplier
-    ("LOOKAHEAD_SCORE_AGE_LIMIT", 0.0, 50000.0, 14999.931, float, 2000.0),
+    ("LOOKAHEAD_SCORE_AGE_LIMIT_RATIO", 0.0, 0.5, 0.06, float, 0.01),
     ("ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", 1.0, 20.0, 3.5972294, float, 0.5),
 ]
 
 # PARAMETER_MAPPING maps each SPSA parameter to (C_filepath, C_variable_name, type)
 PARAMETER_MAPPING = {
-    # ROUTING
-    "ROUTING_SHALLOW_RATIO": ("src/params_double.c", "g_routing_shallow_ratio", "double"),
-    "ROUTING_MEDIUM_RATIO": ("src/params_double.c", "g_routing_medium_ratio", "double"),
+    "ROUTING_SHALLOW_RATIO_LE7": ("src/params_math.c", "g_routing_shallow_ratio_le7", "double"),
+    "ROUTING_SHALLOW_RATIO_S8": ("src/params_math.c", "g_routing_shallow_ratio_s8", "double"),
+    "ROUTING_SHALLOW_RATIO_S9": ("src/params_math.c", "g_routing_shallow_ratio_s9", "double"),
+    "ROUTING_MEDIUM_RATIO_LE7": ("src/params_math.c", "g_routing_medium_ratio_le7", "double"),
+    "ROUTING_MEDIUM_RATIO_S8": ("src/params_math.c", "g_routing_medium_ratio_s8", "double"),
+    "ROUTING_MEDIUM_RATIO_S9": ("src/params_math.c", "g_routing_medium_ratio_s9", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_LE7": ("src/params_math.c", "g_global_entropy_unset_bias_le7", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S8": ("src/params_math.c", "g_global_entropy_unset_bias_s8", "double"),
     "GLOBAL_ENTROPY_UNSET_BIAS_S9": ("src/params_math.c", "g_global_entropy_unset_bias_s9", "double"),
@@ -255,7 +262,7 @@ PARAMETER_MAPPING = {
     "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_LE7": ("src/params_math.c", "g_lookahead_score_weight_split1_le7", "double"),
     "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S8": ("src/params_math.c", "g_lookahead_score_weight_split1_s8", "double"),
     "LOOKAHEAD_SCORE_WEIGHT_SPLIT1_S9": ("src/params_math.c", "g_lookahead_score_weight_split1_s9", "double"),
-    "LOOKAHEAD_SCORE_AGE_LIMIT": ("src/params_double.c", "g_lookahead_score_age_limit", "double"),
+    "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO": ("src/params_double.c", "g_lookahead_score_age_limit_ratio", "double"),
     "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER": ("src/params_double.c", "g_root_period_tier_complement_mult", "double"),
 }
 
@@ -298,7 +305,7 @@ MATH_PARAM_GROUPS = {
 }
 
 for name, *etc in PARAM_METADATA:
-    if "_BIAS" in name or "_FP" in name or "SEL_POWER" in name or "SPLIT" in name or "ENTROPY_WEIGHT" in name:
+    if "_BIAS" in name or "_FP" in name or "SEL_POWER" in name or "SPLIT" in name or "ENTROPY_WEIGHT" in name or "ROUTING" in name:
         if name.endswith("_LE7"):
             MATH_PARAM_GROUPS["7"].add(name)
         elif name.endswith("_S8"):

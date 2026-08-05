@@ -17,11 +17,11 @@
 #include "prune_strat_medium.h"
 #include "prune_strat_deep.h"
 #include "params_double.h"
+#include "params_math.h"
 
 int	prune_current_step(t_puzzle *puzzle)
 {
 	int		d;
-	double	scaling;
 
 	if (puzzle->cur_node->cur_depth == 0)
 	{
@@ -33,12 +33,10 @@ int	prune_current_step(t_puzzle *puzzle)
 	else
 	{
 		d = puzzle->cur_node->cur_depth;
-		scaling = 0.0;
-		if (puzzle->size > 7)
-			scaling = (puzzle->size - 7.0) * (puzzle->size - 7.0) / 4.0;
-		if (d <= puzzle->squared_size * g_routing_shallow_ratio * scaling)
+		if (d <= puzzle->squared_size * get_routing_shallow_ratio(puzzle->size))
 			return (prune_strat_shallow(puzzle));
-		else if (d <= puzzle->squared_size * g_routing_medium_ratio)
+		else if (d <= puzzle->squared_size
+			* get_routing_medium_ratio(puzzle->size))
 			return (prune_strat_medium(puzzle));
 		else
 			return (prune_strat_deep(puzzle));

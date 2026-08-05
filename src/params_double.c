@@ -12,11 +12,9 @@
 
 #include "params_double.h"
 
-double	g_routing_shallow_ratio = 0.2123164;
-double	g_routing_medium_ratio = 0.35049047;
 double	g_sel_period_coef_sqrt = 481.90915;
 double	g_sel_period_coef_inv = 5021.7486;
-double	g_lookahead_score_age_limit = 14999.931;
+double	g_lookahead_score_age_limit_ratio = 0.06;
 double	g_root_period_tier_complement_mult = 3.5972294;
 double	g_root_lookahead_continue_slope = 0.4981356;
 double	g_root_period_coef_scale = 50.150422;

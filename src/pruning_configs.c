@@ -31,7 +31,7 @@ void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_VALUE_SET;
 	cfg->lookahead.max_depth = 1;
-	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_POS;
+	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }
 
@@ -53,7 +53,7 @@ void	get_prune_cfg_medium(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_ANY_CHANGE;
 	cfg->lookahead.max_depth = 1;
-	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_POS;
+	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }
 
@@ -75,7 +75,7 @@ void	get_prune_cfg_heavy(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_NONE;
 	cfg->lookahead.max_depth = 1;
-	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_POS;
+	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }
 
@@ -97,7 +97,7 @@ void	get_prune_cfg_complement(t_prune_routine_cfg *cfg)
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = SELECTIVITY_NONE;
 	cfg->lookahead.max_depth = 1;
-	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_NEG;
+	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }
 
