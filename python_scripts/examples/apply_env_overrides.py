@@ -4,15 +4,15 @@ import sys
 import re
 
 MATH_VARS = [
-    ("g_weight_cell_constr_ratio_fp_le7", "WEIGHT_CELL_CONSTR_RATIO_FP_LE7", "int"),
-    ("g_weight_cell_constr_ratio_fp_s8", "WEIGHT_CELL_CONSTR_RATIO_FP_S8", "int"),
-    ("g_weight_cell_constr_ratio_fp_s9", "WEIGHT_CELL_CONSTR_RATIO_FP_S9", "int"),
+    ("g_weight_cell_constr_ratio_le7", "WEIGHT_CELL_CONSTR_RATIO_LE7", "double"),
+    ("g_weight_cell_constr_ratio_s8", "WEIGHT_CELL_CONSTR_RATIO_S8", "double"),
+    ("g_weight_cell_constr_ratio_s9", "WEIGHT_CELL_CONSTR_RATIO_S9", "double"),
     ("g_sel_weight_cell_constr_ratio_le7", "SEL_WEIGHT_CELL_CONSTR_RATIO_LE7", "double"),
     ("g_sel_weight_cell_constr_ratio_s8", "SEL_WEIGHT_CELL_CONSTR_RATIO_S8", "double"),
     ("g_sel_weight_cell_constr_ratio_s9", "SEL_WEIGHT_CELL_CONSTR_RATIO_S9", "double"),
-    ("g_weight_total_scale_fp_le7", "WEIGHT_TOTAL_SCALE_FP_LE7", "int"),
-    ("g_weight_total_scale_fp_s8", "WEIGHT_TOTAL_SCALE_FP_S8", "int"),
-    ("g_weight_total_scale_fp_s9", "WEIGHT_TOTAL_SCALE_FP_S9", "int"),
+    ("g_weight_total_scale_le7", "WEIGHT_TOTAL_SCALE_LE7", "double"),
+    ("g_weight_total_scale_s8", "WEIGHT_TOTAL_SCALE_S8", "double"),
+    ("g_weight_total_scale_s9", "WEIGHT_TOTAL_SCALE_S9", "double"),
     ("g_global_entropy_unset_bias_le7", "GLOBAL_ENTROPY_UNSET_BIAS_LE7", "double"),
     ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
     ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),

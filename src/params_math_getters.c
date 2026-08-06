@@ -12,13 +12,13 @@
 
 #include "params_math.h"
 
-int	get_weight_cell_constr_ratio_fp(int size)
+double	get_weight_cell_constr_ratio(int size)
 {
 	if (size <= 7)
-		return (g_weight_cell_constr_ratio_fp_le7);
+		return (g_weight_cell_constr_ratio_le7);
 	if (size == 8)
-		return (g_weight_cell_constr_ratio_fp_s8);
-	return (g_weight_cell_constr_ratio_fp_s9);
+		return (g_weight_cell_constr_ratio_s8);
+	return (g_weight_cell_constr_ratio_s9);
 }
 
 double	get_sel_weight_cell_constr_ratio(int size)
@@ -43,13 +43,13 @@ double	get_sel_power(int size)
 	return (u * u * u);
 }
 
-int	get_weight_total_scale_fp(int size)
+double	get_weight_total_scale(int size)
 {
 	if (size <= 7)
-		return (g_weight_total_scale_fp_le7);
+		return (g_weight_total_scale_le7);
 	if (size == 8)
-		return (g_weight_total_scale_fp_s8);
-	return (g_weight_total_scale_fp_s9);
+		return (g_weight_total_scale_s8);
+	return (g_weight_total_scale_s9);
 }
 
 double	get_global_entropy_unset_bias(int size)

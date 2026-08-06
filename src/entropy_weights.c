@@ -11,21 +11,24 @@
 /* ************************************************************************** */
 
 #include "entropy.h"
-#include "params_int.h"
+#include "params_math.h"
 
 int	get_weight_cell(int size)
 {
-	long long	prod;
+	double	scale;
+	double	ratio;
 
-	prod = 1000LL * get_weight_cell_constr_ratio_fp(size)
-		* get_weight_total_scale_fp(size);
-	return ((int)(prod >> 21));
+	scale = get_weight_total_scale(size);
+	ratio = get_weight_cell_constr_ratio(size);
+	return ((int)(scale * ratio));
 }
 
 int	get_weight_constr(int size)
 {
-	long long	prod;
+	double	scale;
+	double	ratio;
 
-	prod = 1000LL * get_weight_total_scale_fp(size);
-	return ((int)(prod >> 10));
+	scale = get_weight_total_scale(size);
+	ratio = get_weight_cell_constr_ratio(size);
+	return ((int)(scale * (1.0 - ratio) / 2.0));
 }
