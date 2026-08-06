@@ -18,18 +18,6 @@
 #include "node_selection_cache.h"
 #include "node_selection_eval.h"
 
-#ifdef LOOKAHEAD_SCORE_FAMILY
-
-static const t_score_family			g_lh_score_family = LOOKAHEAD_SCORE_FAMILY;
-static const int					g_lh_score_family_defined = 1;
-
-#else
-
-static const t_score_family			g_lh_score_family = SCORE_BRANCHING;
-static const int					g_lh_score_family_defined = 0;
-
-#endif
-
 #ifdef LOOKAHEAD_CRITERION
 
 static const t_selection_criterion	g_lh_criterion = LOOKAHEAD_CRITERION;
@@ -56,8 +44,6 @@ static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
 		if (next->cell_idx >= 0)
 			config->start_cell_val = next->cell_val + 1;
 		config->selectivity = node->lookahead_selectivity;
-		if (g_lh_score_family_defined)
-			config->score_family = g_lh_score_family;
 		if (g_lh_criterion_defined)
 			config->criterion = g_lh_criterion;
 	}

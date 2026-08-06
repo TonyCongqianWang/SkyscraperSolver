@@ -21,13 +21,13 @@ int	get_weight_cell_constr_ratio_fp(int size)
 	return (g_weight_cell_constr_ratio_fp_s9);
 }
 
-int	get_sel_weight_cell_constr_ratio_fp(int size)
+double	get_sel_weight_cell_constr_ratio(int size)
 {
 	if (size <= 7)
-		return (g_sel_weight_cell_constr_ratio_fp_le7);
+		return (g_sel_weight_cell_constr_ratio_le7);
 	if (size == 8)
-		return (g_sel_weight_cell_constr_ratio_fp_s8);
-	return (g_sel_weight_cell_constr_ratio_fp_s9);
+		return (g_sel_weight_cell_constr_ratio_s8);
+	return (g_sel_weight_cell_constr_ratio_s9);
 }
 
 double	get_sel_power(int size)

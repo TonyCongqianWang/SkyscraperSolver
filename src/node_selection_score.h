@@ -16,9 +16,9 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-t_selection_lut	make_selection_lut(double p);
+t_selection_lut	make_selection_lut(int size, double p);
 void			score_transition_strat(t_node_state *state,
-					t_node_transition *next, t_score_family family);
+					t_node_transition *next);
 double			calculate_blended_score(t_node_state *node,
 					t_node_order *cache, int idx);
 void			recalculate_cache_scores(t_node_state *node,

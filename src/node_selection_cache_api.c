@@ -15,10 +15,6 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
-#ifndef USE_CONSTRS_SCORING
-# define USE_CONSTRS_SCORING 0
-#endif
-
 int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {

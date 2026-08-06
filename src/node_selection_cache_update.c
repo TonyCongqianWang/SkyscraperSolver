@@ -77,7 +77,7 @@ static void	copy_parent_entropy(t_puzzle *puzzle, t_node_order *cache,
 }
 
 static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
-				t_node_select_config *config, int cv)
+				int cv)
 {
 	t_node_transition	tr;
 	int					c;
@@ -88,7 +88,7 @@ static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
 	v = cv & 0xFF;
 	tr.cell_idx = c;
 	tr.cell_val = v;
-	score_transition_strat(puzzle->cur_node, &tr, config->score_family);
+	score_transition_strat(puzzle->cur_node, &tr);
 	cache->entries[cache->count] = tr;
 	cache->meta[cache->count].cached_br_score = tr.score;
 	copy_parent_entropy(puzzle, cache, c, v);
@@ -103,6 +103,7 @@ void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 	int				v;
 	t_node_state	*state;
 
+	(void)config;
 	state = puzzle->cur_node;
 	cache->count = 0;
 	i = 0;
@@ -115,7 +116,7 @@ void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			while (v >= 1)
 			{
 				if (is_valid_value(state, c, v))
-					add_transition(puzzle, cache, config, (c << 8) | v);
+					add_transition(puzzle, cache, (c << 8) | v);
 				v--;
 			}
 		}

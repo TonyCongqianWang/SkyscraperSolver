@@ -61,8 +61,8 @@ double	calculate_blended_score(t_node_state *node,
 	age_lim = (age_lim - (cache->lookahead_build_entropy
 				- node->remaining_entropy)) / age_lim;
 	return (age_lim * get_lookahead_entropy_weight(node->puzzle->size)
-		* -(s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos * e_neg)
-		+ cache->meta[idx].cached_br_score);
+		* (1.0 - (s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos
+				* e_neg)) + cache->meta[idx].cached_br_score);
 }
 
 void	recalculate_cache_scores(t_node_state *node, t_node_order *cache)

@@ -12,11 +12,6 @@
 
 #include "node_selection_transition.h"
 
-int	get_score_family_idx(t_score_family sf)
-{
-	return ((int)sf);
-}
-
 int	check_sel(t_node_state *node, int idx, t_node_select_config *conf)
 {
 	int	r;

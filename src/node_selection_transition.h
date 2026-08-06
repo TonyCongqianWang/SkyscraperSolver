@@ -14,7 +14,6 @@
 # define NODE_SELECTION_TRANSITION_H
 # include "puzzle_structs.h"
 
-int		get_score_family_idx(t_score_family sf);
 int		check_sel(t_node_state *node, int idx,
 			t_node_select_config *conf);
 void	init_node_transition(t_node_transition *tr);

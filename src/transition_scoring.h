@@ -15,7 +15,6 @@
 # include "puzzle_structs.h"
 
 void	score_transition_full(t_node_state *state, t_node_transition *next);
-void	score_transition_constrs(t_node_state *state, t_node_transition *next);
 void	transition_add_num_valids(t_node_state *state, t_node_transition *next);
 
 #endif

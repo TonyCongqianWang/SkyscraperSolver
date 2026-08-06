@@ -17,29 +17,17 @@
 
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {
-	int		ratio;
 	double	w_cell;
 	double	w_line;
 	double	*lut;
 
 	transition_add_num_valids(state, next);
-	ratio = get_sel_weight_cell_constr_ratio_fp(state->size);
-	w_cell = (double)ratio / 16384.0;
-	w_line = (16384.0 - (double)ratio) / 16384.0;
+	w_cell = get_sel_weight_cell_constr_ratio(state->size);
+	w_line = 1.0 - w_cell;
 	lut = state->puzzle->selection_lut.values;
 	next->score = w_cell * lut[next->num_valids_cell]
 		+ w_line * (lut[next->num_valids_col]
 			+ lut[next->num_valids_row]);
-}
-
-void	score_transition_constrs(t_node_state *state, t_node_transition *next)
-{
-	double	*lut;
-
-	transition_add_num_valids(state, next);
-	lut = state->puzzle->selection_lut.values;
-	next->score = lut[next->num_valids_col]
-		+ lut[next->num_valids_row];
 }
 
 void	transition_add_num_valids(t_node_state *state, t_node_transition *next)
