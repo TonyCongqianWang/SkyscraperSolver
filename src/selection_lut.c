@@ -12,7 +12,6 @@
 
 #include "node_selection_score.h"
 #include "math_utils.h"
-#include "params_math.h"
 
 static double	compute_lut_val(int i, double p)
 {
@@ -29,8 +28,6 @@ t_selection_lut	make_selection_lut(int size, double p)
 {
 	t_selection_lut	lut;
 	int				i;
-	double			w_cell;
-	double			w_line;
 
 	lut.values[0] = 0.0;
 	i = 1;
@@ -39,9 +36,6 @@ t_selection_lut	make_selection_lut(int size, double p)
 		lut.values[i] = compute_lut_val(i, p);
 		i++;
 	}
-	w_cell = get_sel_weight_cell_constr_ratio(size);
-	w_line = 1.0 - w_cell;
-	lut.min_score = w_cell * lut.values[size] + w_line * (lut.values[size]
-			+ lut.values[size]);
+	lut.min_score = lut.values[size];
 	return (lut);
 }

@@ -26,7 +26,7 @@ void	score_transition_full(t_node_state *state, t_node_transition *next)
 	w_line = 1.0 - w_cell;
 	lut = state->puzzle->selection_lut.values;
 	next->score = w_cell * lut[next->num_valids_cell]
-		+ w_line * (lut[next->num_valids_col]
+		+ w_line * 0.5 * (lut[next->num_valids_col]
 			+ lut[next->num_valids_row]);
 }
 
