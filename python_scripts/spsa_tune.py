@@ -683,7 +683,7 @@ def run_spsa(args, datasets, max_workers):
     if args.batch_size is not None:
         batch_size = args.batch_size
     else:
-        batch_size = 32 if args.size == 7 else (16 if args.size == 8 else 8)
+        batch_size = 32
 
     log_print(f"SPSA Batch Size configured: {batch_size}")
 
@@ -844,7 +844,7 @@ def parse_args():
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
-    parser.add_argument("--lr", type=float, default=0.002, help="SPSA initial learning rate step size (a)")
+    parser.add_argument("--lr", type=float, default=0.01, help="SPSA initial learning rate step size (a)")
     parser.add_argument("--alpha", type=float, default=0.0, help="SPSA learning rate decay exponent (alpha)")
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
