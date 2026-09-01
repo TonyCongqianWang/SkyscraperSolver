@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 import glob
 import re
-import numpy as np
+import math
+import statistics
 import os
 import sys
 import argparse
@@ -93,10 +94,9 @@ def main():
             vals = [pdict[k] for _, _, pdict in runs if k in pdict]
             if not vals:
                 continue
-            arr = np.array(vals)
-            med = float(np.median(arr))
-            mean = float(np.mean(arr))
-            std = float(np.std(arr))
+            med = float(statistics.median(vals))
+            mean = float(statistics.mean(vals))
+            std = float(statistics.pstdev(vals)) if len(vals) > 1 else 0.0
             start_val = DEFAULTS.get(k, med)
 
             rsd = (std / abs(mean) * 100.0) if mean != 0 else 0.0
