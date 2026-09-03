@@ -628,6 +628,14 @@ def run_spsa(args, datasets, max_workers):
     winners_filename = resolve_winners_filename(args.size)
     log_print(f"SPSA winners file resolved to: {winners_filename}")
 
+    # Modern Optimizer State: Running scale and momentum buffers
+    beta = args.beta
+    grad_clip_ratio = args.grad_clip
+    mom_clip_ratio = args.mom_clip
+
+    mom_time = [0.0] * len(theta)
+    mom_nodes = [0.0] * len(theta)
+
     ema_time_norm = 1.0
     ema_nodes_norm = 1.0
     ema_beta = 0.90
@@ -698,23 +706,48 @@ def run_spsa(args, datasets, max_workers):
         grad_time_norm = math.sqrt(sum(g**2 for g in grad_time))
         grad_nodes_norm = math.sqrt(sum(g**2 for g in grad_nodes))
 
+        # 1. Update running gradient scale
         ema_time_norm = ema_beta * ema_time_norm + (1 - ema_beta) * max(1e-5, grad_time_norm)
         ema_nodes_norm = ema_beta * ema_nodes_norm + (1 - ema_beta) * max(1e-5, grad_nodes_norm)
 
-        grad_time_scaled = [g / ema_time_norm for g in grad_time]
-        grad_nodes_scaled = [g / ema_nodes_norm for g in grad_nodes]
+        # 2. Relative Gradient Norm Clipping (caps outlier batches relative to running scale)
+        max_time_norm = grad_clip_ratio * ema_time_norm
+        if grad_time_norm > max_time_norm:
+            grad_time = [g * (max_time_norm / grad_time_norm) for g in grad_time]
+            grad_time_norm = max_time_norm
 
-        max_step = 0.02
+        max_nodes_norm = grad_clip_ratio * ema_nodes_norm
+        if grad_nodes_norm > max_nodes_norm:
+            grad_nodes = [g * (max_nodes_norm / grad_nodes_norm) for g in grad_nodes]
+            grad_nodes_norm = max_nodes_norm
+
+        # 3. Unit-Normalized Gradients
+        grad_time_normed = [g / max(1e-5, ema_time_norm) for g in grad_time]
+        grad_nodes_normed = [g / max(1e-5, ema_nodes_norm) for g in grad_nodes]
+
+        # 4. Momentum Buffer Update & Momentum Clipping (protects momentum buffer)
+        for i in range(len(theta)):
+            mom_time[i] = beta * mom_time[i] + (1.0 - beta) * grad_time_normed[i]
+            mom_nodes[i] = beta * mom_nodes[i] + (1.0 - beta) * grad_nodes_normed[i]
+
+        mom_time_norm = math.sqrt(sum(m**2 for m in mom_time))
+        if mom_time_norm > mom_clip_ratio:
+            mom_time = [m * (mom_clip_ratio / mom_time_norm) for m in mom_time]
+
+        mom_nodes_norm = math.sqrt(sum(m**2 for m in mom_nodes))
+        if mom_nodes_norm > mom_clip_ratio:
+            mom_nodes = [m * (mom_clip_ratio / mom_nodes_norm) for m in mom_nodes]
+
+        # 5. Parameter Step: strictly controlled by lr (ak)
+        # Average step is ~ ak / sqrt(D), maximum step strictly <= ak * mom_clip_ratio
         theta_next = []
         for i in range(len(theta)):
             name, pmin, pmax, _, _, _ = PARAM_METADATA[i]
             is_active = (pmax > pmin) and (name in active_names)
             if is_active:
-                step_t = ak * grad_time_scaled[i]
-                step_n = ak * grad_nodes_scaled[i]
-                step_t_c = max(-max_step, min(max_step, step_t))
-                step_n_c = max(-max_step, min(max_step, step_n))
-                val = max(0.0, min(1.0, theta[i] - step_t_c - step_n_c))
+                v_i = 0.5 * (mom_time[i] + mom_nodes[i])
+                step = ak * v_i
+                val = max(0.0, min(1.0, theta[i] - step))
             else:
                 val = theta[i]
             theta_next.append(val)
@@ -778,6 +811,9 @@ def parse_args():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
+    parser.add_argument("--grad-clip", type=float, default=2.5, help="Relative gradient norm clipping threshold (multiple of running gradient norm)")
+    parser.add_argument("--mom-clip", type=float, default=1.5, help="Momentum buffer norm ceiling factor")
+    parser.add_argument("--beta", type=float, default=0.90, help="Momentum decay coefficient (beta)")
     parser.add_argument("--no-stdin", dest="stdin", action="store_false", help="Deactivate using stdin batching to solve puzzles in persistent subprocesses")
     parser.set_defaults(stdin=True)
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
