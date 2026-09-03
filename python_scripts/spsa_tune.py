@@ -39,16 +39,14 @@ BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_mai
 # Paths to datasets
 PATH_S7 = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank7.txt")
 
-# Size 8 calibrated files
-PATH_S8_EASY = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_easy.txt")
-PATH_S8_MED = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_medium.txt")
-PATH_S8_HARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_hard.txt")
-PATH_S8_XHARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutions", "benchmarkSet8_xhard.txt")
+# Size 8 SPSA dataset files
+PATH_S8_TRAIN = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size8_train.txt")
+PATH_S8_VAL = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size8_val.txt")
 
-# Size 9 calibrated files
-PATH_S9_LVL1 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl1.txt")
-PATH_S9_LVL2 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl2.txt")
-PATH_S9_LVL3 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "size9_lvl3.txt")
+# Size 9 SPSA dataset files
+PATH_S9_TRAIN = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size9_train.txt")
+PATH_S9_VAL = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size9_val.txt")
+
 
 
 def project_constraints(theta):
@@ -338,52 +336,17 @@ def load_datasets_size_7():
 
 
 def load_datasets_size_8():
-    s8_easy = read_clues(PATH_S8_EASY)
-    s8_med = read_clues(PATH_S8_MED)
-    s8_hard = read_clues(PATH_S8_HARD)
-    s8_xhard = read_clues(PATH_S8_XHARD)
-
-    easy_train, easy_val = get_deterministic_split(s8_easy, 0.5)
-    med_train, med_val = get_deterministic_split(s8_med, 0.5)
-    hard_train, hard_val = get_deterministic_split(s8_hard, 0.5)
-    xhard_train, xhard_val = get_deterministic_split(s8_xhard, 0.5)
-
-    datasets = {
-        "easy_train": easy_train, "easy_val": easy_val,
-        "med_train": med_train, "med_val": med_val,
-        "hard_train": hard_train, "hard_val": hard_val,
-        "xhard_train": xhard_train, "xhard_val": xhard_val,
-        "s8_single_train": easy_train + med_train + hard_train + xhard_train,
-        "s8_single_val": easy_val + med_val + hard_val + xhard_val,
-        "s8_enum_train": easy_train + med_train,
-        "s8_enum_val": easy_val + med_val
-    }
-
-    log_print("Loaded Size 8 datasets:")
-    log_print(f"  Single train pool: {len(datasets['s8_single_train'])} clues (val: {len(datasets['s8_single_val'])})")
-    log_print(f"  Enum train pool:   {len(datasets['s8_enum_train'])} clues (val: {len(datasets['s8_enum_val'])})")
-    return datasets
+    s8_train = read_clues(PATH_S8_TRAIN)
+    s8_val = read_clues(PATH_S8_VAL)
+    log_print(f"Loaded Size 8 datasets: {len(s8_train)} train clues, {len(s8_val)} validation clues.")
+    return {"s8_train": s8_train, "s8_val": s8_val}
 
 
 def load_datasets_size_9():
-    s9_lvl1 = read_clues(PATH_S9_LVL1)
-    s9_lvl2 = read_clues(PATH_S9_LVL2)
-    s9_lvl3 = read_clues(PATH_S9_LVL3)
-
-    s9_lvl1_train, s9_lvl1_val = get_deterministic_split(s9_lvl1, 0.9)
-    s9_lvl2_train, s9_lvl2_val = get_deterministic_split(s9_lvl2, 0.9)
-    s9_lvl3_train, s9_lvl3_val = get_deterministic_split(s9_lvl3, 0.9)
-
-    log_print("Loaded Size 9 datasets:")
-    log_print(f"  Lvl 1 train: {len(s9_lvl1_train)} clues (val: {len(s9_lvl1_val)})")
-    log_print(f"  Lvl 2 train: {len(s9_lvl2_train)} clues (val: {len(s9_lvl2_val)})")
-    log_print(f"  Lvl 3 train: {len(s9_lvl3_train)} clues (val: {len(s9_lvl3_val)})")
-
-    return {
-        "s9_lvl1_train": s9_lvl1_train, "s9_lvl1_val": s9_lvl1_val,
-        "s9_lvl2_train": s9_lvl2_train, "s9_lvl2_val": s9_lvl2_val,
-        "s9_lvl3_train": s9_lvl3_train, "s9_lvl3_val": s9_lvl3_val
-    }
+    s9_train = read_clues(PATH_S9_TRAIN)
+    s9_val = read_clues(PATH_S9_VAL)
+    log_print(f"Loaded Size 9 datasets: {len(s9_train)} train clues, {len(s9_val)} validation clues.")
+    return {"s9_train": s9_train, "s9_val": s9_val}
 
 
 def load_datasets(size):
@@ -446,112 +409,77 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
 
 
 def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    easy_train = datasets["easy_train"]
-    med_train = datasets["med_train"]
-    hard_train = datasets["hard_train"]
-    xhard_train = datasets["xhard_train"]
+    s8_train = datasets["s8_train"]
 
-    ref_scale_s8_single_easy_med_time = 0.02
-    ref_scale_s8_single_easy_med_nodes = 3000.0
-    ref_scale_s8_single_hard_xhard_time = 0.15
-    ref_scale_s8_single_hard_xhard_nodes = 15000.0
-    ref_scale_s8_enum_easy_med_time = 0.40
-    ref_scale_s8_enum_easy_med_nodes = 50000.0
+    ref_scale_s8_single_time = 0.10
+    ref_scale_s8_single_nodes = 5000.0
+    ref_scale_s8_enum_time = 1.00
+    ref_scale_s8_enum_nodes = 50000.0
 
     if enumeration_only:
-        sampled_s8_enum_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
-        sampled_s8_enum_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 2)))
-
-        tasks_enum_easy_med = [("-s 0", get_random_symmetry(clue)) for clue in sampled_s8_enum_easy_med]
-        tasks_enum_hard_xhard = [("-s 0", get_random_symmetry(clue)) for clue in sampled_s8_enum_hard_xhard]
+        sampled_enum = random.sample(s8_train, min(len(s8_train), batch_size))
+        tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
 
         def get_loss(config_theta):
             env = get_env_for_theta(config_theta)
-            t_e_em, n_e_em = evaluate_subset(env, tasks_enum_easy_med, max_workers=max_workers, use_stdin=use_stdin)
-            t_e_hx, n_e_hx = evaluate_subset(env, tasks_enum_hard_xhard, max_workers=max_workers, use_stdin=use_stdin)
+            t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
-            sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
-            sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
+            # Shift = 2.0s / 100,000 nodes to strongly bias toward instances taking >= 2.0s
+            sgm_t_e = shifted_geo_mean(t_enum, 2.000)
+            sgm_n_e = shifted_geo_mean(n_enum, 100000.0)
 
-            sgm_t_e_hx = shifted_geo_mean(t_e_hx, 1.000)
-            sgm_n_e_hx = shifted_geo_mean(n_e_hx, 50000.0)
+            loss_time = 1.0 * (sgm_t_e / ref_scale_s8_enum_time)
+            loss_nodes = 1.0 * (sgm_n_e / ref_scale_s8_enum_nodes)
 
-            loss_time = 1.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time) + 2.0 * (sgm_t_e_hx / (ref_scale_s8_enum_easy_med_time * 5.0))
-            loss_nodes = 1.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes) + 2.0 * (sgm_n_e_hx / (ref_scale_s8_enum_easy_med_nodes * 5.0))
-
-            return loss_time, loss_nodes, (sgm_t_e_hx, sgm_n_e_hx, sgm_t_e_em, sgm_n_e_em)
+            return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
         return get_loss
 
-    sampled_s8_single_easy_med = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 4)))
-    sampled_s8_single_hard_xhard = random.sample(hard_train + xhard_train, min(len(hard_train + xhard_train), max(1, batch_size // 4)))
-    sampled_s8_enum = random.sample(easy_train + med_train, min(len(easy_train + med_train), max(1, batch_size // 2)))
+    sampled_single = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
+    sampled_enum = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
 
-    tasks_single_easy_med = [("-s 1", get_random_symmetry(clue)) for clue in sampled_s8_single_easy_med]
-    tasks_single_hard_xhard = [("-s 1", get_random_symmetry(clue)) for clue in sampled_s8_single_hard_xhard]
-    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_s8_enum]
+    tasks_single = [("-s 1", get_random_symmetry(clue)) for clue in sampled_single]
+    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_s_em, n_s_em = evaluate_subset(env, tasks_single_easy_med, max_workers=max_workers, use_stdin=use_stdin)
-        t_s_hx, n_s_hx = evaluate_subset(env, tasks_single_hard_xhard, max_workers=max_workers, use_stdin=use_stdin)
-        t_e_em, n_e_em = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+        t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
+        t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
-        sgm_t_s_em = shifted_geo_mean(t_s_em, 0.050)
-        sgm_n_s_em = shifted_geo_mean(n_s_em, 3000.0)
+        sgm_t_s = shifted_geo_mean(t_single, 0.200)
+        sgm_n_s = shifted_geo_mean(n_single, 10000.0)
 
-        sgm_t_s_hx = shifted_geo_mean(t_s_hx, 0.050)
-        sgm_n_s_hx = shifted_geo_mean(n_s_hx, 3000.0)
+        sgm_t_e = shifted_geo_mean(t_enum, 2.000)
+        sgm_n_e = shifted_geo_mean(n_enum, 100000.0)
 
-        sgm_t_e_em = shifted_geo_mean(t_e_em, 0.200)
-        sgm_n_e_em = shifted_geo_mean(n_e_em, 10000.0)
+        loss_time = 0.5 * (sgm_t_s / ref_scale_s8_single_time) + 1.5 * (sgm_t_e / ref_scale_s8_enum_time)
+        loss_nodes = 0.5 * (sgm_n_s / ref_scale_s8_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s8_enum_nodes)
 
-        loss_time = 0.5 * (sgm_t_s_em / ref_scale_s8_single_easy_med_time) + 1.0 * (sgm_t_s_hx / ref_scale_s8_single_hard_xhard_time) + 2.0 * (sgm_t_e_em / ref_scale_s8_enum_easy_med_time)
-        loss_nodes = 0.5 * (sgm_n_s_em / ref_scale_s8_single_easy_med_nodes) + 1.0 * (sgm_n_s_hx / ref_scale_s8_single_hard_xhard_nodes) + 2.0 * (sgm_n_e_em / ref_scale_s8_enum_easy_med_nodes)
-
-        return loss_time, loss_nodes, (sgm_t_s_hx, sgm_n_s_hx, sgm_t_e_em, sgm_n_e_em)
+        return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
     return get_loss
 
 
 def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    s9_lvl1_train = datasets["s9_lvl1_train"]
-    s9_lvl2_train = datasets["s9_lvl2_train"]
-    s9_lvl3_train = datasets["s9_lvl3_train"]
+    s9_train = datasets["s9_train"]
 
-    ref_scale_s9_lvl1_time = 0.20
-    ref_scale_s9_lvl1_nodes = 20000.0
-    ref_scale_s9_lvl2_time = 2.00
-    ref_scale_s9_lvl2_nodes = 250000.0
-    ref_scale_s9_lvl3_time = 15.00
-    ref_scale_s9_lvl3_nodes = 1500000.0
+    ref_scale_s9_time = 0.10
+    ref_scale_s9_nodes = 20000.0
 
-    sampled_lvl1 = random.sample(s9_lvl1_train, min(len(s9_lvl1_train), max(1, batch_size // 4)))
-    sampled_lvl2 = random.sample(s9_lvl2_train, min(len(s9_lvl2_train), max(1, batch_size // 4)))
-    sampled_lvl3 = random.sample(s9_lvl3_train, min(len(s9_lvl3_train), max(1, batch_size // 2)))
-
+    sampled = random.sample(s9_train, min(len(s9_train), batch_size))
     opt_flag = "-s 0" if enumeration_only else "-s 1"
-    tasks_lvl1 = [(opt_flag, get_random_symmetry(clue)) for clue in sampled_lvl1]
-    tasks_lvl2 = [(opt_flag, get_random_symmetry(clue)) for clue in sampled_lvl2]
-    tasks_lvl3 = [(opt_flag, get_random_symmetry(clue)) for clue in sampled_lvl3]
+    tasks = [(opt_flag, get_random_symmetry(clue)) for clue in sampled]
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_l1, n_l1 = evaluate_subset(env, tasks_lvl1, max_workers=max_workers, use_stdin=use_stdin)
-        t_l2, n_l2 = evaluate_subset(env, tasks_lvl2, max_workers=max_workers, use_stdin=use_stdin)
-        t_l3, n_l3 = evaluate_subset(env, tasks_lvl3, max_workers=max_workers, use_stdin=use_stdin)
+        t_list, n_list = evaluate_subset(env, tasks, max_workers=max_workers, use_stdin=use_stdin)
 
-        sgm_t_l1 = shifted_geo_mean(t_l1, 0.100)
-        sgm_n_l1 = shifted_geo_mean(n_l1, 10000.0)
+        # High shift = 1.0s / 120,000 nodes to strongly bias toward hard instances (>= 0.5s up to 5s)
+        sgm_t = shifted_geo_mean(t_list, 1.000)
+        sgm_n = shifted_geo_mean(n_list, 120000.0)
 
-        sgm_t_l2 = shifted_geo_mean(t_l2, 0.500)
-        sgm_n_l2 = shifted_geo_mean(n_l2, 50000.0)
+        loss_time = 1.0 * (sgm_t / ref_scale_s9_time)
+        loss_nodes = 1.0 * (sgm_n / ref_scale_s9_nodes)
 
-        sgm_t_l3 = shifted_geo_mean(t_l3, 1.000)
-        sgm_n_l3 = shifted_geo_mean(n_l3, 200000.0)
-
-        loss_time = 0.5 * (sgm_t_l1 / ref_scale_s9_lvl1_time) + 1.5 * (sgm_t_l2 / ref_scale_s9_lvl2_time) + 3.0 * (sgm_t_l3 / ref_scale_s9_lvl3_time)
-        loss_nodes = 0.5 * (sgm_n_l1 / ref_scale_s9_lvl1_nodes) + 1.5 * (sgm_n_l2 / ref_scale_s9_lvl2_nodes) + 3.0 * (sgm_n_l3 / ref_scale_s9_lvl3_nodes)
-
-        return loss_time, loss_nodes, (sgm_t_l3, sgm_n_l3, sgm_t_l2, sgm_n_l2)
+        return loss_time, loss_nodes, (sgm_t, sgm_n, sgm_t, sgm_n)
     return get_loss
 
 
@@ -591,9 +519,12 @@ def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_no
     if size == 7:
         log_print(f"{prefix} S7 Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S7 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
     elif size == 8:
-        log_print(f"{prefix} S8 Hard Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S8 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
+        if len(stats) >= 4 and stats[0] != stats[2]:
+            log_print(f"{prefix} S8 Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S8 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
+        else:
+            log_print(f"{prefix} S8 Enum t: {stats[0]:.4f}s n: {stats[1]:.0f}")
     elif size == 9:
-        log_print(f"{prefix} S9 Lvl3 t: {stats[0]:.4f}s n: {stats[1]:.0f} | S9 Lvl2 t: {stats[2]:.4f}s n: {stats[3]:.0f}")
+        log_print(f"{prefix} S9 t: {stats[0]:.4f}s n: {stats[1]:.0f}")
 
 
 def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations):
@@ -629,20 +560,16 @@ def run_post_tuning_comparison(args, datasets, theta_final):
 
     elif args.size == 8:
         if not args.enumeration_only:
-            train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", datasets["s8_single_train"]))
-            validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", datasets["s8_single_val"]))
-        train_tasks.append(("Size 8 Training Set (Full Enumeration)", "-s 0", datasets["s8_enum_train"]))
-        validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", datasets["s8_enum_val"]))
+            train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", datasets["s8_train"]))
+            validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", datasets["s8_val"]))
+        train_tasks.append(("Size 8 Training Set (Full Enumeration)", "-s 0", datasets["s8_train"]))
+        validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", datasets["s8_val"]))
 
     elif args.size == 9:
         mode_flag = "-s 0" if args.enumeration_only else "-s 1"
-        mode_lbl = " (Full Enumeration)" if args.enumeration_only else ""
-        train_tasks.append((f"Size 9 Level 1 Training Set{mode_lbl}", mode_flag, datasets["s9_lvl1_train"]))
-        train_tasks.append((f"Size 9 Level 2 Training Set{mode_lbl}", mode_flag, datasets["s9_lvl2_train"]))
-        train_tasks.append((f"Size 9 Level 3 Training Set{mode_lbl}", mode_flag, datasets["s9_lvl3_train"]))
-        validation_tasks.append((f"Size 9 Level 1 Validation Set{mode_lbl}", mode_flag, datasets["s9_lvl1_val"]))
-        validation_tasks.append((f"Size 9 Level 2 Validation Set{mode_lbl}", mode_flag, datasets["s9_lvl2_val"]))
-        validation_tasks.append((f"Size 9 Level 3 Validation Set{mode_lbl}", mode_flag, datasets["s9_lvl3_val"]))
+        mode_lbl = " (Full Enumeration)" if args.enumeration_only else " (Single Solution)"
+        train_tasks.append((f"Size 9 Training Set{mode_lbl}", mode_flag, datasets["s9_train"]))
+        validation_tasks.append((f"Size 9 Validation Set{mode_lbl}", mode_flag, datasets["s9_val"]))
 
     train_log_path = None
     val_log_path = None
@@ -682,6 +609,8 @@ def run_spsa(args, datasets, max_workers):
 
     if args.batch_size is not None:
         batch_size = args.batch_size
+    elif args.size == 9:
+        batch_size = 64
     else:
         batch_size = 32
 
