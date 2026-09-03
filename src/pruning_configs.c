@@ -12,6 +12,7 @@
 
 #include "pruning_configs.h"
 #include "params_double.h"
+#include "params_math.h"
 
 void	get_prune_cfg_light(t_prune_routine_cfg *cfg)
 {

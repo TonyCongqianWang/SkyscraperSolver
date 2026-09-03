@@ -28,19 +28,41 @@ MATH_VARS = [
     ("g_lookahead_entropy_weight_le7", "LOOKAHEAD_ENTROPY_WEIGHT_LE7", "double"),
     ("g_lookahead_entropy_weight_s8", "LOOKAHEAD_ENTROPY_WEIGHT_S8", "double"),
     ("g_lookahead_entropy_weight_s9", "LOOKAHEAD_ENTROPY_WEIGHT_S9", "double"),
-    ("g_routing_shallow_ratio_le7", "ROUTING_SHALLOW_RATIO_LE7", "double"),
-    ("g_routing_shallow_ratio_s8", "ROUTING_SHALLOW_RATIO_S8", "double"),
-    ("g_routing_shallow_ratio_s9", "ROUTING_SHALLOW_RATIO_S9", "double"),
-    ("g_routing_medium_ratio_le7", "ROUTING_MEDIUM_RATIO_LE7", "double"),
-    ("g_routing_medium_ratio_s8", "ROUTING_MEDIUM_RATIO_S8", "double"),
-    ("g_routing_medium_ratio_s9", "ROUTING_MEDIUM_RATIO_S9", "double"),
+    ("g_routing_depth_0_ratio_le7", "ROUTING_DEPTH_0_RATIO_LE7", "double"),
+    ("g_routing_depth_0_ratio_s8", "ROUTING_DEPTH_0_RATIO_S8", "double"),
+    ("g_routing_depth_0_ratio_s9", "ROUTING_DEPTH_0_RATIO_S9", "double"),
+    ("g_routing_depth_1_ratio_le7", "ROUTING_DEPTH_1_RATIO_LE7", "double"),
+    ("g_routing_depth_1_ratio_s8", "ROUTING_DEPTH_1_RATIO_S8", "double"),
+    ("g_routing_depth_1_ratio_s9", "ROUTING_DEPTH_1_RATIO_S9", "double"),
+    ("g_routing_depth_2_ratio_le7", "ROUTING_DEPTH_2_RATIO_LE7", "double"),
+    ("g_routing_depth_2_ratio_s8", "ROUTING_DEPTH_2_RATIO_S8", "double"),
+    ("g_routing_depth_2_ratio_s9", "ROUTING_DEPTH_2_RATIO_S9", "double"),
+    ("g_routing_depth_3_ratio_le7", "ROUTING_DEPTH_3_RATIO_LE7", "double"),
+    ("g_routing_depth_3_ratio_s8", "ROUTING_DEPTH_3_RATIO_S8", "double"),
+    ("g_routing_depth_3_ratio_s9", "ROUTING_DEPTH_3_RATIO_S9", "double"),
+    ("g_routing_depth_4_ratio_le7", "ROUTING_DEPTH_4_RATIO_LE7", "double"),
+    ("g_routing_depth_4_ratio_s8", "ROUTING_DEPTH_4_RATIO_S8", "double"),
+    ("g_routing_depth_4_ratio_s9", "ROUTING_DEPTH_4_RATIO_S9", "double"),
+    ("g_routing_depth_5_ratio_le7", "ROUTING_DEPTH_5_RATIO_LE7", "double"),
+    ("g_routing_depth_5_ratio_s8", "ROUTING_DEPTH_5_RATIO_S8", "double"),
+    ("g_routing_depth_5_ratio_s9", "ROUTING_DEPTH_5_RATIO_S9", "double"),
+    ("g_routing_depth_6_ratio_le7", "ROUTING_DEPTH_6_RATIO_LE7", "double"),
+    ("g_routing_depth_6_ratio_s8", "ROUTING_DEPTH_6_RATIO_S8", "double"),
+    ("g_routing_depth_6_ratio_s9", "ROUTING_DEPTH_6_RATIO_S9", "double"),
+    ("g_routing_depth_7_ratio_le7", "ROUTING_DEPTH_7_RATIO_LE7", "double"),
+    ("g_routing_depth_7_ratio_s8", "ROUTING_DEPTH_7_RATIO_S8", "double"),
+    ("g_routing_depth_7_ratio_s9", "ROUTING_DEPTH_7_RATIO_S9", "double"),
+    ("g_routing_depth_8_ratio_le7", "ROUTING_DEPTH_8_RATIO_LE7", "double"),
+    ("g_routing_depth_8_ratio_s8", "ROUTING_DEPTH_8_RATIO_S8", "double"),
+    ("g_routing_depth_8_ratio_s9", "ROUTING_DEPTH_8_RATIO_S9", "double"),
     ("g_lookahead_score_age_limit_ratio_le7", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_LE7", "double"),
     ("g_lookahead_score_age_limit_ratio_s8", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S8", "double"),
     ("g_lookahead_score_age_limit_ratio_s9", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S9", "double"),
 ]
 
 INT_VARS = []
-for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
+TIERS = [("root", "ROOT")] + [(f"depth_{i}", f"DEPTH_{i}") for i in range(10)]
+for tier_lower, tier_upper in TIERS:
     INT_VARS.extend([
         (f"g_{tier_lower}_min_entropy", f"{tier_upper}_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_gac_min_entropy", f"{tier_upper}_GAC_MIN_ENTROPY", "int"),
@@ -57,7 +79,7 @@ DOUBLE_VARS = [
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
     ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
 ]
-for tier_lower, tier_upper in [("root", "ROOT"), ("shallow", "SHALLOW"), ("medium", "MEDIUM"), ("deep", "DEEP")]:
+for tier_lower, tier_upper in TIERS:
     DOUBLE_VARS.extend([
         (f"g_{tier_lower}_lookahead_continue_slope", f"{tier_upper}_LOOKAHEAD_CONTINUE_SLOPE", "double"),
         (f"g_{tier_lower}_period_coef_scale", f"{tier_upper}_PERIOD_COEF_SCALE", "double"),

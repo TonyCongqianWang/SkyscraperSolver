@@ -5,23 +5,20 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/06/10 14:20:00 by towang            #+#    #+#             */
-/*   Updated: 2026/06/26 10:45:00 by towang           ###   ########.fr       */
+/*   Created: 2026/06/18 16:17:00 by towang            #+#    #+#             */
+/*   Updated: 2026/06/26 13:00:00 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "strategy_routing.h"
 #include "prune_strat_initial.h"
 #include "prune_strat_root.h"
-#include "prune_strat_shallow.h"
-#include "prune_strat_medium.h"
-#include "prune_strat_deep.h"
-#include "params_double.h"
-#include "params_math.h"
+#include "prune_strat_bucket.h"
 
 int	prune_current_step(t_puzzle *puzzle)
 {
-	int		d;
+	int	d;
+	int	b;
 
 	if (puzzle->cur_node->cur_depth == 0)
 	{
@@ -33,12 +30,7 @@ int	prune_current_step(t_puzzle *puzzle)
 	else
 	{
 		d = puzzle->cur_node->cur_depth;
-		if (d <= puzzle->squared_size * get_routing_shallow_ratio(puzzle->size))
-			return (prune_strat_shallow(puzzle));
-		else if (d <= puzzle->squared_size
-			* get_routing_medium_ratio(puzzle->size))
-			return (prune_strat_medium(puzzle));
-		else
-			return (prune_strat_deep(puzzle));
+		b = get_depth_bucket(d, puzzle->squared_size, puzzle->size);
+		return (prune_strat_depth_bucket(puzzle, b));
 	}
 }
