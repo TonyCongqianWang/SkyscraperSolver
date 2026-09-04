@@ -113,13 +113,11 @@ def check_stdin_support_cached(binary):
 def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, log_print=print, use_stdin=True):
     log_print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     
-    # 3-Way Comparison Setup
-    # 1. Baseline: Main solver without environment override logic
-    # 2. Env Baseline: Overrides-enabled solver run with default/no environment variables
-    # 3. Optimized: Overrides-enabled solver run with the tuned environment variables
+    # 2-Way Comparison Setup:
+    # 1. Baseline: Tunable solver run with default/no environment variables
+    # 2. Optimized: Tunable solver run with tuned environment variables
     binaries = [
-        ("Baseline", baseline_bin, None),
-        ("Env Baseline", tunable_bin, None),
+        ("Baseline", tunable_bin, None),
         ("Optimized", tunable_bin, tuned_env)
     ]
     
@@ -223,27 +221,19 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, l
         }
         
     base = results["Baseline"]
-    env_base = results["Env Baseline"]
     optz = results["Optimized"]
     
-    # Diff vs Base (end-to-end including overrides overhead)
-    nodes_diff_base = (optz["total_nodes"] - base["total_nodes"]) / base["total_nodes"] * 100 if base["total_nodes"] else 0
-    sgm_nodes_diff_base = (optz["sgm_nodes"] - base["sgm_nodes"]) / base["sgm_nodes"] * 100 if base["sgm_nodes"] else 0
-    time_diff_base = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
-    sgm_time_diff_base = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
+    nodes_diff = (optz["total_nodes"] - base["total_nodes"]) / base["total_nodes"] * 100 if base["total_nodes"] else 0
+    sgm_nodes_diff = (optz["sgm_nodes"] - base["sgm_nodes"]) / base["sgm_nodes"] * 100 if base["sgm_nodes"] else 0
+    time_diff = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
+    sgm_time_diff = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
     
-    # Diff vs Env Base (pure algorithmic gain, factoring out getenv queries)
-    nodes_diff_env = (optz["total_nodes"] - env_base["total_nodes"]) / env_base["total_nodes"] * 100 if env_base["total_nodes"] else 0
-    sgm_nodes_diff_env = (optz["sgm_nodes"] - env_base["sgm_nodes"]) / env_base["sgm_nodes"] * 100 if env_base["sgm_nodes"] else 0
-    time_diff_env = (optz["total_time"] - env_base["total_time"]) / env_base["total_time"] * 100 if env_base["total_time"] else 0
-    sgm_time_diff_env = (optz["sgm_time"] - env_base["sgm_time"]) / env_base["sgm_time"] * 100 if env_base["sgm_time"] else 0
-    
-    log_print(f"| Metric | Baseline | Env Baseline | Optimized | Diff (vs Base) | Diff (vs Env Base) |")
-    log_print(f"|---|---|---|---|---|---|")
-    log_print(f"| **Total Nodes** | {base['total_nodes']:,} | {env_base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff_base:+.2f}% | {nodes_diff_env:+.2f}% |")
-    log_print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {env_base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff_base:+.2f}% | {sgm_nodes_diff_env:+.2f}% |")
-    log_print(f"| **Total Time** | {base['total_time']:.3f}s | {env_base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff_base:+.2f}% | {time_diff_env:+.2f}% |")
-    log_print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {env_base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff_base:+.2f}% | {sgm_time_diff_env:+.2f}% |")
+    log_print(f"| Metric | Baseline | Optimized | Diff |")
+    log_print(f"|---|---|---|---|")
+    log_print(f"| **Total Nodes** | {base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% |")
+    log_print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% |")
+    log_print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
+    log_print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
 
 def load_tuned_env(winners_path):
     tuned_env = os.environ.copy()

@@ -551,24 +551,29 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     train_tasks = []
     validation_tasks = []
 
+    train_subset_limit = 1000
+
     if args.size == 7:
+        s7_train_sub = datasets["s7_train"][:train_subset_limit]
         if not args.enumeration_only:
-            train_tasks.append(("Size 7 Training Set (Single Solution)", "-s 1", datasets["s7_train"]))
+            train_tasks.append((f"Size 7 Training Set (Single Solution) ({len(s7_train_sub)} instances)", "-s 1", s7_train_sub))
             validation_tasks.append(("Size 7 Validation Set (Single Solution)", "-s 1", datasets["s7_val"]))
-        train_tasks.append(("Size 7 Training Set (Full Enumeration)", "-s 0", datasets["s7_train"]))
+        train_tasks.append((f"Size 7 Training Set (Full Enumeration) ({len(s7_train_sub)} instances)", "-s 0", s7_train_sub))
         validation_tasks.append(("Size 7 Validation Set (Full Enumeration)", "-s 0", datasets["s7_val"]))
 
     elif args.size == 8:
+        s8_train_sub = datasets["s8_train"][:train_subset_limit]
         if not args.enumeration_only:
-            train_tasks.append(("Size 8 Training Set (Single Solution)", "-s 1", datasets["s8_train"]))
+            train_tasks.append((f"Size 8 Training Set (Single Solution) ({len(s8_train_sub)} instances)", "-s 1", s8_train_sub))
             validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", datasets["s8_val"]))
-        train_tasks.append(("Size 8 Training Set (Full Enumeration)", "-s 0", datasets["s8_train"]))
+        train_tasks.append((f"Size 8 Training Set (Full Enumeration) ({len(s8_train_sub)} instances)", "-s 0", s8_train_sub))
         validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", datasets["s8_val"]))
 
     elif args.size == 9:
+        s9_train_sub = datasets["s9_train"][:train_subset_limit]
         mode_flag = "-s 0" if args.enumeration_only else "-s 1"
         mode_lbl = " (Full Enumeration)" if args.enumeration_only else " (Single Solution)"
-        train_tasks.append((f"Size 9 Training Set{mode_lbl}", mode_flag, datasets["s9_train"]))
+        train_tasks.append((f"Size 9 Training Set{mode_lbl} ({len(s9_train_sub)} instances)", mode_flag, s9_train_sub))
         validation_tasks.append((f"Size 9 Validation Set{mode_lbl}", mode_flag, datasets["s9_val"]))
 
     train_log_path = None
@@ -581,15 +586,15 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     import compare_performance
     compare_performance.run_comparison(
         validation_tasks=train_tasks,
-        baseline_bin=BIN_BASELINE,
+        baseline_bin=BIN_CURR,
         tunable_bin=BIN_CURR,
         tuned_env=get_env_for_theta(theta_final),
-        title="TRAINING SET PERFORMANCE COMPARISON",
+        title="TRAINING SET PERFORMANCE COMPARISON (1k subsample)",
         log_path=train_log_path
     )
     compare_performance.run_comparison(
         validation_tasks=validation_tasks,
-        baseline_bin=BIN_BASELINE,
+        baseline_bin=BIN_CURR,
         tunable_bin=BIN_CURR,
         tuned_env=get_env_for_theta(theta_final),
         title="VALIDATION SET PERFORMANCE COMPARISON",
