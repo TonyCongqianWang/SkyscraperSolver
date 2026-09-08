@@ -125,8 +125,8 @@ def main():
                 else:
                     formatted_val = f"{float(value):.15g}"
                     
-                # Match: ("NAME", min, max, default, type, ...)
-                pattern = re.compile(rf'(\(\s*"{name}"\s*,\s*[^,]+\s*,\s*[^,]+\s*,\s*)([^,]+)(\s*,\s*\w+.*?\))')
+                # Match: ('NAME', min, max, default, type, ...) or ("NAME", ...)
+                pattern = re.compile(rf'(\(\s*[\'"]{name}[\'"]\s*,\s*[^,]+\s*,\s*[^,]+\s*,\s*)([^,]+)(\s*,\s*\w+.*?\))')
                 if pattern.search(meta_content):
                     meta_content = pattern.sub(rf'\g<1>{formatted_val}\g<3>', meta_content)
                     print(f"[param_metadata.py] Updated {name} default -> {formatted_val}")
