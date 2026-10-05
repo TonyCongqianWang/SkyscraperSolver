@@ -13,34 +13,34 @@
 #ifndef PARAMS_DEPTH_ARRAYS_H
 # define PARAMS_DEPTH_ARRAYS_H
 
-extern int			g_depth_computed_min_entropy[10];
-extern const int	*g_depth_min_entropy[10];
-extern const int	*g_depth_gac_min_entropy[10];
-extern const int	*g_depth_constr_min_entropy[10];
-extern const int	*g_depth_lookahead_continue_min_entropy[10];
-extern const int	*g_depth_gac_global_min_entropy[10];
-extern const int	*g_depth_constr_global_min_entropy[10];
-extern const int	*g_depth_lookahead_gac_global_min_entropy[10];
-extern const int	*g_depth_lookahead_constr_global_min_entropy[10];
+# define DEPTH_ARRAY_SIZE 82
 
-extern const double	*g_depth_lookahead_continue_slope[10];
-extern const double	*g_depth_period_coef_scale[10];
-extern const double	*g_depth_period_coef_unset[10];
-extern const double	*g_depth_period_tier_medium_mult[10];
-extern const double	*g_depth_period_tier_heavy_mult[10];
-extern const double	*g_depth_gac_local_min_entropy[10];
-extern const double	*g_depth_gac_local_max_entropy[10];
-extern const double	*g_depth_constr_local_min_entropy[10];
-extern const double	*g_depth_constr_local_max_entropy[10];
-extern const double	*g_depth_lookahead_gac_local_min_entropy[10];
-extern const double	*g_depth_lookahead_gac_local_max_entropy[10];
-extern const double	*g_depth_lookahead_constr_local_min_entropy[10];
-extern const double	*g_depth_lookahead_constr_local_max_entropy[10];
+extern int		g_depth_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_gac_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_constr_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_lookahead_continue_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_lookahead_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
+extern int		g_depth_lookahead_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
 
-extern const double	*g_routing_depth_ratio_le7[9];
-extern const double	*g_routing_depth_ratio_s8[9];
-extern const double	*g_routing_depth_ratio_s9[9];
-
-void				init_depth_min_entropy(void);
+extern double	g_depth_lookahead_continue_slope[DEPTH_ARRAY_SIZE];
+extern double	g_depth_period_coef_scale[DEPTH_ARRAY_SIZE];
+extern double	g_depth_period_coef_unset[DEPTH_ARRAY_SIZE];
+extern double	g_depth_period_tier_medium_mult[DEPTH_ARRAY_SIZE];
+extern double	g_depth_period_tier_heavy_mult[DEPTH_ARRAY_SIZE];
+extern double	g_depth_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_lookahead_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_lookahead_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_lookahead_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
+extern double	g_depth_lookahead_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
+void			compute_catmull_weights(double t, double *w);
+void			init_depth_ints_at(int d, const double *w);
+void			init_depth_doubles_part1(int d, const double *w);
+void			init_depth_doubles_part2(int d, const double *w);
+void			init_depth_arrays(int size, int squared_size);
 
 #endif

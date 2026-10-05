@@ -11,320 +11,66 @@
 /* ************************************************************************** */
 
 #include "params_depth_arrays.h"
-#include "params_int.h"
-#include "params_double.h"
 #include "params_math.h"
 
-int				g_depth_computed_min_entropy[10] = {
-	73700, 77190, 77956, 78368, 80793,
-	87599, 101154, 123828, 157987, 206000
-};
+int		g_depth_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_gac_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_constr_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_lookahead_continue_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_lookahead_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
+int		g_depth_lookahead_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
 
-const int		*g_depth_min_entropy[10] = {
-	&g_depth_computed_min_entropy[0],
-	&g_depth_computed_min_entropy[1],
-	&g_depth_computed_min_entropy[2],
-	&g_depth_computed_min_entropy[3],
-	&g_depth_computed_min_entropy[4],
-	&g_depth_computed_min_entropy[5],
-	&g_depth_computed_min_entropy[6],
-	&g_depth_computed_min_entropy[7],
-	&g_depth_computed_min_entropy[8],
-	&g_depth_computed_min_entropy[9]
-};
+double	g_depth_lookahead_continue_slope[DEPTH_ARRAY_SIZE];
+double	g_depth_period_coef_scale[DEPTH_ARRAY_SIZE];
+double	g_depth_period_coef_unset[DEPTH_ARRAY_SIZE];
+double	g_depth_period_tier_medium_mult[DEPTH_ARRAY_SIZE];
+double	g_depth_period_tier_heavy_mult[DEPTH_ARRAY_SIZE];
+double	g_depth_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_lookahead_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_lookahead_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_lookahead_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
+double	g_depth_lookahead_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
 
-const int		*g_depth_gac_min_entropy[10] = {
-	&g_depth_0_gac_min_entropy,
-	&g_depth_1_gac_min_entropy,
-	&g_depth_2_gac_min_entropy,
-	&g_depth_3_gac_min_entropy,
-	&g_depth_4_gac_min_entropy,
-	&g_depth_5_gac_min_entropy,
-	&g_depth_6_gac_min_entropy,
-	&g_depth_7_gac_min_entropy,
-	&g_depth_8_gac_min_entropy,
-	&g_depth_9_gac_min_entropy
-};
+static double	compute_warped_t(double u, int size)
+{
+	double	w0;
+	double	w1;
+	double	w2;
 
-const int		*g_depth_constr_min_entropy[10] = {
-	&g_depth_0_constr_min_entropy,
-	&g_depth_1_constr_min_entropy,
-	&g_depth_2_constr_min_entropy,
-	&g_depth_3_constr_min_entropy,
-	&g_depth_4_constr_min_entropy,
-	&g_depth_5_constr_min_entropy,
-	&g_depth_6_constr_min_entropy,
-	&g_depth_7_constr_min_entropy,
-	&g_depth_8_constr_min_entropy,
-	&g_depth_9_constr_min_entropy
-};
+	w0 = get_depth_warp(size, 0);
+	w1 = get_depth_warp(size, 1);
+	w2 = get_depth_warp(size, 2);
+	if (u <= 0.25)
+		return (4.0 * u * w0);
+	else if (u <= 0.50)
+		return (w0 + 4.0 * (u - 0.25) * (w1 - w0));
+	else if (u <= 0.75)
+		return (w1 + 4.0 * (u - 0.50) * (w2 - w1));
+	else
+		return (w2 + 4.0 * (u - 0.75) * (1.0 - w2));
+}
 
-const int		*g_depth_lookahead_continue_min_entropy[10] = {
-	&g_depth_0_lookahead_continue_min_entropy,
-	&g_depth_1_lookahead_continue_min_entropy,
-	&g_depth_2_lookahead_continue_min_entropy,
-	&g_depth_3_lookahead_continue_min_entropy,
-	&g_depth_4_lookahead_continue_min_entropy,
-	&g_depth_5_lookahead_continue_min_entropy,
-	&g_depth_6_lookahead_continue_min_entropy,
-	&g_depth_7_lookahead_continue_min_entropy,
-	&g_depth_8_lookahead_continue_min_entropy,
-	&g_depth_9_lookahead_continue_min_entropy
-};
+void	init_depth_arrays(int size, int squared_size)
+{
+	int		d;
+	double	u;
+	double	t;
+	double	w[4];
 
-const int		*g_depth_gac_global_min_entropy[10] = {
-	&g_depth_0_gac_global_min_entropy,
-	&g_depth_1_gac_global_min_entropy,
-	&g_depth_2_gac_global_min_entropy,
-	&g_depth_3_gac_global_min_entropy,
-	&g_depth_4_gac_global_min_entropy,
-	&g_depth_5_gac_global_min_entropy,
-	&g_depth_6_gac_global_min_entropy,
-	&g_depth_7_gac_global_min_entropy,
-	&g_depth_8_gac_global_min_entropy,
-	&g_depth_9_gac_global_min_entropy
-};
-
-const int		*g_depth_constr_global_min_entropy[10] = {
-	&g_depth_0_constr_global_min_entropy,
-	&g_depth_1_constr_global_min_entropy,
-	&g_depth_2_constr_global_min_entropy,
-	&g_depth_3_constr_global_min_entropy,
-	&g_depth_4_constr_global_min_entropy,
-	&g_depth_5_constr_global_min_entropy,
-	&g_depth_6_constr_global_min_entropy,
-	&g_depth_7_constr_global_min_entropy,
-	&g_depth_8_constr_global_min_entropy,
-	&g_depth_9_constr_global_min_entropy
-};
-
-const int		*g_depth_lookahead_gac_global_min_entropy[10] = {
-	&g_depth_0_lookahead_gac_global_min_entropy,
-	&g_depth_1_lookahead_gac_global_min_entropy,
-	&g_depth_2_lookahead_gac_global_min_entropy,
-	&g_depth_3_lookahead_gac_global_min_entropy,
-	&g_depth_4_lookahead_gac_global_min_entropy,
-	&g_depth_5_lookahead_gac_global_min_entropy,
-	&g_depth_6_lookahead_gac_global_min_entropy,
-	&g_depth_7_lookahead_gac_global_min_entropy,
-	&g_depth_8_lookahead_gac_global_min_entropy,
-	&g_depth_9_lookahead_gac_global_min_entropy
-};
-
-const int		*g_depth_lookahead_constr_global_min_entropy[10] = {
-	&g_depth_0_lookahead_constr_global_min_entropy,
-	&g_depth_1_lookahead_constr_global_min_entropy,
-	&g_depth_2_lookahead_constr_global_min_entropy,
-	&g_depth_3_lookahead_constr_global_min_entropy,
-	&g_depth_4_lookahead_constr_global_min_entropy,
-	&g_depth_5_lookahead_constr_global_min_entropy,
-	&g_depth_6_lookahead_constr_global_min_entropy,
-	&g_depth_7_lookahead_constr_global_min_entropy,
-	&g_depth_8_lookahead_constr_global_min_entropy,
-	&g_depth_9_lookahead_constr_global_min_entropy
-};
-
-const double	*g_depth_lookahead_continue_slope[10] = {
-	&g_depth_0_lookahead_continue_slope,
-	&g_depth_1_lookahead_continue_slope,
-	&g_depth_2_lookahead_continue_slope,
-	&g_depth_3_lookahead_continue_slope,
-	&g_depth_4_lookahead_continue_slope,
-	&g_depth_5_lookahead_continue_slope,
-	&g_depth_6_lookahead_continue_slope,
-	&g_depth_7_lookahead_continue_slope,
-	&g_depth_8_lookahead_continue_slope,
-	&g_depth_9_lookahead_continue_slope
-};
-
-const double	*g_depth_period_coef_scale[10] = {
-	&g_depth_0_period_coef_scale,
-	&g_depth_1_period_coef_scale,
-	&g_depth_2_period_coef_scale,
-	&g_depth_3_period_coef_scale,
-	&g_depth_4_period_coef_scale,
-	&g_depth_5_period_coef_scale,
-	&g_depth_6_period_coef_scale,
-	&g_depth_7_period_coef_scale,
-	&g_depth_8_period_coef_scale,
-	&g_depth_9_period_coef_scale
-};
-
-const double	*g_depth_period_coef_unset[10] = {
-	&g_depth_0_period_coef_unset,
-	&g_depth_1_period_coef_unset,
-	&g_depth_2_period_coef_unset,
-	&g_depth_3_period_coef_unset,
-	&g_depth_4_period_coef_unset,
-	&g_depth_5_period_coef_unset,
-	&g_depth_6_period_coef_unset,
-	&g_depth_7_period_coef_unset,
-	&g_depth_8_period_coef_unset,
-	&g_depth_9_period_coef_unset
-};
-
-const double	*g_depth_period_tier_medium_mult[10] = {
-	&g_depth_0_period_tier_medium_mult,
-	&g_depth_1_period_tier_medium_mult,
-	&g_depth_2_period_tier_medium_mult,
-	&g_depth_3_period_tier_medium_mult,
-	&g_depth_4_period_tier_medium_mult,
-	&g_depth_5_period_tier_medium_mult,
-	&g_depth_6_period_tier_medium_mult,
-	&g_depth_7_period_tier_medium_mult,
-	&g_depth_8_period_tier_medium_mult,
-	&g_depth_9_period_tier_medium_mult
-};
-
-const double	*g_depth_period_tier_heavy_mult[10] = {
-	&g_depth_0_period_tier_heavy_mult,
-	&g_depth_1_period_tier_heavy_mult,
-	&g_depth_2_period_tier_heavy_mult,
-	&g_depth_3_period_tier_heavy_mult,
-	&g_depth_4_period_tier_heavy_mult,
-	&g_depth_5_period_tier_heavy_mult,
-	&g_depth_6_period_tier_heavy_mult,
-	&g_depth_7_period_tier_heavy_mult,
-	&g_depth_8_period_tier_heavy_mult,
-	&g_depth_9_period_tier_heavy_mult
-};
-
-const double	*g_depth_gac_local_min_entropy[10] = {
-	&g_depth_0_gac_local_min_entropy,
-	&g_depth_1_gac_local_min_entropy,
-	&g_depth_2_gac_local_min_entropy,
-	&g_depth_3_gac_local_min_entropy,
-	&g_depth_4_gac_local_min_entropy,
-	&g_depth_5_gac_local_min_entropy,
-	&g_depth_6_gac_local_min_entropy,
-	&g_depth_7_gac_local_min_entropy,
-	&g_depth_8_gac_local_min_entropy,
-	&g_depth_9_gac_local_min_entropy
-};
-
-const double	*g_depth_gac_local_max_entropy[10] = {
-	&g_depth_0_gac_local_max_entropy,
-	&g_depth_1_gac_local_max_entropy,
-	&g_depth_2_gac_local_max_entropy,
-	&g_depth_3_gac_local_max_entropy,
-	&g_depth_4_gac_local_max_entropy,
-	&g_depth_5_gac_local_max_entropy,
-	&g_depth_6_gac_local_max_entropy,
-	&g_depth_7_gac_local_max_entropy,
-	&g_depth_8_gac_local_max_entropy,
-	&g_depth_9_gac_local_max_entropy
-};
-
-const double	*g_depth_constr_local_min_entropy[10] = {
-	&g_depth_0_constr_local_min_entropy,
-	&g_depth_1_constr_local_min_entropy,
-	&g_depth_2_constr_local_min_entropy,
-	&g_depth_3_constr_local_min_entropy,
-	&g_depth_4_constr_local_min_entropy,
-	&g_depth_5_constr_local_min_entropy,
-	&g_depth_6_constr_local_min_entropy,
-	&g_depth_7_constr_local_min_entropy,
-	&g_depth_8_constr_local_min_entropy,
-	&g_depth_9_constr_local_min_entropy
-};
-
-const double	*g_depth_constr_local_max_entropy[10] = {
-	&g_depth_0_constr_local_max_entropy,
-	&g_depth_1_constr_local_max_entropy,
-	&g_depth_2_constr_local_max_entropy,
-	&g_depth_3_constr_local_max_entropy,
-	&g_depth_4_constr_local_max_entropy,
-	&g_depth_5_constr_local_max_entropy,
-	&g_depth_6_constr_local_max_entropy,
-	&g_depth_7_constr_local_max_entropy,
-	&g_depth_8_constr_local_max_entropy,
-	&g_depth_9_constr_local_max_entropy
-};
-
-const double	*g_depth_lookahead_gac_local_min_entropy[10] = {
-	&g_depth_0_lookahead_gac_local_min_entropy,
-	&g_depth_1_lookahead_gac_local_min_entropy,
-	&g_depth_2_lookahead_gac_local_min_entropy,
-	&g_depth_3_lookahead_gac_local_min_entropy,
-	&g_depth_4_lookahead_gac_local_min_entropy,
-	&g_depth_5_lookahead_gac_local_min_entropy,
-	&g_depth_6_lookahead_gac_local_min_entropy,
-	&g_depth_7_lookahead_gac_local_min_entropy,
-	&g_depth_8_lookahead_gac_local_min_entropy,
-	&g_depth_9_lookahead_gac_local_min_entropy
-};
-
-const double	*g_depth_lookahead_gac_local_max_entropy[10] = {
-	&g_depth_0_lookahead_gac_local_max_entropy,
-	&g_depth_1_lookahead_gac_local_max_entropy,
-	&g_depth_2_lookahead_gac_local_max_entropy,
-	&g_depth_3_lookahead_gac_local_max_entropy,
-	&g_depth_4_lookahead_gac_local_max_entropy,
-	&g_depth_5_lookahead_gac_local_max_entropy,
-	&g_depth_6_lookahead_gac_local_max_entropy,
-	&g_depth_7_lookahead_gac_local_max_entropy,
-	&g_depth_8_lookahead_gac_local_max_entropy,
-	&g_depth_9_lookahead_gac_local_max_entropy
-};
-
-const double	*g_depth_lookahead_constr_local_min_entropy[10] = {
-	&g_depth_0_lookahead_constr_local_min_entropy,
-	&g_depth_1_lookahead_constr_local_min_entropy,
-	&g_depth_2_lookahead_constr_local_min_entropy,
-	&g_depth_3_lookahead_constr_local_min_entropy,
-	&g_depth_4_lookahead_constr_local_min_entropy,
-	&g_depth_5_lookahead_constr_local_min_entropy,
-	&g_depth_6_lookahead_constr_local_min_entropy,
-	&g_depth_7_lookahead_constr_local_min_entropy,
-	&g_depth_8_lookahead_constr_local_min_entropy,
-	&g_depth_9_lookahead_constr_local_min_entropy
-};
-
-const double	*g_depth_lookahead_constr_local_max_entropy[10] = {
-	&g_depth_0_lookahead_constr_local_max_entropy,
-	&g_depth_1_lookahead_constr_local_max_entropy,
-	&g_depth_2_lookahead_constr_local_max_entropy,
-	&g_depth_3_lookahead_constr_local_max_entropy,
-	&g_depth_4_lookahead_constr_local_max_entropy,
-	&g_depth_5_lookahead_constr_local_max_entropy,
-	&g_depth_6_lookahead_constr_local_max_entropy,
-	&g_depth_7_lookahead_constr_local_max_entropy,
-	&g_depth_8_lookahead_constr_local_max_entropy,
-	&g_depth_9_lookahead_constr_local_max_entropy
-};
-
-const double	*g_routing_depth_ratio_le7[9] = {
-	&g_routing_depth_0_ratio_le7,
-	&g_routing_depth_1_ratio_le7,
-	&g_routing_depth_2_ratio_le7,
-	&g_routing_depth_3_ratio_le7,
-	&g_routing_depth_4_ratio_le7,
-	&g_routing_depth_5_ratio_le7,
-	&g_routing_depth_6_ratio_le7,
-	&g_routing_depth_7_ratio_le7,
-	&g_routing_depth_8_ratio_le7
-};
-
-const double	*g_routing_depth_ratio_s8[9] = {
-	&g_routing_depth_0_ratio_s8,
-	&g_routing_depth_1_ratio_s8,
-	&g_routing_depth_2_ratio_s8,
-	&g_routing_depth_3_ratio_s8,
-	&g_routing_depth_4_ratio_s8,
-	&g_routing_depth_5_ratio_s8,
-	&g_routing_depth_6_ratio_s8,
-	&g_routing_depth_7_ratio_s8,
-	&g_routing_depth_8_ratio_s8
-};
-
-const double	*g_routing_depth_ratio_s9[9] = {
-	&g_routing_depth_0_ratio_s9,
-	&g_routing_depth_1_ratio_s9,
-	&g_routing_depth_2_ratio_s9,
-	&g_routing_depth_3_ratio_s9,
-	&g_routing_depth_4_ratio_s9,
-	&g_routing_depth_5_ratio_s9,
-	&g_routing_depth_6_ratio_s9,
-	&g_routing_depth_7_ratio_s9,
-	&g_routing_depth_8_ratio_s9
-};
+	d = 0;
+	while (d <= squared_size)
+	{
+		u = (double)d / (double)squared_size;
+		t = compute_warped_t(u, size);
+		compute_catmull_weights(t, w);
+		init_depth_ints_at(d, w);
+		init_depth_doubles_part1(d, w);
+		init_depth_doubles_part2(d, w);
+		d++;
+	}
+}

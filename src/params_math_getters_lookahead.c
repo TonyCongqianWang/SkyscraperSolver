@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "params_math.h"
-#include "params_depth_arrays.h"
 
 double	get_lookahead_score_weight_split0(int size)
 {
@@ -40,11 +39,23 @@ double	get_lookahead_entropy_weight(int size)
 	return (g_lookahead_entropy_weight_s9);
 }
 
-double	get_routing_depth_ratio(int size, int border_idx)
+double	get_depth_warp(int size, int idx)
 {
+	if (size <= 7 && idx == 0)
+		return (g_depth_warp_0_le7);
+	if (size <= 7 && idx == 1)
+		return (g_depth_warp_1_le7);
 	if (size <= 7)
-		return (*g_routing_depth_ratio_le7[border_idx]);
-	else if (size == 8)
-		return (*g_routing_depth_ratio_s8[border_idx]);
-	return (*g_routing_depth_ratio_s9[border_idx]);
+		return (g_depth_warp_2_le7);
+	if (size == 8 && idx == 0)
+		return (g_depth_warp_0_s8);
+	if (size == 8 && idx == 1)
+		return (g_depth_warp_1_s8);
+	if (size == 8)
+		return (g_depth_warp_2_s8);
+	if (idx == 0)
+		return (g_depth_warp_0_s9);
+	if (idx == 1)
+		return (g_depth_warp_1_s9);
+	return (g_depth_warp_2_s9);
 }

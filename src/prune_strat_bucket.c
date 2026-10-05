@@ -16,49 +16,32 @@
 #include "pruning_configs.h"
 #include "entropy.h"
 #include "math_utils.h"
-#include "params_int.h"
-#include "params_double.h"
-#include "params_math.h"
 #include "params_depth_arrays.h"
-
-int	get_depth_bucket(int depth, int squared_size, int size)
-{
-	int	i;
-
-	i = 0;
-	while (i < 9)
-	{
-		if (depth <= (int)(squared_size * get_routing_depth_ratio(size, i)))
-			return (i);
-		i++;
-	}
-	return (9);
-}
 
 static void	populate_limits(t_prune_limits *lim, int b)
 {
-	lim->gac_min_entropy = *g_depth_gac_min_entropy[b];
-	lim->constr_min_entropy = *g_depth_constr_min_entropy[b];
-	lim->lh_continue_min_entropy = *g_depth_lookahead_continue_min_entropy[b];
-	lim->lh_continue_slope = *g_depth_lookahead_continue_slope[b];
-	lim->gac_local_min_entropy = *g_depth_gac_local_min_entropy[b];
-	lim->gac_local_max_entropy = *g_depth_gac_local_max_entropy[b];
-	lim->gac_global_min_entropy = *g_depth_gac_global_min_entropy[b];
-	lim->constr_local_min_entropy = *g_depth_constr_local_min_entropy[b];
-	lim->constr_local_max_entropy = *g_depth_constr_local_max_entropy[b];
-	lim->constr_global_min_entropy = *g_depth_constr_global_min_entropy[b];
+	lim->gac_min_entropy = g_depth_gac_min_entropy[b];
+	lim->constr_min_entropy = g_depth_constr_min_entropy[b];
+	lim->lh_continue_min_entropy = g_depth_lookahead_continue_min_entropy[b];
+	lim->lh_continue_slope = g_depth_lookahead_continue_slope[b];
+	lim->gac_local_min_entropy = g_depth_gac_local_min_entropy[b];
+	lim->gac_local_max_entropy = g_depth_gac_local_max_entropy[b];
+	lim->gac_global_min_entropy = g_depth_gac_global_min_entropy[b];
+	lim->constr_local_min_entropy = g_depth_constr_local_min_entropy[b];
+	lim->constr_local_max_entropy = g_depth_constr_local_max_entropy[b];
+	lim->constr_global_min_entropy = g_depth_constr_global_min_entropy[b];
 	lim->lh_constr_local_min_entropy
-		= *g_depth_lookahead_constr_local_min_entropy[b];
+		= g_depth_lookahead_constr_local_min_entropy[b];
 	lim->lh_constr_local_max_entropy
-		= *g_depth_lookahead_constr_local_max_entropy[b];
+		= g_depth_lookahead_constr_local_max_entropy[b];
 	lim->lh_constr_global_min_entropy
-		= *g_depth_lookahead_constr_global_min_entropy[b];
+		= g_depth_lookahead_constr_global_min_entropy[b];
 	lim->lh_gac_local_min_entropy
-		= *g_depth_lookahead_gac_local_min_entropy[b];
+		= g_depth_lookahead_gac_local_min_entropy[b];
 	lim->lh_gac_local_max_entropy
-		= *g_depth_lookahead_gac_local_max_entropy[b];
+		= g_depth_lookahead_gac_local_max_entropy[b];
 	lim->lh_gac_global_min_entropy
-		= *g_depth_lookahead_gac_global_min_entropy[b];
+		= g_depth_lookahead_gac_global_min_entropy[b];
 }
 
 static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy,
@@ -88,8 +71,8 @@ static double	calc_period(t_puzzle *puzzle, t_node_state *node, int b)
 	if (rem < 1)
 		rem = 1;
 	raw = (double)(puzzle->max_entropy - rem) / rem;
-	return (*g_depth_period_coef_scale[b] * dpow075_approx(raw)
-		+ *g_depth_period_coef_unset[b]
+	return (g_depth_period_coef_scale[b] * dpow075_approx(raw)
+		+ g_depth_period_coef_unset[b]
 		* (puzzle->squared_size - node->num_unset));
 }
 
@@ -100,16 +83,16 @@ int	prune_strat_depth_bucket(t_puzzle *puzzle, int b)
 
 	node = puzzle->cur_node;
 	if (node->is_invalid || node->is_complete || node->num_unset == 0
-		|| node->remaining_entropy < *g_depth_min_entropy[b])
+		|| node->remaining_entropy < g_depth_min_entropy[b])
 		return (0);
 	period = calc_period(puzzle, node, b);
 	if (node->last_entropy[0] - node->remaining_entropy > period)
 		return (run_tier(puzzle, 0, node->remaining_entropy, b));
 	if (node->last_entropy[1] - node->remaining_entropy
-		> period * *g_depth_period_tier_medium_mult[b])
+		> period * g_depth_period_tier_medium_mult[b])
 		return (run_tier(puzzle, 1, node->remaining_entropy, b));
 	if (node->last_entropy[2] - node->remaining_entropy
-		> period * *g_depth_period_tier_heavy_mult[b])
+		> period * g_depth_period_tier_heavy_mult[b])
 		return (run_tier(puzzle, 2, node->remaining_entropy, b));
 	return (0);
 }

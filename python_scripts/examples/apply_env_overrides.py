@@ -28,38 +28,32 @@ MATH_VARS = [
     ("g_lookahead_entropy_weight_le7", "LOOKAHEAD_ENTROPY_WEIGHT_LE7", "double"),
     ("g_lookahead_entropy_weight_s8", "LOOKAHEAD_ENTROPY_WEIGHT_S8", "double"),
     ("g_lookahead_entropy_weight_s9", "LOOKAHEAD_ENTROPY_WEIGHT_S9", "double"),
-    ("g_routing_depth_0_ratio_le7", "ROUTING_DEPTH_0_RATIO_LE7", "double"),
-    ("g_routing_depth_0_ratio_s8", "ROUTING_DEPTH_0_RATIO_S8", "double"),
-    ("g_routing_depth_0_ratio_s9", "ROUTING_DEPTH_0_RATIO_S9", "double"),
-    ("g_routing_depth_1_ratio_le7", "ROUTING_DEPTH_1_RATIO_LE7", "double"),
-    ("g_routing_depth_1_ratio_s8", "ROUTING_DEPTH_1_RATIO_S8", "double"),
-    ("g_routing_depth_1_ratio_s9", "ROUTING_DEPTH_1_RATIO_S9", "double"),
-    ("g_routing_depth_2_ratio_le7", "ROUTING_DEPTH_2_RATIO_LE7", "double"),
-    ("g_routing_depth_2_ratio_s8", "ROUTING_DEPTH_2_RATIO_S8", "double"),
-    ("g_routing_depth_2_ratio_s9", "ROUTING_DEPTH_2_RATIO_S9", "double"),
-    ("g_routing_depth_3_ratio_le7", "ROUTING_DEPTH_3_RATIO_LE7", "double"),
-    ("g_routing_depth_3_ratio_s8", "ROUTING_DEPTH_3_RATIO_S8", "double"),
-    ("g_routing_depth_3_ratio_s9", "ROUTING_DEPTH_3_RATIO_S9", "double"),
-    ("g_routing_depth_4_ratio_le7", "ROUTING_DEPTH_4_RATIO_LE7", "double"),
-    ("g_routing_depth_4_ratio_s8", "ROUTING_DEPTH_4_RATIO_S8", "double"),
-    ("g_routing_depth_4_ratio_s9", "ROUTING_DEPTH_4_RATIO_S9", "double"),
-    ("g_routing_depth_5_ratio_le7", "ROUTING_DEPTH_5_RATIO_LE7", "double"),
-    ("g_routing_depth_5_ratio_s8", "ROUTING_DEPTH_5_RATIO_S8", "double"),
-    ("g_routing_depth_5_ratio_s9", "ROUTING_DEPTH_5_RATIO_S9", "double"),
-    ("g_routing_depth_6_ratio_le7", "ROUTING_DEPTH_6_RATIO_LE7", "double"),
-    ("g_routing_depth_6_ratio_s8", "ROUTING_DEPTH_6_RATIO_S8", "double"),
-    ("g_routing_depth_6_ratio_s9", "ROUTING_DEPTH_6_RATIO_S9", "double"),
-    ("g_routing_depth_7_ratio_le7", "ROUTING_DEPTH_7_RATIO_LE7", "double"),
-    ("g_routing_depth_7_ratio_s8", "ROUTING_DEPTH_7_RATIO_S8", "double"),
-    ("g_routing_depth_7_ratio_s9", "ROUTING_DEPTH_7_RATIO_S9", "double"),
-    ("g_routing_depth_8_ratio_le7", "ROUTING_DEPTH_8_RATIO_LE7", "double"),
-    ("g_routing_depth_8_ratio_s8", "ROUTING_DEPTH_8_RATIO_S8", "double"),
-    ("g_routing_depth_8_ratio_s9", "ROUTING_DEPTH_8_RATIO_S9", "double"),
+    ("g_depth_warp_0_le7", "DEPTH_WARP_0_LE7", "double"),
+    ("g_depth_warp_0_s8", "DEPTH_WARP_0_S8", "double"),
+    ("g_depth_warp_0_s9", "DEPTH_WARP_0_S9", "double"),
+    ("g_depth_warp_1_le7", "DEPTH_WARP_1_LE7", "double"),
+    ("g_depth_warp_1_s8", "DEPTH_WARP_1_S8", "double"),
+    ("g_depth_warp_1_s9", "DEPTH_WARP_1_S9", "double"),
+    ("g_depth_warp_2_le7", "DEPTH_WARP_2_LE7", "double"),
+    ("g_depth_warp_2_s8", "DEPTH_WARP_2_S8", "double"),
+    ("g_depth_warp_2_s9", "DEPTH_WARP_2_S9", "double"),
     ("g_lookahead_score_age_limit_ratio_le7", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_LE7", "double"),
     ("g_lookahead_score_age_limit_ratio_s8", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S8", "double"),
     ("g_lookahead_score_age_limit_ratio_s9", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S9", "double"),
 ]
-TIERS = [("root", "ROOT")] + [(f"depth_{i}", f"DEPTH_{i}") for i in range(10)]
+
+KNOT_NAMES = ["p00", "p25", "p50", "p100"]
+
+INT_BASE_VARS = [
+    "min_entropy",
+    "gac_min_entropy",
+    "constr_min_entropy",
+    "lookahead_continue_min_entropy",
+    "gac_global_min_entropy",
+    "constr_global_min_entropy",
+    "lookahead_gac_global_min_entropy",
+    "lookahead_constr_global_min_entropy",
+]
 
 INT_VARS = [
     ("g_root_min_entropy", "ROOT_MIN_ENTROPY", "int"),
@@ -70,45 +64,49 @@ INT_VARS = [
     ("g_root_lookahead_gac_global_min_entropy", "ROOT_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
     ("g_root_lookahead_constr_global_min_entropy", "ROOT_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
     ("g_root_lookahead_continue_min_entropy", "ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY", "int"),
-    ("g_min_entropy_p00", "MIN_ENTROPY_P00", "int"),
-    ("g_min_entropy_p25", "MIN_ENTROPY_P25", "int"),
-    ("g_min_entropy_p50", "MIN_ENTROPY_P50", "int"),
-    ("g_min_entropy_p100", "MIN_ENTROPY_P100", "int"),
 ]
-for i in range(10):
-    tier_lower = f"depth_{i}"
-    tier_upper = f"DEPTH_{i}"
-    INT_VARS.extend([
-        (f"g_{tier_lower}_gac_min_entropy", f"{tier_upper}_GAC_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_constr_min_entropy", f"{tier_upper}_CONSTR_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_gac_global_min_entropy", f"{tier_upper}_GAC_GLOBAL_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_constr_global_min_entropy", f"{tier_upper}_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_lookahead_gac_global_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_lookahead_constr_global_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
-        (f"g_{tier_lower}_lookahead_continue_min_entropy", f"{tier_upper}_LOOKAHEAD_CONTINUE_MIN_ENTROPY", "int"),
-    ])
+for base in INT_BASE_VARS:
+    for k in KNOT_NAMES:
+        INT_VARS.append((f"g_{base}_{k}", f"{base.upper()}_{k.upper()}", "int"))
+
+DOUBLE_BASE_VARS = [
+    "lookahead_continue_slope",
+    "period_coef_scale",
+    "period_coef_unset",
+    "period_tier_medium_mult",
+    "period_tier_heavy_mult",
+    "gac_local_min_entropy",
+    "gac_local_max_entropy",
+    "constr_local_min_entropy",
+    "constr_local_max_entropy",
+    "lookahead_gac_local_min_entropy",
+    "lookahead_gac_local_max_entropy",
+    "lookahead_constr_local_min_entropy",
+    "lookahead_constr_local_max_entropy",
+]
 
 DOUBLE_VARS = [
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
     ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
+    ("g_root_lookahead_continue_slope", "ROOT_LOOKAHEAD_CONTINUE_SLOPE", "double"),
+    ("g_root_period_coef_scale", "ROOT_PERIOD_COEF_SCALE", "double"),
+    ("g_root_period_coef_unset", "ROOT_PERIOD_COEF_UNSET", "double"),
+    ("g_root_period_tier_medium_mult", "ROOT_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),
+    ("g_root_period_tier_heavy_mult", "ROOT_PERIOD_TIER_HEAVY_MULTIPLIER", "double"),
+    ("g_root_gac_local_min_entropy", "ROOT_GAC_LOCAL_MIN_ENTROPY", "double"),
+    ("g_root_gac_local_max_entropy", "ROOT_GAC_LOCAL_MAX_ENTROPY", "double"),
+    ("g_root_constr_local_min_entropy", "ROOT_CONSTR_LOCAL_MIN_ENTROPY", "double"),
+    ("g_root_constr_local_max_entropy", "ROOT_CONSTR_LOCAL_MAX_ENTROPY", "double"),
+    ("g_root_lookahead_gac_local_min_entropy", "ROOT_LOOKAHEAD_GAC_LOCAL_MIN_ENTROPY", "double"),
+    ("g_root_lookahead_gac_local_max_entropy", "ROOT_LOOKAHEAD_GAC_LOCAL_MAX_ENTROPY", "double"),
+    ("g_root_lookahead_constr_local_min_entropy", "ROOT_LOOKAHEAD_CONSTR_LOCAL_MIN_ENTROPY", "double"),
+    ("g_root_lookahead_constr_local_max_entropy", "ROOT_LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY", "double"),
 ]
-for tier_lower, tier_upper in TIERS:
-    DOUBLE_VARS.extend([
-        (f"g_{tier_lower}_lookahead_continue_slope", f"{tier_upper}_LOOKAHEAD_CONTINUE_SLOPE", "double"),
-        (f"g_{tier_lower}_period_coef_scale", f"{tier_upper}_PERIOD_COEF_SCALE", "double"),
-        (f"g_{tier_lower}_period_coef_unset", f"{tier_upper}_PERIOD_COEF_UNSET", "double"),
-        (f"g_{tier_lower}_period_tier_medium_mult", f"{tier_upper}_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),
-        (f"g_{tier_lower}_period_tier_heavy_mult", f"{tier_upper}_PERIOD_TIER_HEAVY_MULTIPLIER", "double"),
-        (f"g_{tier_lower}_gac_local_min_entropy", f"{tier_upper}_GAC_LOCAL_MIN_ENTROPY", "double"),
-        (f"g_{tier_lower}_gac_local_max_entropy", f"{tier_upper}_GAC_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_constr_local_min_entropy", f"{tier_upper}_CONSTR_LOCAL_MIN_ENTROPY", "double"),
-        (f"g_{tier_lower}_constr_local_max_entropy", f"{tier_upper}_CONSTR_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_gac_local_min_entropy", f"{tier_upper}_LOOKAHEAD_GAC_LOCAL_MIN_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_gac_local_max_entropy", f"{tier_upper}_LOOKAHEAD_GAC_LOCAL_MAX_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_constr_local_min_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MIN_ENTROPY", "double"),
-        (f"g_{tier_lower}_lookahead_constr_local_max_entropy", f"{tier_upper}_LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY", "double"),
-    ])
+for base in DOUBLE_BASE_VARS:
+    env_base = base.upper().replace("_MULT", "_MULTIPLIER")
+    for k in KNOT_NAMES:
+        DOUBLE_VARS.append((f"g_{base}_{k}", f"{env_base}_{k.upper()}", "double"))
 
 FILES_CONFIGS = [
     ("src/params_math.c", MATH_VARS, "init_params_math_env"),
@@ -149,9 +147,6 @@ def apply_overrides_to_file(filepath, var_list, func_name):
 
     extra_include = ""
     extra_call = ""
-    if "params_int.c" in filepath:
-        extra_include = '#include "params_depth_arrays.h"\n'
-        extra_call = "\n\tinit_depth_min_entropy();"
 
     func_code = f"""#include <stdlib.h>
 {extra_include}

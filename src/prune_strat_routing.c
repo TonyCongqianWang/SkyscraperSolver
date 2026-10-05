@@ -18,7 +18,6 @@
 int	prune_current_step(t_puzzle *puzzle)
 {
 	int	d;
-	int	b;
 
 	if (puzzle->cur_node->cur_depth == 0)
 	{
@@ -30,7 +29,6 @@ int	prune_current_step(t_puzzle *puzzle)
 	else
 	{
 		d = puzzle->cur_node->cur_depth;
-		b = get_depth_bucket(d, puzzle->squared_size, puzzle->size);
-		return (prune_strat_depth_bucket(puzzle, b));
+		return (prune_strat_depth_bucket(puzzle, d));
 	}
 }

@@ -11,36 +11,61 @@
 /* ************************************************************************** */
 
 #include "params_depth_arrays.h"
-#include "params_int.h"
 
-static const double	g_cubic_weights[40] = {
-	1.000000, 0.000000, 0.000000, 0.000000,
-	0.500686, 0.554184, -0.054870, 0.000000,
-	0.067215, 0.976680, -0.043896, 0.000000,
-	-0.074074, 0.765432, 0.333333, -0.024691,
-	-0.019204, 0.171011, 0.893004, -0.044810,
-	0.000000, -0.058528, 0.976680, 0.081847,
-	0.000000, -0.098765, 0.814815, 0.283951,
-	0.000000, -0.073160, 0.554184, 0.518976,
-	0.000000, -0.025606, 0.260631, 0.764975,
-	0.000000, 0.000000, 0.000000, 1.000000
-};
-
-void	init_depth_min_entropy(void)
+static void	compute_hermite_basis(double tau, double *h)
 {
-	int		b;
-	double	val;
+	double	tau2;
+	double	tau3;
 
-	b = 0;
-	while (b < 10)
+	tau2 = tau * tau;
+	tau3 = tau2 * tau;
+	h[0] = 2.0 * tau3 - 3.0 * tau2 + 1.0;
+	h[1] = tau3 - 2.0 * tau2 + tau;
+	h[2] = -2.0 * tau3 + 3.0 * tau2;
+	h[3] = tau3 - tau2;
+}
+
+static void	eval_seg0(const double *h, double *w)
+{
+	w[0] = h[0] - h[1] - 0.5 * h[3];
+	w[1] = h[2] + h[1];
+	w[2] = 0.5 * h[3];
+	w[3] = 0.0;
+}
+
+static void	eval_seg1(const double *h, double *w)
+{
+	w[0] = -0.5 * h[1];
+	w[1] = h[0] - (1.0 / 3.0) * h[3];
+	w[2] = h[2] + 0.5 * h[1];
+	w[3] = (1.0 / 3.0) * h[3];
+}
+
+static void	eval_seg2(const double *h, double *w)
+{
+	w[0] = 0.0;
+	w[1] = -(2.0 / 3.0) * h[1];
+	w[2] = h[0] - h[3];
+	w[3] = h[2] + (2.0 / 3.0) * h[1] + h[3];
+}
+
+void	compute_catmull_weights(double t, double *w)
+{
+	double	h[4];
+
+	if (t <= 0.25)
 	{
-		val = g_cubic_weights[b * 4] * g_min_entropy_p00
-			+ g_cubic_weights[b * 4 + 1] * g_min_entropy_p25
-			+ g_cubic_weights[b * 4 + 2] * g_min_entropy_p50
-			+ g_cubic_weights[b * 4 + 3] * g_min_entropy_p100;
-		if (val < 0.0)
-			val = 0.0;
-		g_depth_computed_min_entropy[b] = (int)(val + 0.5);
-		b++;
+		compute_hermite_basis(4.0 * t, h);
+		eval_seg0(h, w);
+	}
+	else if (t <= 0.50)
+	{
+		compute_hermite_basis(4.0 * (t - 0.25), h);
+		eval_seg1(h, w);
+	}
+	else
+	{
+		compute_hermite_basis(2.0 * (t - 0.50), h);
+		eval_seg2(h, w);
 	}
 }

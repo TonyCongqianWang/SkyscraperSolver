@@ -15,7 +15,6 @@
 
 # include "puzzle_structs.h"
 
-int	get_depth_bucket(int depth, int squared_size, int size);
-int	prune_strat_depth_bucket(t_puzzle *puzzle, int bucket);
+int	prune_strat_depth_bucket(t_puzzle *puzzle, int depth);
 
 #endif
