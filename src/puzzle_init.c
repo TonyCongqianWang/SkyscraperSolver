@@ -18,6 +18,7 @@
 #include "entropy.h"
 #include "node_init.h"
 #include "params_math.h"
+#include "params_depth_arrays.h"
 #include "node_selection_score.h"
 
 static void	init_constraint(t_puzzle *puzzle, int idx, int size);
@@ -27,6 +28,7 @@ static void	init_puzzle_entropy(t_puzzle *puzzle, int size)
 {
 	t_node_state	*node;
 
+	init_depth_min_entropy();
 	node = puzzle->cur_node;
 	node->remaining_entropy = compute_initial_entropy(node, size);
 	puzzle->max_entropy = node->remaining_entropy;

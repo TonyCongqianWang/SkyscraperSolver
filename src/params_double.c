@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   params_double.c                               :+:      :+:    :+:   */
+/*   params_double.c                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -16,7 +16,7 @@ double	g_sel_period_coef_sqrt = 3421.2006;
 double	g_sel_period_coef_inv = 23249.973;
 double	g_root_period_tier_complement_mult = 7.2954258;
 double	g_root_lookahead_continue_slope = 0.35277743;
-double	g_root_period_coef_scale = 49.74;
+double	g_root_period_coef_scale = 50.76;
 double	g_root_period_coef_unset = 6.1950063;
 double	g_root_period_tier_medium_mult = 2.3125431;
 double	g_root_period_tier_heavy_mult = 3.2740544;

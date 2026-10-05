@@ -13,6 +13,7 @@
 #ifndef PARAMS_DEPTH_ARRAYS_H
 # define PARAMS_DEPTH_ARRAYS_H
 
+extern int			g_depth_computed_min_entropy[10];
 extern const int	*g_depth_min_entropy[10];
 extern const int	*g_depth_gac_min_entropy[10];
 extern const int	*g_depth_constr_min_entropy[10];
@@ -39,5 +40,7 @@ extern const double	*g_depth_lookahead_constr_local_max_entropy[10];
 extern const double	*g_routing_depth_ratio_le7[9];
 extern const double	*g_routing_depth_ratio_s8[9];
 extern const double	*g_routing_depth_ratio_s9[9];
+
+void				init_depth_min_entropy(void);
 
 #endif

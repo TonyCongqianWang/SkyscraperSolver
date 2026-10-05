@@ -15,17 +15,22 @@
 #include "params_double.h"
 #include "params_math.h"
 
+int				g_depth_computed_min_entropy[10] = {
+	73700, 77190, 77956, 78368, 80793,
+	87599, 101154, 123828, 157987, 206000
+};
+
 const int		*g_depth_min_entropy[10] = {
-	&g_depth_0_min_entropy,
-	&g_depth_1_min_entropy,
-	&g_depth_2_min_entropy,
-	&g_depth_3_min_entropy,
-	&g_depth_4_min_entropy,
-	&g_depth_5_min_entropy,
-	&g_depth_6_min_entropy,
-	&g_depth_7_min_entropy,
-	&g_depth_8_min_entropy,
-	&g_depth_9_min_entropy
+	&g_depth_computed_min_entropy[0],
+	&g_depth_computed_min_entropy[1],
+	&g_depth_computed_min_entropy[2],
+	&g_depth_computed_min_entropy[3],
+	&g_depth_computed_min_entropy[4],
+	&g_depth_computed_min_entropy[5],
+	&g_depth_computed_min_entropy[6],
+	&g_depth_computed_min_entropy[7],
+	&g_depth_computed_min_entropy[8],
+	&g_depth_computed_min_entropy[9]
 };
 
 const int		*g_depth_gac_min_entropy[10] = {

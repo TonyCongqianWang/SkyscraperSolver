@@ -59,12 +59,26 @@ MATH_VARS = [
     ("g_lookahead_score_age_limit_ratio_s8", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S8", "double"),
     ("g_lookahead_score_age_limit_ratio_s9", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S9", "double"),
 ]
-
-INT_VARS = []
 TIERS = [("root", "ROOT")] + [(f"depth_{i}", f"DEPTH_{i}") for i in range(10)]
-for tier_lower, tier_upper in TIERS:
+
+INT_VARS = [
+    ("g_root_min_entropy", "ROOT_MIN_ENTROPY", "int"),
+    ("g_root_gac_min_entropy", "ROOT_GAC_MIN_ENTROPY", "int"),
+    ("g_root_constr_min_entropy", "ROOT_CONSTR_MIN_ENTROPY", "int"),
+    ("g_root_gac_global_min_entropy", "ROOT_GAC_GLOBAL_MIN_ENTROPY", "int"),
+    ("g_root_constr_global_min_entropy", "ROOT_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+    ("g_root_lookahead_gac_global_min_entropy", "ROOT_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
+    ("g_root_lookahead_constr_global_min_entropy", "ROOT_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+    ("g_root_lookahead_continue_min_entropy", "ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY", "int"),
+    ("g_min_entropy_p00", "MIN_ENTROPY_P00", "int"),
+    ("g_min_entropy_p25", "MIN_ENTROPY_P25", "int"),
+    ("g_min_entropy_p50", "MIN_ENTROPY_P50", "int"),
+    ("g_min_entropy_p100", "MIN_ENTROPY_P100", "int"),
+]
+for i in range(10):
+    tier_lower = f"depth_{i}"
+    tier_upper = f"DEPTH_{i}"
     INT_VARS.extend([
-        (f"g_{tier_lower}_min_entropy", f"{tier_upper}_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_gac_min_entropy", f"{tier_upper}_GAC_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_constr_min_entropy", f"{tier_upper}_CONSTR_MIN_ENTROPY", "int"),
         (f"g_{tier_lower}_gac_global_min_entropy", f"{tier_upper}_GAC_GLOBAL_MIN_ENTROPY", "int"),
@@ -133,15 +147,21 @@ def apply_overrides_to_file(filepath, var_list, func_name):
     env_body = "\n".join(env_lines)
     decl_body = "\n".join(decl_lines)
 
-    func_code = f"""#include <stdlib.h>
+    extra_include = ""
+    extra_call = ""
+    if "params_int.c" in filepath:
+        extra_include = '#include "params_depth_arrays.h"\n'
+        extra_call = "\n\tinit_depth_min_entropy();"
 
+    func_code = f"""#include <stdlib.h>
+{extra_include}
 #if !defined(G_PRUNE_NO_ENV) || !G_PRUNE_NO_ENV
 __attribute__((constructor))
 static void\t{func_name}(void)
 {{
 \tchar\t*val;
 
-{env_body}
+{env_body}{extra_call}
 }}
 #endif"""
 
@@ -182,10 +202,12 @@ def unapply_overrides_from_file(filepath, var_list):
     header_inc = f'#include "{os.path.basename(filepath).replace(".c", ".h")}"'
     decl_body = "\n".join(decl_lines)
 
-    header_comment = """/* ************************************************************************** */
+    fname = os.path.basename(filepath)
+    pad = 51 - len(fname)
+    header_comment = f"""/* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   """ + os.path.basename(filepath) + """                               :+:      :+:    :+:   */
+/*   {fname}{' ' * pad}:+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
