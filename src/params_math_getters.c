@@ -21,28 +21,6 @@ double	get_weight_cell_constr_ratio(int size)
 	return (g_weight_cell_constr_ratio_s9);
 }
 
-double	get_sel_weight_cell_constr_ratio(int size)
-{
-	if (size <= 7)
-		return (g_sel_weight_cell_constr_ratio_le7);
-	if (size == 8)
-		return (g_sel_weight_cell_constr_ratio_s8);
-	return (g_sel_weight_cell_constr_ratio_s9);
-}
-
-double	get_sel_power(int size)
-{
-	double	u;
-
-	if (size <= 7)
-		u = g_sel_power_le7;
-	else if (size == 8)
-		u = g_sel_power_s8;
-	else
-		u = g_sel_power_s9;
-	return (u * u * u);
-}
-
 double	get_weight_total_scale(int size)
 {
 	if (size <= 7)

@@ -159,7 +159,8 @@ typedef struct s_node_pruning_state
 
 typedef struct s_selection_lut
 {
-	double					values[10];
+	double					cell_values[10];
+	double					constr_values[10];
 	double					min_score;
 }		t_selection_lut;
 

@@ -16,7 +16,8 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-t_selection_lut	make_selection_lut(int size, double p);
+t_selection_lut	make_selection_lut(int size, double p_cell,
+					double p_constr, double w_cell);
 void			score_transition_strat(t_node_state *state,
 					t_node_transition *next);
 double			calculate_blended_score(t_node_state *node,

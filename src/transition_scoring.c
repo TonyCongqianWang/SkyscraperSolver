@@ -17,17 +17,17 @@
 
 void	score_transition_full(t_node_state *state, t_node_transition *next)
 {
-	double	w_cell;
-	double	w_line;
-	double	*lut;
+	double			w_cell;
+	double			w_line;
+	t_selection_lut	*lut;
 
 	transition_add_num_valids(state, next);
 	w_cell = get_sel_weight_cell_constr_ratio(state->size);
 	w_line = 1.0 - w_cell;
-	lut = state->puzzle->selection_lut.values;
-	next->score = w_cell * lut[next->num_valids_cell]
-		+ w_line * 0.5 * (lut[next->num_valids_col]
-			+ lut[next->num_valids_row]);
+	lut = &state->puzzle->selection_lut;
+	next->score = w_cell * lut->cell_values[next->num_valids_cell]
+		+ w_line * 0.5 * (lut->constr_values[next->num_valids_col]
+			+ lut->constr_values[next->num_valids_row]);
 }
 
 void	transition_add_num_valids(t_node_state *state, t_node_transition *next)

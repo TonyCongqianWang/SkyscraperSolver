@@ -24,18 +24,22 @@ static double	compute_lut_val(int i, double p)
 		- (p * p * ln_x * ln_x * ln_x) / 6.0);
 }
 
-t_selection_lut	make_selection_lut(int size, double p)
+t_selection_lut	make_selection_lut(int size, double p_cell,
+					double p_constr, double w_cell)
 {
 	t_selection_lut	lut;
 	int				i;
 
-	lut.values[0] = 0.0;
+	lut.cell_values[0] = 0.0;
+	lut.constr_values[0] = 0.0;
 	i = 1;
 	while (i <= 9)
 	{
-		lut.values[i] = compute_lut_val(i, p);
+		lut.cell_values[i] = compute_lut_val(i, p_cell);
+		lut.constr_values[i] = compute_lut_val(i, p_constr);
 		i++;
 	}
-	lut.min_score = lut.values[size];
+	lut.min_score = w_cell * lut.cell_values[size]
+		+ (1.0 - w_cell) * lut.constr_values[size];
 	return (lut);
 }

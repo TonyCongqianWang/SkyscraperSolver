@@ -38,13 +38,25 @@ static void	init_puzzle_entropy(t_puzzle *puzzle, int size)
 	node->last_entropy[3] = node->remaining_entropy;
 }
 
-void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
+static void	init_constraints_all(t_puzzle *puzzle, int size)
 {
 	int		idx;
 
+	idx = 0;
+	while (idx < 2 * size)
+	{
+		init_constraint(puzzle, idx, size);
+		idx++;
+	}
+}
+
+void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
+{
 	puzzle->size = size;
 	puzzle->squared_size = size * size;
-	puzzle->selection_lut = make_selection_lut(size, get_sel_power(size));
+	puzzle->selection_lut = make_selection_lut(size, get_sel_power_cell(size),
+			get_sel_power_constr(size),
+			get_sel_weight_cell_constr_ratio(size));
 	init_cell_distance_order(puzzle, size);
 	puzzle->constr_max_entropy = size * get_log2_scaled(size)
 		* get_weight_constr(size) / ENTROPY_SCALE;
@@ -58,12 +70,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	puzzle->cur_node = &puzzle->node_stack[0];
 	puzzle->cur_node->puzzle = puzzle;
 	init_root_node(puzzle->cur_node, size);
-	idx = 0;
-	while (idx < 2 * size)
-	{
-		init_constraint(puzzle, idx, size);
-		idx++;
-	}
+	init_constraints_all(puzzle, size);
 	init_puzzle_entropy(puzzle, size);
 }
 
