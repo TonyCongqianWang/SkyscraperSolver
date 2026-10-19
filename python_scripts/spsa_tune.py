@@ -615,9 +615,11 @@ def run_spsa(args, datasets, max_workers):
     if args.batch_size is not None:
         batch_size = args.batch_size
     elif args.size == 9:
-        batch_size = 64
-    else:
+        batch_size = 256
+    elif args.size == 8:
         batch_size = 32
+    else:
+        batch_size = 128
 
     log_print(f"SPSA Batch Size configured: {batch_size}")
 
