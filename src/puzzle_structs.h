@@ -65,6 +65,23 @@ typedef struct s_node_orders_stack
 	int				top_idx;
 }		t_node_orders_stack;
 
+typedef struct s_line_priority
+{
+	int	constr_idx;
+	int	entropy;
+}		t_line_priority;
+
+typedef struct s_line_order
+{
+	t_line_priority	entries[MAX_N_CONSTR_PAIRS];
+	int				count;
+}		t_line_order;
+
+typedef struct s_line_orders_stack
+{
+	t_line_order	orders[MAX_STACK_DEPTH];
+}		t_line_orders_stack;
+
 typedef struct s_grid_state
 {
 	char		vals[MAX_CELL_COUNT];
@@ -182,6 +199,7 @@ typedef struct s_puzzle
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
 	t_node_orders_stack		order_stack;
+	t_line_orders_stack		line_order_stack;
 	t_node_state			node_stack[MAX_STACK_DEPTH];
 	int						node_stack_top;
 	int						cell_distance_order[MAX_CELL_COUNT];

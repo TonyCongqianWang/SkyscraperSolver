@@ -14,6 +14,7 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 #include "node_selection_score.h"
+#include "line_order.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -60,8 +61,7 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 		cache->build_depth = n->cur_depth;
 		collect_cache_entries(puzzle, cache, config);
 		recalculate_cache_scores(n, cache);
-		sort_node_order_meta(cache->entries, cache->meta,
-			cache->count, config->criterion);
+		sort_cached_orders(n, cache, config->criterion);
 	}
 	else
 	{
@@ -102,8 +102,7 @@ static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
 	cache->needs_rebuild = 0;
 	restore_lookahead_meta(cache, old_entries, old_meta, old_count);
 	recalculate_cache_scores(puzzle->cur_node, cache);
-	sort_node_order_meta(cache->entries, cache->meta,
-		cache->count, config->criterion);
+	sort_cached_orders(puzzle->cur_node, cache, config->criterion);
 }
 
 void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
@@ -123,6 +122,7 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 		n->order_cache = &puzzle->order_stack
 			.orders[puzzle->order_stack.top_idx];
 		cache = n->order_cache;
+		copy_line_order(puzzle, top);
 		init_new_cache(puzzle, cache, config, top);
 	}
 	else

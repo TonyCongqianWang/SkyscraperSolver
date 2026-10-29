@@ -27,4 +27,7 @@ int	should_process_col(const t_node_state *state, int c,
 int	is_only_selectivity_value_set(const struct s_prune_routine_config *cfg);
 int	is_max_selectivity_any_change(const struct s_prune_routine_config *cfg);
 
+int	should_process_line(const t_node_state *state, int idx,
+		t_selectivity_level selectivity);
+
 #endif

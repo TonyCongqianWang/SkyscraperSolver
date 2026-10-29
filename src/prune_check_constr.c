@@ -14,6 +14,7 @@
 #include "constraint_selection.h"
 #include "selectivity.h"
 #include "check_node_validity.h"
+#include "line_order.h"
 
 static int	do_prop(t_puzzle *puzzle, int *clues, int *grid, int *rev)
 {
@@ -49,43 +50,26 @@ int	process_constraint(t_puzzle *puzzle, int idx, int size,
 	return (do_prop(puzzle, clues, grid_indices, rev_indices));
 }
 
-static int	check_constr_rows(t_puzzle *puzzle, t_node_state *state,
+static int	check_constr_lines(t_puzzle *puzzle, t_node_state *state,
 				t_selectivity_level selectivity, t_constr_limits *limits)
 {
-	int	r;
-	int	changed;
+	t_line_order	*order;
+	int				i;
+	int				idx;
+	int				changed;
 
+	order = get_line_order(state);
 	changed = 0;
-	r = 0;
-	while (r < state->size)
+	i = 0;
+	while (i < order->count && !state->is_invalid)
 	{
-		if (should_process_row(state, r, selectivity))
+		idx = order->entries[i].constr_idx;
+		if (should_process_line(state, idx, selectivity))
 		{
-			if (process_constraint(puzzle, r + state->size, state->size,
-					limits))
+			if (process_constraint(puzzle, idx, state->size, limits))
 				changed = 1;
 		}
-		r++;
-	}
-	return (changed);
-}
-
-static int	check_constr_cols(t_puzzle *puzzle, t_node_state *state,
-				t_selectivity_level selectivity, t_constr_limits *limits)
-{
-	int	c;
-	int	changed;
-
-	changed = 0;
-	c = 0;
-	while (c < state->size)
-	{
-		if (should_process_col(state, c, selectivity))
-		{
-			if (process_constraint(puzzle, c, state->size, limits))
-				changed = 1;
-		}
-		c++;
+		i++;
 	}
 	return (changed);
 }
@@ -104,11 +88,7 @@ void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
 	iterations = 0;
 	while (changed && !state->is_invalid && iterations++ < 100)
 	{
-		changed = 0;
-		if (check_constr_cols(puzzle, state, selectivity, limits))
-			changed = 1;
-		if (check_constr_rows(puzzle, state, selectivity, limits))
-			changed = 1;
+		changed = check_constr_lines(puzzle, state, selectivity, limits);
 	}
 	check_node_validity(puzzle, g_check_constr);
 }

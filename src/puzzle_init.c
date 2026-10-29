@@ -12,6 +12,7 @@
 
 #include "puzzle_init.h"
 #include "cell_distance.h"
+#include "line_order.h"
 #include "cell_bounds.h"
 #include "solution_storage.h"
 #include "node_selection_cache.h"
@@ -72,6 +73,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	init_root_node(puzzle->cur_node, size);
 	init_constraints_all(puzzle, size);
 	init_puzzle_entropy(puzzle, size);
+	init_line_order_stack(puzzle);
 }
 
 static void	init_constraint(t_puzzle *puzzle, int idx, int size)

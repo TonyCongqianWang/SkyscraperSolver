@@ -20,6 +20,7 @@
 #include "grid_interface.h"
 #include "check_node_validity.h"
 #include "entropy.h"
+#include "line_order.h"
 
 static int	collect_line_cells(t_node_state *state, int line_idx, int is_col,
 				int *cells)
@@ -91,23 +92,21 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 {
 	t_node_state	*state;
+	t_line_order	*order;
 	int				i;
+	int				idx;
 
 	state = puzzle->cur_node;
 	if (should_exit_selectivity(state, config->selectivity))
 		return ;
+	order = get_line_order(state);
 	i = 0;
-	while (i < state->size)
+	while (i < order->count && !state->is_invalid)
 	{
-		if (should_process_row(state, i, config->selectivity))
-			analyse_gac_line(puzzle, i, 0, config);
-		i++;
-	}
-	i = 0;
-	while (i < state->size)
-	{
-		if (should_process_col(state, i, config->selectivity))
-			analyse_gac_line(puzzle, i, 1, config);
+		idx = order->entries[i].constr_idx;
+		if (should_process_line(state, idx, config->selectivity))
+			analyse_gac_line(puzzle, idx % state->size, idx < state->size,
+				config);
 		i++;
 	}
 	check_node_validity(puzzle, g_check_constr);

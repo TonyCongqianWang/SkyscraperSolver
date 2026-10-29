@@ -25,4 +25,7 @@ void	sort_node_order_meta(t_node_transition *entries,
 void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
 			t_selection_criterion criterion);
 
+void	sort_cached_orders(t_node_state *node, t_node_order *cache,
+			t_selection_criterion criterion);
+
 #endif
