@@ -27,6 +27,8 @@ import re
 import json
 import fnmatch
 import argparse
+import time
+from functools import wraps
 from concurrent.futures import ThreadPoolExecutor
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -41,6 +43,22 @@ except ImportError:
     sys.exit(1)
 
 
+def retry_transient(function):
+    """Back off on throttling and transient network/server failures only."""
+    @wraps(function)
+    def wrapped(*args, **kwargs):
+        for attempt in range(5):
+            try:
+                return function(*args, **kwargs)
+            except requests.RequestException as error:
+                response = getattr(error, 'response', None)
+                status = response.status_code if response is not None else None
+                if attempt == 4 or (status is not None and status != 429 and status < 500):
+                    raise
+                time.sleep(min(30, 2 ** (attempt + 1)))
+    return wrapped
+
+
 def parse_kernel_arg(kernel_str):
     if "/" in kernel_str:
         parts = kernel_str.split("/")
@@ -48,6 +66,7 @@ def parse_kernel_arg(kernel_str):
     return api.config_values.get("username", "tony14587"), kernel_str
 
 
+@retry_transient
 def get_latest_version_number(owner, slug):
     api.authenticate()
     with api.build_kaggle_client() as client:
@@ -91,6 +110,7 @@ def inspect_version(owner, slug, version_num):
             return version_num, False, None, str(e), None
 
 
+@retry_transient
 def list_version_output_files(owner, slug, version_num):
     api.authenticate()
     v_label = f"v{version_num}"
@@ -114,14 +134,21 @@ def list_version_output_files(owner, slug, version_num):
         return all_files
 
 
+@retry_transient
 def download_file(url, target_path):
     os.makedirs(os.path.dirname(os.path.abspath(target_path)), exist_ok=True)
-    r = requests.get(url, stream=True)
-    r.raise_for_status()
-    with open(target_path, "wb") as f:
-        for chunk in r.iter_content(chunk_size=8192):
-            if chunk:
-                f.write(chunk)
+    temporary = target_path + '.part'
+    try:
+        with requests.get(url, stream=True, timeout=(15, 120)) as response:
+            response.raise_for_status()
+            with open(temporary, 'wb') as output:
+                for chunk in response.iter_content(chunk_size=8192):
+                    if chunk:
+                        output.write(chunk)
+        os.replace(temporary, target_path)
+    finally:
+        if os.path.exists(temporary):
+            os.remove(temporary)
 
 
 def parse_version_spec(spec, latest_num):
@@ -298,10 +325,21 @@ def main():
                 if not target_rel.endswith(".txt"):
                     target_rel += ".txt"
 
+                if len(matched) > 1 and '{filename}' not in dest_template:
+                    stem, _ = os.path.splitext(target_rel)
+                    target_rel = f"{stem}_{os.path.basename(mf.file_name)}"
                 target_full = os.path.join(ROOT_DIR, target_rel)
                 download_file(mf.url, target_full)
                 downloaded_count += 1
                 print(f"[v{v}] Downloaded {mf.file_name} -> {target_rel}")
+                # Keep provenance adjacent to the renamed winner so analysis can
+                # recover historical defaults even after the repository changes.
+                remote_sidecar = os.path.splitext(mf.file_name)[0] + '.json'
+                sidecars = [item for item in files if item.file_name == remote_sidecar]
+                for sidecar in sidecars:
+                    local_sidecar = os.path.splitext(target_full)[0] + '.json'
+                    download_file(sidecar.url, local_sidecar)
+                    print(f"[v{v}] Downloaded metadata -> {os.path.relpath(local_sidecar, ROOT_DIR)}")
         except Exception as e:
             print(f"[v{v}] Error: {e}")
 

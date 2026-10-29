@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
-import subprocess
-import time
-import concurrent.futures
-import math
 import os
 import sys
 import argparse
-import select
+import json
+import statistics
+from contextlib import ExitStack
+
+from comparison_measurements import measure_batch
+from param_metadata import PARAM_METADATA
+from spsa_metrics import get_sgm_shifts, shifted_geo_mean
+from spsa_run_metadata import clue_identity
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
@@ -26,217 +29,121 @@ PATH_S8_XHARD = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_all_solutio
 PATH_S9 = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated.txt")
 PATH_S9_HARDER = os.path.join(ROOT_DIR, "benchmark_sets", "calibrated_single_solution", "benchmarkSet9_calibrated_harder.txt")
 
-def check_stdin_support(binary):
-    try:
-        proc = subprocess.Popen(
-            [binary, "--stdin"],
-            stdin=subprocess.PIPE,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        proc.stdin.write(b"\n")
-        proc.stdin.close()
-        ret = proc.wait(timeout=1.0)
-        return ret == 0
-    except Exception:
-        return False
-
-def read_with_timeout(proc, timeout=10.0):
-    lines = []
-    t_start = time.perf_counter()
-    while True:
-        elapsed = time.perf_counter() - t_start
-        rem = timeout - elapsed
-        if rem <= 0:
-            return None
-        try:
-            r, _, _ = select.select([proc.stdout], [], [], rem)
-            if not r:
-                return None
-            line_bytes = proc.stdout.readline()
-            if not line_bytes:
-                return None
-            line = line_bytes.decode('utf-8')
-            lines.append(line)
-            if line.strip() == "--- END_OF_INSTANCE ---":
-                break
-        except Exception:
-            return None
-    return lines
-
 def resolve_binary_path(path):
-    if not path:
-        return path
-    if os.name == 'nt' or sys.platform.startswith('win'):
-        if not path.lower().endswith('.exe'):
-            if os.path.exists(path + '.exe'):
-                return path + '.exe'
+    if path and (os.name == 'nt' or sys.platform.startswith('win')):
+        if not path.lower().endswith('.exe') and os.path.exists(path + '.exe'):
+            return path + '.exe'
     return path
 
-def run_solver(binary, opt, clue, timeout=15.0, env=None):
-    t_start = time.perf_counter()
-    try:
-        proc = subprocess.run(
-            [binary] + opt.split() + [clue],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            timeout=timeout,
-            env=env
-        )
-        elapsed = time.perf_counter() - t_start
-        if proc.returncode != 0:
-            return None, None
-        
-        nodes = None
-        for line in proc.stdout.splitlines():
-            if line.startswith("Nodes visited:"):
-                nodes = int(line.split(":")[1].strip())
-                break
-        return elapsed, nodes
-    except Exception:
-        return None, None
 
-def shifted_geo_mean(values, shift):
-    if not values:
-        return 0.0
-    sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
-    return math.exp(sum_ln / len(values)) - shift
+def default_environment():
+    # A default comparison must not inherit stale tuning overrides.
+    env = os.environ.copy()
+    for name, *_ in PARAM_METADATA:
+        env.pop(name, None)
+    return env
 
-STDIN_SUPPORT_CACHE = {}
 
-def check_stdin_support_cached(binary):
-    if binary not in STDIN_SUPPORT_CACHE:
-        STDIN_SUPPORT_CACHE[binary] = check_stdin_support(binary)
-    return STDIN_SUPPORT_CACHE[binary]
+def summarize(rows, shifts):
+    time_shift, node_shift = shifts
+    return {
+        'total_nodes': sum(row['nodes'] for row in rows),
+        'total_time': sum(row['seconds'] for row in rows),
+        'sgm_nodes': shifted_geo_mean([row['nodes'] for row in rows], node_shift),
+        'sgm_time': shifted_geo_mean([row['seconds'] for row in rows], time_shift),
+    }
 
-def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None, log_print=print, use_stdin=True):
+
+def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
+                 log_print=print, use_stdin=True, max_workers=4, repeats=2,
+                 warmup=1, timeout=15.0, size=None, records_file=None):
+    if repeats < 1 or repeats % 2:
+        raise ValueError('repeats must be a positive even number for AB/BA balance')
+    if size is None:
+        clue = clues[0].strip().strip('"').replace(',', ' ')
+        tokens = clue.split()
+        token_count = len(tokens) if len(tokens) > 1 else len(clue)
+        if token_count % 4:
+            raise ValueError('clue length must be divisible by four')
+        size = token_count // 4
+    shifts = get_sgm_shifts(size, opt.split() == ['-s', '0'])
     log_print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
-    
-    # 2-Way Comparison Setup:
-    # 1. Baseline: Tunable solver run with default/no environment variables
-    # 2. Optimized: Tunable solver run with tuned environment variables
-    binaries = [
-        ("Baseline", tunable_bin, None),
-        ("Optimized", tunable_bin, tuned_env)
-    ]
-    
-    results = {}
-    for name, binary, env in binaries:
-        times = []
-        nodes = []
-        
-        # Check if stdin mode is supported and desired
-        stdin_ok = use_stdin and check_stdin_support_cached(binary)
-        
-        if not stdin_ok:
-            with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-                futures = [executor.submit(run_solver, binary, opt, clue, env=env) for clue in clues]
-                for fut in futures:
-                    t, n = fut.result()
-                    if t is not None and n is not None:
-                        times.append(t)
-                        nodes.append(n)
-        else:
-            num_workers = os.cpu_count() or 8
-            
-            def run_subgroup(clues_chunk):
-                proc = subprocess.Popen(
-                    [binary] + opt.split() + ["--stdin"],
-                    stdin=subprocess.PIPE,
-                    stdout=subprocess.PIPE,
-                    bufsize=0,
-                    env=env
-                )
-                chunk_results = []
-                try:
-                    for clue in clues_chunk:
-                        t0 = time.perf_counter()
-                        proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
-                        proc.stdin.flush()
-                        
-                        lines = read_with_timeout(proc, timeout=15.0)
-                        elapsed = time.perf_counter() - t0
-                        
-                        if lines is None:
-                            try:
-                                proc.kill()
-                            except Exception:
-                                pass
-                            proc.wait()
-                            proc = subprocess.Popen(
-                                [binary] + opt.split() + ["--stdin"],
-                                stdin=subprocess.PIPE,
-                                stdout=subprocess.PIPE,
-                                bufsize=0,
-                                env=env
-                            )
-                            chunk_results.append((15.0, 100000))
-                            continue
-                        
-                        node_count = 100000
-                        for line in lines:
-                            if line.startswith("Nodes visited:"):
-                                node_count = int(line.split(":")[1].strip())
-                                break
-                        chunk_results.append((elapsed, node_count))
-                finally:
-                    try:
-                        proc.stdin.close()
-                    except Exception:
-                        pass
-                    try:
-                        proc.kill()
-                    except Exception:
-                        pass
-                    proc.wait()
-                return chunk_results
+    log_print(f"SGM shifts: time={shifts[0]:g}s, nodes={shifts[1]:g}; "
+              f"workers={max_workers}, repeats={repeats}, warmup={warmup}")
+    base_env = default_environment()
+    candidates = {
+        'Baseline': (baseline_bin, base_env),
+        'Optimized': (tunable_bin, tuned_env if tuned_env is not None else base_env),
+    }
+    rounds = []
+    valid = True
+    for repeat in range(repeats):
+        order = ['Baseline', 'Optimized'] if repeat % 2 == 0 else ['Optimized', 'Baseline']
+        measured = {}
+        for position, arm in enumerate(order):
+            binary, env = candidates[arm]
+            measured[arm] = measure_batch(binary, opt, clues, env,
+                                         workers=max_workers, use_stdin=use_stdin,
+                                         warmup=warmup, timeout=timeout)
+            if records_file:
+                for row in measured[arm]:
+                    records_file.write(json.dumps(dict(
+                        row, dataset=label, size=size, options=opt,
+                        repeat=repeat + 1, arm=arm, order=position + 1,
+                        binary=os.path.basename(binary))) + '\n')
+                records_file.flush()
+        base, optimized = measured['Baseline'], measured['Optimized']
+        paired = [(b, o) for b, o in zip(base, optimized)
+                  if b['status'] == o['status'] == 'ok']
+        mismatches = sum(b['solutions'] != o['solutions'] for b, o in paired
+                         if b['solutions'] is not None and o['solutions'] is not None)
+        known_counts = sum(b['solutions'] is not None and o['solutions'] is not None
+                           for b, o in paired)
+        failures = {arm: {status: sum(row['status'] == status for row in rows)
+                          for status in ('timeout', 'error')}
+                    for arm, rows in measured.items()}
+        round_valid = len(paired) == len(clues) and not mismatches
+        valid = valid and round_valid
+        log_print(f"Repeat {repeat + 1} ({'/'.join(order)}): paired "
+                  f"{len(paired)}/{len(clues)}, failures={failures}, "
+                  f"solution mismatches={mismatches} (counts available: {known_counts})")
+        results = {arm: summarize([pair[i] for pair in paired], shifts)
+                   for i, arm in enumerate(('Baseline', 'Optimized'))}
+        rounds.append({'repeat': repeat + 1, 'order': order, 'valid': round_valid,
+                       'paired_count': len(paired), 'failures': failures,
+                       'solution_count_pairs': known_counts,
+                       'solution_mismatches': mismatches, 'results': results})
+    if not valid:
+        log_print('INVALID comparison: failed instances or mismatched solution counts. '
+                  'Performance summary withheld; inspect per-instance records.')
+        return {'label': label, 'valid': False, 'rounds': rounds}
+    # Summarize per-round metrics rather than pooling multiple runs as new puzzles.
+    log_print('| Metric | Baseline (median) | Optimized (median) | Median paired diff | Diff range |')
+    log_print('|---|---|---|---|---|')
+    summary = {}
+    for key, title in [('total_nodes', 'Total Nodes'), ('sgm_nodes', 'SGM Nodes'),
+                       ('total_time', 'Total Time'), ('sgm_time', 'SGM Time')]:
+        b = [r['results']['Baseline'][key] for r in rounds]
+        o = [r['results']['Optimized'][key] for r in rounds]
+        # A zero baseline has no meaningful relative change.
+        diffs = [(y - x) / x * 100 if x else None for x, y in zip(b, o)]
+        available = [value for value in diffs if value is not None]
+        summary[key] = {'baseline': statistics.median(b),
+                        'optimized': statistics.median(o),
+                        'diff_pct': statistics.median(available) if available else None,
+                        'diff_range_pct': [min(available), max(available)] if available else None}
+        diff_text = f"{statistics.median(available):+.3f}%" if available else 'n/a'
+        range_text = f"{min(available):+.3f}% to {max(available):+.3f}%" if available else 'n/a'
+        log_print(f"| **{title}** | {statistics.median(b):,.6g} | "
+                  f"{statistics.median(o):,.6g} | {diff_text} | {range_text} |")
+    return {'label': label, 'valid': True, 'size': size, 'options': opt,
+            'dataset': clue_identity(clues), 'sgm_shifts': shifts,
+            'workers': max_workers, 'warmup': warmup, 'summary': summary,
+            'rounds': rounds}
 
-            subgroups = [[] for _ in range(num_workers)]
-            for idx, clue in enumerate(clues):
-                subgroups[idx % num_workers].append(clue)
-            subgroups = [sg for sg in subgroups if sg]
-            
-            futures = []
-            with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
-                for sg in subgroups:
-                    futures.append(executor.submit(run_subgroup, sg))
-                for fut in futures:
-                    for t, n in fut.result():
-                        if t is not None and n is not None:
-                            times.append(t)
-                            nodes.append(n)
-                            
-        tot_nodes = sum(nodes)
-        tot_time = sum(times)
-        sgm_nodes = shifted_geo_mean(nodes, 1000.0)
-        sgm_time = shifted_geo_mean(times, 0.1)
-        
-        results[name] = {
-            "total_nodes": tot_nodes,
-            "total_time": tot_time,
-            "sgm_nodes": sgm_nodes,
-            "sgm_time": sgm_time,
-            "count": len(nodes)
-        }
-        
-    base = results["Baseline"]
-    optz = results["Optimized"]
-    
-    nodes_diff = (optz["total_nodes"] - base["total_nodes"]) / base["total_nodes"] * 100 if base["total_nodes"] else 0
-    sgm_nodes_diff = (optz["sgm_nodes"] - base["sgm_nodes"]) / base["sgm_nodes"] * 100 if base["sgm_nodes"] else 0
-    time_diff = (optz["total_time"] - base["total_time"]) / base["total_time"] * 100 if base["total_time"] else 0
-    sgm_time_diff = (optz["sgm_time"] - base["sgm_time"]) / base["sgm_time"] * 100 if base["sgm_time"] else 0
-    
-    log_print(f"| Metric | Baseline | Optimized | Diff |")
-    log_print(f"|---|---|---|---|")
-    log_print(f"| **Total Nodes** | {base['total_nodes']:,} | {optz['total_nodes']:,} | {nodes_diff:+.2f}% |")
-    log_print(f"| **SGM Nodes** | {base['sgm_nodes']:,.1f} | {optz['sgm_nodes']:,.1f} | {sgm_nodes_diff:+.2f}% |")
-    log_print(f"| **Total Time** | {base['total_time']:.3f}s | {optz['total_time']:.3f}s | {time_diff:+.2f}% |")
-    log_print(f"| **SGM Time** | {base['sgm_time']:.3f}s | {optz['sgm_time']:.3f}s | {sgm_time_diff:+.2f}% |")
 
 def load_tuned_env(winners_path):
-    tuned_env = os.environ.copy()
+    tuned_env = default_environment()
     if not winners_path or not os.path.exists(winners_path):
         print(f"Warning: Winners file not found at '{winners_path}'. Running without env overrides.")
         return None
@@ -250,38 +157,51 @@ def load_tuned_env(winners_path):
                     tuned_env[name] = val
     return tuned_env
 
-def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None, title="SOLVER PERFORMANCE COMPARISON", log_path=None, use_stdin=True):
-    """
-    Programmatic entry point to run comparisons.
-    validation_tasks: list of tuples (label, options, list_of_clues)
-    """
+def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
+                   title="SOLVER PERFORMANCE COMPARISON", log_path=None,
+                   use_stdin=True, max_workers=4, repeats=2, warmup=1,
+                   timeout=15.0, size=None, records_path=None):
+    """Compare fixed datasets in balanced AB/BA rounds; retain every outcome."""
+    if max_workers < 1 or warmup < 0 or timeout <= 0:
+        raise ValueError('workers/timeout must be positive; warmup nonnegative')
+    if repeats < 1 or repeats % 2:
+        raise ValueError('repeats must be positive and even')
     baseline = resolve_binary_path(baseline_bin)
     tunable = resolve_binary_path(tunable_bin)
-    
-    log_file = None
-    if log_path:
-        log_dir = os.path.dirname(log_path)
-        if log_dir:
-            os.makedirs(log_dir, exist_ok=True)
-        log_file = open(log_path, "w")
-        
-    def log_print(*args, **kwargs):
-        print(*args, **kwargs)
-        if log_file:
-            print(*args, **kwargs, file=log_file)
-            log_file.flush()
-            
-    log_print("======================================================================")
-    log_print(f"   {title}   ".center(70))
-    log_print("======================================================================")
-    for label, options, clues in validation_tasks:
-        if not clues:
-            continue
-        evaluate_set(clues, options, label, baseline, tunable, tuned_env, log_print, use_stdin=use_stdin)
-    log_print("======================================================================")
-    
-    if log_file:
-        log_file.close()
+    if records_path is None:
+        records_path = (os.path.splitext(log_path)[0] + '_instances.jsonl'
+                        if log_path else os.path.join(ROOT_DIR, 'scratch', 'comparison_instances.jsonl'))
+    summary_path = os.path.splitext(records_path)[0] + '_summary.json'
+    with ExitStack() as stack:
+        log_file = None
+        if log_path:
+            os.makedirs(os.path.dirname(os.path.abspath(log_path)), exist_ok=True)
+            log_file = stack.enter_context(open(log_path, 'w'))
+        os.makedirs(os.path.dirname(os.path.abspath(records_path)), exist_ok=True)
+        records_file = stack.enter_context(open(records_path, 'w'))
+
+        def log_print(*args, **kwargs):
+            print(*args, **kwargs)
+            if log_file:
+                print(*args, **kwargs, file=log_file)
+                log_file.flush()
+
+        log_print('=' * 70)
+        log_print(f'   {title}   '.center(70))
+        reports = []
+        for label, options, clues in validation_tasks:
+            if clues:
+                reports.append(evaluate_set(
+                    clues, options, label, baseline, tunable, tuned_env, log_print,
+                    use_stdin, max_workers, repeats, warmup, timeout, size, records_file))
+        with open(summary_path, 'w') as summary_file:
+            json.dump(reports, summary_file, indent=2)
+            summary_file.write('\n')
+        log_print(f'Per-instance records: {records_path}')
+        log_print(f'Comparison summaries: {summary_path}')
+        log_print('=' * 70)
+        return reports
+
 
 def read_clues(file_path):
     if not os.path.exists(file_path):
@@ -298,7 +218,14 @@ def main():
     parser.add_argument("-w", "--winners", default=None, help="Path to SPSA winners text file to load env overrides from.")
     parser.add_argument("-l", "--log", default=None, help="Optional path to write comparison tables to a log file.")
     parser.add_argument("--no-use-stdin", action="store_true", help="Disable stdin mode batching for comparisons.")
+    parser.add_argument('--max-workers', type=int, default=4)
+    parser.add_argument('--repeats', type=int, default=2, help='Even number of balanced AB/BA rounds')
+    parser.add_argument('--warmup', type=int, default=1, help='Unmeasured instances per worker and round')
+    parser.add_argument('--timeout', type=float, default=15.0)
+    parser.add_argument('--records', default=None, help='Per-instance JSONL output path')
     args = parser.parse_args()
+    if args.max_workers < 1 or args.repeats < 2 or args.repeats % 2 or args.warmup < 0 or args.timeout <= 0:
+        parser.error('workers/timeout must be positive, repeats positive and even, warmup nonnegative')
     
     # Auto-resolve winners file path if not provided but size is specified
     winners_file = args.winners
@@ -350,7 +277,13 @@ def main():
         print("Error: No validation sets loaded.", file=sys.stderr)
         sys.exit(1)
         
-    run_comparison(validation_tasks, args.baseline, args.tunable, tuned_env, log_path=args.log, use_stdin=not args.no_use_stdin)
+    reports = run_comparison(
+        validation_tasks, args.baseline, args.tunable, tuned_env,
+        log_path=args.log, use_stdin=not args.no_use_stdin,
+        max_workers=args.max_workers, repeats=args.repeats, warmup=args.warmup,
+        timeout=args.timeout, size=args.size, records_path=args.records)
+    if any(not report['valid'] for report in reports):
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

@@ -18,9 +18,12 @@ if SCRIPT_DIR not in sys.path:
 
 from symmetry import get_random_symmetry, canonize_clue_str as canonize
 from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
+from spsa_metrics import get_sgm_shifts, shifted_geo_mean
+from spsa_run_metadata import build_run_metadata, save_run_metadata
 
 # Globals
 LOG_FILE_HANDLE = None
+RUN_METADATA = None
 
 
 def resolve_binary_path(path):
@@ -160,13 +163,6 @@ def run_solver_instance(env, opt, clue, timeout=10.0):
         return elapsed, nodes
     except Exception:
         return float(timeout), 100000
-
-
-def shifted_geo_mean(values, shift):
-    if not values:
-        return 0.0
-    sum_ln = sum(math.log(max(0.0, float(x)) + shift) for x in values)
-    return math.exp(sum_ln / len(values)) - shift
 
 
 def read_with_timeout(proc, timeout=10.0):
@@ -363,6 +359,8 @@ def load_datasets(size):
 
 def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumeration_only):
     s7_train = datasets["s7_train"]
+    single_time_shift, single_node_shift = get_sgm_shifts(7)
+    enum_time_shift, enum_node_shift = get_sgm_shifts(7, True)
     ref_scale_s7_single_time = 0.005
     ref_scale_s7_single_nodes = 350.0
     ref_scale_s7_enum_time = 0.01
@@ -376,8 +374,8 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
             env = get_env_for_theta(config_theta)
             t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
-            sgm_t_e = shifted_geo_mean(t_enum, 0.005)
-            sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
+            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
+            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
             loss_time = 1.0 * (sgm_t_e / ref_scale_s7_enum_time)
             loss_nodes = 1.0 * (sgm_n_e / ref_scale_s7_enum_nodes)
@@ -395,11 +393,11 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
         t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
         t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
-        sgm_t_s = shifted_geo_mean(t_single, 0.002)
-        sgm_n_s = shifted_geo_mean(n_single, 100.0)
+        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
+        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
 
-        sgm_t_e = shifted_geo_mean(t_enum, 0.005)
-        sgm_n_e = shifted_geo_mean(n_enum, 1000.0)
+        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
+        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
         loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
         loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s7_enum_nodes)
@@ -410,6 +408,8 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
 
 def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only):
     s8_train = datasets["s8_train"]
+    single_time_shift, single_node_shift = get_sgm_shifts(8)
+    enum_time_shift, enum_node_shift = get_sgm_shifts(8, True)
 
     ref_scale_s8_single_time = 0.10
     ref_scale_s8_single_nodes = 5000.0
@@ -425,8 +425,8 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
             t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
             # Shift = 2.0s / 100,000 nodes to strongly bias toward instances taking >= 2.0s
-            sgm_t_e = shifted_geo_mean(t_enum, 2.000)
-            sgm_n_e = shifted_geo_mean(n_enum, 100000.0)
+            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
+            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
             loss_time = 1.0 * (sgm_t_e / ref_scale_s8_enum_time)
             loss_nodes = 1.0 * (sgm_n_e / ref_scale_s8_enum_nodes)
@@ -445,11 +445,11 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
         t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
         t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
 
-        sgm_t_s = shifted_geo_mean(t_single, 0.200)
-        sgm_n_s = shifted_geo_mean(n_single, 10000.0)
+        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
+        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
 
-        sgm_t_e = shifted_geo_mean(t_enum, 2.000)
-        sgm_n_e = shifted_geo_mean(n_enum, 100000.0)
+        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
+        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
         loss_time = 0.5 * (sgm_t_s / ref_scale_s8_single_time) + 1.5 * (sgm_t_e / ref_scale_s8_enum_time)
         loss_nodes = 0.5 * (sgm_n_s / ref_scale_s8_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s8_enum_nodes)
@@ -460,6 +460,7 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
 
 def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only):
     s9_train = datasets["s9_train"]
+    single_time_shift, single_node_shift = get_sgm_shifts(9)
 
     ref_scale_s9_time = 0.10
     ref_scale_s9_nodes = 20000.0
@@ -473,8 +474,8 @@ def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumera
         t_list, n_list = evaluate_subset(env, tasks, max_workers=max_workers, use_stdin=use_stdin)
 
         # High shift = 1.0s / 120,000 nodes to strongly bias toward hard instances (>= 0.5s up to 5s)
-        sgm_t = shifted_geo_mean(t_list, 1.000)
-        sgm_n = shifted_geo_mean(n_list, 120000.0)
+        sgm_t = shifted_geo_mean(t_list, single_time_shift)
+        sgm_n = shifted_geo_mean(n_list, single_node_shift)
 
         loss_time = 1.0 * (sgm_t / ref_scale_s9_time)
         loss_nodes = 1.0 * (sgm_n / ref_scale_s9_nodes)
@@ -508,10 +509,13 @@ def resolve_winners_filename(size):
 def save_winners(filename, theta_vals, label, size):
     phys = get_physical_params(theta_vals)
     with open(filename, "w") as f:
-        f.write(f"SPSA WINNING PARAMETERS FOR SIZE {size} ({label})\n")
+        mode = RUN_METADATA['tune_mode'] if RUN_METADATA else 'unknown'
+        f.write(f"SPSA WINNING PARAMETERS FOR SIZE {size} ({label}; mode={mode})\n")
         f.write("==============================================\n")
         for name, val in phys.items():
             f.write(f"#define {name} {val}\n")
+    if RUN_METADATA:
+        save_run_metadata(filename, RUN_METADATA, label)
 
 
 def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_nodes_norm, stats):
@@ -535,8 +539,8 @@ def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations):
 
     sens_data = []
     for i, (name, _, _, _, _, _) in enumerate(PARAM_METADATA):
-        avg_gt = abs(grad_time_sum[i]) / iterations
-        avg_gn = abs(grad_nodes_sum[i]) / iterations
+        avg_gt = grad_time_sum[i] / iterations
+        avg_gn = grad_nodes_sum[i] / iterations
         total_sens = avg_gt + avg_gn
         sens_data.append((name, avg_gt, avg_gn, total_sens))
 
@@ -584,22 +588,33 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         val_log_path = f"{base}_val{ext}"
 
     import compare_performance
-    compare_performance.run_comparison(
+    train_reports = compare_performance.run_comparison(
         validation_tasks=train_tasks,
         baseline_bin=BIN_CURR,
         tunable_bin=BIN_CURR,
         tuned_env=get_env_for_theta(theta_final),
         title="TRAINING SET PERFORMANCE COMPARISON (1k subsample)",
-        log_path=train_log_path
+        log_path=train_log_path,
+        use_stdin=args.stdin, max_workers=min(os.cpu_count() or 1, args.max_workers),
+        repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
+        records_path=os.path.splitext(args.log or os.path.join(
+            ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_train_instances.jsonl'
     )
-    compare_performance.run_comparison(
+    val_reports = compare_performance.run_comparison(
         validation_tasks=validation_tasks,
         baseline_bin=BIN_CURR,
         tunable_bin=BIN_CURR,
         tuned_env=get_env_for_theta(theta_final),
         title="VALIDATION SET PERFORMANCE COMPARISON",
-        log_path=val_log_path
+        log_path=val_log_path,
+        use_stdin=args.stdin, max_workers=min(os.cpu_count() or 1, args.max_workers),
+        repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
+        records_path=os.path.splitext(args.log or os.path.join(
+            ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_val_instances.jsonl'
     )
+
+    if any(not report['valid'] for report in train_reports + val_reports):
+        raise RuntimeError('Post-tuning comparison invalid; inspect per-instance records')
 
 
 # --- Core SPSA Loop ---
@@ -634,6 +649,14 @@ def run_spsa(args, datasets, max_workers):
 
     winners_filename = resolve_winners_filename(args.size)
     log_print(f"SPSA winners file resolved to: {winners_filename}")
+    global RUN_METADATA
+    RUN_METADATA = build_run_metadata(
+        args, datasets, PARAM_METADATA, get_active_param_names(args.tune_mode, args.size),
+        max_workers, get_physical_params(theta))
+    RUN_METADATA['sgm_shifts'] = {
+        mode: dict(zip(('time', 'nodes'), get_sgm_shifts(args.size, enumeration)))
+        for mode, enumeration in [('single', False), ('enumeration', True)]}
+    save_run_metadata(winners_filename, RUN_METADATA, 'Started')
 
     # Modern Optimizer State: Running scale and momentum buffers
     beta = args.beta
@@ -703,8 +726,8 @@ def run_spsa(args, datasets, max_workers):
                 gn_i = 0.0
             grad_time.append(gt_i)
             grad_nodes.append(gn_i)
-            grad_time_sum[i] += gt_i
-            grad_nodes_sum[i] += gn_i
+            grad_time_sum[i] += abs(gt_i)
+            grad_nodes_sum[i] += abs(gn_i)
 
         if LOG_FILE_HANDLE:
             LOG_FILE_HANDLE.write(f"Iter {k} grad_time:  {list(grad_time)}\n")
@@ -826,11 +849,22 @@ def parse_args():
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
     parser.add_argument("--tune-mode", choices=["all", "strategy", "math"], default="all", help="Tuning mode: 'all' (all unfrozen parameters), 'strategy' (tune strategy params only, freeze math constants), 'math' (tune math/scale constants only, freeze strategy params)")
     parser.add_argument("--enumeration-only", action="store_true", help="Focus solely on full enumeration benchmarks (-s 0) during tuning")
-    return parser.parse_args()
+    parser.add_argument('--seed', type=int, default=None, help='RNG seed; generated and recorded if omitted')
+    parser.add_argument('--comparison-repeats', type=int, default=2, help='Even number of AB/BA comparison rounds')
+    parser.add_argument('--comparison-warmup', type=int, default=1, help='Unmeasured instances per comparison worker')
+    args = parser.parse_args()
+    if args.max_workers < 1 or args.iterations < 1 or (args.batch_size is not None and args.batch_size < 1):
+        parser.error('workers, iterations and batch size must be positive')
+    if args.comparison_repeats < 2 or args.comparison_repeats % 2 or args.comparison_warmup < 0:
+        parser.error('comparison repeats must be positive and even; warmup nonnegative')
+    return args
 
 
 def main():
     args = parse_args()
+    if args.seed is None:
+        args.seed = random.SystemRandom().getrandbits(64)
+    random.seed(args.seed)
     max_workers = min(os.cpu_count() or 1, args.max_workers)
 
     global LOG_FILE_HANDLE
@@ -840,6 +874,7 @@ def main():
             os.makedirs(log_dir, exist_ok=True)
         LOG_FILE_HANDLE = open(args.log, "w")
 
+    log_print(f"SPSA random seed: {args.seed}")
     log_print(f"Starting SPSA optimization for size {args.size} (iterations: {args.iterations})")
 
     datasets = load_datasets(args.size)
@@ -847,6 +882,7 @@ def main():
 
     if LOG_FILE_HANDLE:
         LOG_FILE_HANDLE.close()
+        LOG_FILE_HANDLE = None
 
     if not args.no_compare:
         run_post_tuning_comparison(args, datasets, theta_final)
