@@ -13,6 +13,13 @@
 #include "puzzle_init.h"
 #include "cell_distance.h"
 
+static int	get_edge_distance(int coordinate, int size)
+{
+	if (coordinate > (size - 1) / 2)
+		return (size - 1 - coordinate);
+	return (coordinate);
+}
+
 static int	get_cell_dist_val(int idx, int size)
 {
 	int		x_edge_dist;
@@ -20,12 +27,8 @@ static int	get_cell_dist_val(int idx, int size)
 	int		score_component;
 	int		s;
 
-	x_edge_dist = idx % size;
-	if (x_edge_dist > size / 2)
-		x_edge_dist = size - x_edge_dist;
-	y_edge_dist = idx / size;
-	if (y_edge_dist > size / 2)
-		y_edge_dist = size - y_edge_dist;
+	x_edge_dist = get_edge_distance(idx % size, size);
+	y_edge_dist = get_edge_distance(idx / size, size);
 	s = size + 1;
 	score_component = s * s;
 	if (x_edge_dist <= y_edge_dist)
