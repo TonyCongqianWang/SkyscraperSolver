@@ -1,22 +1,33 @@
 """Runtime screening with durable per-symmetry measurements."""
 import statistics
 import subprocess
+import tempfile
 import time
 
 from comparison_measurements import parse_output, read_instance, stop_process
-from .common import digest, key, modes, symmetries
+from .common import ROOT, digest, key, modes, symmetries
 
 
 class Session:
     def __init__(self, binary, mode, env, timeout):
         self.timeout = timeout
-        self.proc = subprocess.Popen(
-            [str(binary), '-s', '0' if mode == 'enumeration' else '1', '--stdin'],
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
-            env=env, bufsize=0)
+        (ROOT / 'scratch').mkdir(exist_ok=True)
+        self.stderr = tempfile.TemporaryFile(dir=ROOT / 'scratch')
+        self.closed = False
+        try:
+            self.proc = subprocess.Popen(
+                [str(binary), '-s', '0' if mode == 'enumeration' else '1', '--stdin'],
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=self.stderr,
+                env=env, bufsize=0)
+        except OSError:
+            self.stderr.close()
+            raise
 
     def measure(self, clue):
         start = time.perf_counter()
+        if self.closed:
+            raise RuntimeError('Cannot measure using a failed or closed session')
+        lines = []
         try:
             self.proc.stdin.write(f'"{clue}"\n'.encode())
             self.proc.stdin.flush()
@@ -24,13 +35,23 @@ class Session:
             row = parse_output(lines, time.perf_counter() - start)
             if status != 'ok':
                 row['status'] = status
-            return row
         except (OSError, ValueError) as error:
-            return {'seconds': time.perf_counter() - start, 'nodes': None,
-                    'solutions': None, 'status': 'error', 'detail': str(error)}
+            row = {'seconds': time.perf_counter() - start, 'nodes': None,
+                   'solutions': None, 'status': 'error', 'detail': str(error)}
+        if row['status'] != 'ok':
+            self.close()
+            row.update(returncode=self.proc.returncode, stderr=self.error_output,
+                       stdout=''.join(lines))
+        return row
 
     def close(self):
+        if self.closed:
+            return
         stop_process(self.proc)
+        self.stderr.seek(0)
+        self.error_output = self.stderr.read().decode('utf-8', errors='replace')
+        self.stderr.close()
+        self.closed = True
 
 
 def screen(clue, size, binary, env, settings, cache, stopped):
@@ -51,8 +72,14 @@ def screen(clue, size, binary, env, settings, cache, stopped):
                         if session is None:
                             session = Session(binary, mode, env, settings['timeout'])
                             # Warm a fresh worker, but do not use warmup for ranking/filtering.
-                            session.measure(variant)
-                        row = dict(session.measure(variant), id=measurement_id,
+                            warmup = session.measure(variant)
+                            if warmup['status'] != 'ok' or warmup['seconds'] > settings['timeout']:
+                                row = dict(warmup, phase='warmup')
+                            else:
+                                row = session.measure(variant)
+                        else:
+                            row = session.measure(variant)
+                        row = dict(row, id=measurement_id,
                                    size=size, key=canonical, mode=mode,
                                    symmetry=variant, attempt=attempt)
                         cache.save_measurement(measurement_id, row)

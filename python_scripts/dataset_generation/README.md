@@ -76,6 +76,12 @@ Re-run the **same command** to resume. Results live by default under
 - `results/`: verified datasets, raw measurements, provenance and reports.
 - `spsa_datasets_<version>.tar.gz` and its `.sha256`: the bundle to return.
 
+Failed warmups reject the puzzle and are recorded with `phase: warmup`. Any
+timeout or malformed response closes the solver session before another input
+can be sent. Failure records include the process return code, stderr and the
+stdout consumed by that measurement; a timeout's return code may reflect the
+worker being killed by the screener.
+
 Completed measurements, including failures, are reused. A measurement interrupted
 before completion is repeated. Solver, source, Python/dependency, input or
 sampling-setting changes refuse cache reuse; choose another `--work-dir`.
