@@ -17,10 +17,10 @@ fi
 }
 make -j "$BUILD_JOBS"
 exec "$PYTHON" -u -m python_scripts.dataset_generation run \
-    --sizes 8 9 \
+    --sizes 9 \
     --train-count 10000 --validation-count 1000 \
-    --difficulty-mix 0.2 0.5 0.3 \
-    --seed 20261029 --max-workers 4 \
+    --difficulty-mix 0.2 0.45 0.35 \
+    --seed 20261029 --max-workers 2 \
     --timeout 8 --recheck-threshold 6.4 \
     --reference-count 500 --candidate-batch-size 2000 \
     --burn-in 100000 --gap 100 \
