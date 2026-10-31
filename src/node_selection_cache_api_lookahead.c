@@ -80,7 +80,10 @@ int	get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
 	if (next->cell_idx >= 0)
 		update_resume_index(node, next);
 	else
+	{
+		node->lookahead_ctx->curr_pass = 1;
 		node->lookahead_ctx->curr_index = 0;
+	}
 	max_pass = get_max_allowed_pass(config->selectivity);
 	while (node->lookahead_ctx->curr_pass <= max_pass)
 	{
