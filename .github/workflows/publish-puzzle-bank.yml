@@ -1,0 +1,34 @@
+name: Publish puzzle-bank API
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'puzzle_bank/unique/v1/**'
+      - '.github/workflows/publish-puzzle-bank.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: pages
+  cancel-in-progress: true
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - name: Stage static API
+        run: |
+          mkdir -p public/puzzle-bank/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          touch public/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deployment
+        uses: actions/deploy-pages@v4
