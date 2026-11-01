@@ -40,7 +40,6 @@ void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 void	descend_to_child(t_puzzle *puzzle, int *d,
 			t_search_frame *frames)
 {
-	update_sol_target(&frames[*d].node_sols, puzzle->cur_node);
 	(*d)++;
 	puzzle->node_stack_top = *d;
 	puzzle->node_stack[*d] = puzzle->node_stack[*d - 1];
