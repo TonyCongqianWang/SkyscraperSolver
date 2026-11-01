@@ -1,9 +1,11 @@
-name: Publish puzzle-bank API
+name: Publish puzzle-bank API and WebAssembly solver
 on:
   push:
     branches: [main]
     paths:
       - 'puzzle_bank/unique/v1/**'
+      - 'src/**'
+      - 'web/**'
       - '.github/workflows/publish-puzzle-bank.yml'
   workflow_dispatch:
 permissions:
@@ -15,12 +17,27 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+      - name: Build WebAssembly solver
+        run: |
+          mkdir -p public/solver
+          emcc -O3 -flto src/*.c web/wasm_api.c \
+            -s MODULARIZE=1 \
+            -s EXPORT_NAME=createSkyscraperSolver \
+            -s EXPORTED_FUNCTIONS='["_solve_web"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
+            -s ALLOW_MEMORY_GROWTH=1 \
+            -s INITIAL_MEMORY=67108864 \
+            -o public/solver/solver.js
+          cp web/index.html web/worker.js public/solver/
       - uses: actions/configure-pages@v5
       - name: Stage static API
         run: |
