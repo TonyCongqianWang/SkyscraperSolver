@@ -5,6 +5,9 @@ import json
 import random
 import re
 import subprocess
+import shlex
+import sys
+import traceback
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -49,6 +52,38 @@ def verify(binary, clues, cells, timeout, *, diagnose=False):
             raise RuntimeError(f"Solver output could not be parsed for clues={clues}, cells={cells}\\nstdout={p.stdout}\\nstderr={p.stderr}")
         return None
     return (int(m[1]), int(nodes[1]))
+
+def print_failure_diagnostics(binary, ident, label, minimal, variant, cells,
+                              solution, timeout, seed, attempt, original_error=None):
+    """Emit all context and reproducible solver runs to stderr before failing."""
+    def fmt(values):
+        return " ".join(map(str, values))
+
+    print("\\n" + "=" * 76, file=sys.stderr)
+    print("UNIQUE PUZZLE BANK — VERIFICATION FAILURE", file=sys.stderr)
+    print(f"Puzzle: {ident} | variant: {label} | attempt: {attempt} | seed: {seed}",
+          file=sys.stderr)
+    print(f"Minimal clues: {minimal}", file=sys.stderr)
+    print(f"Variant clues: {variant}", file=sys.stderr)
+    print(f"Given cells:   {cells}", file=sys.stderr)
+    print(f"Known solution: {solution}", file=sys.stderr)
+    if original_error is not None:
+        print(f"Original failure: {original_error!r}", file=sys.stderr)
+    for name, clue_set in (("minimal", minimal), ("failing variant", variant)):
+        for limit in (2, 0):
+            command = [str(binary), "-s", str(limit), fmt(clue_set), fmt(cells)]
+            print(f"\\n{name}, -s {limit}: {shlex.join(command)}", file=sys.stderr)
+            try:
+                run = subprocess.run(command, capture_output=True, text=True,
+                                     timeout=timeout, check=False)
+                print(f"Exit code: {run.returncode}", file=sys.stderr)
+                print("stdout:\\n" + run.stdout, file=sys.stderr)
+                if run.stderr:
+                    print("stderr:\\n" + run.stderr, file=sys.stderr)
+            except subprocess.TimeoutExpired as exc:
+                print(f"TIMEOUT after {timeout}s: {exc}", file=sys.stderr)
+    print("=" * 76, file=sys.stderr, flush=True)
+
 
 def minimize(binary, full, solved, rng, timeout, weight):
     n = len(solved)
@@ -119,10 +154,20 @@ def main():
         for label,additional in [("minimal",0),("plus_2",2),("plus_4",4),("full",len(missing))]:
             variant=clues[:]
             for i in missing[:additional]: variant[i]=full[i]
-            verified=verify(binary,variant,cells,args.timeout,diagnose=True)
-            if verified[0]!=1:
-                raise RuntimeError(f"Variant {label} for {ident} returned {verified[0]} solutions, expected 1. "
-                                   f"Clues={variant}, givens={cells}, known solution={solution}")
+            try:
+                verified = verify(binary, variant, cells, args.timeout, diagnose=True)
+                if verified[0] != 1:
+                    raise RuntimeError(
+                        f"Variant {label} returned {verified[0]} solutions (expected 1)"
+                    )
+            except Exception as exc:
+                print_failure_diagnostics(
+                    binary, ident, label, clues, variant, cells, solution,
+                    args.timeout, args.seed, attempt + 1, exc,
+                )
+                raise RuntimeError(
+                    f"Verification failed for {ident}/{label}; full diagnostic stack printed above"
+                ) from exc
             variants.append({"label":label,"clues":variant,"givens":cells,
                  "clue_count":sum(bool(v) for v in variant),"nodes_visited":verified[1]})
         graded_bank.append({"id":ident,"size":args.size,"variants":variants,
