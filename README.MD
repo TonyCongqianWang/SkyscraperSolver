@@ -1,6 +1,6 @@
 # Solver for the Skyscraper puzzle game
 
-Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
+Originally created for the Rush01 project during the C Piscine at 42 Heilbronn. Since then, the solver has grown into a larger project focused on constraint propagation, search heuristics, and performance optimization.
 
 > [!NOTE]
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
@@ -10,7 +10,15 @@ Created as a solution for the Rush01 Project of the C Piscine in 42 Heilbronn.
 > A solver-inspired playable offline implementation with C#/.NET GUI can be found at the [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository.
 
 
-Compilation and usage like this (assuming cc is your C compiler):
+## Compilation and Usage
+
+Build with `make`, or compile directly (assuming `cc` is your C compiler):
+
+```
+make
+```
+
+For direct compilation:
 
 ```
 cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
@@ -18,15 +26,15 @@ cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
 ./skyscraper_solver "2 3 2 4 3 2 1 5 1 3 2 3 2 4 5 4 2 3 3 2 5 3 3 1 2 4 3 2 1 2 2 5" "0 3 0 0 5 0 0 0 1 0 0 5 0 0 0 0 3 0 6 0 2 0 0 0 0 0 0 1 0 0 6 0 0 0 0 0 0 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 0 0 1 4 0 0 0 0 0 1 0 0"
 ```
 
-or on windows:
+On Windows:
 
 ```
 .\skyscraper_solver "5 3 2 1 3 4 1 2 4 2 2 3 4 3 2 3 2 1 3 4 2 1 2 3"
 ```
 
-Grids up to size 9x9 are accepted. Constraint values (aka clues) are in order top (l->r) bottom (l->r) left (t->b) right (t->b). The format has to be exactly as specified. Exacltly one space seperating each number. Since v06 grids can optionally be input as second argument (same format rules apply). Empty cells are represented by the number 0. Version v06a allows empty constraint values, also represented by 0.
+Grids up to size 9x9 are supported. Constraint values (clues) must be given in this order: top (left to right), bottom (left to right), left (top to bottom), and right (top to bottom), with exactly one space between numbers. Since v06, optional pre-filled grid values can be supplied as a second argument, using the same space-separated format. A value of `0` represents an empty cell; since v06a, `0` also represents an unspecified constraint.
 
-There is one optional flag `-s <n_solutions>` you can use. When specified, instead of stopping after the first solution, the programm will stop until it finds `n_solutions` or until all solutions are found. At the end all solutions are displayed. `n_solutions = 0` is a special case, where no solutions are displayed at the end, but the programm only stop after finding all possible solutions and the number of solutions is displayed.
+The optional flag `-s <n_solutions>` controls solution enumeration. By default, the solver stops after the first solution. With `-s`, it searches until it finds the requested number of solutions or exhausts all possibilities, and prints the solutions found. The special case `-s 0` enumerates all solutions and reports their count without printing individual solution grids.
 
 Solutions (if found) are printed like this:
 
@@ -44,7 +52,7 @@ Solutions (if found) are printed like this:
 
 ### Instances
 
-Some more example inputs of different sizes (more can be found in the benchmark_scripts or generated automatically using the python script):
+Additional example inputs of different sizes (more instances can be found in the benchmark datasets or generated with the Python scripts):
 ```
 ./skyscraper_solver "5 2 3 2 2 1 4 1 3 3 3 4 2 2 3 3 4 2 2 2 1 2 3 2 4 3 1 3"
 ./skyscraper_solver "2 3 4 3 1 2 3 2 3 1 3 5 4 3 2 4 3 3 4 2 2 1 4 2 3 3 1 2 5 4 2 3"
@@ -53,20 +61,27 @@ Some more example inputs of different sizes (more can be found in the benchmark_
 ```
 
 ## Python Cross-Checking Solver
-A Python-based Skyscraper solver utilizing either the Z3 Theorem Prover or the otrools cpsat solver as backend is located in the [python_solver/](python_solver/) directory. It serves as a high-fidelity mathematical reference model to cross-check the correctness of the C solver's solution counts and cell assignments.
 
-You can run it by installing the required solver dependencies (`pip install -r python_solver/requirements.txt`) and executing the solver scripts within the directory for automated verification.
+A Python-based Skyscraper solver using either Z3 or OR-Tools CP-SAT as its backend is available in [python_solver/](python_solver/). It provides an independent mathematical reference for cross-checking the C solver's solution counts and cell assignments.
+
+Install its dependencies with `pip install -r python_solver/requirements.txt`, then use the scripts in that directory for reference solving and verification.
+
+## Auxiliary Tools and Benchmarking
+
+Alongside the C solver, [python_scripts/](python_scripts/) contains tools for generating puzzle instances, running benchmarks, comparing solver versions, and verifying correctness. The [benchmark_sets/](benchmark_sets/) and [puzzle_bank/](puzzle_bank/) directories contain instances used for testing and performance evaluation.
+
+Since v09, benchmarking and parameter tuning have become an important part of development. In particular, the SPSA (Simultaneous Perturbation Stochastic Approximation) scripts help tune the solver's many search and pruning parameters against benchmark workloads. Related scripts analyze tuning runs and apply selected parameter values. The auxiliary tools are primarily intended for development and experimentation; they are not required to compile or use the C solver.
 
 ## Version History
 
 ### v09
-Large scale refactor and tweakning of entire codebase using agent driven development.
-Improved benchmarking and added scripts to tune parameters automatically using SPSA.
-Added CI tests to allow for easy checking of solver correctness, crucial for fast development.
+Large-scale refactoring and tuning across the codebase, with agent-assisted development.
+Expanded the benchmarking tools and added automated parameter tuning using SPSA.
+Added CI checks to help verify correctness throughout development.
 
-Solves size 9 benchmarks set in roughly 20 minutes on a 2.20GHz Intel Xeon. A massive improvement!
+Completes the size 9 benchmark set in roughly 20 minutes on a 2.20 GHz Intel Xeon. This result is workload- and version-dependent; see earlier entries for historical comparisons.
 
-Slight regression in size 8 enumeration performance.
+Some regression in size 8 enumeration performance.
 
 ### v08
 Added Python Z3 Cross-Checking Solver.
@@ -76,7 +91,7 @@ Refactored lookahead node pruning logic and integrated domain-specific type defi
 Solves the size 9 benchmark set in roughly 7:48 on a 2.20GHz Intel Xeon.
 
 ### v07
-Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and outputed, instead only the number of solutions will be displayed at the end.
+Added flag to allow searching for multiple solutions. Special case is 0, where solutions are not stored and output, instead only the number of solutions will be displayed at the end.
 
 First version being able to solve the size 9 benchmarkset in roughly 7:59 on a 2.20GHz Intel Xeon.
 
