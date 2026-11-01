@@ -44,8 +44,6 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 	puzzle->node_stack_top = *d;
 	puzzle->node_stack[*d] = puzzle->node_stack[*d - 1];
 	puzzle->cur_node = &puzzle->node_stack[*d];
-	/* Keep the parent's total cap unchanged. Limit this child to the
-	 * solutions still needed after earlier sibling branches. */
 	if (puzzle->cur_node->max_solutions > 0)
 		puzzle->cur_node->max_solutions -= frames[*d - 1].node_sols.solutions_found;
 	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
