@@ -45,7 +45,16 @@ def run_solver(binary, options, clues):
 def verify_instance(idx, clues, binary_candidate, binary_reference, options, expected_solutions=None):
     res_candidate = run_solver(binary_candidate, options, clues)
     res_reference = run_solver(binary_reference, options, clues) if binary_reference else None
-    return idx, clues, res_candidate, res_reference, expected_solutions
+    # The expected count is authoritative when supplied; otherwise use the
+    # independently executed reference. Never derive limits from a failed run.
+    full_count = (expected_solutions if expected_solutions is not None
+                  else res_reference.get("solutions") if res_reference and "error" not in res_reference
+                  else None)
+    limited = {}
+    if full_count is not None and "error" not in res_candidate:
+        for limit in sorted({10, full_count} - {0}):
+            limited[limit] = run_solver(binary_candidate, f"-s {limit}", clues)
+    return idx, clues, res_candidate, res_reference, expected_solutions, limited
 
 def verify_file(benchmark_file, expected_file, candidate, reference, options, jobs, num_instances=None):
     if not os.path.exists(benchmark_file):
@@ -74,6 +83,7 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
         
     total = len(lines)
     print(f"Starting verification of {total} instances using {options}...")
+    print("Finite-limit checks: -s 10 and -s <expected_count> (when > 0)")
     print(f"Benchmark file:   {benchmark_file}")
     print(f"Candidate binary: {candidate}")
     if reference:
@@ -101,7 +111,7 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
         ]
         
         for fut in concurrent.futures.as_completed(futures):
-            idx, clues, res_candidate, res_reference, expected_solutions = fut.result()
+            idx, clues, res_candidate, res_reference, expected_solutions, limited = fut.result()
             
             if "error" in res_candidate or (res_reference and "error" in res_reference):
                 errors += 1
@@ -114,6 +124,26 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
                 s_candidate = res_candidate["solutions"]
                 n_candidate = res_candidate["nodes"]
                 
+                # Check finite stopping limits against an independently known count.
+                # -s 10 should return min(10, total); -s total should return total.
+                expected_total = (expected_solutions if expected_solutions is not None
+                                  else res_reference["solutions"] if res_reference else None)
+                if expected_total is not None:
+                    limit_failures = []
+                    for limit, result in limited.items():
+                        wanted = min(limit, expected_total)
+                        if "error" in result:
+                            limit_failures.append(f"-s {limit}: {result['error']}")
+                        elif result["solutions"] != wanted:
+                            limit_failures.append(
+                                f"-s {limit}: got {result['solutions']}, expected {wanted}")
+                    if limit_failures:
+                        mismatches += 1
+                        print(f"[LIMIT MISMATCH] Instance {idx} (Clues: {clues[:60]}...):")
+                        for failure in limit_failures:
+                            print(f"  {failure}")
+                        continue
+
                 # Check consistency against expected solutions if file was provided
                 if expected_solutions is not None:
                     if s_candidate != expected_solutions:
