@@ -4,7 +4,7 @@ Build locally with [Emscripten](https://emscripten.org/):
 
 ```sh
 emcc -O3 -flto src/*.c web/wasm_api.c \
-  -s MODULARIZE=1 -s EXPORT_NAME=createSkyscraperSolver \
+  -s INVOKE_RUN=0 -s MODULARIZE=1 -s EXPORT_NAME=createSkyscraperSolver \
   -s EXPORTED_FUNCTIONS='["_solve_web"]' \
   -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
   -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
