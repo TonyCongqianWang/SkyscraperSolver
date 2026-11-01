@@ -51,7 +51,7 @@ debug: CFLAGS += -fsanitize=address,undefined -g
 debug: re
 
 test: $(BINARY)
-	python python_scripts/verify_consistency.py -r $(BINARY)
+	python python_scripts/verify_consistency.py -c $(BINARY)
 
 # Skip including dependency files if we are cleaning/rebuilding
 ifeq ($(filter clean fclean re debug,$(MAKECMDGOALS)),)
