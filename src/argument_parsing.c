@@ -40,7 +40,7 @@ int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv)
 	if (set_max_solutions)
 		max_solutions = argv[2];
 	constr = argv[1 + 2 * set_max_solutions];
-	if (argc > 1 + 2 * set_max_solutions)
+	if (argc > 2 + 2 * set_max_solutions)
 		grid = argv[2 + 2 * set_max_solutions];
 	if (!init_puzzle_from_constr_str(puzzle, constr, max_solutions))
 	{
