@@ -224,6 +224,17 @@ def main():
             ("benchmark_sets/benchmarkSet8_easy50.txt", "benchmark_sets/_num_solutions_benchmarkSet8_easy50.txt")
         ]
         all_success = True
+        # Regression: the old finite-limit accounting returned only 1 for -s 2,
+        # although exhaustive enumeration correctly found 2 solutions.
+        regression_clues = "1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0"
+        print("\\nRunning finite-limit 4x4 regression...")
+        for limit, expected in ((0, 2), (1, 1), (2, 2), (10, 2)):
+            result = run_solver(candidate_path, f"-s {limit}", regression_clues)
+            if "error" in result or result["solutions"] != expected:
+                print(f"[FAIL] Regression -s {limit}: {result}, expected {expected}")
+                all_success = False
+            else:
+                print(f"[PASS] Regression -s {limit}: {expected} solutions")
         for b_file, e_file in default_sets:
             print(f"\n============================================================")
             print(f"Running Default Set: {b_file}")
