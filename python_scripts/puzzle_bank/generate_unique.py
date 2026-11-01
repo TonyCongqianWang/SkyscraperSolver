@@ -29,18 +29,26 @@ def clues_for(g):
        + [visibility(g[r]) for r in range(n)]
        + [visibility(g[r][::-1]) for r in range(n)])
 
-def verify(binary, clues, cells, timeout):
+def verify(binary, clues, cells, timeout, *, diagnose=False):
     try:
         p = subprocess.run([str(binary), "-s", "2", " ".join(map(str, clues)),
                             " ".join(map(str, cells))], text=True, capture_output=True,
                            timeout=timeout)
-    except subprocess.TimeoutExpired:
+    except subprocess.TimeoutExpired as exc:
+        if diagnose:
+            raise RuntimeError(f"Solver timed out after {timeout}s for clues={clues}, cells={cells}") from exc
         return None
     if p.returncode:
+        if diagnose:
+            raise RuntimeError(f"Solver exited {p.returncode} for clues={clues}, cells={cells}\\nstdout={p.stdout}\\nstderr={p.stderr}")
         return None
     m = re.search(r"^Solutions found:\s*(\d+)\s*$", p.stdout, re.M)
     nodes = re.search(r"^Nodes visited:\s*(\d+)\s*$", p.stdout, re.M)
-    return (int(m[1]), int(nodes[1])) if m and nodes else None
+    if not m or not nodes:
+        if diagnose:
+            raise RuntimeError(f"Solver output could not be parsed for clues={clues}, cells={cells}\\nstdout={p.stdout}\\nstderr={p.stderr}")
+        return None
+    return (int(m[1]), int(nodes[1]))
 
 def minimize(binary, full, solved, rng, timeout, weight):
     n = len(solved)
@@ -111,8 +119,10 @@ def main():
         for label,additional in [("minimal",0),("plus_2",2),("plus_4",4),("full",len(missing))]:
             variant=clues[:]
             for i in missing[:additional]: variant[i]=full[i]
-            verified=verify(binary,variant,cells,args.timeout)
-            if not verified or verified[0]!=1: raise RuntimeError("Variant not verified")
+            verified=verify(binary,variant,cells,args.timeout,diagnose=True)
+            if verified[0]!=1:
+                raise RuntimeError(f"Variant {label} for {ident} returned {verified[0]} solutions, expected 1. "
+                                   f"Clues={variant}, givens={cells}, known solution={solution}")
             variants.append({"label":label,"clues":variant,"givens":cells,
                  "clue_count":sum(bool(v) for v in variant),"nodes_visited":verified[1]})
         graded_bank.append({"id":ident,"size":args.size,"variants":variants,
