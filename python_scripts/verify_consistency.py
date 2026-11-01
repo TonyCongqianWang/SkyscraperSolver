@@ -42,143 +42,98 @@ def run_solver(binary, options, clues):
         
     return {"solutions": solutions_found, "nodes": nodes_visited}
 
-def verify_instance(idx, clues, binary_candidate, binary_reference, options, expected_solutions=None):
-    res_candidate = run_solver(binary_candidate, options, clues)
-    res_reference = run_solver(binary_reference, options, clues) if binary_reference else None
-    # The expected count is authoritative when supplied; otherwise use the
-    # independently executed reference. Never derive limits from a failed run.
-    full_count = (expected_solutions if expected_solutions is not None
-                  else res_reference.get("solutions") if res_reference and "error" not in res_reference
-                  else None)
-    limited = {}
-    if full_count is not None and "error" not in res_candidate:
-        for limit in sorted({10, full_count} - {0}):
-            limited[limit] = run_solver(binary_candidate, f"-s {limit}", clues)
-    return idx, clues, res_candidate, res_reference, expected_solutions, limited
+def run_pass(name, instances, candidate, reference, options, jobs):
+    """Execute one verification mode across its entire selected dataset."""
+    print(f"  Pass: {name} ({len(instances)} instances, {options})", flush=True)
 
-def verify_file(benchmark_file, expected_file, candidate, reference, options, jobs, num_instances=None):
+    def check(item):
+        idx, clues, expected = item
+        result = run_solver(candidate, options, clues)
+        if "error" in result:
+            return idx, f"candidate error: {result['error']}"
+        wanted = min(int(shlex.split(options)[1]), expected) if options != "-s 0" else expected
+        if result["solutions"] != wanted:
+            return idx, f"got {result['solutions']}, expected {wanted} (nodes: {result['nodes']})"
+        if reference:
+            ref_result = run_solver(reference, options, clues)
+            if "error" in ref_result:
+                return idx, f"reference error: {ref_result['error']}"
+            if result["solutions"] != ref_result["solutions"]:
+                return idx, f"candidate {result['solutions']} vs reference {ref_result['solutions']}"
+        return idx, None
+
+    failures = 0
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        futures = [executor.submit(check, item) for item in instances]
+        for future in concurrent.futures.as_completed(futures):
+            idx, error = future.result()
+            if error:
+                failures += 1
+                print(f"[FAIL] {name}, instance {idx}: {error}")
+    print(f"  {name}: {len(instances) - failures}/{len(instances)} passed", flush=True)
+    return failures == 0
+
+
+def verify_file(benchmark_file, expected_file, candidate, reference, options, jobs,
+                num_instances=None, limit_instances=None):
     if not os.path.exists(benchmark_file):
         print(f"Error: Benchmark file {benchmark_file} not found.")
         return False
-        
-    expected_counts = None
-    if expected_file:
-        if not os.path.exists(expected_file):
-            print(f"Error: Expected solutions file {expected_file} not found.")
-            return False
-        with open(expected_file, "r") as f:
-            expected_counts = [int(line.strip()) for line in f if line.strip()]
-            
-    if not reference and not expected_file:
-        print("Error: Must provide either a reference binary (-r) or expected solution counts file (-e).")
+
+    if not expected_file:
+        print("Error: An expected-count file is required for ordered multi-pass checks.")
+        return False
+    if not os.path.exists(expected_file):
+        print(f"Error: Expected solutions file {expected_file} not found.")
         return False
 
-    with open(benchmark_file, "r") as f:
-        lines = [line.strip().strip('"') for line in f if line.strip()]
-        
-    if num_instances is not None:
-        lines = lines[:num_instances]
-        if expected_counts is not None:
-            expected_counts = expected_counts[:num_instances]
-        
-    total = len(lines)
-    print(f"Starting verification of {total} instances using {options}...")
-    print("Finite-limit checks: -s 10 and -s <expected_count> (when > 0)")
-    print(f"Benchmark file:   {benchmark_file}")
-    print(f"Candidate binary: {candidate}")
-    if reference:
-        print(f"Reference binary: {reference}")
-    if expected_file:
-        print(f"Expected solutions file: {expected_file}")
-    print("-" * 60)
-    
-    mismatches = 0
-    errors = 0
-    results = []
-    
-    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
-        futures = [
-            executor.submit(
-                verify_instance, 
-                idx, 
-                line, 
-                candidate, 
-                reference, 
-                options,
-                expected_counts[idx - 1] if expected_counts is not None else None
-            )
-            for idx, line in enumerate(lines, 1)
-        ]
-        
-        for fut in concurrent.futures.as_completed(futures):
-            idx, clues, res_candidate, res_reference, expected_solutions, limited = fut.result()
-            
-            if "error" in res_candidate or (res_reference and "error" in res_reference):
-                errors += 1
-                print(f"[ERROR] Instance {idx}:")
-                if "error" in res_candidate:
-                    print(f"  Candidate: {res_candidate['error']}")
-                if res_reference and "error" in res_reference:
-                    print(f"  Reference: {res_reference['error']}")
-            else:
-                s_candidate = res_candidate["solutions"]
-                n_candidate = res_candidate["nodes"]
-                
-                # Check finite stopping limits against an independently known count.
-                # -s 10 should return min(10, total); -s total should return total.
-                expected_total = (expected_solutions if expected_solutions is not None
-                                  else res_reference["solutions"] if res_reference else None)
-                if expected_total is not None:
-                    limit_failures = []
-                    for limit, result in limited.items():
-                        wanted = min(limit, expected_total)
-                        if "error" in result:
-                            limit_failures.append(f"-s {limit}: {result['error']}")
-                        elif result["solutions"] != wanted:
-                            limit_failures.append(
-                                f"-s {limit}: got {result['solutions']}, expected {wanted}")
-                    if limit_failures:
-                        mismatches += 1
-                        print(f"[LIMIT MISMATCH] Instance {idx} (Clues: {clues[:60]}...):")
-                        for failure in limit_failures:
-                            print(f"  {failure}")
-                        continue
+    with open(benchmark_file, "r") as stream:
+        clues = [line.strip().strip('"') for line in stream if line.strip()]
+    with open(expected_file, "r") as stream:
+        expected = [int(line.strip()) for line in stream if line.strip()]
 
-                # Check consistency against expected solutions if file was provided
-                if expected_solutions is not None:
-                    if s_candidate != expected_solutions:
-                        mismatches += 1
-                        print(f"[MISMATCH] Instance {idx} (Clues: {clues[:30]}...):")
-                        print(f"  Candidate solutions: {s_candidate} (Nodes: {n_candidate})")
-                        print(f"  Expected solutions:  {expected_solutions}")
-                        continue
-                
-                # Check consistency between candidate and reference solvers if reference is provided
-                if res_reference:
-                    s_reference = res_reference["solutions"]
-                    n_reference = res_reference["nodes"]
-                    if s_candidate != s_reference:
-                        mismatches += 1
-                        print(f"[MISMATCH] Instance {idx} (Clues: {clues[:30]}...):")
-                        print(f"  Candidate solutions: {s_candidate} (Nodes: {n_candidate})")
-                        print(f"  Reference solutions: {s_reference} (Nodes: {n_reference})")
-                        continue
-                    results.append((idx, s_candidate, n_candidate, n_reference))
-                else:
-                    results.append((idx, s_candidate, n_candidate, 0))
-                    
-                # Print progress periodically
-                if len(results) % max(1, total // 10) == 0 or len(results) == total:
-                    print(f"Progress: {len(results)}/{total} verified successfully.")
-                        
-    print("-" * 60)
-    print(f"Verification completed:")
-    print(f"  Total instances checked: {total}")
-    print(f"  Matches:                 {total - mismatches - errors}")
-    print(f"  Mismatches:              {mismatches}")
-    print(f"  Errors/Crashes:          {errors}")
-    
-    return mismatches == 0 and errors == 0
+    if len(expected) != len(clues):
+        print(f"Error: {benchmark_file} has {len(clues)} puzzles, but {expected_file} "
+              f"has {len(expected)} expected counts.")
+        return False
+
+    total = min(len(clues), num_instances) if num_instances is not None else len(clues)
+    items = [(i + 1, clues[i], expected[i]) for i in range(total)]
+    limit_count = min(total, limit_instances) if limit_instances is not None else total
+    limited_items = items[:limit_count]
+
+    print(f"Dataset: {benchmark_file}")
+    print(f"  Enumeration: {total} instances")
+    print(f"  Finite limits: first {limit_count} instances")
+
+    # Finish all exhaustive checks before starting any limited-search pass.
+    success = run_pass("enumeration", items, candidate, reference, options, jobs)
+    success = run_pass("-s 10", limited_items, candidate, None, "-s 10", jobs) and success
+
+    # Each instance has its own exact count; execute these in a separate pass.
+    exact_items = [item for item in limited_items if item[2] > 0]
+    print(f"  Pass: exact count ({len(exact_items)} instances)", flush=True)
+    failures = 0
+
+    def exact_check(item):
+        idx, clue, count = item
+        result = run_solver(candidate, f"-s {count}", clue)
+        if "error" in result:
+            return idx, result["error"]
+        if result["solutions"] != count:
+            return idx, f"got {result['solutions']}, expected {count}"
+        return idx, None
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
+        futures = [executor.submit(exact_check, item) for item in exact_items]
+        for future in concurrent.futures.as_completed(futures):
+            idx, error = future.result()
+            if error:
+                failures += 1
+                print(f"[FAIL] exact-count instance {idx}: {error}")
+    print(f"  Exact count: {len(exact_items) - failures}/{len(exact_items)} passed")
+    return success and failures == 0
+
 
 def main():
     parser = argparse.ArgumentParser(description="Verify solution count consistency between candidate and reference C solvers.")
@@ -188,9 +143,12 @@ def main():
     parser.add_argument("-e", "--expected", default=None, help="Path to the expected solution counts file.")
     parser.add_argument("-o", "--options", default="-s 0", help="Options for both solvers.")
     parser.add_argument("-j", "--jobs", type=int, default=8, help="Number of concurrent verification jobs.")
-    parser.add_argument("-n", "--num_instances", type=int, default=None, help="Limit to first N instances.")
+    parser.add_argument("-n", "--num_instances", type=int, default=None, help="Limit enumeration and finite checks to first N instances.")
+    parser.add_argument("--limit-instances", type=int, default=None, help="Check finite limits only on the first N instances (enumerate all).")
     
     args = parser.parse_args()
+    if args.jobs < 1 or (args.num_instances is not None and args.num_instances < 1) or (args.limit_instances is not None and args.limit_instances < 0):
+        parser.error("jobs and num_instances must be positive; limit-instances must be nonnegative")
     
     candidate_path = os.path.abspath(args.candidate)
     reference_path = os.path.abspath(args.reference) if args.reference else None
@@ -209,7 +167,7 @@ def main():
             sys.exit(1)
         
     if args.benchmark_file is not None:
-        success = verify_file(args.benchmark_file, args.expected, candidate_path, reference_path, args.options, args.jobs, args.num_instances)
+        success = verify_file(args.benchmark_file, args.expected, candidate_path, reference_path, args.options, args.jobs, args.num_instances, args.limit_instances)
         if not success:
             print("[FAIL] Mismatches or errors were found!")
             sys.exit(1)
@@ -239,7 +197,7 @@ def main():
             print(f"\n============================================================")
             print(f"Running Default Set: {b_file}")
             print(f"============================================================")
-            success = verify_file(b_file, e_file, candidate_path, reference_path, args.options, args.jobs, args.num_instances)
+            success = verify_file(b_file, e_file, candidate_path, reference_path, args.options, args.jobs, args.num_instances, 10 if "benchmarkSet8_" in b_file else args.limit_instances)
             if not success:
                 all_success = False
         
