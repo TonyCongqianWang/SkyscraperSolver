@@ -105,7 +105,7 @@ jobs:
               assert isinstance(bank.get('statistics'), dict), n
               assert isinstance(bank.get('difficulties'), dict), n
           PY
-          python3 web/generate_directory_indexes.py public/puzzle-bank
+          python3 python_scripts/puzzle_bank/export_api_metadata.py --directory public/puzzle-bank/curated/v1\n          cp puzzle_bank/curated/v1/api.js public/puzzle-bank/curated/v1/api.js\n          test -s public/puzzle-bank/curated/v1/metadata.json\n          test -s public/puzzle-bank/curated/v1/api.js\n          python3 web/generate_directory_indexes.py public/puzzle-bank
           cp web/curated.html public/puzzle-bank/curated/index.html
           test -f public/puzzle-bank/unique/v2/minimal/size_4.json
           test -f public/puzzle-bank/curated/index.html
