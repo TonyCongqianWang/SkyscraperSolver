@@ -14,6 +14,7 @@ small{color:#555}.note{max-width:75ch}
 </head>
 <body>
 <h1>Index of /</h1>
+<p id="environment-switch"><small>Environment: <strong id="environment-name">Production</strong> · <a id="production-link" href="https://tonycongqianwang.github.io/SkyscraperSolver/">Production</a> · <a id="preview-link" href="https://pr-15.skyscrapersolver-preview.pages.dev/">PR #15 preview</a></small></p>
 <hr>
 <pre><a href="./solver/">solver/</a>              WebAssembly files and usage
 <a href="./solver/demo/">solver/demo/</a>         Try the solver in your browser
@@ -25,5 +26,13 @@ small{color:#555}.note{max-width:75ch}
 <p class="note">Curious about the solver itself? <a href="./solver/demo/">Try the solver in your browser</a> — paste visibility clues, optionally provide a starting grid, and see the first solution. Everything runs locally via WebAssembly; no installation needed.</p>
 <p class="note"><small>The <a href="./puzzle-bank/curated/">curated page</a> summarizes available curated puzzles; the <a href="./puzzle-bank/v1/">v1</a> and <a href="./puzzle-bank/curated/v1/">curated v1</a> JSON endpoints are for programmatic use. Candidate datasets are not published.</small></p>
 <p><small>Source: <a href="https://github.com/TonyCongqianWang/SkyscraperSolver">GitHub / SkyscraperSolver</a></small></p>
+<script>
+// Preview deployments use a separate Cloudflare Pages project; production remains on GitHub Pages.
+const previewHost = "pr-15.skyscrapersolver-preview.pages.dev";
+const isPreview = location.hostname === previewHost;
+document.getElementById("environment-name").textContent = isPreview ? "PR #15 preview" : "Production";
+document.getElementById("production-link").setAttribute("aria-current", isPreview ? "false" : "page");
+document.getElementById("preview-link").setAttribute("aria-current", isPreview ? "page" : "false");
+</script>
 </body>
 </html>
