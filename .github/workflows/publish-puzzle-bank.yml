@@ -28,6 +28,29 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download puzzle-bank LFS content
+        run: |
+          git lfs install --local
+          git lfs pull --include="puzzle_bank/unique/v2/minimal/*.json,puzzle_bank/curated/v1/*.json" --exclude=""
+          git lfs checkout
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for folder in ('puzzle_bank/unique/v2/minimal', 'puzzle_bank/curated/v1'):
+              for n in range(4, 10):
+                  path = Path(folder) / f'size_{n}.json'
+                  try:
+                      bank = json.loads(path.read_text(encoding='utf-8'))
+                  except (ValueError, OSError) as exc:
+                      raise RuntimeError(f'LFS content unavailable for {path}; check LFS tracking and uploaded objects') from exc
+                  assert bank.get('size') == n, f'Invalid or unhydrated LFS file: {path}'
+                  print(f'Loaded {path} ({path.stat().st_size:,} bytes)')
+          try:
+              report = json.loads(Path('puzzle_bank/curated/v1/statistics.json').read_text(encoding='utf-8'))
+          except (ValueError, OSError) as exc:
+              raise RuntimeError('LFS content unavailable for curated statistics.json') from exc
+          assert isinstance(report.get('sizes'), dict), 'Curated statistics missing'
+          PY
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
@@ -52,8 +75,8 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Stage static API
         run: |
-          mkdir -p public/puzzle-bank/v1
-          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          mkdir -p public/puzzle-bank/unique/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/unique/v1/
           mkdir -p public/puzzle-bank/unique/v2/minimal
           cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
           # Reject Git LFS pointer files: Pages must publish actual JSON payloads.
@@ -69,6 +92,19 @@ jobs:
           PY
           mkdir -p public/puzzle-bank/curated/v1
           find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
+          # Validate curated LFS payloads and their statistics before publishing.
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('public/puzzle-bank/curated/v1')
+          report = json.loads((root / 'statistics.json').read_text())
+          assert isinstance(report.get('sizes'), dict)
+          for n in range(4, 10):
+              bank = json.loads((root / f'size_{n}.json').read_text())
+              assert bank.get('size') == n, n
+              assert isinstance(bank.get('statistics'), dict), n
+              assert isinstance(bank.get('difficulties'), dict), n
+          PY
           python3 web/generate_directory_indexes.py public/puzzle-bank
           cp web/curated.html public/puzzle-bank/curated/index.html
           test -f public/puzzle-bank/unique/v2/minimal/size_4.json
