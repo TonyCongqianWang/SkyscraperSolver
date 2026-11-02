@@ -313,7 +313,7 @@ def main():
                 "id": group_id, "canonical_solution": list(key), "puzzles": []}
             if not args.minimal_only:
                 candidate_groups[key] = {
-                "id": group_id, "canonical_solution": list(key), "puzzles": []}
+                    "id": group_id, "canonical_solution": list(key), "puzzles": []}
         group = minimal_groups[key]
         ident = group["id"] + f"-p{len(group['puzzles'])+1:03d}"
         base = {
