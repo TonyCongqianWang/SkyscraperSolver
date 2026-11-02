@@ -20,12 +20,10 @@ def difficulty(nodes, main_nodes):
     The original thresholds leave gaps (e.g. 4000 nodes and main=1).
     Complete those cases with main-dependent difficulty floors/ceilings:
     1: total-based through very_hard; 2: hard..very_hard;
-    3..8: hard..extreme_plus; 9+: impossible.
+    3+: hard..extreme_plus; no automatic impossible override.
     """
     if nodes < 0 or main_nodes < 1:
         raise ValueError("node counts must be nonnegative, main nodes >= 1")
-    if main_nodes > 8:
-        return "impossible"
     if main_nodes >= 3:
         if nodes <= 400:
             return "hard"
