@@ -29,6 +29,15 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, wor
     buckets = existing.get("difficulties", {name: [] for name in LEVELS})
     for name in LEVELS:
         buckets.setdefault(name, [])
+    # Regrade existing puzzles, including those formerly classified as impossible.
+    # Preserve the per-grade cap when migrating old entries.
+    regraded = {name: [] for name in LEVELS}
+    for rows in buckets.values():
+        for puzzle in rows:
+            grade = difficulty(puzzle["nodes_visited"], puzzle["main_nodes_visited"])
+            if len(regraded[grade]) < 15000:
+                regraded[grade].append(puzzle)
+    buckets = regraded
     seen = {(tuple(v["clues"]), tuple(v["givens"]), v["solution_group_id"])
             for rows in buckets.values() for v in rows}
     wanted = {name: quotas.get(name, 0) for name in LEVELS}
