@@ -20,9 +20,9 @@
       "medium": 10000,
       "hard": 10000,
       "very_hard": 10000,
-      "extreme": 10000,
-      "extreme_plus": 10000,
-      "impossible": 10000
+      "extreme": 0,
+      "extreme_plus": 0,
+      "impossible": 0
     },
     "6": {
       "very_easy": 0,
@@ -31,8 +31,8 @@
       "hard": 10000,
       "very_hard": 10000,
       "extreme": 10000,
-      "extreme_plus": 10000,
-      "impossible": 10000
+      "extreme_plus": 0,
+      "impossible": 0
     },
     "7": {
       "very_easy": 0,
