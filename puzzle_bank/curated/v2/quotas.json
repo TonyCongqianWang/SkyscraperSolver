@@ -42,7 +42,7 @@
       "very_hard": 10000,
       "extreme": 10000,
       "extreme_plus": 10000,
-      "impossible": 10000
+      "impossible": 0
     },
     "8": {
       "very_easy": 1000,
@@ -52,7 +52,7 @@
       "very_hard": 10000,
       "extreme": 10000,
       "extreme_plus": 10000,
-      "impossible": 10000
+      "impossible": 0
     },
     "9": {
       "very_easy": 0,
@@ -62,7 +62,7 @@
       "very_hard": 10000,
       "extreme": 10000,
       "extreme_plus": 10000,
-      "impossible": 10000
+      "impossible": 0
     }
   }
 }
