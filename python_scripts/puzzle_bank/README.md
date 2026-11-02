@@ -5,7 +5,7 @@ sampler in `python_scripts/dataset_generation/generator.py`, rather than
 shuffled cyclic Latin squares. MCMC has full-state sampling goals but is **not
 claimed to be proven uniform**; `--burn-in` and `--gap` control sampling.
 
-It writes a new **v2** format; existing `puzzle_bank/unique/v1/` files are
+The puzzle-bank generator imports `MCMCLatinSquareSampler` from the existing\n`dataset_generation/generator.py` module. It restarts from a fresh random\nLatin square when no new canonical solution group has been accepted for at\nleast `max(3 * batch_size, 200)` samples, with a new burn-in after reseeding.\n\nIt writes a new **v2** format; existing `puzzle_bank/unique/v1/` files are
 left unchanged. Building a full set of banks can be expensive since every
 candidate is checked using the native solver with `-s 2`.
 
