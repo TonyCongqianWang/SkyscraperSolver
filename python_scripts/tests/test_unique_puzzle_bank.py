@@ -10,17 +10,19 @@ class PuzzleBankTests(unittest.TestCase):
         self.square = [[1, 2, 3, 4], [2, 3, 4, 1],
                        [3, 4, 1, 2], [4, 1, 2, 3]]
 
-    def test_shared_mcmc_sampler_reseeds(self):
+    def test_shared_mcmc_sampler_buffer(self):
         from python_scripts.dataset_generation.generator import MCMCLatinSquareSampler
         sampler = MCMCLatinSquareSampler(4, seed=42, burn_in=1,
-                                         gap=1, batch_size=2)
-        a = sampler.next_square()
-        self.assertEqual(a.shape, (4, 4))
-        self.assertEqual(set(a[0].tolist()), {1, 2, 3, 4})
-        sampler.reseed()
-        b = sampler.next_square()
-        self.assertEqual(set(b[0].tolist()), {1, 2, 3, 4})
-        self.assertEqual(sampler.next_burn_in, 0)
+                                         gap=1, batch_size=10, reseed_interval=3)
+        samples = [sampler.next_square().copy() for _ in range(10)]
+        self.assertEqual(sampler.reseeds, 4)
+        self.assertEqual(len(samples), 10)
+        for square in samples:
+            self.assertEqual(square.shape, (4, 4))
+            for row in square:
+                self.assertEqual(set(row.tolist()), {1, 2, 3, 4})
+        sampler.next_square()
+        self.assertEqual(sampler.reseeds, 8)
 
     def test_d4_canonical_representative(self):
         key = bank.solution_key(self.square)
@@ -42,7 +44,8 @@ class PuzzleBankTests(unittest.TestCase):
         full = bank.clues_for(grid)
         cells = [0] * 16
         def verify(_binary, clue_values, grid_values, _timeout, **kwargs):
-            return (1, sum(bool(v) for v in clue_values) * 7 + sum(bool(v) for v in grid_values),\n                    sum(bool(v) for v in clue_values))
+            return (1, sum(bool(v) for v in clue_values) * 7 + sum(bool(v) for v in grid_values),
+                    sum(bool(v) for v in clue_values))
 
         with patch.object(bank, "verify", side_effect=verify):
             variants = bank.generate_variants(
@@ -56,7 +59,8 @@ class PuzzleBankTests(unittest.TestCase):
         self.assertEqual(len({
             (tuple(v["clues"]), tuple(v["givens"])) for v in variants
         }), len(variants))
-        self.assertTrue(all(v["given_count"] <= 16 // 3 for v in variants))\n        self.assertTrue(all("main_nodes_visited" in v for v in variants))
+        self.assertTrue(all(v["given_count"] <= 16 // 3 for v in variants))
+        self.assertTrue(all("main_nodes_visited" in v for v in variants))
 
 
 if __name__ == "__main__":
