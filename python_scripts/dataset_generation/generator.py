@@ -196,43 +196,54 @@ def seed_mcmc(seed):
 
 
 class MCMCLatinSquareSampler:
-    """Reusable cycle-switch sampler with explicit stagnation recovery.
+    """Persistent shuffled buffer of independently reseeded MCMC segments.
 
-    next_square() maintains one continuous chain. reseed() starts a fresh
-    randomized-backtracking Latin square and reapplies burn-in. Callers
-    decide when their own deduplication criterion has stagnated.
+    A buffer is assembled from multiple chains, then shuffled before samples
+    are returned. Each segment starts from a fresh backtracking Latin square.
     """
 
-    def __init__(self, n, *, seed=None, burn_in=100000, gap=100, batch_size=64):
-        if n < 2 or burn_in < 0 or gap < 1 or batch_size < 1:
-            raise ValueError("size >= 2, burn-in >= 0, gap/batch-size > 0")
+    def __init__(self, n, *, seed=None, burn_in=100000, gap=100,
+                 batch_size=4000, reseed_interval=200):
+        if (n < 2 or burn_in < 0 or gap < 1 or batch_size < 1
+                or reseed_interval < 1):
+            raise ValueError("invalid MCMC sampler parameters")
         self.n = n
         self.burn_in = burn_in
         self.gap = gap
         self.batch_size = batch_size
+        self.reseed_interval = reseed_interval
+        self.shuffle_rng = random.Random(seed)
         if seed is not None:
             random.seed(seed)
             seed_mcmc(seed % (2 ** 32))
-        self.reseed()
-
-    def reseed(self):
-        self.grid = generate_random_latin_square(self.n)
-        self.next_burn_in = self.burn_in
-        self.batch = None
+        self.buffer = None
         self.index = 0
+        self.reseeds = 0
 
     def next_batch(self, count=None):
-        count = count or self.batch_size
-        samples, self.grid = generate_uniform_latin_squares(
-            self.n, count, self.grid, self.next_burn_in, self.gap)
-        self.next_burn_in = 0
+        """Return shuffled draws across multiple independently seeded chains."""
+        count = self.batch_size if count is None else count
+        if count < 1:
+            raise ValueError("count must be positive")
+        chunks = []
+        remaining = count
+        while remaining:
+            take = min(remaining, self.reseed_interval)
+            grid = generate_random_latin_square(self.n)
+            squares, _ = generate_uniform_latin_squares(
+                self.n, take, grid, self.burn_in, self.gap)
+            chunks.append(squares)
+            self.reseeds += 1
+            remaining -= take
+        samples = np.concatenate(chunks, axis=0)
+        self.shuffle_rng.shuffle(samples)
         return samples
 
     def next_square(self):
-        if self.batch is None or self.index >= len(self.batch):
-            self.batch = self.next_batch()
+        if self.buffer is None or self.index >= len(self.buffer):
+            self.buffer = self.next_batch()
             self.index = 0
-        square = self.batch[self.index]
+        square = self.buffer[self.index]
         self.index += 1
         return square
 
