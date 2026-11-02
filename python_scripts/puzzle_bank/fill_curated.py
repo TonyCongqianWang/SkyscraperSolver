@@ -5,6 +5,7 @@ Randomly samples the Cartesian product of extra edge clues and extra givens.
 Existing curated entries are preserved; newly verified entries are appended.
 """
 import argparse
+import hashlib
 import json
 import random
 import sys
@@ -37,14 +38,21 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
     def done():
         return all(len(buckets[name]) >= wanted[name] for name in LEVELS)
 
-    # A met minimum does not close a bucket while another minimum is unmet.
-    # Important: all-zero quotas require neither candidate generation nor a solver.
-    if not done():
-        pool = [(group, base) for group in bank["groups"]
-                for base in group["puzzles"]]
+    # A bucket can grow beyond its minimum, up to cap, while any quota is unmet.
+    # Revisit minimal puzzles with fresh samples; don't stop after a single sweep.
+    # "No progress" means 100 consecutive candidate draws without adding a
+    # puzzle to a bucket that is still below its minimum.
+    stall_limit = 100
+    stalled = 0
+    pool = [(group, base) for group in bank["groups"]
+            for base in group["puzzles"]]
+    if not done() and not pool:
+        print(f"size {size}: no minimal puzzles available", file=sys.stderr)
+
+    while pool and not done() and stalled < stall_limit:
         rng.shuffle(pool)
         for group, base in pool:
-            if done():
+            if done() or stalled >= stall_limit:
                 break
             solution = group["canonical_solution"]
             n = size
@@ -53,11 +61,10 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
             missing = [i for i, x in enumerate(base["clues"]) if not x]
             empty = [i for i, x in enumerate(base["givens"]) if not x]
             max_givens = max(0, n*n//3 - sum(bool(x) for x in base["givens"]))
-            for attempt in range(attempts):
-                if done():
+            for _ in range(attempts):
+                if done() or stalled >= stall_limit:
                     break
                 # Each trial chooses a random position in the 2D density grid.
-                # The combination within each density is also randomized.
                 add_clues = rng.randrange(len(missing) + 1)
                 add_givens = rng.randrange(min(len(empty), max_givens) + 1)
                 clue_indices = rng.sample(missing, add_clues)
@@ -69,6 +76,8 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                 for i in given_indices:
                     givens[i] = solution[i]
                 key = (tuple(clues), tuple(givens), group["id"])
+                # Repeated candidates and unsuccessful verifications are tries.
+                stalled += 1
                 if key in seen:
                     continue
                 seen.add(key)
@@ -79,8 +88,11 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                 grade = difficulty(nodes, main_nodes)
                 if len(buckets[grade]) >= cap:
                     continue
+                below_minimum = len(buckets[grade]) < wanted[grade]
+                # Deterministic identity, distinct across sweeps and reruns.
+                digest = hashlib.sha256(repr(key).encode("utf-8")).hexdigest()[:20]
                 buckets[grade].append({
-                    "id": f"{base['id']}:sample_{attempt+1}",
+                    "id": f"{base['id']}:sample_{digest}",
                     "solution_group_id": group["id"],
                     "minimal_puzzle_id": base["id"],
                     "canonical_solution": solution,
@@ -91,6 +103,15 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                     "nodes_visited": nodes,
                     "main_nodes_visited": main_nodes,
                 })
+                if below_minimum:
+                    stalled = 0
+
+    if stalled >= stall_limit and not done():
+        missing_quotas = {name: wanted[name] - len(buckets[name])
+                          for name in LEVELS if len(buckets[name]) < wanted[name]}
+        print(f"size {size}: stopped after {stall_limit} draws without "
+              f"progress towards unmet quotas: {missing_quotas}",
+              file=sys.stderr)
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": 1, "size": size, "curated_version": "v2",
                "source_bank": "unique/v3/minimal", "difficulty_policy": "main_node_override_v2",
