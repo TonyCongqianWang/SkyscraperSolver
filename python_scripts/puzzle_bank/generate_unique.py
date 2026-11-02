@@ -8,6 +8,7 @@ import re
 import subprocess
 import shlex
 import sys
+import time
 import traceback
 
 # Reuse the same cycle-switch sampler as the SPSA dataset generator.
@@ -293,10 +294,16 @@ def main():
     minimal_groups = {}
     candidate_groups = {}
     seen_puzzles = set()
+    last_report = time.monotonic()
 
     for attempt in range(1, args.attempts + 1):
         if len(minimal_groups) >= args.count:
             break
+        now = time.monotonic()
+        if now - last_report >= 60:
+            print(f"Size {args.size}: {len(minimal_groups)}/{args.count} groups, "
+                  f"{len(seen_puzzles)} puzzles, {attempt - 1} samples", flush=True)
+            last_report = now
         solution = canonical_square(next(sampler))
         key = tuple(v for row in solution for v in row)
         full = clues_for(solution)
@@ -308,7 +315,8 @@ def main():
         if puzzle_key in seen_puzzles:
             continue
         seen_puzzles.add(puzzle_key)
-        if key not in minimal_groups:
+        new_group = key not in minimal_groups
+        if new_group:
             group_id = f"s{args.size}-{len(minimal_groups)+1:05d}"
             minimal_groups[key] = {
                 "id": group_id, "canonical_solution": list(key), "puzzles": []}
@@ -331,8 +339,10 @@ def main():
         candidate_groups[key]["puzzles"].append({
             "id": ident, "size": args.size, "variants": variants,
             "difficulty_matched": False})
-        print(f"Accepted {len(minimal_groups)}/{args.count} solution groups; "
-              f"{len(seen_puzzles)} puzzles, {attempt} samples", flush=True)
+        if new_group and len(minimal_groups) % 50 == 0:
+            print(f"Size {args.size}: {len(minimal_groups)}/{args.count} groups, "
+                  f"{len(seen_puzzles)} puzzles, {attempt} samples", flush=True)
+            last_report = time.monotonic()
 
     if len(minimal_groups) != args.count:
         raise SystemExit(
