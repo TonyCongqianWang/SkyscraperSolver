@@ -1,79 +1,149 @@
 name: CI
-
 on:
   pull_request:
   push:
-    branches:
-      - main
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      full_suite:
+        description: Run every check regardless of changed files (use before releases)
+        type: boolean
+        default: true
+  release:
+    types: [published]
 
-# Pin the environment so new Python releases cannot outpace native wheels.
+permissions:
+  contents: read
+
 jobs:
-  norminette-formatting:
+  changes:
     runs-on: ubuntu-24.04
-
+    outputs:
+      native: ${{ steps.filter.outputs.native }}
+      python: ${{ steps.filter.outputs.python }}
+      wasm: ${{ steps.filter.outputs.wasm }}
+      pages: ${{ steps.filter.outputs.pages }}
+      spsa: ${{ steps.filter.outputs.spsa }}
+      full: ${{ steps.force.outputs.full }}
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.14'
-
-      - name: Install norminette package
+      - uses: actions/checkout@v4
+      - name: Decide whether to force full suite
+        id: force
+        env:
+          EVENT: ${{ github.event_name }}
+          FORCE: ${{ inputs.full_suite }}
         run: |
-          pip install --upgrade pip
-          pip install norminette
-
-      - name: Run norminette formatting check
-        run: |
-          # Run norminette normally to output human-readable style warnings/errors in the logs
-          python -m norminette src/*.c src/*.h || true
-
-          # Fetch JSON output and count Errors and Notices using bash tools
-          OUTPUT=$(python -m norminette -f json src/*.c src/*.h) || true
-          ERRORS=$(echo "$OUTPUT" | grep -o '"level":"Error"' | wc -l)
-          NOTICES=$(echo "$OUTPUT" | grep -o '"level":"Notice"' | wc -l)
-
-          echo "========================================"
-          echo "Norminette Summary:"
-          echo "  Errors:  $ERRORS"
-          echo "  Notices: $NOTICES"
-          echo "========================================"
-
-          if [ "$ERRORS" -ne 0 ]; then
-            exit 1
+          if [[ "$EVENT" == "release" || ("$EVENT" == "workflow_dispatch" && "$FORCE" == "true") ]]; then
+            echo "full=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "full=false" >> "$GITHUB_OUTPUT"
           fi
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            native:
+              - 'src/**'
+              - 'Makefile'
+              - 'python_scripts/verify_consistency.py'
+              - 'python_solver/**'
+              - '.github/workflows/ci.yml'
+            python:
+              - 'python_scripts/**'
+              - 'puzzle_bank/curated/**'
+              - '.github/workflows/ci.yml'
+            wasm:
+              - 'src/**'
+              - 'web/wasm_api.c'
+              - 'web/worker.js'
+              - 'web/smoke_test.cjs'
+              - '.github/workflows/ci.yml'
+            pages:
+              - 'web/**'
+              - 'puzzle_bank/curated/**'
+              - 'puzzle_bank/unique/v1/**'
+              - '.github/workflows/ci.yml'
+            spsa:
+              - 'src/**'
+              - 'setup_and_tune.sh'
+              - 'generate_spsa_datasets.sh'
+              - 'python_scripts/dataset_generation/**'
+              - '.github/workflows/ci.yml'
+
+  norminette-formatting:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.native == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - run: pip install norminette
+      - name: Check native formatting
+        run: |
+          python -m norminette src/*.c src/*.h || true
+          OUTPUT=$(python -m norminette -f json src/*.c src/*.h) || true
+          ERRORS=$(echo "$OUTPUT" | grep -o '"level":"Error"' | wc -l || true)
+          echo "Norminette errors: $ERRORS"
+          test "$ERRORS" -eq 0
 
   verify-correctness:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
-
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
         with:
-          python-version: '3.14'
-
-      - name: Install Python deps (if present)
+          python-version: '3.13'
+      - name: Install solver dependencies
         run: |
-          if [ -f python_solver/requirements.txt ]; then
-            pip install --upgrade pip
-            pip install -r python_solver/requirements.txt
-          fi
+          if [ -f python_solver/requirements.txt ]; then pip install -r python_solver/requirements.txt; fi
+      - name: Build and verify
+        run: |
+          make
+          make test
 
-      - name: Build (make re)
-        run: make re
+  pytest:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.python == 'true'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_scripts/dataset_generation/requirements.txt
+      - name: Install test dependencies
+        run: |
+          python -m pip install pytest
+          python -m pip install -r python_scripts/dataset_generation/requirements.txt
+      - name: Run Python tests
+        run: python -m pytest python_scripts/tests -q
 
-      - name: Run consistency verification
-        run: make test
-
-      - name: Verify setup_and_tune
+  spsa-tuning:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.spsa == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install solver dependencies
+        run: |
+          if [ -f python_solver/requirements.txt ]; then pip install -r python_solver/requirements.txt; fi
+      - name: Verify setup and tuning
         run: bash setup_and_tune.sh
 
   wasm-build:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.wasm == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -89,23 +159,42 @@ jobs:
             -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
             -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
             -o web/solver.js
-      - name: Verify WebAssembly solver
-        run: node web/smoke_test.cjs
-
-
+      - run: node web/smoke_test.cjs
 
   pages-index-check:
+    needs: changes
+    if: needs.changes.outputs.full == 'true' || needs.changes.outputs.pages == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
-      - name: Check directory listing generation
+      - name: Check directory listings
         run: |
-          mkdir -p public/puzzle-bank/v1
+          mkdir -p public/puzzle-bank/v1 public/puzzle-bank/curated/v1
           cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
           python3 web/generate_directory_indexes.py public/puzzle-bank
           test -f public/puzzle-bank/index.html
-          test -f public/puzzle-bank/v1/index.html
           test -f public/puzzle-bank/v1/minimal/index.html
           test -f public/puzzle-bank/v1/candidates/index.html
+          test -f public/puzzle-bank/curated/v1/index.html
+          test -f web/curated.html
           test -f public/puzzle-bank/v1/minimal/size_4.json
-          grep -q 'size_4.json' public/puzzle-bank/v1/minimal/index.html
+
+  ci-gate:
+    if: always()
+    needs: [changes, norminette-formatting, verify-correctness, pytest, spsa-tuning, wasm-build, pages-index-check]
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Require all selected checks to pass
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | python3 -c '
+          import json,sys
+          jobs=json.load(sys.stdin)
+          failed={name: job["result"] for name,job in jobs.items() if job["result"] not in ("success","skipped")}
+          print("CI job results:", {name: job["result"] for name,job in jobs.items()})
+          if failed:
+              print("Unsuccessful jobs:", failed)
+              sys.exit(1)
+          '
