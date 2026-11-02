@@ -669,7 +669,7 @@ def run_spsa(args, datasets, max_workers):
     else:
         batch_size = 128
 
-    directions = getattr(args, 'directions', 4)
+    directions = getattr(args, 'directions', 1)
     if directions < 1 or directions > batch_size:
         raise ValueError("directions must be between 1 and the batch size")
     log_print(f"SPSA Batch Size configured: {batch_size}; directions: {directions}")
