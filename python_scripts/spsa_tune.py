@@ -551,7 +551,8 @@ def make_perturbation_directions(active_indices, dimensions, count):
                 delta[index] = signs[col] * (-1.0 if parity else 1.0)
             directions.append(delta)
         return directions
-    return [[random.choice([-1.0, 1.0]) if i in active_indices else 0.0
+    active_set = set(active_indices)
+    return [[random.choice([-1.0, 1.0]) if i in active_set else 0.0
              for i in range(dimensions)] for _ in range(count)]
 
 
@@ -722,10 +723,14 @@ def run_spsa(args, datasets, max_workers):
                 enumeration_only=args.enumeration_only)
             for part in sizes
         ]
-        get_loss = evaluators[0]
+        get_loss = (evaluators[0] if directions == 1 else build_loss_evaluator(
+            size=args.size, datasets=datasets, batch_size=batch_size,
+            max_workers=max_workers, use_stdin=args.stdin,
+            enumeration_only=args.enumeration_only))
         active_names = get_active_param_names(args.tune_mode, args.size)
         active_indices = [i for i, (name, pmin, pmax, _, _, _) in enumerate(PARAM_METADATA)
                           if pmax > pmin and name in active_names]
+        active_index_set = set(active_indices)
         perturbations = make_perturbation_directions(active_indices, len(theta), directions)
 
         grad_time = [0.0] * len(theta)
@@ -735,7 +740,7 @@ def run_spsa(args, datasets, max_workers):
             for sign in (1.0, -1.0):
                 perturbed = []
                 for i, value in enumerate(theta):
-                    if i in active_indices:
+                    if i in active_index_set:
                         scale = PARAM_METADATA[i][5]
                         value = max(0.0, min(1.0, value + sign * ck * scale * delta[i]))
                     perturbed.append(value)
