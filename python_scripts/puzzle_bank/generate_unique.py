@@ -269,10 +269,21 @@ def main():
             args.gap, args.batch_size, args.variants_per_step) <= 0
             or args.burn_in < 0):
         ap.error("positive parameters required (burn-in may be zero)")
-    if args.size == 4 and args.count > 74:
-        print("Size 4 has a configured maximum of 74 canonical solutions; "
-              f"reducing requested count from {args.count} to 74.", flush=True)
-        args.count = 74
+    # Exact number of D4 orbits for n=4; for other sizes the known
+    # Latin-square totals are conservative upper bounds on orbit counts.
+    latin_square_counts = {
+        4: 576,
+        5: 161280,
+        6: 812851200,
+        7: 61479419904000,
+        8: 108776032459082956800,
+        9: 5524751496156892842531225600,
+    }
+    limit = 74 if args.size == 4 else latin_square_counts[args.size]
+    if args.count > limit:
+        print(f"Size {args.size}: reducing count from {args.count} to {limit} "
+              "(maximum possible distinct solution groups).", flush=True)
+        args.count = limit
     binary = args.solver.resolve()
     if not binary.is_file():
         ap.error("Build the native solver using make first")
