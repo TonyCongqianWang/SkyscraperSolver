@@ -18,7 +18,7 @@ textarea:focus{outline:1px solid white}
 button{margin:20px 0;padding:11px 25px;border:1px solid #eee;border-radius:4px;background:#f4f4f4;color:#080808;font:inherit;font-weight:600;cursor:pointer}
 button:disabled{opacity:.5;cursor:wait}
 pre{white-space:pre;overflow-x:auto;line-height:1.6;font-size:clamp(12px,2.5vw,17px)}
-#status{min-height:1.5em;color:#fff}#status.error{color:#ff9c9c}
+#status{min-height:1.5em;color:#fff;white-space:pre-line}#status.error{color:#ff9c9c}
 small{font-size:.85rem;font-weight:400;color:#999}
 </style>
 </head>
@@ -38,6 +38,7 @@ Grid: N × N values, row by row (→, then ↓). Use 0 for missing clues or empt
 <script>
 const $=id=>document.getElementById(id);
 let worker=null;
+let feedbackTimer=null;
 function numbers(source){
  const text=source.trim();
  if(!text)return [];
@@ -61,10 +62,11 @@ function ascii(n,clues,values){
 }
 $("solve").onclick=()=>{
  try{
+  clearTimeout(feedbackTimer);
   $("status").textContent=""; $("output").textContent="";
   const clues=numbers($("clues").value),n=clues.length/4,grid=numbers($("grid").value);
   if(!Number.isInteger(n)||n<4||n>9||clues.some(x=>x>n))
-   throw Error("Parsed "+clues.length+" clues. Expected 4 × N clues (16, 20, 24, 28, 32 or 36), each between 0 and N.");
+   throw Error("Expected: 4 × N clues, each between 0 and N (N = 4–9; 16, 20, 24, 28, 32 or 36 clues).\\nGot: "+clues.length+" clues"+(Number.isInteger(n)&&n>=4&&n<=9&&clues.some(x=>x>n)?" (some values exceed N)":"")+".");
   if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
   if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
   worker?.terminate();
@@ -85,7 +87,9 @@ $("solve").onclick=()=>{
   worker.onerror=e=>{worker?.terminate();worker=null;$("solve").disabled=false;$("status").className="error";$("status").textContent=e.message};
   worker.postMessage({clues:clues.join(" "),grid:grid.join(" "),limit:2});
  }catch(error){$("solve").disabled=false;$("status").className="error";
-  requestAnimationFrame(()=>requestAnimationFrame(()=>$("status").textContent=error.message));}
+  const message=error.message;
+  feedbackTimer=setTimeout(()=>$("status").textContent=message, 220);
+ }
 };
 </script>
 </body></html>
