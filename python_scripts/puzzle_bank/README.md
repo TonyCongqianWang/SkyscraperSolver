@@ -137,7 +137,7 @@ Edit `puzzle_bank/curated/v2/quotas.json`: each size and difficulty has a
 nonnegative minimum. The defaults are 10,000 for most bands. Very easy has a minimum of 10,000
 for sizes 4–5, 2,000 for sizes 6–7, 1,000 for size 8 and zero for size 9.
 Size 9 easy has a minimum of 1,000. Size 4 hard and above have zero minimum;
-size 5 extreme and above and size 6 extreme_plus and above also have zero minimum.
+size 5 extreme and above and size 6 extreme_plus and above also have zero minimum.\nImpossible has zero minimum for all sizes.
 The filler continues collecting candidates for all buckets (up to 15,000
 per bucket) while any minimum is unmet; a met minimum does not stop that
 bucket from growing. It reshuffles and resamples minimal puzzles over multiple
