@@ -92,3 +92,20 @@ jobs:
       - name: Verify WebAssembly solver
         run: node web/smoke_test.cjs
 
+
+
+  pages-index-check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check directory listing generation
+        run: |
+          mkdir -p public/puzzle-bank/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          python3 web/generate_directory_indexes.py public/puzzle-bank
+          test -f public/puzzle-bank/index.html
+          test -f public/puzzle-bank/v1/index.html
+          test -f public/puzzle-bank/v1/minimal/index.html
+          test -f public/puzzle-bank/v1/candidates/index.html
+          test -f public/puzzle-bank/v1/minimal/size_4.json
+          grep -q 'size_4.json' public/puzzle-bank/v1/minimal/index.html
