@@ -14,7 +14,7 @@ For a reproducible sampling and perturbation sequence, pass `--seed`:
 
 ```bash
 python3 python_scripts/spsa_tune.py --size 8 --tune-mode math \
-  --iterations 500 --lr 0.0001 --seed 42 --log scratch/tune.log
+  --iterations 500 --lr 0.0001 --seed 42 --directions 4 --log scratch/tune.log
 ```
 
 Without `--seed`, the tuner generates one and records it. Timing still depends on
@@ -22,7 +22,19 @@ the machine and system load. Each winner has an adjacent JSON sidecar containing
 mode, seed, defaults, projected initial values, active parameters, optimizer
 settings, revision, source/binary hashes, and hashes/counts of the loaded datasets.
 Metadata starts as incomplete and is marked complete with the final winner.
-The sensitivity report now averages absolute gradients, avoiding cancellation.
+The tuner defaults to four perturbation pairs per iteration; `--directions N`
+controls this, and `--directions 1` retains the original single-pair sampling
+and optimizer behavior. Each direction uses a portion of the configured batch,
+with the same instances evaluated at its plus/minus perturbations. For a
+power-of-two number of active parameters, Hadamard directions are exactly
+orthogonal when the requested count does not exceed that number. Otherwise
+independent randomized sign vectors are used. The requested direction count
+must not exceed the batch size. Full-batch monitoring remains unchanged.
+
+For two or more directions, sensitivity reports the average across iterations
+of the absolute *combined* raw gradient (after directional averaging, before
+clipping and momentum). One direction reports N/A, as do inactive parameters;
+a single SPSA pair cannot distinguish per-parameter absolute sensitivity.
 
 Post-tuning comparisons honor `--max-workers` and `--no-stdin`. By default they
 run two rounds, baseline/optimized followed by optimized/baseline, with one
