@@ -11,9 +11,18 @@ on:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   preview:
+    environment:
+      name: github-pages
+      url: https://tonycongqianwang.github.io/SkyscraperSolver/previews/pr-${{ github.event.pull_request.number }}/
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     steps:
@@ -57,10 +66,46 @@ jobs:
           name: website-preview
           path: public/
           retention-days: 14
-      - name: Deploy PR preview to Cloudflare Pages
+      - name: Assemble production plus preview
         if: github.event_name == 'pull_request'
-        uses: cloudflare/wrangler-action@v3
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          mv public preview-build
+          mkdir -p public
+          # Retain the currently deployed production website. Do not overwrite it.
+          curl --fail --location --retry 3 \
+            https://tonycongqianwang.github.io/SkyscraperSolver/ -o /tmp/production-index.html
+          # The production tree is reconstructed from main rather than fetched from
+          # the live site, so no crawling of public JSON or WASM is necessary.
+          git fetch origin main
+          git worktree add --detach production-tree origin/main
+          mkdir -p public/solver/demo public/puzzle-bank/v1 public/puzzle-bank/unique/v2/minimal public/puzzle-bank/curated/v1
+          cp production-tree/web/home.html public/index.html
+          cp production-tree/web/index.html public/solver/demo/index.html
+          cp production-tree/web/worker.js public/solver/worker.js
+          cp production-tree/web/solver-info.html public/solver/index.html
+          cp -a production-tree/puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          cp -a production-tree/puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
+          find production-tree/puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
+          python3 web/generate_directory_indexes.py public/puzzle-bank
+          cp production-tree/web/curated.html public/puzzle-bank/curated/index.html
+          # Production WASM must be compiled from main, not the PR.
+          emcc -O3 -flto -Iproduction-tree/src production-tree/src/*.c production-tree/web/wasm_api.c \
+            -s INVOKE_RUN=0 -s MODULARIZE=1 \
+            -s EXPORT_NAME=createSkyscraperSolver \
+            -s EXPORTED_FUNCTIONS='["_solve_web"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
+            -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
+            -o public/solver/solver.js
+          mkdir -p "public/previews/pr-$PR_NUMBER"
+          cp -a preview-build/. "public/previews/pr-$PR_NUMBER/"
+          touch public/.nojekyll
+      - uses: actions/configure-pages@v5
+        if: github.event_name == 'pull_request'
+      - uses: actions/upload-pages-artifact@v3
+        if: github.event_name == 'pull_request'
         with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy public --project-name=skyscrapersolver-preview --branch=pr-${{ github.event.pull_request.number }}
+          path: public
+      - uses: actions/deploy-pages@v4
+        if: github.event_name == 'pull_request'
