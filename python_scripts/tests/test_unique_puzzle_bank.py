@@ -10,6 +10,18 @@ class PuzzleBankTests(unittest.TestCase):
         self.square = [[1, 2, 3, 4], [2, 3, 4, 1],
                        [3, 4, 1, 2], [4, 1, 2, 3]]
 
+    def test_shared_mcmc_sampler_reseeds(self):
+        from python_scripts.dataset_generation.generator import MCMCLatinSquareSampler
+        sampler = MCMCLatinSquareSampler(4, seed=42, burn_in=1,
+                                         gap=1, batch_size=2)
+        a = sampler.next_square()
+        self.assertEqual(a.shape, (4, 4))
+        self.assertEqual(set(a[0].tolist()), {1, 2, 3, 4})
+        sampler.reseed()
+        b = sampler.next_square()
+        self.assertEqual(set(b[0].tolist()), {1, 2, 3, 4})
+        self.assertEqual(sampler.next_burn_in, 0)
+
     def test_d4_canonical_representative(self):
         key = bank.solution_key(self.square)
         for transformed in bank.square_symmetries(self.square):
