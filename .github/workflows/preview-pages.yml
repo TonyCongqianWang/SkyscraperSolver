@@ -22,6 +22,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           lfs: true
+      - name: Download puzzle-bank LFS content
+        run: |
+          git lfs install --local
+          git lfs pull --include="puzzle_bank/unique/v2/minimal/*.json,puzzle_bank/curated/v1/*.json" --exclude=""
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for folder in ('puzzle_bank/unique/v2/minimal', 'puzzle_bank/curated/v1'):
+              for n in range(4, 10):
+                  path = Path(folder) / f'size_{n}.json'
+                  bank = json.loads(path.read_text(encoding='utf-8'))
+                  assert bank.get('size') == n, f'Invalid or unhydrated LFS file: {path}'
+                  print(f'Loaded {path} ({path.stat().st_size:,} bytes)')
+          report = json.loads(Path('puzzle_bank/curated/v1/statistics.json').read_text(encoding='utf-8'))
+          assert isinstance(report.get('sizes'), dict), 'Curated statistics missing'
+          PY
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
