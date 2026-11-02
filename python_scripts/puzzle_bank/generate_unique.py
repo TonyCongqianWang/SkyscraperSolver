@@ -247,13 +247,14 @@ def main():
     ap.add_argument("--timeout", type=float, default=10)
     ap.add_argument("--burn-in", type=int, default=100000)
     ap.add_argument("--gap", type=int, default=100)
-    ap.add_argument("--batch-size", type=int, default=64)
+    ap.add_argument("--batch-size", type=int, default=4000)
+    ap.add_argument("--reseed-interval", type=int, default=200)
     ap.add_argument("--variants-per-step", type=int, default=4)
     ap.add_argument("--solver", type=Path, default=ROOT/"skyscraper_solver")
     ap.add_argument("--output", type=Path, default=ROOT/"puzzle_bank"/"unique"/"v2")
     args = ap.parse_args()
     if (min(args.count, args.attempts, args.weight, args.timeout,
-            args.gap, args.batch_size, args.variants_per_step) <= 0
+            args.gap, args.batch_size, args.reseed_interval, args.variants_per_step) <= 0
             or args.burn_in < 0):
         ap.error("positive parameters required (burn-in may be zero)")
     # Exact number of D4 orbits for n=4; for other sizes the known
@@ -277,10 +278,8 @@ def main():
     rng = random.Random(args.seed)
     sampler = MCMCLatinSquareSampler(args.size, seed=args.seed,
                                     burn_in=args.burn_in, gap=args.gap,
-                                    batch_size=args.batch_size)
-    samples_since_new_group = 0
-    reseed_after = max(3 * args.batch_size, 200)
-    reseeds = 0
+                                    batch_size=args.batch_size,
+                                    reseed_interval=args.reseed_interval)
     minimal_groups = {}
     candidate_groups = {}
     seen_puzzles = set()
@@ -296,13 +295,6 @@ def main():
             last_report = now
         solution = canonical_square(sampler.next_square().tolist())
         key = tuple(v for row in solution for v in row)
-        # Repeated solutions may produce distinct minimized puzzles; keep
-        # processing them, but restart a stagnant chain periodically.
-        samples_since_new_group += 1
-        if samples_since_new_group >= reseed_after:
-            sampler.reseed()
-            samples_since_new_group = 0
-            reseeds += 1
         full = clues_for(solution)
         item = minimize(binary, full, solution, rng, args.timeout, args.weight)
         if item is None:
@@ -314,7 +306,6 @@ def main():
         seen_puzzles.add(puzzle_key)
         new_group = key not in minimal_groups
         if new_group:
-            samples_since_new_group = 0
             group_id = f"s{args.size}-{len(minimal_groups)+1:05d}"
             minimal_groups[key] = {
                 "id": group_id, "canonical_solution": list(key), "puzzles": []}
@@ -353,8 +344,9 @@ def main():
         "schema_version": 2, "size": args.size, "count": args.count,
         "puzzle_count": len(seen_puzzles), "seed": args.seed,
         "sampler": {"method": "cycle_switch_mcmc", "burn_in": args.burn_in,
-                    "gap": args.gap, "batch_size": args.batch_size},
-        "mcmc_reseeds": reseeds,
+                    "gap": args.gap, "batch_size": args.batch_size,
+                    "reseed_interval": args.reseed_interval},
+        "mcmc_reseeds": sampler.reseeds,
         "symmetry": "D4_board_only", "canonical_rep": "lexicographically_smallest_grid",
         "uniqueness": "verified by native solver -s 2", "cell_weight": args.weight,
     }
