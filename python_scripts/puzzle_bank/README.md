@@ -128,3 +128,31 @@ The curator is independent of the generator: a future v3 generator can use
 a Cartesian product of extra clues and givens, with eight randomly selected
 candidate configurations per minimal puzzle rather than exhaustively enumerating
 the grid.
+
+## Directly filling curated quotas (without candidate files)
+
+Intermediate `puzzle_bank/unique/v2/candidates/` JSON is ignored and removed
+from this branch; only the minimal and curated datasets need to be retained.
+The LFS attribute is restricted to generated minimal banks, not curated JSON.
+Pull the minimal LFS objects locally before running the filler.
+
+Edit `puzzle_bank/curated/v1/quotas.json`: each size and difficulty has a
+nonnegative desired count, initialized to **zero**. Quotas of zero generate no
+solver work; existing curated entries are preserved. To generate new mixed
+clue/given candidates directly from the minimal bank, run:
+
+```sh
+python3 python_scripts/puzzle_bank/fill_curated.py --sizes 4 5 6 7 8 9
+```
+
+The script randomly samples **Cartesian products** of extra edge-clue and
+prefilled-cell density levels and random subsets at each density. It verifies
+uniqueness with the native `-s 2` solver, calculates both node metrics, and
+appends qualifying variants until the quotas are reached or the configured
+per-minimal sampling limit is exhausted. `max_attempts_per_minimal` defaults to
+100 in the JSON config. Running it repeatedly preserves selected entries;
+there is no guarantee all quotas are reachable. The output retains the
+minimal puzzle and canonical solution group IDs.
+
+The original candidate-based curator (`curate.py`) is still available for
+any local historical candidate files, but candidate storage isn't required.
