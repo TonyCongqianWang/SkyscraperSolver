@@ -66,7 +66,7 @@ $("solve").onclick=()=>{
   $("status").textContent=""; $("output").textContent="";
   const clues=numbers($("clues").value),n=clues.length/4,grid=numbers($("grid").value);
   if(!Number.isInteger(n)||n<4||n>9||clues.some(x=>x>n))
-   throw Error("Expected: 4 × N clues, each between 0 and N (N = 4–9; 16, 20, 24, 28, 32 or 36 clues).\\nGot: "+clues.length+" clues"+(Number.isInteger(n)&&n>=4&&n<=9&&clues.some(x=>x>n)?" (some values exceed N)":"")+".");
+   throw Error("Expected: 4 × N clues, each between 0 and N (N = 4–9; 16, 20, 24, 28, 32 or 36 clues).\nGot: "+clues.length+" clues"+(Number.isInteger(n)&&n>=4&&n<=9&&clues.some(x=>x>n)?" (some values exceed N)":"")+".");
   if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
   if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
   worker?.terminate();
