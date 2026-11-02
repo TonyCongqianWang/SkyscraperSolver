@@ -87,3 +87,7 @@ opt into it. Pages publishing of v2 JSON is separate from this generator change.
 ```sh
 python3 -m unittest python_scripts.tests.test_unique_puzzle_bank -v
 ```
+
+## Offline distribution statistics
+
+Run `python3 python_scripts/puzzle_bank/analyze_candidates.py` from the repository root to aggregate v2 candidates for sizes 4–7 into `candidate_stats.json` without exporting solution grids. Use `--directory`, `--sizes`, and `--output` to target a curated bank or different versions. The report includes minimum and maximum alongside quantiles for total and main nodes, histogram bins, and clue/given breakdowns. This compact report can be used as an input when generating static curated index statistics; do not publish the full candidate files.
