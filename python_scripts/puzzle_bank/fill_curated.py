@@ -29,6 +29,7 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
     seen = {(tuple(v["clues"]), tuple(v["givens"]), v["solution_group_id"])
             for rows in buckets.values() for v in rows}
     wanted = {name: quotas.get(name, 0) for name in LEVELS}
+    cap = 15000
     for name, count in wanted.items():
         if not isinstance(count, int) or count < 0:
             raise ValueError(f"invalid quota {size}/{name}: {count}")
@@ -36,6 +37,7 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
     def done():
         return all(len(buckets[name]) >= wanted[name] for name in LEVELS)
 
+    # A met minimum does not close a bucket while another minimum is unmet.
     # Important: all-zero quotas require neither candidate generation nor a solver.
     if not done():
         pool = [(group, base) for group in bank["groups"]
@@ -75,7 +77,7 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                     continue
                 nodes, main_nodes = result[1:3]
                 grade = difficulty(nodes, main_nodes)
-                if len(buckets[grade]) >= wanted[grade]:
+                if len(buckets[grade]) >= cap:
                     continue
                 buckets[grade].append({
                     "id": f"{base['id']}:sample_{attempt+1}",
@@ -91,8 +93,8 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                 })
     target.parent.mkdir(parents=True, exist_ok=True)
     payload = {"schema_version": 1, "size": size, "curated_version": "v1",
-               "source_bank": "unique/v2/minimal", "difficulty_policy": "main_node_override_v1",
-               "quotas": wanted, "difficulties": buckets}
+               "source_bank": "unique/v2/minimal", "difficulty_policy": "main_node_override_v2",
+               "quotas": wanted, "max_per_difficulty": cap, "difficulties": buckets}
     target.write_text(json.dumps(payload, separators=(",", ":")) + "\n",
                       encoding="utf-8")
     return {name: {"selected": len(buckets[name]), "quota": wanted[name]}
