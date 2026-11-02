@@ -30,11 +30,11 @@ class PuzzleBankTests(unittest.TestCase):
         full = bank.clues_for(grid)
         cells = [0] * 16
         def verify(_binary, clue_values, grid_values, _timeout, **kwargs):
-            return 1, sum(bool(v) for v in clue_values) * 7 + sum(bool(v) for v in grid_values)
+            return (1, sum(bool(v) for v in clue_values) * 7 + sum(bool(v) for v in grid_values),\n                    sum(bool(v) for v in clue_values))
 
         with patch.object(bank, "verify", side_effect=verify):
             variants = bank.generate_variants(
-                None, "test", clues, cells, full, grid, 1,
+                None, "test", clues, cells, full, grid, (1, 1),
                 __import__("random").Random(123), 1, 123, 1, 4)
 
         # One baseline, four samples for each clue count 1..15,
@@ -44,7 +44,7 @@ class PuzzleBankTests(unittest.TestCase):
         self.assertEqual(len({
             (tuple(v["clues"]), tuple(v["givens"])) for v in variants
         }), len(variants))
-        self.assertTrue(all(v["given_count"] <= 16 // 3 for v in variants))
+        self.assertTrue(all(v["given_count"] <= 16 // 3 for v in variants))\n        self.assertTrue(all("main_nodes_visited" in v for v in variants))
 
 
 if __name__ == "__main__":
