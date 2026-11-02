@@ -4,6 +4,7 @@ on:
     branches: [main]
     paths:
       - 'puzzle_bank/unique/v1/**'
+      - 'puzzle_bank/unique/v2/minimal/**'
       - 'puzzle_bank/curated/v1/**'
       - 'src/**'
       - 'web/**'
@@ -46,16 +47,19 @@ jobs:
           grep -q "Index of /solver/" public/solver/index.html
           test -f public/solver/demo/index.html
           cp web/home.html public/index.html
-          mkdir -p public/curated
-          cp web/curated.html public/curated/index.html
       - uses: actions/configure-pages@v5
       - name: Stage static API
         run: |
           mkdir -p public/puzzle-bank/v1
           cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          mkdir -p public/puzzle-bank/unique/v2/minimal
+          cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
           mkdir -p public/puzzle-bank/curated/v1
           find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
           python3 web/generate_directory_indexes.py public/puzzle-bank
+          cp web/curated.html public/puzzle-bank/curated/index.html
+          test -f public/puzzle-bank/unique/v2/minimal/size_4.json
+          test -f public/puzzle-bank/curated/index.html
           touch public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
