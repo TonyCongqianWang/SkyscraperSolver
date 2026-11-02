@@ -39,8 +39,8 @@ jobs:
           cp web/worker.js web/solver-info.html public/solver/
           mv public/solver/solver-info.html public/solver/index.html
           cp web/home.html public/index.html
-          mkdir -p public/puzzle-bank/v1 public/puzzle-bank/unique/v2/minimal public/puzzle-bank/curated/v1
-          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          mkdir -p public/puzzle-bank/unique/v1 public/puzzle-bank/unique/v2/minimal public/puzzle-bank/curated/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/unique/v1/
           cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
           find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
           python3 web/generate_directory_indexes.py public/puzzle-bank
@@ -51,6 +51,15 @@ jobs:
           for n in range(4,10):
               with Path(f'public/puzzle-bank/unique/v2/minimal/size_{n}.json').open() as f:
                   assert json.load(f)['size'] == n
+          PY
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('public/puzzle-bank/curated/v1')
+          assert isinstance(json.loads((root/'statistics.json').read_text()).get('sizes'), dict)
+          for n in range(4,10):
+              bank=json.loads((root/f'size_{n}.json').read_text())
+              assert bank['size']==n and isinstance(bank['statistics'],dict)
           PY
           touch public/.nojekyll
       - name: Upload browsable site artifact
