@@ -61,13 +61,14 @@ function ascii(n,clues,values){
 }
 $("solve").onclick=()=>{
  try{
+  $("status").textContent=""; $("output").textContent="";
   const clues=numbers($("clues").value),n=clues.length/4,grid=numbers($("grid").value);
   if(!Number.isInteger(n)||n<4||n>9||clues.some(x=>x>n))
-   throw Error("Expected 4 × N clues, each between 0 and N (N = 4–9).");
+   throw Error("Parsed "+clues.length+" clues. Expected 4 × N clues (16, 20, 24, 28, 32 or 36), each between 0 and N.");
   if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
   if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
   worker?.terminate();
-  worker=new Worker("./worker.js");
+  worker=new Worker("../worker.js");
   $("solve").disabled=true;$("status").className="";$("status").textContent="Solving…";$("output").textContent="";
   worker.onmessage=({data})=>{
    worker?.terminate();worker=null;$("solve").disabled=false;
@@ -83,7 +84,8 @@ $("solve").onclick=()=>{
   };
   worker.onerror=e=>{worker?.terminate();worker=null;$("solve").disabled=false;$("status").className="error";$("status").textContent=e.message};
   worker.postMessage({clues:clues.join(" "),grid:grid.join(" "),limit:2});
- }catch(error){$("solve").disabled=false;$("status").className="error";$("status").textContent=error.message}
+ }catch(error){$("solve").disabled=false;$("status").className="error";
+  requestAnimationFrame(()=>requestAnimationFrame(()=>$("status").textContent=error.message));}
 };
 </script>
 </body></html>

@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Index of /solver/</title><style>
+body{font:15px/1.5 monospace;max-width:920px;margin:2em auto;padding:0 1em;background:#fff;color:#111}
+h1{font-size:1.5em;font-weight:normal}a{color:#00e}a:visited{color:#551a8b}
+hr{border:0;border-top:1px solid #999}pre{overflow-x:auto}code{font:inherit}
+</style></head><body><h1>Index of /solver/</h1><hr>
+<pre><a href="../">../</a>
+<a href="demo/">demo/</a>           Try the solver in your browser
+<a href="solver.js">solver.js</a>        Emscripten JavaScript loader
+<a href="solver.wasm">solver.wasm</a>      WebAssembly binary
+<a href="worker.js">worker.js</a>        Worker used by the demo</pre><hr>
+<p>The solver runs in the browser; no download or compilation necessary to <a href="demo/">try it</a>.</p>
+<p>To use it in your own page, load <code>solver.js</code> and keep <code>solver.wasm</code> beside it. Call
+<code>solve_web(clues, grid, max_solutions)</code> through Emscripten's <code>ccall</code>:</p>
+<pre>&lt;script src="solver.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+createSkyscraperSolver().then(module =&gt; {
+  const result = module.ccall(
+    "solve_web", "string",
+    ["string", "string", "number"],
+    ["1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0", "", 2]
+  );
+  console.log(result);
+});
+&lt;/script&gt;</pre>
+<p>Clues: 4 × N digits, separated by spaces, ordered top (→), bottom (→), left (↓), right (↓).
+Grid: optional N × N space-separated digits, row-major; zero means empty. Supported sizes: 4–9.</p>
+<p>Response: <code>count|nodes|size|first_solution</code> (row-major digits), or <code>ERR:message</code>.
+Use 2 as the solution limit to check uniqueness. <code>0</code> counts all solutions, but the wrapper currently accepts limits 1–100.</p>
+<p>The call is synchronous and can be expensive. For interactive pages, run it in a Web Worker,
+as <a href="worker.js">worker.js</a> does. The returned string must be read before the next call.</p>
+</body></html>

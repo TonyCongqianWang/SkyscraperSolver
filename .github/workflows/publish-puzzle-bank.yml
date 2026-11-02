@@ -29,7 +29,7 @@ jobs:
           version: latest
       - name: Build WebAssembly solver
         run: |
-          mkdir -p public/solver
+          mkdir -p public/solver/demo
           emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
             -s INVOKE_RUN=0 -s MODULARIZE=1 \
             -s EXPORT_NAME=createSkyscraperSolver \
@@ -38,13 +38,16 @@ jobs:
             -s ALLOW_MEMORY_GROWTH=1 \
             -s INITIAL_MEMORY=67108864 \
             -o public/solver/solver.js
-          cp web/index.html web/worker.js public/solver/
+          cp web/index.html public/solver/demo/index.html
+          cp web/worker.js web/solver-info.html public/solver/
+          mv public/solver/solver-info.html public/solver/index.html
           cp web/home.html public/index.html
       - uses: actions/configure-pages@v5
       - name: Stage static API
         run: |
           mkdir -p public/puzzle-bank/v1
           cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          python3 web/generate_directory_indexes.py public/puzzle-bank
           touch public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
