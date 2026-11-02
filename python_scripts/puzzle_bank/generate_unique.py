@@ -2,6 +2,7 @@
 """Generate versioned minimal and augmented unique puzzle banks with the native solver."""
 import argparse
 import json
+import math
 import random
 import re
 import subprocess
@@ -93,11 +94,12 @@ def verify(binary, clues, cells, timeout, *, diagnose=False):
         return None
     m = re.search(r"^Solutions found:\s*(\d+)\s*$", p.stdout, re.M)
     nodes = re.search(r"^Nodes visited:\s*(\d+)\s*$", p.stdout, re.M)
-    if not m or not nodes:
+    main_nodes = re.search(r"^Main nodes visited:\s*(\d+)\s*$", p.stdout, re.M)
+    if not m or not nodes or not main_nodes:
         if diagnose:
             raise RuntimeError(f"Solver output could not be parsed for clues={clues}, cells={cells}\\nstdout={p.stdout}\\nstderr={p.stderr}")
         return None
-    return (int(m[1]), int(nodes[1]))
+    return (int(m[1]), int(nodes[1]), int(main_nodes[1]))
 
 def print_failure_diagnostics(binary, ident, label, minimal, variant, cells,
                               solution, timeout, seed, attempt, original_error=None):
@@ -131,6 +133,19 @@ def print_failure_diagnostics(binary, ident, label, minimal, variant, cells,
     print("=" * 76, file=sys.stderr, flush=True)
 
 
+def weighted_removal_order(candidates, solved, full, rng, weight, rate=0.25):
+    """Preserve grid/clue cost priority, bias ties with exponential weights."""
+    n = len(solved)
+    def priority(item):
+        _, is_cell, idx = item
+        value = solved[idx // n][idx % n] if is_cell else full[idx]
+        preference = (math.exp(-rate * value) if is_cell
+                      else math.exp(rate * abs(value - 3)))
+        # Weighted sampling without replacement; more preferred entries first.
+        return rng.random() ** (1.0 / preference)
+    return sorted(candidates, key=lambda item: (-item[0], -priority(item)))
+
+
 def minimize(binary, full, solved, rng, timeout, weight):
     n = len(solved)
     clues, cells = full[:], [0] * (n*n)
@@ -148,8 +163,7 @@ def minimize(binary, full, solved, rng, timeout, weight):
             return None
     candidates = [(weight, 1, i) for i,v in enumerate(cells) if v]
     candidates += [(1, 0, i) for i,v in enumerate(clues) if v]
-    rng.shuffle(candidates)
-    candidates.sort(key=lambda x:-x[0])
+    candidates = weighted_removal_order(candidates, solved, full, rng, weight)
     for _, is_cell, i in candidates:
         target = cells if is_cell else clues
         old = target[i]
@@ -158,7 +172,7 @@ def minimize(binary, full, solved, rng, timeout, weight):
         if not test or test[0] != 1:
             target[i] = old
     test = verify(binary, clues, cells, timeout)
-    return (clues, cells, test[1]) if test and test[0] == 1 else None
+    return (clues, cells, test[1], test[2]) if test and test[0] == 1 else None
 
 def unique_samples(positions, count, rng, samples_per_step):
     """Choose up to four distinct unordered subsets for a given density."""
@@ -204,14 +218,15 @@ def generate_variants(binary, ident, clues, cells, full, solution, minimal_nodes
                     binary, ident, label, clues, new_clues, new_cells,
                     solution, timeout, seed, attempt, exc)
                 raise RuntimeError(f"Verification failed for {ident}/{label}") from exc
-            nodes = result[1]
+            nodes, main_nodes = result[1], result[2]
         else:
-            nodes = known_nodes
+            nodes, main_nodes = known_nodes
         variants.append({
             "label": label, "clues": new_clues[:], "givens": new_cells[:],
             "clue_count": sum(bool(x) for x in new_clues),
             "given_count": sum(bool(x) for x in new_cells),
             "nodes_visited": nodes,
+            "main_nodes_visited": main_nodes,
         })
 
     append("minimal", clues, cells, minimal_nodes)
@@ -254,6 +269,10 @@ def main():
             args.gap, args.batch_size, args.variants_per_step) <= 0
             or args.burn_in < 0):
         ap.error("positive parameters required (burn-in may be zero)")
+    if args.size == 4 and args.count > 74:
+        print("Size 4 has a configured maximum of 74 canonical solutions; "
+              f"reducing requested count from {args.count} to 74.", flush=True)
+        args.count = 74
     binary = args.solver.resolve()
     if not binary.is_file():
         ap.error("Build the native solver using make first")
@@ -273,7 +292,7 @@ def main():
         item = minimize(binary, full, solution, rng, args.timeout, args.weight)
         if item is None:
             continue
-        clues, cells, nodes = item
+        clues, cells, nodes, main_nodes = item
         puzzle_key = (key, tuple(clues), tuple(cells))
         if puzzle_key in seen_puzzles:
             continue
@@ -292,9 +311,10 @@ def main():
             "given_count": sum(bool(v) for v in cells),
             "cost": sum(bool(v) for v in clues) + args.weight*sum(bool(v) for v in cells),
             "nodes_visited": nodes,
+            "main_nodes_visited": main_nodes,
         }
         variants = generate_variants(
-            binary, ident, clues, cells, full, solution, nodes, rng,
+            binary, ident, clues, cells, full, solution, (nodes, main_nodes), rng,
             args.timeout, args.seed, attempt, args.variants_per_step)
         group["puzzles"].append(base)
         candidate_groups[key]["puzzles"].append({
