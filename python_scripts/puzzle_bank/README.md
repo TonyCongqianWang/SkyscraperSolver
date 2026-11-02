@@ -134,14 +134,15 @@ The LFS attribute is restricted to generated minimal banks, not curated JSON.
 Pull the minimal LFS objects locally before running the filler.
 
 Edit `puzzle_bank/curated/v2/quotas.json`: each size and difficulty has a
-nonnegative minimum. The defaults are 10,000 except very_easy for all sizes
-and hard through impossible for size 4, which have zero minimum. Size 5 also
-has zero minimum for extreme and above; size 6 for extreme_plus and above.
+nonnegative minimum. The defaults are 10,000 for most bands. Very easy has a minimum of 10,000
+for sizes 4–5, 2,000 for sizes 6–7, 1,000 for size 8 and zero for size 9.
+Size 9 easy has a minimum of 1,000. Size 4 hard and above have zero minimum;
+size 5 extreme and above and size 6 extreme_plus and above also have zero minimum.
 The filler continues collecting candidates for all buckets (up to 15,000
 per bucket) while any minimum is unmet; a met minimum does not stop that
 bucket from growing. It reshuffles and resamples minimal puzzles over multiple
-passes, exiting after 100 consecutive draws without advancing an unmet
-minimum.
+passes, exiting after 1,000 consecutive draws without adding a new puzzle to a
+positive-quota bucket still below 1.5 times its minimum.
 All-zero minima generate no solver work; existing curated entries are preserved. To generate new mixed
 clue/given candidates directly from the minimal bank, run:
 
