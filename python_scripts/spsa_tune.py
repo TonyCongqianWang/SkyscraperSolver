@@ -531,7 +531,33 @@ def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_no
         log_print(f"{prefix} S9 t: {stats[0]:.4f}s n: {stats[1]:.0f}")
 
 
-def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations):
+def make_perturbation_directions(active_indices, dimensions, count):
+    """Randomized orthogonal Hadamard rows, or independent Rademacher fallback."""
+    n = len(active_indices)
+    if count == 1:
+        # Preserve the original RNG draws, including draws for inactive parameters.
+        return [[random.choice([-1.0, 1.0]) for _ in range(dimensions)]]
+    if n and n & (n - 1) == 0 and count <= n:
+        # Sylvester Hadamard matrix: row/column permutations and sign flips
+        # preserve exact orthogonality on the active coordinates.
+        rows = random.sample(range(n), count)
+        columns = random.sample(range(n), n)
+        signs = [random.choice([-1.0, 1.0]) for _ in range(n)]
+        directions = []
+        for row in rows:
+            delta = [0.0] * dimensions
+            for col, index in enumerate(active_indices):
+                parity = (row & columns[col]).bit_count() % 2
+                delta[index] = signs[col] * (-1.0 if parity else 1.0)
+            directions.append(delta)
+        return directions
+    active_set = set(active_indices)
+    return [[random.choice([-1.0, 1.0]) if i in active_set else 0.0
+             for i in range(dimensions)] for _ in range(count)]
+
+
+def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations, directions=1,
+                                active_names=None):
     log_print("\nParameter Sensitivity Analysis (Average Absolute Gradient):")
     log_print("==========================================================")
     log_print(f"{'Parameter Name':<30} | {'Time Loss Sens.':<16} | {'Node Loss Sens.':<16} | {'Total Sens.':<12}")
@@ -539,14 +565,21 @@ def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations):
 
     sens_data = []
     for i, (name, _, _, _, _, _) in enumerate(PARAM_METADATA):
-        avg_gt = grad_time_sum[i] / iterations
-        avg_gn = grad_nodes_sum[i] / iterations
-        total_sens = avg_gt + avg_gn
+        active = active_names is None or name in active_names
+        if directions == 1 or not active:
+            avg_gt = avg_gn = total_sens = None
+        else:
+            avg_gt = grad_time_sum[i] / iterations
+            avg_gn = grad_nodes_sum[i] / iterations
+            total_sens = avg_gt + avg_gn
         sens_data.append((name, avg_gt, avg_gn, total_sens))
 
-    sens_data.sort(key=lambda x: x[3], reverse=True)
+    sens_data.sort(key=lambda x: x[3] if x[3] is not None else -1, reverse=True)
     for name, avg_gt, avg_gn, total_sens in sens_data:
-        log_print(f"{name:<30} | {avg_gt:<16.6f} | {avg_gn:<16.6f} | {total_sens:<12.6f}")
+        if total_sens is None:
+            log_print(f"{name:<30} | {'N/A':<16} | {'N/A':<16} | {'N/A':<12}")
+        else:
+            log_print(f"{name:<30} | {avg_gt:<16.6f} | {avg_gn:<16.6f} | {total_sens:<12.6f}")
 
 
 # --- Comparison Runner ---
@@ -636,7 +669,10 @@ def run_spsa(args, datasets, max_workers):
     else:
         batch_size = 128
 
-    log_print(f"SPSA Batch Size configured: {batch_size}")
+    directions = getattr(args, 'directions', 1)
+    if directions < 1 or directions > batch_size:
+        raise ValueError("directions must be between 1 and the batch size")
+    log_print(f"SPSA Batch Size configured: {batch_size}; directions: {directions}")
 
     theta = project_constraints(get_default_theta())
     swa_theta = [0.0] * len(theta)
@@ -677,57 +713,50 @@ def run_spsa(args, datasets, max_workers):
         ak = a / ((k + A) ** alpha)
         ck = c / (k ** gamma)
 
-        get_loss = build_loss_evaluator(
-            size=args.size,
-            datasets=datasets,
-            batch_size=batch_size,
-            max_workers=max_workers,
-            use_stdin=args.stdin,
-            enumeration_only=args.enumeration_only
-        )
-
+        # Partition the existing batch budget across paired perturbation evaluations.
+        sizes = [batch_size // directions + (j < batch_size % directions)
+                 for j in range(directions)]
+        evaluators = [
+            build_loss_evaluator(
+                size=args.size, datasets=datasets, batch_size=part,
+                max_workers=max_workers, use_stdin=args.stdin,
+                enumeration_only=args.enumeration_only)
+            for part in sizes
+        ]
+        get_loss = (evaluators[0] if directions == 1 else build_loss_evaluator(
+            size=args.size, datasets=datasets, batch_size=batch_size,
+            max_workers=max_workers, use_stdin=args.stdin,
+            enumeration_only=args.enumeration_only))
         active_names = get_active_param_names(args.tune_mode, args.size)
-        delta = [random.choice([-1.0, 1.0]) for _ in range(len(theta))]
+        active_indices = [i for i, (name, pmin, pmax, _, _, _) in enumerate(PARAM_METADATA)
+                          if pmax > pmin and name in active_names]
+        active_index_set = set(active_indices)
+        perturbations = make_perturbation_directions(active_indices, len(theta), directions)
 
-        # Perturbed plus
-        theta_plus_raw = []
-        for i in range(len(theta)):
-            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (name in active_names)
-            if is_active:
-                theta_plus_raw.append(max(0.0, min(1.0, theta[i] + ck * perturb_scale * delta[i])))
-            else:
-                theta_plus_raw.append(theta[i])
-        theta_plus = project_constraints(theta_plus_raw)
-        loss_time_plus, loss_nodes_plus, _ = get_loss(theta_plus)
+        grad_time = [0.0] * len(theta)
+        grad_nodes = [0.0] * len(theta)
+        for delta, evaluator, part in zip(perturbations, evaluators, sizes):
+            losses = []
+            for sign in (1.0, -1.0):
+                perturbed = []
+                for i, value in enumerate(theta):
+                    if i in active_index_set:
+                        scale = PARAM_METADATA[i][5]
+                        value = max(0.0, min(1.0, value + sign * ck * scale * delta[i]))
+                    perturbed.append(value)
+                losses.append(evaluator(project_constraints(perturbed)))
+            loss_time_plus, loss_nodes_plus, _ = losses[0]
+            loss_time_minus, loss_nodes_minus, _ = losses[1]
+            # Preserve the existing perturb_scale gradient convention.
+            weight = part / batch_size
+            for i in active_indices:
+                grad_time[i] += weight * (loss_time_plus - loss_time_minus) / (2.0 * ck * delta[i])
+                grad_nodes[i] += weight * (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * delta[i])
 
-        # Perturbed minus
-        theta_minus_raw = []
-        for i in range(len(theta)):
-            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (name in active_names)
-            if is_active:
-                theta_minus_raw.append(max(0.0, min(1.0, theta[i] - ck * perturb_scale * delta[i])))
-            else:
-                theta_minus_raw.append(theta[i])
-        theta_minus = project_constraints(theta_minus_raw)
-        loss_time_minus, loss_nodes_minus, _ = get_loss(theta_minus)
-
-        grad_time = []
-        grad_nodes = []
-        for i in range(len(theta)):
-            name, pmin, pmax, _, _, perturb_scale = PARAM_METADATA[i]
-            is_active = (pmax > pmin) and (name in active_names)
-            if is_active:
-                gt_i = (loss_time_plus - loss_time_minus) / (2.0 * ck * delta[i])
-                gn_i = (loss_nodes_plus - loss_nodes_minus) / (2.0 * ck * delta[i])
-            else:
-                gt_i = 0.0
-                gn_i = 0.0
-            grad_time.append(gt_i)
-            grad_nodes.append(gn_i)
-            grad_time_sum[i] += abs(gt_i)
-            grad_nodes_sum[i] += abs(gn_i)
+        if directions > 1:
+            for i in active_indices:
+                grad_time_sum[i] += abs(grad_time[i])
+                grad_nodes_sum[i] += abs(grad_nodes[i])
 
         if LOG_FILE_HANDLE:
             LOG_FILE_HANDLE.write(f"Iter {k} grad_time:  {list(grad_time)}\n")
@@ -820,7 +849,7 @@ def run_spsa(args, datasets, max_workers):
     for name, val in phys_best.items():
         log_print(f"{name} = {val}")
 
-    report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations)
+    report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations, directions, active_names)
 
     save_winners(winners_filename, theta_final, "Final SWA" if swa_count > 0 else "Final", args.size)
     log_print(f"\nOptimal generalizing definitions written to {winners_filename}")
@@ -841,6 +870,7 @@ def parse_args():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
+    parser.add_argument("--directions", type=int, default=4, help="Perturbation pairs per iteration (1 retains legacy SPSA behavior)")
     parser.add_argument("--grad-clip", type=float, default=2.5, help="Relative gradient norm clipping threshold (multiple of running gradient norm)")
     parser.add_argument("--mom-clip", type=float, default=1.5, help="Momentum buffer norm ceiling factor")
     parser.add_argument("--beta", type=float, default=0.90, help="Momentum decay coefficient (beta)")
@@ -853,7 +883,7 @@ def parse_args():
     parser.add_argument('--comparison-repeats', type=int, default=2, help='Even number of AB/BA comparison rounds')
     parser.add_argument('--comparison-warmup', type=int, default=1, help='Unmeasured instances per comparison worker')
     args = parser.parse_args()
-    if args.max_workers < 1 or args.iterations < 1 or (args.batch_size is not None and args.batch_size < 1):
+    if args.max_workers < 1 or args.iterations < 1 or args.directions < 1 or (args.batch_size is not None and args.batch_size < 1):
         parser.error('workers, iterations and batch size must be positive')
     if args.comparison_repeats < 2 or args.comparison_repeats % 2 or args.comparison_warmup < 0:
         parser.error('comparison repeats must be positive and even; warmup nonnegative')
