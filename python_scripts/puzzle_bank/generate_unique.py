@@ -296,13 +296,8 @@ def main():
             last_report = now
         solution = canonical_square(sampler.next_square().tolist())
         key = tuple(v for row in solution for v in row)
-        if key in minimal_groups:
-            samples_since_new_group += 1
-            if samples_since_new_group >= reseed_after:
-                sampler.reseed()
-                samples_since_new_group = 0
-                reseeds += 1
-            continue
+        # Repeated solutions may produce distinct minimized puzzles; keep
+        # processing them, but restart a stagnant chain periodically.
         samples_since_new_group += 1
         if samples_since_new_group >= reseed_after:
             sampler.reseed()
