@@ -30,7 +30,9 @@ class CuratorTests(unittest.TestCase):
         self.assertEqual(difficulty(801, 8), "extreme")
         self.assertEqual(difficulty(1600, 8), "extreme")
         self.assertEqual(difficulty(1601, 8), "extreme_plus")
-        self.assertEqual(difficulty(50, 9), "impossible")
+        self.assertEqual(difficulty(50, 9), "hard")
+        self.assertEqual(difficulty(900, 9), "extreme")
+        self.assertEqual(difficulty(1601, 9), "extreme_plus")
 
     def test_reservoir_cap_and_provenance(self):
         with tempfile.TemporaryDirectory() as td:
