@@ -15,6 +15,19 @@ makeSolver().then((Module) => {
   if (!given.startsWith("1|")) {
     throw new Error("Expected a unique fully given grid: " + given);
   }
+  // Repeat with a partial initial grid, which may cause propagation to
+  // fill other givens before their turn in the initial update batch.
+  for (const filled of [1, 4, 8, 12, 15]) {
+    const partialGrid = [...grid].map((value, index) =>
+      index < filled ? value : "0").join(" ");
+    const partial = Module.ccall("solve_web", "string",
+      ["string", "string", "number"], [clues, partialGrid, 2]);
+    const [partialCount] = partial.split("|");
+    if (Number(partialCount) < 1 || Number(partialCount) > 2) {
+      throw new Error("Partial grid (first " + filled +
+        " givens) unexpectedly has no solution: " + partial);
+    }
+  }
   console.log("WASM smoke test passed: " + count + " solutions, " + nodes + " nodes");
 }).catch((error) => {
   console.error(error);

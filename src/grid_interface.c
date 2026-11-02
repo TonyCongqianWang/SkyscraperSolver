@@ -43,8 +43,12 @@ int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates,
 	i = 0;
 	while (i < count && !puzzle->cur_node->is_invalid)
 	{
-		set_grid_val_internal(puzzle->cur_node, updates[i].cell_idx,
-			updates[i].val, 0);
+		if (puzzle->cur_node->grid.vals[updates[i].cell_idx] == 0)
+			set_grid_val_internal(puzzle->cur_node, updates[i].cell_idx,
+				updates[i].val, 0);
+		else if (puzzle->cur_node->grid.vals[updates[i].cell_idx]
+			!= updates[i].val)
+			puzzle->cur_node->is_invalid = 1;
 		i++;
 	}
 	if (mode.run_constr)

@@ -2,80 +2,87 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Skyscraper Solver — WebAssembly</title>
+<title>Skyscraper Solver / WASM</title>
 <style>
-:root{font-family:system-ui,sans-serif;color:#272018;background:#f7f1e7}
-body{max-width:790px;margin:28px auto;padding:0 18px}
-h1{margin-bottom:8px}p{line-height:1.55}
-label{display:block;font-weight:700;margin:18px 0 7px}
-textarea{box-sizing:border-box;width:100%;padding:12px;border:1px solid #bca98b;border-radius:8px;background:#fffaf2;font:15px/1.6 ui-monospace,monospace;resize:vertical}
-button{background:#b58741;color:#17110b;font-size:17px;font-weight:700;border:0;border-radius:8px;padding:12px 22px;cursor:pointer;margin:18px 0}
-button:disabled{opacity:.6;cursor:wait}
-#status{min-height:25px}#status.error{color:#9e251c}
-#board{display:grid;grid-template-columns:repeat(var(--side),minmax(0,1fr));max-width:520px;gap:3px;margin:18px 0}
-#board .cell,#board .clue,#board .blank{min-height:32px;aspect-ratio:1;display:grid;place-items:center}
-#board .cell{background:#fffaf0;border:1px solid #c9bca5;border-radius:4px;font-weight:700}
-#board .clue{color:#76582b;font-weight:700}
-code{word-break:break-word}
+:root{color-scheme:dark;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#090909;color:#f0f0f0}
+*{box-sizing:border-box}body{max-width:850px;margin:38px auto;padding:0 20px}
+h1{font-size:1.45rem;font-weight:600}p{line-height:1.6;color:#c9c9c9}
+label{display:block;margin:0 0 8px}
+.input-row{display:flex;align-items:flex-end;gap:12px;margin-top:24px}
+.input-field{flex:1;min-width:0}
+.input-row button{flex:none;margin:0;min-height:75px}
+.hint{font-size:.85rem;margin-top:12px}
+@media(max-width:620px){.input-row{flex-wrap:wrap}.input-field{flex:1 1 100%}.input-row button{min-height:0}}
+textarea{display:block;width:100%;min-height:75px;padding:12px;background:#171717;color:#fafafa;border:1px solid #696969;border-radius:4px;font:inherit;resize:vertical}
+textarea:focus{outline:1px solid white}
+button{margin:20px 0;padding:11px 25px;border:1px solid #eee;border-radius:4px;background:#f4f4f4;color:#080808;font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+pre{white-space:pre;overflow-x:auto;line-height:1.6;font-size:clamp(12px,2.5vw,17px)}
+#status{min-height:1.5em;color:#fff}#status.error{color:#ff9c9c}
+small{font-size:.85rem;font-weight:400;color:#999}
 </style>
-</head><body>
-<h1>Skyscraper Solver <small>(WebAssembly)</small></h1>
-<p>Runs the C solver locally in your browser. Enter <b>4×N clues</b> as space-separated digits in this order: <b>top, bottom, left, right</b> (each group has N entries). Use <b>0</b> for a missing clue. Sizes 4–9.</p>
-<label for="clues">Visibility clues</label>
-<textarea id="clues" rows="3" spellcheck="false">1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0</textarea>
-<label for="grid">Initial grid (optional)</label>
-<textarea id="grid" rows="3" spellcheck="false" placeholder="N×N values row by row; 0 for blank. Leave empty for no givens."></textarea>
-<button id="solve">Solve!</button>
-<p id="status" role="status" aria-live="polite"></p><div id="board" aria-label="First solution"></div>
-<p id="stats"></p>
+</head>
+<body>
+<h1>Skyscraper Solver <small>/ WebAssembly</small></h1>
+<div class="input-row">
+  <div class="input-field"><label for="clues">CLUES</label>
+    <textarea id="clues" rows="2" spellcheck="false">1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0</textarea></div>
+  <div class="input-field"><label for="grid">GRID (OPTIONAL)</label>
+    <textarea id="grid" rows="2" spellcheck="false" placeholder="Leave empty for no givens"></textarea></div>
+  <button id="solve">Solve!</button>
+</div>
+<p class="hint">Clues: 4 × N space-separated values (N = 4–9), ordered Top (→), Bottom (→), Left (↓), Right (↓).<br>
+Grid: N × N values, row by row (→, then ↓). Use 0 for missing clues or empty cells.</p>
+<p id="status" role="status" aria-live="polite"></p>
+<pre id="output" aria-label="First solution"></pre>
 <script>
-const cluesEl=document.querySelector("#clues"),gridEl=document.querySelector("#grid"),
-  solveBtn=document.querySelector("#solve"),statusEl=document.querySelector("#status"),
-  board=document.querySelector("#board"),stats=document.querySelector("#stats");
-let worker;
-const tokens=(s)=>s.trim()?s.trim().split(/\s+/).map(Number):[];
-function validate(){
-  const clues=tokens(cluesEl.value),n=clues.length/4,grid=tokens(gridEl.value);
-  if(!Number.isInteger(n)||n<4||n>9||clues.some(v=>!Number.isInteger(v)||v<0||v>n))
-    throw Error("Provide 4×N clue numbers (N = 4–9), all between 0 and N.");
-  if(grid.length&&grid.length!==n*n)throw Error("Grid must contain exactly N×N values, or be empty.");
-  if(grid.some(v=>!Number.isInteger(v)||v<0||v>n))throw Error("Grid values must be integers between 0 and N.");
-  return {n,clues,grid};
+const $=id=>document.getElementById(id);
+let worker=null;
+function numbers(source){
+ const text=source.trim();
+ if(!text)return [];
+ const parts=text.split(/\s+/);
+ if(parts.some(x=>!/^[0-9]+$/.test(x)))throw Error("Use only space-separated integers.");
+ return parts.map(Number);
 }
-function render(n,values,clues){
-  board.replaceChildren();board.style.setProperty("--side",n+2);
-  const cell=(text,cls)=>{const el=document.createElement("div");el.className=cls;el.textContent=text||"";board.append(el)};
-  for(let r=-1;r<=n;r++)for(let c=-1;c<=n;c++){
-    if(r===-1&&c>=0)cell(clues[c]||"","clue");
-    else if(r===n&&c>=0)cell(clues[n+c]||"","clue");
-    else if(c===-1&&r>=0&&r<n)cell(clues[2*n+r]||"","clue");
-    else if(c===n&&r>=0&&r<n)cell(clues[3*n+r]||"","clue");
-    else if(r>=0&&r<n&&c>=0&&c<n)cell(values[r*n+c],"cell");
-    else cell("","blank");
-  }
+function ascii(n,clues,values){
+ const show=v=>v?String(v):" ";
+ const pad="    ",top=pad+Array.from({length:n},(_,i)=>show(clues[i])).join("   ");
+ const edge=pad+"+"+Array.from({length:n},()=> "---").join("+")+"+";
+ const rows=[top,edge];
+ for(let r=0;r<n;r++){
+  let cells=Array.from({length:n},(_,c)=>show(values[r*n+c])).map(v=>" "+v+" ").join("|");
+  rows.push(" "+show(clues[2*n+r])+"  |"+cells+"|  "+show(clues[3*n+r]));
+  rows.push(edge);
+ }
+ rows.push(pad+Array.from({length:n},(_,i)=>show(clues[n+i])).join("   "));
+ return rows.join("\n");
 }
-solveBtn.onclick=()=>{
-  try{
-    const {n,clues,grid}=validate();
-    if(worker)worker.terminate();
-    worker=new Worker("./worker.js");
-    solveBtn.disabled=true;statusEl.className="";statusEl.textContent="Solving locally…";
-    stats.textContent="";board.replaceChildren();
-    worker.onmessage=({data})=>{
-      solveBtn.disabled=false;worker.terminate();worker=null;
-      if(data.error||data.response?.startsWith("ERR:")){
-        statusEl.className="error";statusEl.textContent=data.error||data.response;return;
-      }
-      const [countStr,nodesStr,sizeStr,solution=""]=data.response.split("|");
-      const count=Number(countStr),size=Number(sizeStr);
-      if(count===0){statusEl.textContent="No solution found.";return;}
-      statusEl.textContent=count===1?"Unique solution.":"Not unique: at least two solutions exist.";
-      if(solution.length!==size*size)throw Error("Unexpected solver solution format");
-      render(size,[...solution].map(Number),clues);
-      stats.textContent="Solutions found (search limit 2): "+count+" · Nodes visited: "+nodesStr;
-    };
-    worker.onerror=(e)=>{solveBtn.disabled=false;statusEl.className="error";statusEl.textContent="WebAssembly worker failed: "+e.message;worker?.terminate();worker=null};
-    worker.postMessage({clues:clues.join(" "),grid:grid.join(" "),limit:2});
-  }catch(e){solveBtn.disabled=false;statusEl.className="error";statusEl.textContent=e.message;}
+$("solve").onclick=()=>{
+ try{
+  const clues=numbers($("clues").value),n=clues.length/4,grid=numbers($("grid").value);
+  if(!Number.isInteger(n)||n<4||n>9||clues.some(x=>x>n))
+   throw Error("Expected 4 × N clues, each between 0 and N (N = 4–9).");
+  if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
+  if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
+  worker?.terminate();
+  worker=new Worker("./worker.js");
+  $("solve").disabled=true;$("status").className="";$("status").textContent="Solving…";$("output").textContent="";
+  worker.onmessage=({data})=>{
+   worker?.terminate();worker=null;$("solve").disabled=false;
+   if(data.error||data.response?.startsWith("ERR:")){
+    $("status").className="error";$("status").textContent=data.error||data.response;return;
+   }
+   const [countText,nodes,sizeText,solution=""]=data.response.split("|");
+   const count=Number(countText),size=Number(sizeText);
+   if(count===0){$("status").textContent="No solutions.";return;}
+   if(size!==n||solution.length!==n*n){$("status").className="error";$("status").textContent="Invalid solver response.";return;}
+   $("status").textContent=(count===1?"Unique solution.":"Not unique: at least two solutions.")+" Nodes visited: "+nodes;
+   $("output").textContent=ascii(n,clues,[...solution].map(Number));
+  };
+  worker.onerror=e=>{worker?.terminate();worker=null;$("solve").disabled=false;$("status").className="error";$("status").textContent=e.message};
+  worker.postMessage({clues:clues.join(" "),grid:grid.join(" "),limit:2});
+ }catch(error){$("solve").disabled=false;$("status").className="error";$("status").textContent=error.message}
 };
-</script></body></html>
+</script>
+</body></html>
