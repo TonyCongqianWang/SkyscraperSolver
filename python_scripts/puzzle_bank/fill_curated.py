@@ -40,9 +40,9 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
 
     # A bucket can grow beyond its minimum, up to cap, while any quota is unmet.
     # Revisit minimal puzzles with fresh samples; don't stop after a single sweep.
-    # "No progress" means 100 consecutive candidate draws without adding a
-    # puzzle to a bucket that is still below its minimum.
-    stall_limit = 100
+    # Reset the stall counter for each new puzzle in a positive-quota bucket
+    # below 1.5x its minimum, even if its minimum is already satisfied.
+    stall_limit = 1000
     stalled = 0
     pool = [(group, base) for group in bank["groups"]
             for base in group["puzzles"]]
@@ -88,7 +88,8 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                 grade = difficulty(nodes, main_nodes)
                 if len(buckets[grade]) >= cap:
                     continue
-                below_minimum = len(buckets[grade]) < wanted[grade]
+                counts_as_progress = (wanted[grade] > 0 and
+                                      2 * len(buckets[grade]) < 3 * wanted[grade])
                 # Deterministic identity, distinct across sweeps and reruns.
                 digest = hashlib.sha256(repr(key).encode("utf-8")).hexdigest()[:20]
                 buckets[grade].append({
@@ -103,7 +104,7 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
                     "nodes_visited": nodes,
                     "main_nodes_visited": main_nodes,
                 })
-                if below_minimum:
+                if counts_as_progress:
                     stalled = 0
 
     if stalled >= stall_limit and not done():
