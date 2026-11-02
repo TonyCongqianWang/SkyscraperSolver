@@ -1,0 +1,66 @@
+name: PR website preview
+on:
+  pull_request:
+    paths:
+      - 'web/**'
+      - 'src/**'
+      - 'puzzle_bank/**'
+      - '.github/workflows/preview-pages.yml'
+      - '.github/workflows/publish-puzzle-bank.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          lfs: true
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: latest
+      - name: Build website
+        run: |
+          mkdir -p public/solver/demo
+          emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
+            -s INVOKE_RUN=0 -s MODULARIZE=1 \
+            -s EXPORT_NAME=createSkyscraperSolver \
+            -s EXPORTED_FUNCTIONS='["_solve_web"]' \
+            -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
+            -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
+            -o public/solver/solver.js
+          cp web/index.html public/solver/demo/index.html
+          cp web/worker.js web/solver-info.html public/solver/
+          mv public/solver/solver-info.html public/solver/index.html
+          cp web/home.html public/index.html
+          mkdir -p public/puzzle-bank/v1 public/puzzle-bank/unique/v2/minimal public/puzzle-bank/curated/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
+          find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
+          python3 web/generate_directory_indexes.py public/puzzle-bank
+          cp web/curated.html public/puzzle-bank/curated/index.html
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for n in range(4,10):
+              with Path(f'public/puzzle-bank/unique/v2/minimal/size_{n}.json').open() as f:
+                  assert json.load(f)['size'] == n
+          PY
+          touch public/.nojekyll
+      - name: Upload browsable site artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: website-preview
+          path: public/
+          retention-days: 14
+      - name: Deploy PR preview to Cloudflare Pages
+        if: github.event_name == 'pull_request'
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy public --project-name=skyscrapersolver-preview --branch=pr-${{ github.event.pull_request.number }}
