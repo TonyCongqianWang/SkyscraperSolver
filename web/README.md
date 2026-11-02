@@ -13,4 +13,4 @@ emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
 
 The page communicates with a Web Worker to keep the main UI responsive. The C interface `solve_web(const char *clues, const char *grid, int max_solutions)` returns a transient string `count|nodes|size|row-major-first-solution` or `ERR:...`. Clues and optional grid follow the native CLI input format. Web page always uses a solution cap of two.
 
-GitHub Actions publishes the compiled JS and WASM together with the puzzle bank to Pages.
+GitHub Actions publishes the compiled JS and WASM at `/solver/`, usage notes at `/solver/`, and the interactive demo at `/solver/demo/`. Puzzle-bank directory indexes are generated during deployment.
