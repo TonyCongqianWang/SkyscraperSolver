@@ -47,7 +47,8 @@ function numbers(source){
 }
 function ascii(n,clues,values){
  const show=v=>v?String(v):" ";
- const pad="    ",top=pad+Array.from({length:n},(_,i)=>show(clues[i])).join("   ");
+ const pad="    ",cluePad="      "; // Clue digits sit at cell centers, two columns past the left border.
+ const top=cluePad+Array.from({length:n},(_,i)=>show(clues[i])).join("   ");
  const edge=pad+"+"+Array.from({length:n},()=> "---").join("+")+"+";
  const rows=[top,edge];
  for(let r=0;r<n;r++){
@@ -55,7 +56,7 @@ function ascii(n,clues,values){
   rows.push(" "+show(clues[2*n+r])+"  |"+cells+"|  "+show(clues[3*n+r]));
   rows.push(edge);
  }
- rows.push(pad+Array.from({length:n},(_,i)=>show(clues[n+i])).join("   "));
+ rows.push(cluePad+Array.from({length:n},(_,i)=>show(clues[n+i])).join("   "));
  return rows.join("\n");
 }
 $("solve").onclick=()=>{
