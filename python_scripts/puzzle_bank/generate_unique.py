@@ -19,7 +19,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from python_scripts.dataset_generation.generator import (
-    generate_random_latin_square, generate_uniform_latin_squares, seed_mcmc,
+    MCMCLatinSquareSampler,
 )
 
 def visibility(line):
@@ -57,20 +57,6 @@ def canonical_square(grid):
 
 def solution_key(grid):
     return tuple(v for row in canonical_square(grid) for v in row)
-
-
-def mcmc_solutions(n, seed, burn_in, gap, batch_size):
-    """Continuous cycle-switch MCMC chain, with initial random Latin square."""
-    random.seed(seed)
-    seed_mcmc(seed % (2 ** 32))
-    current = generate_random_latin_square(n)
-    first = True
-    while True:
-        squares, current = generate_uniform_latin_squares(
-            n, batch_size, current, burn_in if first else 0, gap)
-        first = False
-        for sample in squares:
-            yield sample.tolist()
 
 
 def clues_for(g):
@@ -289,8 +275,12 @@ def main():
     if not binary.is_file():
         ap.error("Build the native solver using make first")
     rng = random.Random(args.seed)
-    sampler = mcmc_solutions(args.size, args.seed, args.burn_in,
-                             args.gap, args.batch_size)
+    sampler = MCMCLatinSquareSampler(args.size, seed=args.seed,
+                                    burn_in=args.burn_in, gap=args.gap,
+                                    batch_size=args.batch_size)
+    samples_since_new_group = 0
+    reseed_after = max(3 * args.batch_size, 200)
+    reseeds = 0
     minimal_groups = {}
     candidate_groups = {}
     seen_puzzles = set()
@@ -304,8 +294,20 @@ def main():
             print(f"Size {args.size}: {len(minimal_groups)}/{args.count} groups, "
                   f"{len(seen_puzzles)} puzzles, {attempt - 1} samples", flush=True)
             last_report = now
-        solution = canonical_square(next(sampler))
+        solution = canonical_square(sampler.next_square().tolist())
         key = tuple(v for row in solution for v in row)
+        if key in minimal_groups:
+            samples_since_new_group += 1
+            if samples_since_new_group >= reseed_after:
+                sampler.reseed()
+                samples_since_new_group = 0
+                reseeds += 1
+            continue
+        samples_since_new_group += 1
+        if samples_since_new_group >= reseed_after:
+            sampler.reseed()
+            samples_since_new_group = 0
+            reseeds += 1
         full = clues_for(solution)
         item = minimize(binary, full, solution, rng, args.timeout, args.weight)
         if item is None:
@@ -317,6 +319,7 @@ def main():
         seen_puzzles.add(puzzle_key)
         new_group = key not in minimal_groups
         if new_group:
+            samples_since_new_group = 0
             group_id = f"s{args.size}-{len(minimal_groups)+1:05d}"
             minimal_groups[key] = {
                 "id": group_id, "canonical_solution": list(key), "puzzles": []}
@@ -356,6 +359,7 @@ def main():
         "puzzle_count": len(seen_puzzles), "seed": args.seed,
         "sampler": {"method": "cycle_switch_mcmc", "burn_in": args.burn_in,
                     "gap": args.gap, "batch_size": args.batch_size},
+        "mcmc_reseeds": reseeds,
         "symmetry": "D4_board_only", "canonical_rep": "lexicographically_smallest_grid",
         "uniqueness": "verified by native solver -s 2", "cell_weight": args.weight,
     }
