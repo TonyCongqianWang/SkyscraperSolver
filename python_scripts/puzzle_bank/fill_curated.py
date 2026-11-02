@@ -7,12 +7,15 @@ Existing curated entries are preserved; newly verified entries are appended.
 import argparse
 import json
 import random
+import sys
 from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from python_scripts.puzzle_bank.curate import LEVELS, difficulty
 from python_scripts.puzzle_bank.generate_unique import clues_for, verify
-
-ROOT = Path(__file__).resolve().parents[2]
 
 
 def fill_size(size, quotas, source, target, solver, timeout, seed, attempts):
