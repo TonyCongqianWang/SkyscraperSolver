@@ -110,6 +110,41 @@ class WorkflowTests(unittest.TestCase):
         self.assertTrue(json.loads(path.with_suffix('.json').read_text())['complete'])
         self.assertFalse(list(self.directory.glob('*.tmp')))
 
+    def test_hadamard_directions_are_exactly_orthogonal(self):
+        random.seed(17)
+        for count in (2, 4, 8):
+            vectors = tuning.make_perturbation_directions(list(range(8)), 10, count)
+            self.assertEqual(len(vectors), count)
+            for vector in vectors:
+                self.assertEqual(vector[8:], [0.0, 0.0])
+                self.assertTrue(all(abs(x) == 1 for x in vector[:8]))
+            for i in range(count):
+                for j in range(i):
+                    self.assertEqual(sum(a * b for a, b in zip(vectors[i], vectors[j])), 0)
+
+    def test_non_power_of_two_directions_use_random_fallback(self):
+        random.seed(19)
+        vectors = tuning.make_perturbation_directions([0, 2, 3], 5, 4)
+        self.assertEqual(len(vectors), 4)
+        for vector in vectors:
+            self.assertEqual((vector[1], vector[4]), (0.0, 0.0))
+            self.assertTrue(all(abs(vector[i]) == 1 for i in (0, 2, 3)))
+
+    def test_single_direction_preserves_legacy_random_sequence(self):
+        random.seed(23)
+        expected = [random.choice([-1.0, 1.0]) for _ in range(7)]
+        random.seed(23)
+        self.assertEqual(tuning.make_perturbation_directions([1, 3], 7, 1), [expected])
+
+    def test_sensitivity_unavailable_for_one_direction_and_inactive_params(self):
+        output = io.StringIO()
+        with patch.object(tuning, 'log_print', side_effect=lambda msg: print(msg, file=output)):
+            tuning.report_sensitivity_analysis(
+                [1.0] * len(tuning.PARAM_METADATA), [2.0] * len(tuning.PARAM_METADATA),
+                2, directions=1)
+        self.assertIn('N/A', output.getvalue())
+        self.assertNotIn('0.500000', output.getvalue())
+
     def test_seed_controls_optimizer_randomness(self):
         observed = []
         args = argparse.Namespace(seed=42, max_workers=1, log=None, size=8,
