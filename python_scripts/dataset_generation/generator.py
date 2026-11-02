@@ -195,6 +195,48 @@ def seed_mcmc(seed):
     np.random.seed(seed)
 
 
+class MCMCLatinSquareSampler:
+    """Reusable cycle-switch sampler with explicit stagnation recovery.
+
+    next_square() maintains one continuous chain. reseed() starts a fresh
+    randomized-backtracking Latin square and reapplies burn-in. Callers
+    decide when their own deduplication criterion has stagnated.
+    """
+
+    def __init__(self, n, *, seed=None, burn_in=100000, gap=100, batch_size=64):
+        if n < 2 or burn_in < 0 or gap < 1 or batch_size < 1:
+            raise ValueError("size >= 2, burn-in >= 0, gap/batch-size > 0")
+        self.n = n
+        self.burn_in = burn_in
+        self.gap = gap
+        self.batch_size = batch_size
+        if seed is not None:
+            random.seed(seed)
+            seed_mcmc(seed % (2 ** 32))
+        self.reseed()
+
+    def reseed(self):
+        self.grid = generate_random_latin_square(self.n)
+        self.next_burn_in = self.burn_in
+        self.batch = None
+        self.index = 0
+
+    def next_batch(self, count=None):
+        count = count or self.batch_size
+        samples, self.grid = generate_uniform_latin_squares(
+            self.n, count, self.grid, self.next_burn_in, self.gap)
+        self.next_burn_in = 0
+        return samples
+
+    def next_square(self):
+        if self.batch is None or self.index >= len(self.batch):
+            self.batch = self.next_batch()
+            self.index = 0
+        square = self.batch[self.index]
+        self.index += 1
+        return square
+
+
 def generate_unique_instances(n, target_count, burn_in=100000, gap=100, seed=None,
                               excluded_keys=()):
     """
