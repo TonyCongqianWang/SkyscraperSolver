@@ -9,7 +9,7 @@ from python_scripts.puzzle_bank import fill_curated
 
 
 class RetryTests(unittest.TestCase):
-    def test_revisits_pool_and_stops_after_100_nonprogress_draws(self):
+    def test_revisits_pool_and_stops_after_1000_nonprogress_draws(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "minimal.json"
             target = Path(temp) / "curated.json"
@@ -34,7 +34,7 @@ class RetryTests(unittest.TestCase):
             self.assertEqual(stats["easy"]["selected"], 0)
             self.assertEqual(stats["very_easy"]["selected"], len(
                 json.loads(target.read_text())["difficulties"]["very_easy"]))
-            self.assertLessEqual(len(calls), 100)
+            self.assertLessEqual(len(calls), 1000)
             self.assertGreater(len(calls), 2)
 
 if __name__ == "__main__":
