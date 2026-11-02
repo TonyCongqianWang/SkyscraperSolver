@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Curated puzzles — SkyscraperSolver</title><style>
+:root{font-family:system-ui,sans-serif;color-scheme:light dark}body{max-width:1000px;margin:2rem auto;padding:0 1rem}h1{margin-bottom:.2rem}p{line-height:1.5}table{border-collapse:collapse;width:100%;margin:1rem 0}th,td{padding:.6rem;border-bottom:1px solid #888;text-align:right}th:first-child,td:first-child{text-align:left}th{font-size:.9rem}a{color:inherit}a:hover{text-decoration-thickness:2px}.chart{display:grid;gap:.55rem}.bar-row{display:grid;grid-template-columns:105px 1fr 70px;align-items:center;gap:.6rem}.track{height:18px;background:#8883;border-radius:3px;overflow:hidden}.bar{height:100%;background:#4389bd}.muted{opacity:.7}select{font:inherit;padding:.4rem}#message{min-height:1.5em}@media(max-width:550px){.bar-row{grid-template-columns:85px 1fr 48px;font-size:.85rem}table{font-size:.8rem}th,td{padding:.35rem}}
+</style></head><body><nav><a href="../">← Home</a></nav><h1>Curated puzzles</h1><p>Browse the published curated Skyscraper puzzle sets (sizes 4–9). Difficulty bands are provisional solver-node heuristics, not human-calibrated ratings.</p><label for="size">Board size: </label><select id="size"><option value="all">All available sizes</option><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option></select><p id="message" role="status">Loading published sets…</p><section id="results" hidden><h2>Difficulty distribution</h2><div id="chart" class="chart" role="img" aria-label="Curated puzzle counts by difficulty"></div><h2>Statistics</h2><div style="overflow-x:auto"><table><thead><tr><th>Difficulty</th><th>Puzzles</th><th>Min nodes</th><th>Max nodes</th><th>Min main nodes</th><th>Max main nodes</th></tr></thead><tbody id="rows"></tbody></table></div><p id="links"></p></section><p class="muted">Only curated JSON is published here; raw candidate sets and canonical solution grids are not shown on this page. <a href="../puzzle-bank/curated/v1/">Browse curated JSON</a>.</p><script>
+const levels=['very_easy','easy','medium','hard','very_hard','extreme','impossible'];
+const label=s=>s.replaceAll('_',' ');
+const fmt=n=>n==null?'—':n.toLocaleString();
+const data={};
+const message=document.getElementById('message');
+const select=document.getElementById('size');
+const results=document.getElementById('results');
+function render(){
+ const sizes=select.value==='all'?Object.keys(data):[select.value].filter(x=>data[x]);
+ const entries=sizes.map(s=>data[s]);
+ const summary=levels.map(level=>{
+  const stats=entries.map(e=>e.statistics?.[level]).filter(Boolean);
+  const selected=stats.reduce((n,s)=>n+(Number(s.selected)||0),0);
+  const range=key=>stats.map(s=>s[key]).filter(v=>typeof v==='number');
+  const mins=range('min_nodes'),maxs=range('max_nodes'),mainMins=range('min_main_nodes'),mainMaxs=range('max_main_nodes');
+  return {level,selected,min:mins.length?Math.min(...mins):null,max:maxs.length?Math.max(...maxs):null,mainMin:mainMins.length?Math.min(...mainMins):null,mainMax:mainMaxs.length?Math.max(...mainMaxs):null};
+ });
+ const total=summary.reduce((n,s)=>n+s.selected,0);
+ results.hidden=!entries.length;
+ message.textContent=entries.length?fmt(total)+' curated puzzles across '+sizes.length+' published board size(s).'+(total===0?' No puzzles have been populated yet.':''):'No curated puzzle sets have been published for this size yet.';
+ const max=Math.max(1,...summary.map(x=>x.selected));
+ document.getElementById('chart').replaceChildren(...summary.map(s=>{
+  const row=document.createElement('div');row.className='bar-row';
+  const name=document.createElement('span');name.textContent=label(s.level);
+  const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='bar';bar.style.width=(s.selected/max*100)+'%';track.append(bar);
+  const count=document.createElement('span');count.textContent=fmt(s.selected);row.append(name,track,count);return row;
+ }));
+ document.getElementById('rows').replaceChildren(...summary.map(s=>{const tr=document.createElement('tr');[label(s.level),fmt(s.selected),fmt(s.min),fmt(s.max),fmt(s.mainMin),fmt(s.mainMax)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td)});return tr}));
+ const links=document.getElementById('links');links.replaceChildren(...sizes.flatMap((size,i)=>{const a=document.createElement('a');a.href='../puzzle-bank/curated/v1/size_'+size+'.json';a.textContent=size+'×'+size+' JSON';return i?[document.createTextNode(' · '),a]:[a]}));
+}
+select.addEventListener('change',render);
+Promise.all([4,5,6,7,8,9].map(async n=>{try{const r=await fetch('../puzzle-bank/curated/v1/size_'+n+'.json');if(!r.ok)return;const j=await r.json();if(j.size===n&&j.statistics)data[n]=j}catch{}})).then(render);
+</script></body></html>
