@@ -28,7 +28,7 @@ within a group are suppressed.
 Sampling stops once the requested number of solution groups is obtained.
 `--attempts` caps sampled solutions, including those rejected or repeated.
 For small sizes, the number of available canonical solutions is finite, so
-asking for too many groups will fail without overwriting the output.
+requests above the known Latin-square total are capped. Size 4 uses the exact\n74 distinct D4-orbit limit; for sizes 5–9 the total number of Latin\nsquares is only a conservative upper bound, not an exact D4-orbit count.\nA smaller unattainable request can still exhaust `--attempts` without output.
 
 Alternatively, from the repository root run `bash generate_unique_banks.sh` to\ngenerate sizes 4–9 with 1000 target solution groups (capped at 74 for size 4)\nand 100000 attempts per size. Additional arguments to the wrapper are passed\nto each generator invocation.\n\n## Output
 
