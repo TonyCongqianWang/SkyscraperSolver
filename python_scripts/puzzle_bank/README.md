@@ -142,7 +142,7 @@ The filler continues collecting candidates for all buckets (up to 15,000
 per bucket) while any minimum is unmet; a met minimum does not stop that
 bucket from growing. It reshuffles and resamples minimal puzzles over multiple
 passes, exiting after 1,000 consecutive draws without adding a new puzzle to a
-positive-quota bucket still below 1.5 times its minimum.
+positive-quota bucket still below 1.5 times its minimum. Solver checks run\nconcurrently with 4 workers by default (override with `--workers N`). Progress\nis printed when each positive quota is first reached and every 60 seconds.
 All-zero minima generate no solver work; existing curated entries are preserved. To generate new mixed
 clue/given candidates directly from the minimal bank, run:
 
