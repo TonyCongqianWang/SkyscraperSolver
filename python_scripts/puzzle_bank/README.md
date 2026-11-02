@@ -41,10 +41,7 @@ requests above the known Latin-square total are capped. Size 4 uses the exact
 squares is only a conservative upper bound, not an exact D4-orbit count.
 A smaller unattainable request can still exhaust `--attempts` without output.
 
-Alternatively, from the repository root run `bash generate_unique_banks.sh` to
-generate sizes 4–9 with 1000 target solution groups (capped at 74 for size 4)
-and 100000 attempts per size. Additional arguments to the wrapper are passed
-to each generator invocation.
+Alternatively, run `bash generate_unique_banks.sh` from the repository root.\nIt generates only minimal puzzles for sizes 4–9 in `puzzle_bank/unique/v3/minimal`\n(1000 target groups, capped at 74 for size 4; 100000 attempts each), then\nuses those minimal puzzles to fill `puzzle_bank/curated/v2` with mixed\nclue/given candidates, using `puzzle_bank/curated/v2/quotas.json`.\nAdditional wrapper arguments are passed to minimal puzzle generation only.
 
 ## Output
 
@@ -136,7 +133,7 @@ from this branch; only the minimal and curated datasets need to be retained.
 The LFS attribute is restricted to generated minimal banks, not curated JSON.
 Pull the minimal LFS objects locally before running the filler.
 
-Edit `puzzle_bank/curated/v1/quotas.json`: each size and difficulty has a
+Edit `puzzle_bank/curated/v2/quotas.json`: each size and difficulty has a
 nonnegative minimum. The defaults are 10,000 except very_easy for all sizes
 and hard through impossible for size 4, which have zero minimum. The filler
 continues collecting candidates for all buckets (up to 15,000 each) while
