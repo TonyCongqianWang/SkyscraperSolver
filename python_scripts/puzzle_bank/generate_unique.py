@@ -10,13 +10,16 @@ import sys
 import traceback
 
 # Reuse the same cycle-switch sampler as the SPSA dataset generator.
-import numpy as np
-from python_scripts.dataset_generation.generator import (
-    generate_random_latin_square, generate_uniform_latin_squares, seed_mcmc,
-)
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from python_scripts.dataset_generation.generator import (
+    generate_random_latin_square, generate_uniform_latin_squares, seed_mcmc,
+)
+
 def visibility(line):
     highest = count = 0
     for v in line:
