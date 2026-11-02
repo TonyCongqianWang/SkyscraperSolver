@@ -100,11 +100,11 @@ not needed by GitHub Pages. Run this offline after generation:
 ```sh
 python3 python_scripts/puzzle_bank/curate.py --sizes 4 5 6 7 8 9 \
   --source puzzle_bank/unique/v2/candidates \
-  --output puzzle_bank/curated/v1 --max-per-band 10000
+  --output puzzle_bank/curated/v1 --max-per-band 15000
 ```
 
 The curated namespace has **independent versioning**. For each size, the
-script saves up to 10,000 variants per difficulty using deterministic uniform
+script saves up to 15,000 variants per difficulty using deterministic uniform
 reservoir sampling; the source count and selected count are both recorded.
 Every curated variant stores its parent `minimal_puzzle_id`, canonical
 `solution_group_id`, variant label, clues, givens, total nodes and main nodes.
@@ -115,10 +115,10 @@ Difficulty rules (main-node overrides dominate):
 
 | Main nodes | Total nodes | Band |
 |---|---|---|
-| 1 | <=100 / <=200 / <=400 / <=800 | very_easy / easy / medium / hard |
-| 1 | >800 | very_hard (capped) |
-| 2 | <=800 / >800 | hard / very_hard |
-| 3–8 | <=800 / <=1600 / >1600 | hard / very_hard / extreme |
+| 1 | <=50 / <=100 / <=200 / <=400 | very_easy / easy / medium / hard |
+| 1 | >400 | very_hard (capped) |
+| 2 | <=400 / >400 | hard / very_hard |
+| 3–8 | <=400 / <=800 / <=1600 / >1600 | hard / very_hard / extreme / extreme_plus |
 | >8 | any | impossible |
 
 The supplied thresholds have gaps or conflicts for some node/main-node pairs;
@@ -137,8 +137,11 @@ The LFS attribute is restricted to generated minimal banks, not curated JSON.
 Pull the minimal LFS objects locally before running the filler.
 
 Edit `puzzle_bank/curated/v1/quotas.json`: each size and difficulty has a
-nonnegative desired count, initialized to **zero**. Quotas of zero generate no
-solver work; existing curated entries are preserved. To generate new mixed
+nonnegative minimum. The defaults are 10,000 except very_easy for all sizes
+and hard through impossible for size 4, which have zero minimum. The filler
+continues collecting candidates for all buckets (up to 15,000 each) while
+any minimum is unmet; a met minimum does not stop that bucket from growing.
+All-zero minima generate no solver work; existing curated entries are preserved. To generate new mixed
 clue/given candidates directly from the minimal bank, run:
 
 ```sh
@@ -148,7 +151,7 @@ python3 python_scripts/puzzle_bank/fill_curated.py --sizes 4 5 6 7 8 9
 The script randomly samples **Cartesian products** of extra edge-clue and
 prefilled-cell density levels and random subsets at each density. It verifies
 uniqueness with the native `-s 2` solver, calculates both node metrics, and
-appends qualifying variants until the quotas are reached or the configured
+appends qualifying variants until all minima are reached or the configured
 per-minimal sampling limit is exhausted. `max_attempts_per_minimal` defaults to
 100 in the JSON config. Running it repeatedly preserves selected entries;
 there is no guarantee all quotas are reachable. The output retains the
