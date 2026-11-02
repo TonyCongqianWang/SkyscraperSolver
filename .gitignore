@@ -9,3 +9,6 @@ obj/
 benchmark_sets/*rand*.txt
 benchmark_sets/*subset*.txt
 scratch/
+
+# Large, reproducible intermediate candidate banks
+/puzzle_bank/unique/v2/candidates/
