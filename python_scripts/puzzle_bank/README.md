@@ -91,3 +91,40 @@ python3 -m unittest python_scripts.tests.test_unique_puzzle_bank -v
 ## Offline distribution statistics
 
 Run `python3 python_scripts/puzzle_bank/analyze_candidates.py` from the repository root to aggregate v2 candidates for sizes 4–7 into `candidate_stats.json` without exporting solution grids. Use `--directory`, `--sizes`, and `--output` to target a curated bank or different versions. The report includes minimum and maximum alongside quantiles for total and main nodes, histogram bins, and clue/given breakdowns. This compact report can be used as an input when generating static curated index statistics; do not publish the full candidate files.
+
+## Curating candidates
+
+The raw v2 candidate sets may remain in Git LFS or release artifacts; they are
+not needed by GitHub Pages. Run this offline after generation:
+
+```sh
+python3 python_scripts/puzzle_bank/curate.py --sizes 4 5 6 7 8 9 \
+  --source puzzle_bank/unique/v2/candidates \
+  --output puzzle_bank/curated/v1 --max-per-band 10000
+```
+
+The curated namespace has **independent versioning**. For each size, the
+script saves up to 10,000 variants per difficulty using deterministic uniform
+reservoir sampling; the source count and selected count are both recorded.
+Every curated variant stores its parent `minimal_puzzle_id`, canonical
+`solution_group_id`, variant label, clues, givens, total nodes and main nodes.
+The per-size files and compact `statistics.json` are intended for publishing
+without exposing candidate files.
+
+Difficulty rules (main-node overrides dominate):
+
+| Main nodes | Total nodes | Band |
+|---|---|---|
+| 1 | <=100 / <=200 / <=400 / <=800 | very_easy / easy / medium / hard |
+| 1 | >800 | very_hard (capped) |
+| 2 | <=800 / >800 | hard / very_hard |
+| 3–8 | <=800 / <=1600 / >1600 | hard / very_hard / extreme |
+| >8 | any | impossible |
+
+The supplied thresholds have gaps or conflicts for some node/main-node pairs;
+these explicit floor/cap rules ensure every candidate gets exactly one band.
+They are provisional difficulty heuristics, not validated human difficulty.
+The curator is independent of the generator: a future v3 generator can use
+a Cartesian product of extra clues and givens, with eight randomly selected
+candidate configurations per minimal puzzle rather than exhaustively enumerating
+the grid.
