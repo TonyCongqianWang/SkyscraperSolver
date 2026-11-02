@@ -52,8 +52,8 @@ jobs:
       - uses: actions/configure-pages@v5
       - name: Stage static API
         run: |
-          mkdir -p public/puzzle-bank/v1
-          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
+          mkdir -p public/puzzle-bank/unique/v1
+          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/unique/v1/
           mkdir -p public/puzzle-bank/unique/v2/minimal
           cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
           # Reject Git LFS pointer files: Pages must publish actual JSON payloads.
@@ -69,6 +69,19 @@ jobs:
           PY
           mkdir -p public/puzzle-bank/curated/v1
           find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
+          # Validate curated LFS payloads and their statistics before publishing.
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('public/puzzle-bank/curated/v1')
+          report = json.loads((root / 'statistics.json').read_text())
+          assert isinstance(report.get('sizes'), dict)
+          for n in range(4, 10):
+              bank = json.loads((root / f'size_{n}.json').read_text())
+              assert bank.get('size') == n, n
+              assert isinstance(bank.get('statistics'), dict), n
+              assert isinstance(bank.get('difficulties'), dict), n
+          PY
           python3 web/generate_directory_indexes.py public/puzzle-bank
           cp web/curated.html public/puzzle-bank/curated/index.html
           test -f public/puzzle-bank/unique/v2/minimal/size_4.json
