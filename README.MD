@@ -5,16 +5,11 @@ Originally created for the Rush01 project during the C Piscine at 42 Heilbronn. 
 > [!NOTE]
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
 
-## Play online — no installation required
+## Play online
 
-**[Play my Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/)** — an interactive version with visible candidate domains and assistance while you solve.
+You can play my [Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/) or [try this C solver in your browser](https://tonycongqianwang.github.io/SkyscraperSolver/solver/) (WebAssembly, no need to download or compile anything).
 
-**[Try the C solver in your browser](https://tonycongqianwang.github.io/SkyscraperSolver/solver/)** — enter visibility clues and an optional starting grid, click **Solve!**, and see the first solution and whether the puzzle is unique. The solver runs locally through WebAssembly: **no download, compilation, or installation needed.**
-
-The [SkyscraperSolver GitHub Pages homepage](https://tonycongqianwang.github.io/SkyscraperSolver/) also links to the static puzzle-bank API for applications.
-
-Other worthwhile Skyscrapers implementations include [Simon Tatham's Towers](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/js/towers.html) and [Puzzle Baron's Skyscrapers](https://skyscrapers.puzzlebaron.com/). For a separate offline C#/.NET GUI implementation, see my earlier [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) project.
-
+Other good implementations are [Simon Tatham's Towers](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/js/towers.html) and [Puzzle Baron's Skyscrapers](https://skyscrapers.puzzlebaron.com/). I also made an earlier [C#/.NET version](https://github.com/TonyCongqianWang/SkyscraperGame).
 
 ## Compilation and Usage
 
