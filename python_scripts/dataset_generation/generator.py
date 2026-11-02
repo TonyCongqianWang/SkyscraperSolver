@@ -203,7 +203,7 @@ class MCMCLatinSquareSampler:
     """
 
     def __init__(self, n, *, seed=None, burn_in=100000, gap=100,
-                 batch_size=4000, reseed_interval=200):
+                 batch_size=10000, reseed_interval=250):
         if (n < 2 or burn_in < 0 or gap < 1 or batch_size < 1
                 or reseed_interval < 1):
             raise ValueError("invalid MCMC sampler parameters")
