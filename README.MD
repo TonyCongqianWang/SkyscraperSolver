@@ -5,10 +5,11 @@ Originally created for the Rush01 project during the C Piscine at 42 Heilbronn. 
 > [!NOTE]
 > This repository was originally a subdirectory within the [42HeilbronnCPiscine](https://github.com/TonyCongqianWang/42HeilbronnCPiscine) repository. It has been extracted into this standalone repository to facilitate easier tracking, independent usage, and clean integration.
 
-> [!NOTE]
-> To learn the rules or play online, see [here](https://www.puzzle-skyscrapers.com/) or [here](https://www.brainbashers.com/skyscrapers.asp).
-> A solver-inspired playable offline implementation with C#/.NET GUI can be found at the [SkyscraperGame](https://github.com/TonyCongqianWang/SkyscraperGame) repository.
+## Play online
 
+You can play my [Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/) or [try this C solver in your browser](https://tonycongqianwang.github.io/SkyscraperSolver/solver/) (WebAssembly, no need to download or compile anything).
+
+Other good implementations are [Simon Tatham's Towers](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/js/towers.html) and [Puzzle Baron's Skyscrapers](https://skyscrapers.puzzlebaron.com/). I also made an earlier [C#/.NET version](https://github.com/TonyCongqianWang/SkyscraperGame).
 
 ## Compilation and Usage
 
