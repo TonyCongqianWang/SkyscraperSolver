@@ -10,7 +10,7 @@ import random
 from collections import Counter
 from pathlib import Path
 
-LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "impossible")
+LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "extreme_plus", "impossible")
 SCHEMA = 1
 
 
@@ -20,27 +20,29 @@ def difficulty(nodes, main_nodes):
     The original thresholds leave gaps (e.g. 4000 nodes and main=1).
     Complete those cases with main-dependent difficulty floors/ceilings:
     1: total-based through very_hard; 2: hard..very_hard;
-    3..8: hard..extreme; 9+: impossible.
+    3..8: hard..extreme_plus; 9+: impossible.
     """
     if nodes < 0 or main_nodes < 1:
         raise ValueError("node counts must be nonnegative, main nodes >= 1")
     if main_nodes > 8:
         return "impossible"
     if main_nodes >= 3:
-        if nodes <= 800:
+        if nodes <= 400:
             return "hard"
-        if nodes <= 1600:
+        if nodes <= 800:
             return "very_hard"
-        return "extreme"
+        if nodes <= 1600:
+            return "extreme"
+        return "extreme_plus"
     if main_nodes == 2:
-        return "hard" if nodes <= 800 else "very_hard"
-    if nodes <= 100:
+        return "hard" if nodes <= 400 else "very_hard"
+    if nodes <= 50:
         return "very_easy"
-    if nodes <= 200:
+    if nodes <= 100:
         return "easy"
-    if nodes <= 400:
+    if nodes <= 200:
         return "medium"
-    if nodes <= 800:
+    if nodes <= 400:
         return "hard"
     return "very_hard"
 
@@ -108,7 +110,7 @@ def curate_size(path, output, limit, seed):
     public = {
         "schema_version": SCHEMA,
         "size": n,
-        "difficulty_policy": "main_node_override_v1",
+        "difficulty_policy": "main_node_override_v2",
         "source_bank": "unique/v2/candidates",
         "curated_version": "v1",
         "max_per_difficulty": limit,
@@ -134,7 +136,7 @@ def main():
     parser.add_argument("--output", type=Path,
                         default=Path("puzzle_bank/curated/v1"))
     parser.add_argument("--sizes", type=int, nargs="+", default=list(range(4, 10)))
-    parser.add_argument("--max-per-band", type=int, default=10000)
+    parser.add_argument("--max-per-band", type=int, default=15000)
     parser.add_argument("--seed", type=int, default=12345)
     args = parser.parse_args()
     if args.max_per_band < 1:
