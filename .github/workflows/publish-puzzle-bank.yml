@@ -26,6 +26,8 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
@@ -54,6 +56,17 @@ jobs:
           cp -a puzzle_bank/unique/v1/. public/puzzle-bank/v1/
           mkdir -p public/puzzle-bank/unique/v2/minimal
           cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
+          # Reject Git LFS pointer files: Pages must publish actual JSON payloads.
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for n in range(4, 10):
+              path = Path(f'public/puzzle-bank/unique/v2/minimal/size_{n}.json')
+              with path.open(encoding='utf-8') as handle:
+                  bank = json.load(handle)
+              assert isinstance(bank, dict) and bank.get('size') == n, path
+              print(f'Validated published v2 size {n}: {path.stat().st_size} bytes')
+          PY
           mkdir -p public/puzzle-bank/curated/v1
           find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
           python3 web/generate_directory_indexes.py public/puzzle-bank
