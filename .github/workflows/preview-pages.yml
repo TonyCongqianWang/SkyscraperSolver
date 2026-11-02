@@ -1,6 +1,7 @@
 name: PR website preview
 on:
   pull_request:
+    types: [opened, synchronize, reopened, closed]
     paths:
       - 'web/**'
       - 'src/**'
@@ -23,7 +24,7 @@ jobs:
     environment:
       name: github-pages
       url: https://tonycongqianwang.github.io/SkyscraperSolver/previews/pr-${{ github.event.pull_request.number }}/
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.event_name == 'workflow_dispatch' || github.event.action == 'closed' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -98,8 +99,10 @@ jobs:
             -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
             -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
             -o public/solver/solver.js
-          mkdir -p "public/previews/pr-$PR_NUMBER"
-          cp -a preview-build/. "public/previews/pr-$PR_NUMBER/"
+          if [[ "${{ github.event.action }}" != "closed" ]]; then
+            mkdir -p "public/previews/pr-$PR_NUMBER"
+            cp -a preview-build/. "public/previews/pr-$PR_NUMBER/"
+          fi
           touch public/.nojekyll
       - uses: actions/configure-pages@v5
         if: github.event_name == 'pull_request'
