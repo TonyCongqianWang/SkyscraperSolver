@@ -7,8 +7,8 @@ const { pathToFileURL } = require("node:url");
 (async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "skyscraper-api-"));
   try {
-    const modulePath = path.join(dir, "random.mjs");
-    fs.copyFileSync(path.join(__dirname, "random.js"), modulePath);
+    const modulePath = path.join(dir, "puzzles.mjs");
+    fs.copyFileSync(path.join(__dirname, "puzzles.js"), modulePath);
     const metadata = {
       schema_version: 1, curated_version: "v1",
       difficulties: ["easy", "hard"],

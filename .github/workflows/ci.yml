@@ -170,9 +170,9 @@ jobs:
       - name: Check static site and asset export
         run: |
           python3 -m unittest python_scripts.tests.test_web_assets -v
-          node --input-type=module --check < web/random.js
+          node --input-type=module --check < web/puzzles.js
           node --check web/worker.js
-          node web/test_random.cjs
+          node web/test_puzzles.cjs
 
   ci-gate:
     if: always()

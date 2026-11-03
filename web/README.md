@@ -12,13 +12,13 @@ in the browser, with no server-side endpoints.
 - `/assets/puzzles/curated/v1/metadata.json`: available size/difficulty counts
 - `/assets/puzzles/curated/v1/statistics.json`: precomputed explorer statistics
 - `/assets/puzzles/curated/v1/N/LEVEL.json`: published curated shards
-- `/assets/puzzles/random.js`: browser-side random and ID-based puzzle API
+- `/assets/puzzles/puzzles.js`: browser-side random and ID-based puzzle API
 
 Import the API as an ES module from the deployed site:
 
 ```js
 import { getRandomPuzzle, getPuzzleById, getMetadata } from
-  "https://tonycongqianwang.github.io/SkyscraperSolver/assets/puzzles/random.js";
+  "https://tonycongqianwang.github.io/SkyscraperSolver/assets/puzzles/puzzles.js";
 const puzzle = await getRandomPuzzle({ size: 7, difficulty: "extreme_plus" });
 const samePuzzle = await getPuzzleById(puzzle.puzzle_id);
 ```

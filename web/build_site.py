@@ -28,7 +28,7 @@ def build_site(output):
         site.add_asset(f"/assets/solver/{filename}", description=description, kind=kind)
     site.add_asset("/assets/solver/worker.js", ROOT / "web/worker.js",
                    "Worker used by the solver demo", "javascript")
-    site.add_asset("/assets/puzzles/random.js", ROOT / "web/random.js",
+    site.add_asset("/assets/puzzles/puzzles.js", ROOT / "web/puzzles.js",
                    "Client-side random curated puzzle API", "javascript")
 
     for size in range(4, 10):
