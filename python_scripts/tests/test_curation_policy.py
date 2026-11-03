@@ -15,7 +15,10 @@ class CurationPolicyTests(unittest.TestCase):
         self.assertEqual(difficulty(400, 3), "hard")
         self.assertEqual(difficulty(800, 8), "very_hard")
         self.assertEqual(difficulty(1600, 3), "extreme")
-        self.assertEqual(difficulty(1601, 3), "extreme_plus")
+        self.assertEqual(difficulty(1601, 3), "extreme")
+        self.assertEqual(difficulty(3201, 4), "extreme")
+        self.assertEqual(difficulty(1601, 5), "extreme_plus")
+        self.assertEqual(difficulty(3201, 5), "extreme_plus_plus")
         self.assertEqual(difficulty(1, 9), "hard")
         self.assertEqual(difficulty(1601, 9), "extreme_plus")
 
