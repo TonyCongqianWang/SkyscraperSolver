@@ -6,13 +6,13 @@ on:
       - 'web/**'
       - 'src/**'
       - 'puzzle_bank/**'
+      - 'python_scripts/puzzle_bank/export_api_metadata.py'
       - '.github/workflows/preview-pages.yml'
       - '.github/workflows/publish-puzzle-bank.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-
 
 jobs:
   preview:
@@ -25,66 +25,52 @@ jobs:
       - name: Download puzzle-bank LFS content
         run: |
           git lfs install --local
-          git lfs pull --include="puzzle_bank/unique/v1/minimal/*.json,puzzle_bank/curated/v1/*.json" --exclude=""
+          git lfs pull --include="puzzle_bank/unique/v1/minimal/size_*.json,puzzle_bank/curated/v1/size_*.json" --exclude=""
           git lfs checkout
           python3 - <<'PY'
           import json
           from pathlib import Path
-          for folder in ('puzzle_bank/unique/v1/minimal', 'puzzle_bank/curated/v1'):
-              for n in range(4, 10):
-                  path = Path(folder) / f'size_{n}.json'
+          for family in ('unique/v1/minimal', 'curated/v1'):
+              for size in range(4, 10):
+                  path = Path('puzzle_bank') / family / f'size_{size}.json'
                   try:
                       bank = json.loads(path.read_text(encoding='utf-8'))
                   except (ValueError, OSError) as exc:
-                      raise RuntimeError(f'LFS content unavailable for {path}; check LFS tracking and uploaded objects') from exc
-                  assert bank.get('size') == n, f'Invalid or unhydrated LFS file: {path}'
-                  print(f'Loaded {path} ({path.stat().st_size:,} bytes)')
-          try:
-              report = json.loads(Path('puzzle_bank/curated/v1/statistics.json').read_text(encoding='utf-8'))
-          except (ValueError, OSError) as exc:
-              raise RuntimeError('LFS content unavailable for curated statistics.json') from exc
-          assert isinstance(report.get('sizes'), dict), 'Curated statistics missing'
+                      raise RuntimeError(f'LFS content unavailable for {path}') from exc
+                  assert bank.get('size') == size, path
           PY
       - uses: mymindstorm/setup-emsdk@v14
         with:
           version: latest
-      - name: Build website
+      - name: Build static website
         run: |
-          mkdir -p public/solver/demo
+          mkdir -p public/assets/solver
           emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
             -s INVOKE_RUN=0 -s MODULARIZE=1 \
             -s EXPORT_NAME=createSkyscraperSolver \
             -s EXPORTED_FUNCTIONS='["_solve_web"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
             -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
-            -o public/solver/solver.js
-          cp web/index.html public/solver/demo/index.html
-          cp web/worker.js web/solver-info.html public/solver/
-          mv public/solver/solver-info.html public/solver/index.html
-          cp web/home.html public/index.html
-          mkdir -p public/puzzle-bank/unique/v1 public/puzzle-bank/unique/v1/minimal public/puzzle-bank/curated/v1
-          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/unique/v1/
-          cp -a puzzle_bank/unique/v1/minimal/. public/puzzle-bank/unique/v1/minimal/
-          find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
-          python3 web/generate_directory_indexes.py public/puzzle-bank
-          cp web/curated.html public/puzzle-bank/curated/index.html
+            -o public/assets/solver/solver.js
+          python3 web/build_site.py --output public
+          test -s public/assets/index.json
+          test -s public/assets/puzzles/random.js
+          test -s public/assets/puzzles/curated/v1/7/extreme_plus.json
+          test -s public/demo/index.html
+          test -s public/curated/index.html
           python3 - <<'PY'
           import json
           from pathlib import Path
-          for n in range(4,10):
-              with Path(f'public/puzzle-bank/unique/v1/minimal/size_{n}.json').open() as f:
-                  assert json.load(f)['size'] == n
+          base = Path('public/assets/puzzles/curated/v1')
+          metadata = json.loads((base / 'metadata.json').read_text())
+          statistics = json.loads((base / 'statistics.json').read_text())
+          assert metadata['curated_version'] == 'v1'
+          assert statistics['curated_version'] == 'v1'
+          for size, counts in metadata['sizes'].items():
+              for level, count in counts.items():
+                  shard = base / size / (level + '.json')
+                  assert shard.exists() == (count > 0), shard
           PY
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          root=Path('public/puzzle-bank/curated/v1')
-          assert isinstance(json.loads((root/'statistics.json').read_text()).get('sizes'), dict)
-          for n in range(4,10):
-              bank=json.loads((root/f'size_{n}.json').read_text())
-              assert bank['size']==n and isinstance(bank['statistics'],dict)
-          PY
-          touch public/.nojekyll
       - name: Upload browsable site artifact
         uses: actions/upload-artifact@v4
         with:

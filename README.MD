@@ -7,7 +7,9 @@ Originally created for the Rush01 project during the C Piscine at 42 Heilbronn. 
 
 ## Play online
 
-You can play my [Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/) or [try this C solver in your browser](https://tonycongqianwang.github.io/SkyscraperSolver/solver/demo/) (WebAssembly, no need to download or compile anything).
+You can play my [Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/) or [try this C solver in your browser](https://tonycongqianwang.github.io/SkyscraperSolver/demo/) (WebAssembly, no need to download or compile anything).
+
+You can also [explore the curated puzzles](https://tonycongqianwang.github.io/SkyscraperSolver/curated/) or [browse static API assets](https://tonycongqianwang.github.io/SkyscraperSolver/assets/).
 
 Other good implementations are [Simon Tatham's Towers](https://www.chiark.greenend.org.uk/~sgtatham/puzzles/js/towers.html) and [Puzzle Baron's Skyscrapers](https://skyscrapers.puzzlebaron.com/). I also made an earlier [C#/.NET version](https://github.com/TonyCongqianWang/SkyscraperGame).
 

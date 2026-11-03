@@ -1,37 +1,100 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Curated puzzles — SkyscraperSolver</title><style>
-:root{font-family:monospace;background:#fff;color:#111}body{max-width:900px;margin:2em auto;padding:0 1em;font:15px/1.5 monospace}h1{margin-bottom:.2rem}p{line-height:1.5}table{border-collapse:collapse;width:100%;margin:1rem 0}th,td{padding:.6rem;border-bottom:1px solid #888;text-align:right}th:first-child,td:first-child{text-align:left}th{font-size:.9rem}a{color:#00e}a:visited{color:#551a8b}a:hover{text-decoration-thickness:2px}.chart{display:grid;gap:.55rem}.bar-row{display:grid;grid-template-columns:105px 1fr 70px;align-items:center;gap:.6rem}.track{height:18px;background:#eee;border-radius:3px;overflow:hidden}.bar{height:100%;background:#777}.muted{opacity:.7}select{font:inherit;padding:.4rem}#message{min-height:1.5em}@media(max-width:550px){.bar-row{grid-template-columns:85px 1fr 48px;font-size:.85rem}table{font-size:.8rem}th,td{padding:.35rem}}
-</style></head><body><nav><a href="../../">../</a></nav><hr><h1>Curated puzzles</h1><p>Puzzle counts and difficulty by board size.</p><label for="size">Board size: </label><select id="size"><option value="all">All available sizes</option><option value="4">4 × 4</option><option value="5">5 × 5</option><option value="6">6 × 6</option><option value="7">7 × 7</option><option value="8">8 × 8</option><option value="9">9 × 9</option></select><p id="message" role="status">Loading published sets…</p><section id="results" hidden><h2>Difficulty distribution</h2><div id="chart" class="chart" role="img" aria-label="Curated puzzle counts by difficulty"></div><h2>Statistics</h2><div style="overflow-x:auto"><table><thead><tr><th>Difficulty</th><th>Puzzles</th><th>Min nodes</th><th>Max nodes</th><th>Min main nodes</th><th>Max main nodes</th></tr></thead><tbody id="rows"></tbody></table></div><p id="links"></p></section><p class="muted"><a href="./v1/">Browse curated JSON</a>.</p><script>
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Curated puzzles — SkyscraperSolver</title><style>
+:root{font-family:monospace;background:#fff;color:#111}
+body{max-width:900px;margin:2em auto;padding:0 1em;font:15px/1.5 monospace}
+h1{margin-bottom:.2rem}p{line-height:1.5}
+table{border-collapse:collapse;width:100%;margin:1rem 0}
+th,td{padding:.6rem;border-bottom:1px solid #888;text-align:right}
+th:first-child,td:first-child{text-align:left}th{font-size:.9rem}
+a{color:#00e}a:visited{color:#551a8b}a:hover{text-decoration-thickness:2px}
+.chart{display:grid;gap:.55rem}
+.bar-row{display:grid;grid-template-columns:115px 1fr 75px;align-items:center;gap:.6rem}
+.track{height:18px;background:#eee;border-radius:3px;overflow:hidden}
+.bar{height:100%;background:#777}
+.muted{opacity:.7}select{font:inherit;padding:.4rem;margin-right:1rem}
+.controls{display:flex;flex-wrap:wrap;gap:1rem}.controls label{display:grid;gap:.4rem}
+#message{min-height:1.5em}
+.histogram{display:flex;align-items:end;gap:2px;height:150px;border-bottom:1px solid #888}
+.histogram div{background:#777;flex:1;min-width:1px}
+.axis{display:flex;justify-content:space-between;font-size:.85em}
+@media(max-width:550px){.bar-row{grid-template-columns:95px 1fr 55px;font-size:.85rem}table{font-size:.8rem}th,td{padding:.35rem}}
+</style></head><body>
+<nav><a href="../">../</a></nav><hr>
+<h1>Curated puzzles</h1>
+<div class="controls">
+<label>Board size<select id="size"><option value="all">All sizes</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></label>
+<label>Difficulty<select id="difficulty"><option value="all">All difficulties</option></select></label>
+</div>
+<p id="message" role="status">Loading statistics…</p>
+<section id="overview" hidden><h2>Difficulty distribution</h2><div id="chart" class="chart"></div></section>
+<section id="details" hidden>
+<h2>Detailed statistics</h2>
+<p class="muted">Select a metric to see percentiles and its distribution.</p>
+<label>Metric <select id="metric">
+<option value="nodes_visited">Total nodes</option>
+<option value="main_nodes_visited">Main nodes</option>
+<option value="clue_count">Visibility clues</option>
+<option value="given_count">Given cells</option>
+</select></label>
+<div id="plot" class="histogram" role="img" aria-label="Distribution histogram"></div>
+<div class="axis"><span id="minLabel"></span><span id="maxLabel"></span></div>
+<div style="overflow-x:auto"><table><thead><tr><th>Metric</th><th>Min</th><th>P10</th><th>P25</th><th>Median</th><th>P75</th><th>P90</th><th>Max</th><th>Mean</th></tr></thead><tbody id="percentiles"></tbody></table></div>
+</section>
+<p class="muted" id="note">Select a difficulty for percentiles and histograms.</p>
+<p class="muted"><a href="../assets/puzzles/curated/v1/">Browse curated JSON</a></p>
+<script>
 const levels=['very_easy','easy','medium','hard','very_hard','extreme','extreme_plus','extreme_plus_plus'];
-const label=s=>s==='extreme_plus_plus'?'Extreme++':s==='extreme_plus'?'Extreme+':s.replaceAll('_',' ');
-const fmt=n=>n==null?'—':n.toLocaleString();
-const data={};
-let failedLoads=0;
-const message=document.getElementById('message');
-const select=document.getElementById('size');
-const results=document.getElementById('results');
+const names={extreme_plus:'Extreme+',extreme_plus_plus:'Extreme++'};
+const label=s=>names[s]||s.replaceAll('_',' ');
+const $=id=>document.getElementById(id);
+const fmt=n=>n==null?'—':Number(n).toLocaleString();
+let stats;
+levels.forEach(level=>{const option=document.createElement('option');option.value=level;option.textContent=label(level);$('difficulty').append(option)});
 function render(){
- const sizes=select.value==='all'?Object.keys(data):[select.value].filter(x=>data[x]);
- const entries=sizes.map(s=>data[s]);
- const summary=levels.map(level=>{
-  const stats=entries.map(e=>e.statistics?.[level]).filter(Boolean);
-  const selected=stats.reduce((n,s)=>n+(Number(s.selected)||0),0);
-  const range=key=>stats.map(s=>s[key]).filter(v=>typeof v==='number');
-  const mins=range('min_nodes'),maxs=range('max_nodes'),mainMins=range('min_main_nodes'),mainMaxs=range('max_main_nodes');
-  return {level,selected,min:mins.length?Math.min(...mins):null,max:maxs.length?Math.max(...maxs):null,mainMin:mainMins.length?Math.min(...mainMins):null,mainMax:mainMaxs.length?Math.max(...mainMaxs):null};
- });
- const total=summary.reduce((n,s)=>n+s.selected,0);
- results.hidden=!entries.length;
- message.textContent=entries.length?fmt(total)+' curated puzzles across '+sizes.length+' published board size(s).'+(total===0?' No puzzles have been populated yet.':''):'No statistics available for this size.';
- const max=Math.max(1,...summary.map(x=>x.selected));
- document.getElementById('chart').replaceChildren(...summary.map(s=>{
-  const row=document.createElement('div');row.className='bar-row';
-  const name=document.createElement('span');name.textContent=label(s.level);
-  const track=document.createElement('div');track.className='track';const bar=document.createElement('div');bar.className='bar';bar.style.width=(s.selected/max*100)+'%';track.append(bar);
-  const count=document.createElement('span');count.textContent=fmt(s.selected);row.append(name,track,count);return row;
+ if(!stats)return;
+ const size=$('size').value,level=$('difficulty').value;
+ const sizes=size==='all'?Object.keys(stats.sizes):[size];
+ const visible=level==='all'?levels:[level];
+ const rows=visible.map(difficulty=>({
+  difficulty,count:sizes.reduce((sum,n)=>sum+(stats.sizes[n]?.[difficulty]?.selected||0),0)
  }));
- document.getElementById('rows').replaceChildren(...summary.map(s=>{const tr=document.createElement('tr');[label(s.level),fmt(s.selected),fmt(s.min),fmt(s.max),fmt(s.mainMin),fmt(s.mainMax)].forEach(value=>{const td=document.createElement('td');td.textContent=value;tr.append(td)});return tr}));
- const links=document.getElementById('links');links.replaceChildren(...sizes.flatMap((size,i)=>{const a=document.createElement('a');a.href='./v1/size_'+size+'.json';a.textContent=size+'×'+size+' JSON';return i?[document.createTextNode(' · '),a]:[a]}));
+ const total=rows.reduce((sum,row)=>sum+row.count,0);
+ $('message').textContent=fmt(total)+' puzzles';
+ $('overview').hidden=false;
+ const max=Math.max(1,...rows.map(row=>row.count));
+ $('chart').replaceChildren(...rows.map(row=>{
+  const line=document.createElement('div');line.className='bar-row';
+  const name=document.createElement('span');name.textContent=label(row.difficulty);
+  const track=document.createElement('div');track.className='track';
+  const bar=document.createElement('div');bar.className='bar';bar.style.width=(row.count/max*100)+'%';
+  track.append(bar);
+  const count=document.createElement('span');count.textContent=fmt(row.count);
+  line.append(name,track,count);return line;
+ }));
+ const selected=level!=='all'?stats.details[size]?.[level]:null;
+ $('details').hidden=!selected?.count;
+ $('note').hidden=level!=='all';
+ if(!selected?.count)return;
+ const key=$('metric').value,dist=selected.metrics[key];
+ if(!dist)return;
+ const counts=dist.histogram,peak=Math.max(1,...counts);
+ $('plot').replaceChildren(...counts.map(count=>{
+  const bar=document.createElement('div');
+  bar.style.height=Math.max(count?2:0,count/peak*100)+'%';
+  bar.title=fmt(count)+' puzzles';
+  return bar;
+ }));
+ $('minLabel').textContent=fmt(dist.min);
+ $('maxLabel').textContent=fmt(dist.max);
+ const tr=document.createElement('tr');
+ const fields=[key.replaceAll('_',' '),dist.min,dist.p10,dist.p25,dist.p50,dist.p75,dist.p90,dist.max,dist.mean];
+ tr.replaceChildren(...fields.map(value=>{const td=document.createElement('td');td.textContent=typeof value==='number'?fmt(value):value;return td}));
+ $('percentiles').replaceChildren(tr);
 }
-select.addEventListener('change',render);
-Promise.all([4,5,6,7,8,9].map(async n=>{try{const r=await fetch('./v1/size_'+n+'.json');if(!r.ok)throw new Error('HTTP '+r.status);const j=await r.json();if(Number(j.size)===n&&j.statistics)data[n]=j;else throw new Error('Invalid puzzle data')}catch(e){failedLoads++;console.warn('Unable to load curated size '+n,e)}})).then(()=>{render();if(failedLoads)message.textContent += ' Some statistics could not be loaded.';});
+['size','difficulty','metric'].forEach(id=>$(id).addEventListener('change',render));
+fetch('../assets/puzzles/curated/v1/statistics.json').then(async response=>{
+ if(!response.ok)throw new Error('HTTP '+response.status);
+ stats=await response.json();render();
+}).catch(error=>{$('message').textContent='Unable to load statistics.';console.error(error)});
 </script></body></html>

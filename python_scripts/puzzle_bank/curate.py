@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Curate v2 candidate banks into independently versioned, capped public banks.
+"""Curate candidate banks into independently versioned, capped public banks.
 
 Candidate JSON stays offline (Git LFS/release assets). Curated JSON includes only
 selected variants and source references, never the complete candidate corpus.
@@ -113,7 +113,7 @@ def curate_size(path, output, limit, seed):
         "schema_version": SCHEMA,
         "size": n,
         "difficulty_policy": "main_node_override_v2",
-        "source_bank": "unique/v2/candidates",
+        "source_bank": "unique/v1/candidates",
         "curated_version": "v1",
         "max_per_difficulty": limit,
         "seed": seed,
@@ -134,7 +134,7 @@ def curate_size(path, output, limit, seed):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path,
-                        default=Path("puzzle_bank/unique/v2/candidates"))
+                        default=Path("puzzle_bank/unique/v1/candidates"))
     parser.add_argument("--output", type=Path,
                         default=Path("puzzle_bank/curated/v1"))
     parser.add_argument("--sizes", type=int, nargs="+", default=list(range(4, 10)))
@@ -144,7 +144,7 @@ def main():
     if args.max_per_band < 1:
         parser.error("--max-per-band must be positive")
     report = {"schema_version": SCHEMA, "curated_version": "v1",
-              "difficulty_policy": "main_node_override_v1", "sizes": {}}
+              "difficulty_policy": "main_node_override_v2", "sizes": {}}
     for size in args.sizes:
         path = args.source / f"size_{size}.json"
         print(f"Curating {path}", flush=True)

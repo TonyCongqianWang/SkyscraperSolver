@@ -253,7 +253,7 @@ def main():
     ap.add_argument("--minimal-only", action="store_true",
                     help="Skip candidate variants; write minimal puzzles only")
     ap.add_argument("--solver", type=Path, default=ROOT/"skyscraper_solver")
-    ap.add_argument("--output", type=Path, default=ROOT/"puzzle_bank"/"unique"/"v2")
+    ap.add_argument("--output", type=Path, default=ROOT/"puzzle_bank"/"unique"/"v1")
     args = ap.parse_args()
     if (min(args.count, args.attempts, args.weight, args.timeout,
             args.gap, args.batch_size, args.reseed_interval, args.variants_per_step) <= 0

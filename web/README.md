@@ -1,16 +1,40 @@
-# Browser solver
+# Static website and assets
 
-Build locally with [Emscripten](https://emscripten.org/):
+The site is published on GitHub Pages. All processing and random selection run
+in the browser, with no server-side endpoints.
 
-```sh
-emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
-  -s INVOKE_RUN=0 -s MODULARIZE=1 -s EXPORT_NAME=createSkyscraperSolver \
-  -s EXPORTED_FUNCTIONS='["_solve_web"]' \
-  -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
-  -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
-  -o web/solver.js
+- `/`: homepage, with links to `/demo/`, `/curated/`, and `/assets/`
+- `/demo/`: WebAssembly solver demo
+- `/curated/`: difficulty distribution, percentiles and histograms
+- `/assets/`: browsable asset directories and `/assets/index.json` endpoint catalog
+- `/assets/solver/`: compiled solver, WASM and worker
+- `/assets/puzzles/unique/v1/minimal/size_N.json`: unique puzzle banks
+- `/assets/puzzles/curated/v1/metadata.json`: available size/difficulty counts
+- `/assets/puzzles/curated/v1/statistics.json`: precomputed explorer statistics
+- `/assets/puzzles/curated/v1/N/LEVEL.json`: published curated shards
+- `/assets/puzzles/random.js`: browser-side random puzzle API
+
+Import the API as an ES module from the deployed site:
+
+```js
+import { getRandomPuzzle, getMetadata } from
+  "https://tonycongqianwang.github.io/SkyscraperSolver/assets/puzzles/random.js";
+const puzzle = await getRandomPuzzle({ size: 7, difficulty: "extreme_plus" });
 ```
 
-The page communicates with a Web Worker to keep the main UI responsive. The C interface `solve_web(const char *clues, const char *grid, int max_solutions)` returns a transient string `count|nodes|size|row-major-first-solution` or `ERR:...`. Clues and optional grid follow the native CLI input format. Web page always uses a solution cap of two.
+Both filters are optional. Selection is uniform across matching records,
+with replacement. The module downloads only the selected shard, caches
+in-flight and completed requests, and evicts failed requests for retry.
+Each puzzle includes source metadata, size and difficulty. The API is a
+JavaScript module, not a dynamic HTTP JSON endpoint.
 
-GitHub Actions publishes the compiled JS and WASM at `/solver/`, usage notes at `/solver/`, and the interactive demo at `/solver/demo/`. Puzzle-bank directory indexes are generated during deployment.
+Generate the static site from hydrated LFS puzzle banks with:
+
+```sh
+python3 web/build_site.py --output public
+```
+
+Compile Emscripten output into `public/assets/solver/solver.js` first.
+`web/endpoint_registry.py` is the shared route registry that creates
+intermediate indexes and the machine-readable catalog. Generated pages and
+API paths are relative, so GitHub Pages project-site prefixes work.

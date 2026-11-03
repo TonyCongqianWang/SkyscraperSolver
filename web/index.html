@@ -70,7 +70,7 @@ $("solve").onclick=()=>{
   if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
   if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
   worker?.terminate();
-  worker=new Worker("../worker.js");
+  worker=new Worker("../assets/solver/worker.js");
   $("solve").disabled=true;$("status").className="";$("status").textContent="Solving…";$("output").textContent="";
   worker.onmessage=({data})=>{
    worker?.terminate();worker=null;$("solve").disabled=false;

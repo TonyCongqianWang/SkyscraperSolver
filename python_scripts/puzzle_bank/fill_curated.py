@@ -160,8 +160,8 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, wor
               f"progress towards unmet quotas: {missing_quotas}",
               file=sys.stderr)
     target.parent.mkdir(parents=True, exist_ok=True)
-    payload = {"schema_version": 1, "size": size, "curated_version": "v2",
-               "source_bank": "unique/v3/minimal", "difficulty_policy": "main_node_override_v2",
+    payload = {"schema_version": 1, "size": size, "curated_version": "v1",
+               "source_bank": "unique/v1/minimal", "difficulty_policy": "main_node_override_v2",
                "quotas": wanted, "max_per_difficulty": cap, "difficulties": buckets}
     target.write_text(json.dumps(payload, separators=(",", ":")) + "\n",
                       encoding="utf-8")
@@ -171,9 +171,9 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, wor
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--config", type=Path, default=ROOT / "puzzle_bank/curated/v2/quotas.json")
-    parser.add_argument("--source", type=Path, default=ROOT / "puzzle_bank/unique/v3/minimal")
-    parser.add_argument("--output", type=Path, default=ROOT / "puzzle_bank/curated/v2")
+    parser.add_argument("--config", type=Path, default=ROOT / "puzzle_bank/curated/v1/quotas.json")
+    parser.add_argument("--source", type=Path, default=ROOT / "puzzle_bank/unique/v1/minimal")
+    parser.add_argument("--output", type=Path, default=ROOT / "puzzle_bank/curated/v1")
     parser.add_argument("--solver", type=Path, default=ROOT / "skyscraper_solver")
     parser.add_argument("--timeout", type=float, default=10)
     parser.add_argument("--sizes", nargs="+", type=int, default=list(range(4, 10)))
