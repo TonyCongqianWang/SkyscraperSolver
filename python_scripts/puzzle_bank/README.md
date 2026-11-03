@@ -115,8 +115,8 @@ Difficulty rules (main-node overrides dominate):
 | 1 | <=50 / <=100 / <=200 / <=400 | very_easy / easy / medium / hard |
 | 1 | >400 | very_hard (capped) |
 | 2 | <=400 / >400 | hard / very_hard |
-| 3–8 | <=400 / <=800 / <=1600 / >1600 | hard / very_hard / extreme / extreme_plus |
-| >8 | any | impossible |
+| 3–4 | <=400 / <=800 / >800 | hard / very_hard / extreme |
+| >=5 | <=400 / <=800 / <=1600 / <=3200 / >3200 | hard / very_hard / extreme / extreme_plus / extreme_plus_plus |
 
 The supplied thresholds have gaps or conflicts for some node/main-node pairs;
 these explicit floor/cap rules ensure every candidate gets exactly one band.
