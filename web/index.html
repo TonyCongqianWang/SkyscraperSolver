@@ -3,6 +3,16 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Skyscraper Solver / WASM</title>
+<script>
+(() => {
+ const params=new URLSearchParams(window.location.search);
+ const fromIndex=params.get("from")==="index";
+ const requested=params.get("theme");
+ document.documentElement.dataset.theme=
+  requested==="light"||requested==="dark"?requested:(fromIndex?"light":"dark");
+ document.documentElement.dataset.fromIndex=String(fromIndex);
+})();
+</script>
 <style>
 :root{color-scheme:dark;font-family:ui-monospace,SFMono-Regular,Consolas,"Liberation Mono",monospace;background:#090909;color:#f0f0f0}
 *{box-sizing:border-box}body{max-width:850px;margin:38px auto;padding:0 20px}
@@ -20,9 +30,27 @@ button:disabled{opacity:.5;cursor:wait}
 pre{white-space:pre;overflow-x:auto;line-height:1.6;font-size:clamp(12px,2.5vw,17px)}
 #status{min-height:1.5em;color:#fff;white-space:pre-line}#status.error{color:#ff9c9c}
 small{font-size:.85rem;font-weight:400;color:#999}
+.demo-toolbar{display:flex;justify-content:space-between;align-items:center;min-height:34px;margin:0 0 12px}
+.demo-toolbar a{color:#c9c9c9;text-decoration:none;font-size:.87rem}
+.demo-toolbar a:hover{text-decoration:underline}
+.demo-toolbar button{margin:0 0 0 auto;padding:6px 11px;background:#171717;color:#f0f0f0;border:1px solid #696969;font-size:.85rem;font-weight:400}
+:root[data-theme="light"]{color-scheme:light;background:#fff;color:#111}
+:root[data-theme="light"] p{color:#444}
+:root[data-theme="light"] textarea{background:#fff;color:#111;border-color:#888}
+:root[data-theme="light"] textarea:focus{outline-color:#111}
+:root[data-theme="light"] .input-row button{background:#111;color:#fff;border-color:#111}
+:root[data-theme="light"] .demo-toolbar a{color:#333}
+:root[data-theme="light"] .demo-toolbar button{background:#f6f6f6;color:#111;border-color:#888}
+:root[data-theme="light"] #status{color:#111}
+:root[data-theme="light"] #status.error{color:#b42318}
+:root[data-theme="light"] small{color:#555}
 </style>
 </head>
 <body>
+<nav class="demo-toolbar" aria-label="Demo navigation">
+  <a id="back-home" href="../" hidden>← Back to index</a>
+  <button id="theme-toggle" type="button">Light theme</button>
+</nav>
 <h1>Skyscraper Solver <small>/ WebAssembly</small></h1>
 <div class="input-row">
   <div class="input-field"><label for="clues">CLUES</label>
@@ -37,6 +65,22 @@ Grid: N × N values, row by row (→, then ↓). Use 0 for missing clues or empt
 <pre id="output" aria-label="First solution"></pre>
 <script>
 const $=id=>document.getElementById(id);
+const themeToggle=$("theme-toggle");
+function renderThemeToggle(){
+ const light=document.documentElement.dataset.theme==="light";
+ themeToggle.textContent=light?"Dark theme":"Light theme";
+ themeToggle.setAttribute("aria-label","Switch to "+(light?"dark":"light")+" theme");
+}
+$("back-home").hidden=document.documentElement.dataset.fromIndex!=="true";
+themeToggle.onclick=()=>{
+ const next=document.documentElement.dataset.theme==="light"?"dark":"light";
+ document.documentElement.dataset.theme=next;
+ const url=new URL(window.location.href);
+ url.searchParams.set("theme",next);
+ window.history.replaceState(null,"",url);
+ renderThemeToggle();
+};
+renderThemeToggle();
 let worker=null;
 let feedbackTimer=null;
 function numbers(source){

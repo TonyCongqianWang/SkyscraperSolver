@@ -4,10 +4,13 @@ The site is published on GitHub Pages. All processing and random selection run
 in the browser, with no server-side endpoints.
 
 - `/`: homepage, with links to `/demo/`, `/curated/`, and `/assets/`
-- `/demo/`: WebAssembly solver demo
+- `/demo/`: WebAssembly solver demo; defaults to dark unless opened from the homepage
+  with `?from=index&theme=light`. Direct `?theme=light` and
+  `?theme=dark` links select the initial theme; a client-side toggle updates the
+  query without reloading. The back-to-index link appears only for `from=index`.
 - `/curated/`: difficulty distribution, percentiles and histograms
 - `/assets/`: browsable asset directories and `/assets/index.json` endpoint catalog
-- `/assets/solver/`: compiled solver, WASM and worker
+- `/assets/solver/`: compiled solver, WASM and worker, with a brief generated usage note
 - `/assets/puzzles/unique/v1/minimal/size_N.json`: unique puzzle banks
 - `/assets/puzzles/curated/v1/metadata.json`: available size/difficulty counts
 - `/assets/puzzles/curated/v1/statistics.json`: precomputed explorer statistics

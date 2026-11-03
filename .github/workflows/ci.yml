@@ -173,6 +173,7 @@ jobs:
           node --input-type=module --check < web/puzzles.js
           node --check web/worker.js
           node web/test_puzzles.cjs
+          node web/test_demo_theme.cjs
 
   ci-gate:
     if: always()

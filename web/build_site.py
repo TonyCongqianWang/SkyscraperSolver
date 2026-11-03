@@ -21,6 +21,14 @@ def build_site(output):
     site.add_page("/curated/", ROOT / "web/curated.html", "Curated explorer")
 
     site.add_asset("/assets/index.json", description="Machine-readable endpoint catalog", kind="json")
+    site.add_directory(
+        "/assets/solver/",
+        "WebAssembly solver for 4–9 grids. solver.js loads solver.wasm; "
+        "worker.js runs the synchronous solve_web API off the main thread. "
+        "Try the interactive demo at /demo/. "
+        "For your own page, load solver.js beside solver.wasm and call "
+        "solve_web(clues, grid, max_solutions) via Emscripten ccall.",
+    )
     for filename, description, kind in (
         ("solver.js", "WebAssembly solver loader", "javascript"),
         ("solver.wasm", "Compiled WebAssembly solver", "wasm"),
