@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Curate v2 candidate banks into independently versioned, capped public banks.
+"""Curate candidate banks into independently versioned, capped public banks.
 
 Candidate JSON stays offline (Git LFS/release assets). Curated JSON includes only
 selected variants and source references, never the complete candidate corpus.
@@ -10,7 +10,7 @@ import random
 from collections import Counter
 from pathlib import Path
 
-LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "impossible")
+LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "extreme_plus", "extreme_plus_plus")
 SCHEMA = 1
 
 
@@ -20,27 +20,31 @@ def difficulty(nodes, main_nodes):
     The original thresholds leave gaps (e.g. 4000 nodes and main=1).
     Complete those cases with main-dependent difficulty floors/ceilings:
     1: total-based through very_hard; 2: hard..very_hard;
-    3..8: hard..extreme; 9+: impossible.
+    3+: hard..extreme; Extreme+ and Extreme++ require main nodes >=5.
     """
     if nodes < 0 or main_nodes < 1:
         raise ValueError("node counts must be nonnegative, main nodes >= 1")
-    if main_nodes > 8:
-        return "impossible"
     if main_nodes >= 3:
-        if nodes <= 800:
+        if nodes <= 400:
             return "hard"
-        if nodes <= 1600:
+        if nodes <= 800:
             return "very_hard"
-        return "extreme"
+        if nodes <= 1600:
+            return "extreme"
+        if main_nodes <= 4:
+            return "extreme"
+        if nodes <= 3200:
+            return "extreme_plus"
+        return "extreme_plus_plus"
     if main_nodes == 2:
-        return "hard" if nodes <= 800 else "very_hard"
-    if nodes <= 100:
+        return "hard" if nodes <= 400 else "very_hard"
+    if nodes <= 50:
         return "very_easy"
-    if nodes <= 200:
+    if nodes <= 100:
         return "easy"
-    if nodes <= 400:
+    if nodes <= 200:
         return "medium"
-    if nodes <= 800:
+    if nodes <= 400:
         return "hard"
     return "very_hard"
 
@@ -108,8 +112,8 @@ def curate_size(path, output, limit, seed):
     public = {
         "schema_version": SCHEMA,
         "size": n,
-        "difficulty_policy": "main_node_override_v1",
-        "source_bank": "unique/v2/candidates",
+        "difficulty_policy": "main_node_override_v2",
+        "source_bank": "unique/v1/candidates",
         "curated_version": "v1",
         "max_per_difficulty": limit,
         "seed": seed,
@@ -130,17 +134,17 @@ def curate_size(path, output, limit, seed):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path,
-                        default=Path("puzzle_bank/unique/v2/candidates"))
+                        default=Path("puzzle_bank/unique/v1/candidates"))
     parser.add_argument("--output", type=Path,
                         default=Path("puzzle_bank/curated/v1"))
     parser.add_argument("--sizes", type=int, nargs="+", default=list(range(4, 10)))
-    parser.add_argument("--max-per-band", type=int, default=10000)
+    parser.add_argument("--max-per-band", type=int, default=15000)
     parser.add_argument("--seed", type=int, default=12345)
     args = parser.parse_args()
     if args.max_per_band < 1:
         parser.error("--max-per-band must be positive")
     report = {"schema_version": SCHEMA, "curated_version": "v1",
-              "difficulty_policy": "main_node_override_v1", "sizes": {}}
+              "difficulty_policy": "main_node_override_v2", "sizes": {}}
     for size in args.sizes:
         path = args.source / f"size_{size}.json"
         print(f"Curating {path}", flush=True)

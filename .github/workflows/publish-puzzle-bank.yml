@@ -4,10 +4,10 @@ on:
     branches: [main]
     paths:
       - 'puzzle_bank/unique/v1/**'
-      - 'puzzle_bank/unique/v2/minimal/**'
       - 'puzzle_bank/curated/v1/**'
       - 'src/**'
       - 'web/**'
+      - 'python_scripts/puzzle_bank/export_api_metadata.py'
       - '.github/workflows/publish-puzzle-bank.yml'
   workflow_dispatch:
 permissions:
@@ -31,89 +31,53 @@ jobs:
       - name: Download puzzle-bank LFS content
         run: |
           git lfs install --local
-          git lfs pull --include="puzzle_bank/unique/v2/minimal/*.json,puzzle_bank/curated/v1/*.json" --exclude=""
+          git lfs pull --include="puzzle_bank/unique/v1/minimal/size_*.json,puzzle_bank/curated/v1/size_*.json" --exclude=""
           git lfs checkout
           python3 - <<'PY'
           import json
           from pathlib import Path
-          for folder in ('puzzle_bank/unique/v2/minimal', 'puzzle_bank/curated/v1'):
-              for n in range(4, 10):
-                  path = Path(folder) / f'size_{n}.json'
+          for family in ('unique/v1/minimal', 'curated/v1'):
+              for size in range(4, 10):
+                  path = Path('puzzle_bank') / family / f'size_{size}.json'
                   try:
                       bank = json.loads(path.read_text(encoding='utf-8'))
                   except (ValueError, OSError) as exc:
-                      raise RuntimeError(f'LFS content unavailable for {path}; check LFS tracking and uploaded objects') from exc
-                  assert bank.get('size') == n, f'Invalid or unhydrated LFS file: {path}'
-                  print(f'Loaded {path} ({path.stat().st_size:,} bytes)')
-          try:
-              report = json.loads(Path('puzzle_bank/curated/v1/statistics.json').read_text(encoding='utf-8'))
-          except (ValueError, OSError) as exc:
-              raise RuntimeError('LFS content unavailable for curated statistics.json') from exc
-          assert isinstance(report.get('sizes'), dict), 'Curated statistics missing'
+                      raise RuntimeError(f'LFS content unavailable for {path}') from exc
+                  assert bank.get('size') == size, path
           PY
       - uses: emscripten-core/setup-emsdk@v15
         with:
           version: latest
-      - name: Build WebAssembly solver
+      - name: Build static website
         run: |
-          mkdir -p public/solver/demo
+          mkdir -p public/assets/solver
           emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
             -s INVOKE_RUN=0 -s MODULARIZE=1 \
             -s EXPORT_NAME=createSkyscraperSolver \
             -s EXPORTED_FUNCTIONS='["_solve_web"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
-            -s ALLOW_MEMORY_GROWTH=1 \
-            -s INITIAL_MEMORY=67108864 \
-            -o public/solver/solver.js
-          cp web/index.html public/solver/demo/index.html
-          cp web/worker.js web/solver-info.html public/solver/
-          mv public/solver/solver-info.html public/solver/index.html
-          test -f public/solver/index.html
-          grep -q "Index of /solver/" public/solver/index.html
-          test -f public/solver/demo/index.html
-          cp web/home.html public/index.html
+            -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
+            -o public/assets/solver/solver.js
+          python3 web/build_site.py --output public
+          test -s public/assets/index.json
+          test -s public/assets/puzzles/puzzles.js
+          test -s public/assets/puzzles/curated/v1/7/extreme_plus.json
+          test -s public/demo/index.html
+          test -s public/curated/index.html
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          base = Path('public/assets/puzzles/curated/v1')
+          metadata = json.loads((base / 'metadata.json').read_text())
+          statistics = json.loads((base / 'statistics.json').read_text())
+          assert metadata['curated_version'] == 'v1'
+          assert statistics['curated_version'] == 'v1'
+          for size, counts in metadata['sizes'].items():
+              for level, count in counts.items():
+                  shard = base / size / (level + '.json')
+                  assert shard.exists() == (count > 0), shard
+          PY
       - uses: actions/configure-pages@v6
-      - name: Stage static API
-        run: |
-          mkdir -p public/puzzle-bank/unique/v1
-          cp -a puzzle_bank/unique/v1/. public/puzzle-bank/unique/v1/
-          mkdir -p public/puzzle-bank/unique/v2/minimal
-          cp -a puzzle_bank/unique/v2/minimal/. public/puzzle-bank/unique/v2/minimal/
-          # Reject Git LFS pointer files: Pages must publish actual JSON payloads.
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          for n in range(4, 10):
-              path = Path(f'public/puzzle-bank/unique/v2/minimal/size_{n}.json')
-              with path.open(encoding='utf-8') as handle:
-                  bank = json.load(handle)
-              assert isinstance(bank, dict) and bank.get('size') == n, path
-              print(f'Validated published v2 size {n}: {path.stat().st_size} bytes')
-          PY
-          mkdir -p public/puzzle-bank/curated/v1
-          find puzzle_bank/curated/v1 -maxdepth 1 -type f \( -name 'size_*.json' -o -name 'statistics.json' \) -exec cp {} public/puzzle-bank/curated/v1/ \;
-          # Validate curated LFS payloads and their statistics before publishing.
-          python3 - <<'PY'
-          import json
-          from pathlib import Path
-          root = Path('public/puzzle-bank/curated/v1')
-          report = json.loads((root / 'statistics.json').read_text())
-          assert isinstance(report.get('sizes'), dict)
-          for n in range(4, 10):
-              bank = json.loads((root / f'size_{n}.json').read_text())
-              assert bank.get('size') == n, n
-              assert isinstance(bank.get('statistics'), dict), n
-              assert isinstance(bank.get('difficulties'), dict), n
-          PY
-          python3 python_scripts/puzzle_bank/export_api_metadata.py --directory public/puzzle-bank/curated/v1
-          cp puzzle_bank/curated/v1/api.js public/puzzle-bank/curated/v1/api.js
-          test -s public/puzzle-bank/curated/v1/metadata.json
-          test -s public/puzzle-bank/curated/v1/api.js
-          python3 web/generate_directory_indexes.py public/puzzle-bank
-          cp web/curated.html public/puzzle-bank/curated/index.html
-          test -f public/puzzle-bank/unique/v2/minimal/size_4.json
-          test -f public/puzzle-bank/curated/index.html
-          touch public/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
           path: public

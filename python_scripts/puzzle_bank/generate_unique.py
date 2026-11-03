@@ -250,8 +250,10 @@ def main():
     ap.add_argument("--batch-size", type=int, default=10000)
     ap.add_argument("--reseed-interval", type=int, default=250)
     ap.add_argument("--variants-per-step", type=int, default=4)
+    ap.add_argument("--minimal-only", action="store_true",
+                    help="Skip candidate variants; write minimal puzzles only")
     ap.add_argument("--solver", type=Path, default=ROOT/"skyscraper_solver")
-    ap.add_argument("--output", type=Path, default=ROOT/"puzzle_bank"/"unique"/"v2")
+    ap.add_argument("--output", type=Path, default=ROOT/"puzzle_bank"/"unique"/"v1")
     args = ap.parse_args()
     if (min(args.count, args.attempts, args.weight, args.timeout,
             args.gap, args.batch_size, args.reseed_interval, args.variants_per_step) <= 0
@@ -309,8 +311,9 @@ def main():
             group_id = f"s{args.size}-{len(minimal_groups)+1:05d}"
             minimal_groups[key] = {
                 "id": group_id, "canonical_solution": list(key), "puzzles": []}
-            candidate_groups[key] = {
-                "id": group_id, "canonical_solution": list(key), "puzzles": []}
+            if not args.minimal_only:
+                candidate_groups[key] = {
+                    "id": group_id, "canonical_solution": list(key), "puzzles": []}
         group = minimal_groups[key]
         ident = group["id"] + f"-p{len(group['puzzles'])+1:03d}"
         base = {
@@ -321,13 +324,14 @@ def main():
             "nodes_visited": nodes,
             "main_nodes_visited": main_nodes,
         }
-        variants = generate_variants(
-            binary, ident, clues, cells, full, solution, (nodes, main_nodes), rng,
-            args.timeout, args.seed, attempt, args.variants_per_step)
         group["puzzles"].append(base)
-        candidate_groups[key]["puzzles"].append({
-            "id": ident, "size": args.size, "variants": variants,
-            "difficulty_matched": False})
+        if not args.minimal_only:
+            variants = generate_variants(
+                binary, ident, clues, cells, full, solution, (nodes, main_nodes), rng,
+                args.timeout, args.seed, attempt, args.variants_per_step)
+            candidate_groups[key]["puzzles"].append({
+                "id": ident, "size": args.size, "variants": variants,
+                "difficulty_matched": False})
         if new_group and len(minimal_groups) % 50 == 0:
             print(f"Size {args.size}: {len(minimal_groups)}/{args.count} groups, "
                   f"{len(seen_puzzles)} puzzles, {attempt} samples", flush=True)
@@ -339,7 +343,8 @@ def main():
             f"after {args.attempts} attempts; no output written")
     out = args.output
     (out/"minimal").mkdir(parents=True, exist_ok=True)
-    (out/"candidates").mkdir(parents=True, exist_ok=True)
+    if not args.minimal_only:
+        (out/"candidates").mkdir(parents=True, exist_ok=True)
     metadata = {
         "schema_version": 2, "size": args.size, "count": args.count,
         "puzzle_count": len(seen_puzzles), "seed": args.seed,
@@ -352,11 +357,12 @@ def main():
     }
     (out/"minimal"/f"size_{args.size}.json").write_text(
         json.dumps({**metadata, "groups": list(minimal_groups.values())}, indent=2) + "\n")
-    (out/"candidates"/f"size_{args.size}.json").write_text(
-        json.dumps({**metadata, "status": "uncalibrated",
-                    "variants_per_step": args.variants_per_step,
-                    "max_given_fraction": "1/3",
-                    "groups": list(candidate_groups.values())}, indent=2) + "\n")
+    if not args.minimal_only:
+        (out/"candidates"/f"size_{args.size}.json").write_text(
+            json.dumps({**metadata, "status": "uncalibrated",
+                        "variants_per_step": args.variants_per_step,
+                        "max_given_fraction": "1/3",
+                        "groups": list(candidate_groups.values())}, indent=2) + "\n")
     print(f"Wrote grouped MCMC puzzle banks to {out}")
 
 

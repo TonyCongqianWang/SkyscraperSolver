@@ -9,19 +9,33 @@ from python_scripts.puzzle_bank.curate import curate_size, difficulty
 
 class CuratorTests(unittest.TestCase):
     def test_main_node_override(self):
-        self.assertEqual(difficulty(100, 1), "very_easy")
-        self.assertEqual(difficulty(101, 1), "easy")
-        self.assertEqual(difficulty(200, 1), "easy")
-        self.assertEqual(difficulty(400, 1), "medium")
-        self.assertEqual(difficulty(800, 1), "hard")
+        self.assertEqual(difficulty(50, 1), "very_easy")
+        self.assertEqual(difficulty(51, 1), "easy")
+        self.assertEqual(difficulty(100, 1), "easy")
+        self.assertEqual(difficulty(101, 1), "medium")
+        self.assertEqual(difficulty(200, 1), "medium")
+        self.assertEqual(difficulty(201, 1), "hard")
+        self.assertEqual(difficulty(400, 1), "hard")
+        self.assertEqual(difficulty(401, 1), "very_hard")
         self.assertEqual(difficulty(1600, 1), "very_hard")
         self.assertEqual(difficulty(99999, 1), "very_hard")
         self.assertEqual(difficulty(20, 2), "hard")
+        self.assertEqual(difficulty(400, 2), "hard")
+        self.assertEqual(difficulty(401, 2), "very_hard")
         self.assertEqual(difficulty(5000, 2), "very_hard")
         self.assertEqual(difficulty(200, 3), "hard")
-        self.assertEqual(difficulty(1600, 8), "very_hard")
-        self.assertEqual(difficulty(3200, 8), "extreme")
-        self.assertEqual(difficulty(50, 9), "impossible")
+        self.assertEqual(difficulty(400, 3), "hard")
+        self.assertEqual(difficulty(401, 3), "very_hard")
+        self.assertEqual(difficulty(800, 8), "very_hard")
+        self.assertEqual(difficulty(801, 8), "extreme")
+        self.assertEqual(difficulty(1600, 8), "extreme")
+        self.assertEqual(difficulty(1601, 8), "extreme_plus")
+        self.assertEqual(difficulty(3201, 3), "extreme")
+        self.assertEqual(difficulty(3201, 4), "extreme")
+        self.assertEqual(difficulty(3201, 5), "extreme_plus_plus")
+        self.assertEqual(difficulty(50, 9), "hard")
+        self.assertEqual(difficulty(900, 9), "extreme")
+        self.assertEqual(difficulty(1601, 9), "extreme_plus")
 
     def test_reservoir_cap_and_provenance(self):
         with tempfile.TemporaryDirectory() as td:
@@ -30,7 +44,7 @@ class CuratorTests(unittest.TestCase):
             variants = [
                 {"label": f"clues_plus_{j}_1", "clues": [j] * 16,
                  "givens": [0] * 16, "clue_count": 16,
-                 "nodes_visited": 100, "main_nodes_visited": 1}
+                 "nodes_visited": 50, "main_nodes_visited": 1}
                 for j in range(1, 6)
             ]
             bank = {"size": 4, "groups": [{

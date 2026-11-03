@@ -1,3 +1,210 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:ca34c85815c6b82769d76e875c07bf35904b6a1e1ba66b8bf4df2edc8cd5dfd5
-size 11653
+{
+  "schema_version": 1,
+  "curated_version": "v1",
+  "sizes": {
+    "4": {
+      "very_easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "easy": {
+        "selected": 2717,
+        "quota": 10000
+      },
+      "medium": {
+        "selected": 136,
+        "quota": 10000
+      },
+      "hard": {
+        "selected": 13,
+        "quota": 0
+      },
+      "very_hard": {
+        "selected": 0,
+        "quota": 0
+      },
+      "extreme": {
+        "selected": 0,
+        "quota": 0
+      },
+      "extreme_plus": {
+        "selected": 0,
+        "quota": 0
+      },
+      "extreme_plus_plus": {
+        "selected": 0,
+        "quota": 0
+      }
+    },
+    "5": {
+      "very_easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "medium": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "very_hard": {
+        "selected": 3035,
+        "quota": 10000
+      },
+      "extreme": {
+        "selected": 173,
+        "quota": 0
+      },
+      "extreme_plus": {
+        "selected": 0,
+        "quota": 0
+      },
+      "extreme_plus_plus": {
+        "selected": 0,
+        "quota": 0
+      }
+    },
+    "6": {
+      "very_easy": {
+        "selected": 15000,
+        "quota": 2000
+      },
+      "easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "medium": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "very_hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme": {
+        "selected": 10000,
+        "quota": 10000
+      },
+      "extreme_plus": {
+        "selected": 939,
+        "quota": 0
+      },
+      "extreme_plus_plus": {
+        "selected": 14,
+        "quota": 0
+      }
+    },
+    "7": {
+      "very_easy": {
+        "selected": 15000,
+        "quota": 2000
+      },
+      "easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "medium": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "very_hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme_plus": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme_plus_plus": {
+        "selected": 10000,
+        "quota": 10000
+      }
+    },
+    "8": {
+      "very_easy": {
+        "selected": 5684,
+        "quota": 1000
+      },
+      "easy": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "medium": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "very_hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme": {
+        "selected": 13014,
+        "quota": 10000
+      },
+      "extreme_plus": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme_plus_plus": {
+        "selected": 10000,
+        "quota": 10000
+      }
+    },
+    "9": {
+      "very_easy": {
+        "selected": 87,
+        "quota": 0
+      },
+      "easy": {
+        "selected": 4692,
+        "quota": 1000
+      },
+      "medium": {
+        "selected": 15000,
+        "quota": 5000
+      },
+      "hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "very_hard": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme": {
+        "selected": 10000,
+        "quota": 10000
+      },
+      "extreme_plus": {
+        "selected": 15000,
+        "quota": 10000
+      },
+      "extreme_plus_plus": {
+        "selected": 15000,
+        "quota": 10000
+      }
+    }
+  }
+}
