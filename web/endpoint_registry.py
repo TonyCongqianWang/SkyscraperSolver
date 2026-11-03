@@ -55,6 +55,10 @@ class EndpointRegistry:
     def add_page(self, route, source, description=""):
         return self._register(route, True, description, "page", source)
 
+    def add_directory(self, route, description=""):
+        """Describe a generated directory index without replacing its listing."""
+        return self._register(route, True, description, "directory", None)
+
     def add_asset(self, route, source=None, description="", kind="asset"):
         return self._register(route, False, description, kind, source)
 
@@ -85,8 +89,9 @@ class EndpointRegistry:
             'a:visited{color:#551a8b}hr{border:0;border-top:1px solid #999}'
             'pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}'
             '</style></head><body>'
-            f'<h1>{escape(title)}</h1><hr><pre>'
-            + "\n".join(links) + '</pre><hr></body></html>\n'
+            f'<h1>{escape(title)}</h1>'
+            + (f'<p>{escape(node.description)}</p>' if node.description else "")
+            + '<hr><pre>' + "\n".join(links) + '</pre><hr></body></html>\n'
         )
 
     @staticmethod

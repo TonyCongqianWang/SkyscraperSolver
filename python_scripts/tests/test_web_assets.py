@@ -52,6 +52,27 @@ class StaticAssetsTests(unittest.TestCase):
             self.assertEqual(stats["details"]["all"]["easy"]["count"], 2)
             self.assertEqual(stats["details"]["7"]["extreme_plus"]["metrics"]["given_count"]["max"], 49)
 
+    def test_solver_index_description_is_generated_and_escaped(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            worker = root / "worker.js"
+            worker.write_text("// a worker")
+            site = EndpointRegistry(root / "public")
+            site.add_page("/", None)
+            site.add_asset("/assets/index.json", description="Catalog", kind="json")
+            site.add_directory("/assets/solver/", "Browser solver <safe> & demo")
+            site.add_asset("/assets/solver/worker.js", worker,
+                           "Demo worker", kind="javascript")
+            with self.assertRaises(ValueError):
+                site.add_directory("/assets/solver/", "Duplicate")
+            site.build()
+            index = (root / "public/assets/solver/index.html").read_text()
+            self.assertIn("Index of /assets/solver/", index)
+            self.assertIn("Browser solver &lt;safe&gt; &amp; demo", index)
+            self.assertIn("worker.js", index)
+            self.assertIn("Demo worker", index)
+            self.assertNotIn("<safe>", index)
+
     def test_registry_generates_nested_indexes_and_catalog(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
