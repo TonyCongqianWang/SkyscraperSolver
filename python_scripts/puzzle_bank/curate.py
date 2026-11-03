@@ -10,7 +10,7 @@ import random
 from collections import Counter
 from pathlib import Path
 
-LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "extreme_plus", "impossible")
+LEVELS = ("very_easy", "easy", "medium", "hard", "very_hard", "extreme", "extreme_plus", "extreme_plus_plus")
 SCHEMA = 1
 
 
@@ -20,7 +20,7 @@ def difficulty(nodes, main_nodes):
     The original thresholds leave gaps (e.g. 4000 nodes and main=1).
     Complete those cases with main-dependent difficulty floors/ceilings:
     1: total-based through very_hard; 2: hard..very_hard;
-    3+: hard..extreme_plus; no automatic impossible override.
+    3+: hard..extreme; Extreme+ and Extreme++ require main nodes >=5.
     """
     if nodes < 0 or main_nodes < 1:
         raise ValueError("node counts must be nonnegative, main nodes >= 1")
@@ -31,7 +31,11 @@ def difficulty(nodes, main_nodes):
             return "very_hard"
         if nodes <= 1600:
             return "extreme"
-        return "extreme_plus"
+        if main_nodes <= 4:
+            return "extreme"
+        if nodes <= 3200:
+            return "extreme_plus"
+        return "extreme_plus_plus"
     if main_nodes == 2:
         return "hard" if nodes <= 400 else "very_hard"
     if nodes <= 50:
