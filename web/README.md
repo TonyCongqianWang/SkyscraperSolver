@@ -12,20 +12,21 @@ in the browser, with no server-side endpoints.
 - `/assets/puzzles/curated/v1/metadata.json`: available size/difficulty counts
 - `/assets/puzzles/curated/v1/statistics.json`: precomputed explorer statistics
 - `/assets/puzzles/curated/v1/N/LEVEL.json`: published curated shards
-- `/assets/puzzles/random.js`: browser-side random puzzle API
+- `/assets/puzzles/random.js`: browser-side random and ID-based puzzle API
 
 Import the API as an ES module from the deployed site:
 
 ```js
-import { getRandomPuzzle, getMetadata } from
+import { getRandomPuzzle, getPuzzleById, getMetadata } from
   "https://tonycongqianwang.github.io/SkyscraperSolver/assets/puzzles/random.js";
 const puzzle = await getRandomPuzzle({ size: 7, difficulty: "extreme_plus" });
+const samePuzzle = await getPuzzleById(puzzle.puzzle_id);
 ```
 
 Both filters are optional. Selection is uniform across matching records,
 with replacement. The module downloads only the selected shard, caches
 in-flight and completed requests, and evicts failed requests for retry.
-Each puzzle includes source metadata, size and difficulty. The API is a
+Each puzzle includes source metadata, size, difficulty, and a version-tagged `puzzle_id` (`v1:<size>:<difficulty>:<original-id>`), while preserving the original `id`. `getPuzzleById` parses that ID and loads only the corresponding shard; unknown IDs reject with `RangeError`. The API is a
 JavaScript module, not a dynamic HTTP JSON endpoint.
 
 Generate the static site from hydrated LFS puzzle banks with:
