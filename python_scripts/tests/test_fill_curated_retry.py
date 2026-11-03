@@ -7,9 +7,10 @@ from unittest.mock import patch
 
 from python_scripts.puzzle_bank import fill_curated
 
+STALL_LIMIT = 10000
 
 class RetryTests(unittest.TestCase):
-    def test_revisits_pool_and_stops_after_1000_nonprogress_draws(self):
+    def test_revisits_pool_and_stops_after_stall_limit_nonprogress_draws(self):
         with tempfile.TemporaryDirectory() as temp:
             source = Path(temp) / "minimal.json"
             target = Path(temp) / "curated.json"
@@ -30,11 +31,11 @@ class RetryTests(unittest.TestCase):
             with patch.object(fill_curated, "verify", side_effect=fake_verify), \
                  patch.object(fill_curated, "clues_for", return_value=[1]*16):
                 stats = fill_curated.fill_size(
-                    4, quotas, source, target, None, 1, 123, 2)
+                    4, quotas, source, target, None, 1, 123, 2, STALL_LIMIT)
             self.assertEqual(stats["easy"]["selected"], 0)
             self.assertEqual(stats["very_easy"]["selected"], len(
                 json.loads(target.read_text())["difficulties"]["very_easy"]))
-            self.assertLessEqual(len(calls), 1000)
+            self.assertLessEqual(len(calls), STALL_LIMIT)
             self.assertGreater(len(calls), 2)
 
 if __name__ == "__main__":

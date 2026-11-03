@@ -21,7 +21,7 @@ from python_scripts.puzzle_bank.curate import LEVELS, difficulty
 from python_scripts.puzzle_bank.generate_unique import clues_for, verify
 
 
-def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, workers=4):
+def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, workers=4, stall_limit=10000):
     with source.open(encoding="utf-8") as file:
         bank = json.load(file)
     rng = random.Random(seed + size)
@@ -51,7 +51,6 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, wor
 
     # A single coordinator owns seen, quotas, and the stall counter.
     # Workers only run the independent native solver subprocesses.
-    stall_limit = 10000
     stalled = 0
     pool = [(group, base) for group in bank["groups"]
             for base in group["puzzles"]]
@@ -180,6 +179,8 @@ def main():
     parser.add_argument("--sizes", nargs="+", type=int, default=list(range(4, 10)))
     parser.add_argument("--workers", type=int, default=4,
                         help="Concurrent native solver checks (default: 4)")
+    parser.add_argument("--stall-limit", type=int, default=10000,
+                        help="Maximum samples of no progress before stopping (default: 10000)")
     args = parser.parse_args()
     if args.workers < 1:
         parser.error("--workers must be positive")
@@ -194,7 +195,7 @@ def main():
         summary["sizes"][str(size)] = fill_size(
             size, limits[str(size)], args.source / f"size_{size}.json",
             args.output / f"size_{size}.json", args.solver, args.timeout,
-            cfg["seed"], cfg["max_attempts_per_minimal"], args.workers)
+            cfg["seed"], cfg["max_attempts_per_minimal"], args.workers, args.stall_limit)
         print(f"size {size}: " + ", ".join(
             f"{name}={s['selected']}/{s['quota']}"
             for name, s in summary["sizes"][str(size)].items()), flush=True)
