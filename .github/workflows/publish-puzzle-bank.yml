@@ -60,7 +60,7 @@ jobs:
             -o public/assets/solver/solver.js
           python3 web/build_site.py --output public
           test -s public/assets/index.json
-          test -s public/assets/puzzles/random.js
+          test -s public/assets/puzzles/puzzles.js
           test -s public/assets/puzzles/curated/v1/7/extreme_plus.json
           test -s public/demo/index.html
           test -s public/curated/index.html
