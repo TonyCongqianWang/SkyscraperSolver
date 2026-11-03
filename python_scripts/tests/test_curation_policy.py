@@ -23,7 +23,7 @@ class CurationPolicyTests(unittest.TestCase):
         self.assertEqual(difficulty(1601, 9), "extreme_plus")
 
     def test_levels(self):
-        self.assertEqual(LEVELS[-2:], ("extreme_plus", "impossible"))
+        self.assertEqual(LEVELS[-2:], ("extreme_plus", "extreme_plus_plus"))
 
 if __name__ == "__main__":
     unittest.main()
