@@ -6,3 +6,9 @@
 /puzzle_bank/unique/v3/minimal/size_7.json filter=lfs diff=lfs merge=lfs -text
 /puzzle_bank/unique/v3/minimal/size_8.json filter=lfs diff=lfs merge=lfs -text
 /puzzle_bank/unique/v3/minimal/size_9.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_4.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_5.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_6.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_7.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_8.json filter=lfs diff=lfs merge=lfs -text
+/puzzle_bank/curated/v2/size_9.json filter=lfs diff=lfs merge=lfs -text

@@ -51,7 +51,7 @@ def fill_size(size, quotas, source, target, solver, timeout, seed, attempts, wor
 
     # A single coordinator owns seen, quotas, and the stall counter.
     # Workers only run the independent native solver subprocesses.
-    stall_limit = 1000
+    stall_limit = 10000
     stalled = 0
     pool = [(group, base) for group in bank["groups"]
             for base in group["puzzles"]]

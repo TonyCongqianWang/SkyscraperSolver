@@ -2,7 +2,7 @@
   "schema_version": 1,
   "version": "v2",
   "max_attempts_per_minimal": 100,
-  "seed": 12345,
+  "seed": 99483,
   "sizes": {
     "4": {
       "very_easy": 10000,
