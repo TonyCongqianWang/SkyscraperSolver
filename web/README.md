@@ -10,7 +10,9 @@ in the browser, with no server-side endpoints.
   query without reloading. The back-to-index link appears only for `from=index`.
 - `/curated/`: difficulty distribution, percentiles and histograms
 - `/assets/`: browsable asset directories and `/assets/index.json` endpoint catalog
-- `/assets/solver/`: compiled solver, WASM and worker, with a brief generated usage note
+- `/assets/solver/`: compiled solver, WASM and worker; a formatted usage guide
+  appears *beneath* the directory listing (the parent `/assets/` listing has no
+  extra description). The guide is maintained in `web/solver-description.html`.
 - `/assets/puzzles/unique/v1/minimal/size_N.json`: unique puzzle banks
 - `/assets/puzzles/curated/v1/metadata.json`: available size/difficulty counts
 - `/assets/puzzles/curated/v1/statistics.json`: precomputed explorer statistics

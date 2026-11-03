@@ -60,18 +60,27 @@ class StaticAssetsTests(unittest.TestCase):
             site = EndpointRegistry(root / "public")
             site.add_page("/", None)
             site.add_asset("/assets/index.json", description="Catalog", kind="json")
-            site.add_directory("/assets/solver/", "Browser solver <safe> & demo")
+            footer = root / "solver-description.html"
+            footer.write_text('<section><h2>Using the solver</h2>'
+                              '<p>Call <code>solve_web</code>.</p></section>')
+            site.add_directory("/assets/solver/", footer=footer)
             site.add_asset("/assets/solver/worker.js", worker,
                            "Demo worker", kind="javascript")
             with self.assertRaises(ValueError):
                 site.add_directory("/assets/solver/", "Duplicate")
             site.build()
+            listing = (root / "public/assets/index.html").read_text()
             index = (root / "public/assets/solver/index.html").read_text()
+            self.assertIn('<a href="solver/">solver/</a>', listing)
+            self.assertNotIn("Using the solver", listing)
+            self.assertNotIn("solve_web", listing)
             self.assertIn("Index of /assets/solver/", index)
-            self.assertIn("Browser solver &lt;safe&gt; &amp; demo", index)
             self.assertIn("worker.js", index)
             self.assertIn("Demo worker", index)
-            self.assertNotIn("<safe>", index)
+            self.assertIn("<h2>Using the solver</h2>", index)
+            self.assertIn("<code>solve_web</code>", index)
+            self.assertLess(index.index('href="worker.js"'),
+                            index.index("<h2>Using the solver</h2>"))
 
     def test_registry_generates_nested_indexes_and_catalog(self):
         with tempfile.TemporaryDirectory() as temp:

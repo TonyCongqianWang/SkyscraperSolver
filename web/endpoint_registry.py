@@ -17,6 +17,7 @@ class Node:
     source: Path | None = None
     children: dict = field(default_factory=dict)
     page: Path | None = None
+    footer: Path | None = None
 
 
 class EndpointRegistry:
@@ -41,7 +42,8 @@ class EndpointRegistry:
                 node.children[part] = child
             elif child.directory != is_dir:
                 raise ValueError(f"Endpoint collision: {route}")
-            elif final and (child.source is not None or child.page is not None or child.description):
+            elif final and (child.source is not None or child.page is not None
+                            or child.footer is not None or child.description):
                 raise ValueError(f"Duplicate endpoint: {route}")
             node = child
         node.description = description
@@ -55,9 +57,11 @@ class EndpointRegistry:
     def add_page(self, route, source, description=""):
         return self._register(route, True, description, "page", source)
 
-    def add_directory(self, route, description=""):
-        """Describe a generated directory index without replacing its listing."""
-        return self._register(route, True, description, "directory", None)
+    def add_directory(self, route, description="", footer=None):
+        """Register a directory; optional HTML footer appears below its file listing."""
+        node = self._register(route, True, description, "directory", None)
+        node.footer = Path(footer) if footer else None
+        return node
 
     def add_asset(self, route, source=None, description="", kind="asset"):
         return self._register(route, False, description, kind, source)
@@ -88,10 +92,15 @@ class EndpointRegistry:
             'h1{font-size:1.5em;font-weight:normal}a{color:#00e}'
             'a:visited{color:#551a8b}hr{border:0;border-top:1px solid #999}'
             'pre{font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}'
+            'pre.usage{white-space:pre;overflow-x:auto;background:#f6f6f6;'
+            'border:1px solid #ddd;padding:12px}'
+            'code{font:inherit}h2{font-size:1.1em;margin-top:1.4em}'
             '</style></head><body>'
             f'<h1>{escape(title)}</h1>'
             + (f'<p>{escape(node.description)}</p>' if node.description else "")
-            + '<hr><pre>' + "\n".join(links) + '</pre><hr></body></html>\n'
+            + '<hr><pre>' + "\n".join(links) + '</pre><hr>'
+            + (node.footer.read_text(encoding="utf-8") if node.footer else "")
+            + '</body></html>\n'
         )
 
     @staticmethod
