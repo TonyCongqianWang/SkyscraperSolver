@@ -630,6 +630,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         log_path=train_log_path,
         use_stdin=args.stdin, max_workers=min(os.cpu_count() or 1, args.max_workers),
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
+        timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
+        win_tolerance=args.comparison_win_tolerance,
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_train_instances.jsonl'
     )
@@ -642,6 +644,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         log_path=val_log_path,
         use_stdin=args.stdin, max_workers=min(os.cpu_count() or 1, args.max_workers),
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
+        timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
+        win_tolerance=args.comparison_win_tolerance,
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_val_instances.jsonl'
     )
@@ -882,7 +886,15 @@ def parse_args():
     parser.add_argument('--seed', type=int, default=None, help='RNG seed; generated and recorded if omitted')
     parser.add_argument('--comparison-repeats', type=int, default=2, help='Even number of AB/BA comparison rounds')
     parser.add_argument('--comparison-warmup', type=int, default=1, help='Unmeasured instances per comparison worker')
+    parser.add_argument('--comparison-timeout', type=float, default=10.0, help='Per-instance post-tuning comparison limit in seconds (default: 10)')
+    parser.add_argument('--comparison-timeout-penalty', type=float, default=4.0, help='Comparison timeout runtime multiplier (default: 4)')
+    parser.add_argument('--comparison-win-tolerance', type=float, default=0.10, help='Comparison timing tie/near-best tolerance (default: 0.10)')
     args = parser.parse_args()
+    from comparison_statistics import validate_policy
+    try:
+        validate_policy(args.comparison_timeout, args.comparison_timeout_penalty, args.comparison_win_tolerance)
+    except ValueError as error:
+        parser.error(str(error))
     if args.max_workers < 1 or args.iterations < 1 or args.directions < 1 or (args.batch_size is not None and args.batch_size < 1):
         parser.error('workers, iterations and batch size must be positive')
     if args.comparison_repeats < 2 or args.comparison_repeats % 2 or args.comparison_warmup < 0:

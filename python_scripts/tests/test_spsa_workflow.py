@@ -209,7 +209,7 @@ class WorkflowTests(unittest.TestCase):
                 self.assertEqual(report['sgm_shifts'], get_sgm_shifts(report['size']))
 
     def test_failures_and_solution_mismatches_invalidate_comparison(self):
-        for status, solutions in [('timeout', 1), ('error', 1), ('ok', 2)]:
+        for status, solutions in [('error', 1), ('ok', 2)]:
             with self.subTest(status=status, solutions=solutions):
                 def fake_batch(binary, *args, **kwargs):
                     return [{'index': 0, 'clue': 'a', 'seconds': 1, 'nodes': 100,

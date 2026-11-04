@@ -40,14 +40,18 @@ Post-tuning comparisons honor `--max-workers` and `--no-stdin`. By default they
 run two rounds, baseline/optimized followed by optimized/baseline, with one
 unmeasured warmup instance per worker per arm. This doubles measured comparison
 work compared with the old single round. Adjust with `--comparison-repeats`
-(a positive even number) and `--comparison-warmup`. Training iterations are unchanged.
+(a positive even number) and `--comparison-warmup`. The per-instance comparison
+limit defaults to **10 seconds**, configurable with `--comparison-timeout`.
+`--comparison-timeout-penalty` defaults to 4 and
+`--comparison-win-tolerance` to 0.10. Training iteration timeouts are unchanged.
 
 For a standalone comparison:
 
 ```bash
 python3 python_scripts/compare_performance.py --size 8 \
   --winners scratch/spsa_winners_s8_0.txt --max-workers 4 \
-  --repeats 4 --warmup 1 --log scratch/comparison.log
+  --repeats 4 --warmup 1 --timeout 10 --timeout-penalty 4 \
+  --win-tolerance 0.10 --log scratch/comparison.log
 ```
 
 The standalone baseline uses `--baseline`; post-tuning comparisons use the same
@@ -60,11 +64,42 @@ Each comparison writes per-instance JSONL and a JSON summary alongside its log
 path. Records include dataset label, input index/clue, round, evaluation order,
 arm, time, nodes, status and solution count when available. Summary tables show
 median per-round metrics, median paired percentage changes and their ranges.
-Timeouts/errors and differing solution counts invalidate the comparison, withhold
-the aggregate performance table and cause a nonzero CLI exit. They are never
-silently omitted or replaced with artificial node counts. The current C stdin
-protocol reports nodes but no solution count; its records therefore contain
-`solutions: null`. Use subprocess mode or `verify_consistency.py` to check counts.
+Timeouts are normal benchmark outcomes and do not invalidate a comparison.
+Timing summaries include every instance, assigning each timeout `penalty × limit`
+seconds: by default **40 seconds (PAR-4)**. Raw elapsed time and status are preserved
+alongside `scored_seconds`, timeout and penalty in JSONL. The timing shift is
+applied after charging timeouts. Errors, missing/misaligned records and differing
+known solution counts still invalidate the comparison and cause a nonzero exit.
+A successful-versus-timeout pair cannot be checked for matching solution counts.
+
+Node summaries use only pairs completed by both solvers within each round; their
+sample counts are printed. A timeout has no trustworthy final node count, so no
+node penalty is invented. If no pairs finish, node metrics are `n/a` while the
+penalized timing summary remains valid. Both-timeout instances stay in the timing
+summary at the same penalty for both solvers and receive no win.
+
+The outcome table shows solved instances, timeouts, errors, decisive wins and
+near-best wins. A successful solve beats a timeout. With both solved, runtimes
+within 10% of the faster time are ties; otherwise the faster solver wins.
+Near-best wins count every solver within 10% of the fastest successful solve,
+so both solvers can receive one on a tied instance. `--win-tolerance` changes the
+relative tolerance. Every round persists its per-instance outcome in the JSON
+summary. Counts are per-round medians with min/max ranges, never pooled as
+additional independent puzzles.
+
+This follows SCIP's separation of solved/timeout/error counts and its
+[within-10%-of-fastest wins convention](https://www.scipopt.org/scip/doc/html/TEST.php).
+Unlike SCIP's optimization-specific handling of unfinished primal bounds, our
+both-timeout pairs are unranked because the puzzle protocol supplies no comparable
+progress bound. Gurobi publishes
+[penalized geometric runtime means (PAR-10)](https://www.gurobi.com/misc/lp/all/unmatched-performance);
+our PAR-4 multiplier is an explicit policy choice, not a universal benchmark
+standard. Balanced repeated comparisons retain timing variability, consistent
+with [Gurobi's comparison guidance](https://support.gurobi.com/hc/en-us/articles/26992650628369-How-can-I-make-accurate-comparisons).
+
+The current C stdin protocol reports nodes but no solution count; its records
+therefore contain `solutions: null`. Use subprocess mode or
+`verify_consistency.py` to check counts.
 
 Fetch winners with the existing `fetch_kaggle_runs.py` commands. Adjacent JSON
 metadata is downloaded automatically, and multiple winners in a version receive

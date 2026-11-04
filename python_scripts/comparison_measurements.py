@@ -40,7 +40,7 @@ def stop_process(proc):
 
 
 def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
-                  warmup=1, timeout=15.0):
+                  warmup=1, timeout=10.0):
     """Return one record per input, including timeouts and malformed output."""
     if workers < 1 or warmup < 0 or timeout <= 0:
         raise ValueError('workers/timeout must be positive; warmup nonnegative')

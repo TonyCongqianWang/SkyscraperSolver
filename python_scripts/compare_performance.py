@@ -3,12 +3,14 @@ import os
 import sys
 import argparse
 import json
-import statistics
 from contextlib import ExitStack
 
 from comparison_measurements import measure_batch
 from param_metadata import PARAM_METADATA
-from spsa_metrics import get_sgm_shifts, shifted_geo_mean
+from spsa_metrics import get_sgm_shifts
+from comparison_statistics import (DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_PENALTY,
+                                   DEFAULT_WIN_TOLERANCE, charged_seconds, summarize,
+                                   validate_policy, round_statistics, print_summary)
 from spsa_run_metadata import clue_identity
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -44,19 +46,12 @@ def default_environment():
     return env
 
 
-def summarize(rows, shifts):
-    time_shift, node_shift = shifts
-    return {
-        'total_nodes': sum(row['nodes'] for row in rows),
-        'total_time': sum(row['seconds'] for row in rows),
-        'sgm_nodes': shifted_geo_mean([row['nodes'] for row in rows], node_shift),
-        'sgm_time': shifted_geo_mean([row['seconds'] for row in rows], time_shift),
-    }
-
-
 def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
                  log_print=print, use_stdin=True, max_workers=4, repeats=2,
-                 warmup=1, timeout=15.0, size=None, records_file=None):
+                 warmup=1, timeout=DEFAULT_TIMEOUT, size=None, records_file=None,
+                 timeout_penalty=DEFAULT_TIMEOUT_PENALTY,
+                 win_tolerance=DEFAULT_WIN_TOLERANCE):
+    validate_policy(timeout, timeout_penalty, win_tolerance)
     if repeats < 1 or repeats % 2:
         raise ValueError('repeats must be a positive even number for AB/BA balance')
     if size is None:
@@ -70,6 +65,8 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
     log_print(f"\nEvaluating {label} ({len(clues)} instances, options: '{opt}')...")
     log_print(f"SGM shifts: time={shifts[0]:g}s, nodes={shifts[1]:g}; "
               f"workers={max_workers}, repeats={repeats}, warmup={warmup}")
+    log_print(f"Timeout={timeout:g}s; timeouts charged {timeout_penalty:g} × limit "
+              f"({timeout * timeout_penalty:g}s); win tolerance={win_tolerance:.0%}")
     base_env = default_environment()
     candidates = {
         'Baseline': (baseline_bin, base_env),
@@ -90,55 +87,35 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
                     records_file.write(json.dumps(dict(
                         row, dataset=label, size=size, options=opt,
                         repeat=repeat + 1, arm=arm, order=position + 1,
-                        binary=os.path.basename(binary))) + '\n')
+                        binary=os.path.basename(binary),
+                        scored_seconds=charged_seconds(row, timeout, timeout_penalty),
+                        timeout=timeout, timeout_penalty=timeout_penalty)) + '\n')
                 records_file.flush()
-        base, optimized = measured['Baseline'], measured['Optimized']
-        paired = [(b, o) for b, o in zip(base, optimized)
-                  if b['status'] == o['status'] == 'ok']
-        mismatches = sum(b['solutions'] != o['solutions'] for b, o in paired
-                         if b['solutions'] is not None and o['solutions'] is not None)
-        known_counts = sum(b['solutions'] is not None and o['solutions'] is not None
-                           for b, o in paired)
-        failures = {arm: {status: sum(row['status'] == status for row in rows)
-                          for status in ('timeout', 'error')}
-                    for arm, rows in measured.items()}
-        round_valid = len(paired) == len(clues) and not mismatches
+        stats = round_statistics(measured, shifts, timeout, timeout_penalty, win_tolerance)
+        aligned = all(len(rows) == len(clues) and
+                      all(row['index'] == i and row['clue'] == clue
+                          for i, (row, clue) in enumerate(zip(rows, clues)))
+                      for rows in measured.values())
+        round_valid = aligned and not stats['solution_mismatches'] and all(
+            row['status'] in ('ok', 'timeout') for rows in measured.values() for row in rows)
         valid = valid and round_valid
-        log_print(f"Repeat {repeat + 1} ({'/'.join(order)}): paired "
-                  f"{len(paired)}/{len(clues)}, failures={failures}, "
-                  f"solution mismatches={mismatches} (counts available: {known_counts})")
-        results = {arm: summarize([pair[i] for pair in paired], shifts)
-                   for i, arm in enumerate(('Baseline', 'Optimized'))}
-        rounds.append({'repeat': repeat + 1, 'order': order, 'valid': round_valid,
-                       'paired_count': len(paired), 'failures': failures,
-                       'solution_count_pairs': known_counts,
-                       'solution_mismatches': mismatches, 'results': results})
+        stats['solved'] = {arm: sum(row['status'] == 'ok' for row in rows)
+                           for arm, rows in measured.items()}
+        log_print(f"Repeat {repeat + 1} ({'/'.join(order)}): paired solved "
+                  f"{stats['paired_count']}/{len(clues)}, failures={stats['failures']}, "
+                  f"solution mismatches={stats['solution_mismatches']} "
+                  f"(counts available: {stats['solution_count_pairs']})")
+        rounds.append(dict(stats, repeat=repeat + 1, order=order, valid=round_valid))
     if not valid:
-        log_print('INVALID comparison: failed instances or mismatched solution counts. '
+        log_print('INVALID comparison: solver errors, missing/misaligned results or mismatched solution counts. '
                   'Performance summary withheld; inspect per-instance records.')
         return {'label': label, 'valid': False, 'rounds': rounds}
-    # Summarize per-round metrics rather than pooling multiple runs as new puzzles.
-    log_print('| Metric | Baseline (median) | Optimized (median) | Median paired diff | Diff range |')
-    log_print('|---|---|---|---|---|')
-    summary = {}
-    for key, title in [('total_nodes', 'Total Nodes'), ('sgm_nodes', 'SGM Nodes'),
-                       ('total_time', 'Total Time'), ('sgm_time', 'SGM Time')]:
-        b = [r['results']['Baseline'][key] for r in rounds]
-        o = [r['results']['Optimized'][key] for r in rounds]
-        # A zero baseline has no meaningful relative change.
-        diffs = [(y - x) / x * 100 if x else None for x, y in zip(b, o)]
-        available = [value for value in diffs if value is not None]
-        summary[key] = {'baseline': statistics.median(b),
-                        'optimized': statistics.median(o),
-                        'diff_pct': statistics.median(available) if available else None,
-                        'diff_range_pct': [min(available), max(available)] if available else None}
-        diff_text = f"{statistics.median(available):+.3f}%" if available else 'n/a'
-        range_text = f"{min(available):+.3f}% to {max(available):+.3f}%" if available else 'n/a'
-        log_print(f"| **{title}** | {statistics.median(b):,.6g} | "
-                  f"{statistics.median(o):,.6g} | {diff_text} | {range_text} |")
+    summary, counts = print_summary(rounds, log_print, timeout_penalty, win_tolerance)
     return {'label': label, 'valid': True, 'size': size, 'options': opt,
             'dataset': clue_identity(clues), 'sgm_shifts': shifts,
             'workers': max_workers, 'warmup': warmup, 'summary': summary,
+            'timeout': timeout, 'timeout_penalty': timeout_penalty,
+            'win_tolerance': win_tolerance, 'counts': counts,
             'rounds': rounds}
 
 
@@ -160,9 +137,12 @@ def load_tuned_env(winners_path):
 def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
                    title="SOLVER PERFORMANCE COMPARISON", log_path=None,
                    use_stdin=True, max_workers=4, repeats=2, warmup=1,
-                   timeout=15.0, size=None, records_path=None):
+                   timeout=DEFAULT_TIMEOUT, size=None, records_path=None,
+                   timeout_penalty=DEFAULT_TIMEOUT_PENALTY,
+                   win_tolerance=DEFAULT_WIN_TOLERANCE):
     """Compare fixed datasets in balanced AB/BA rounds; retain every outcome."""
-    if max_workers < 1 or warmup < 0 or timeout <= 0:
+    validate_policy(timeout, timeout_penalty, win_tolerance)
+    if max_workers < 1 or warmup < 0:
         raise ValueError('workers/timeout must be positive; warmup nonnegative')
     if repeats < 1 or repeats % 2:
         raise ValueError('repeats must be positive and even')
@@ -193,7 +173,8 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
             if clues:
                 reports.append(evaluate_set(
                     clues, options, label, baseline, tunable, tuned_env, log_print,
-                    use_stdin, max_workers, repeats, warmup, timeout, size, records_file))
+                    use_stdin, max_workers, repeats, warmup, timeout, size, records_file,
+                    timeout_penalty, win_tolerance))
         with open(summary_path, 'w') as summary_file:
             json.dump(reports, summary_file, indent=2)
             summary_file.write('\n')
@@ -221,12 +202,19 @@ def main():
     parser.add_argument('--max-workers', type=int, default=4)
     parser.add_argument('--repeats', type=int, default=2, help='Even number of balanced AB/BA rounds')
     parser.add_argument('--warmup', type=int, default=1, help='Unmeasured instances per worker and round')
-    parser.add_argument('--timeout', type=float, default=15.0)
+    parser.add_argument('--timeout', type=float, default=DEFAULT_TIMEOUT, help='Per-instance limit in seconds (default: 10)')
+    parser.add_argument('--timeout-penalty', type=float, default=DEFAULT_TIMEOUT_PENALTY, help='Timeout runtime multiplier (default: 4, PAR-4)')
+    parser.add_argument('--win-tolerance', type=float, default=DEFAULT_WIN_TOLERANCE, help='Relative timing tie/near-best tolerance (default: 0.10)')
     parser.add_argument('--records', default=None, help='Per-instance JSONL output path')
     args = parser.parse_args()
     if args.max_workers < 1 or args.repeats < 2 or args.repeats % 2 or args.warmup < 0 or args.timeout <= 0:
         parser.error('workers/timeout must be positive, repeats positive and even, warmup nonnegative')
     
+    try:
+        validate_policy(args.timeout, args.timeout_penalty, args.win_tolerance)
+    except ValueError as error:
+        parser.error(str(error))
+
     # Auto-resolve winners file path if not provided but size is specified
     winners_file = args.winners
     if winners_file is None and args.size is not None:
@@ -281,7 +269,8 @@ def main():
         validation_tasks, args.baseline, args.tunable, tuned_env,
         log_path=args.log, use_stdin=not args.no_use_stdin,
         max_workers=args.max_workers, repeats=args.repeats, warmup=args.warmup,
-        timeout=args.timeout, size=args.size, records_path=args.records)
+        timeout=args.timeout, size=args.size, records_path=args.records,
+        timeout_penalty=args.timeout_penalty, win_tolerance=args.win_tolerance)
     if any(not report['valid'] for report in reports):
         sys.exit(1)
 
