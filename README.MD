@@ -45,3 +45,5 @@ pip install -r python_solver/requirements.txt
 ## Auxiliary tools and benchmarking
 
 [python_scripts/](python_scripts/) contains tools for puzzle generation, benchmarking, verification, and parameter tuning (including SPSA). [benchmark_sets/](benchmark_sets/) and [puzzle_bank/](puzzle_bank/) hold test and evaluation instances. These tools are not required to build or run the C solver.
+
+For the original development notes, see [Version History](HISTORY.md).
