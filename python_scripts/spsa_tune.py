@@ -506,16 +506,29 @@ def resolve_winners_filename(size):
     return os.path.join(ROOT_DIR, f"{base_path}_{idx}{ext}")
 
 
-def save_winners(filename, theta_vals, label, size):
+def save_winners(filename, theta_vals, label, size, active_names):
     phys = get_physical_params(theta_vals)
     with open(filename, "w") as f:
         mode = RUN_METADATA['tune_mode'] if RUN_METADATA else 'unknown'
         f.write(f"SPSA WINNING PARAMETERS FOR SIZE {size} ({label}; mode={mode})\n")
         f.write("==============================================\n")
         for name, val in phys.items():
+            if name not in active_names:
+                continue
             f.write(f"#define {name} {val}\n")
     if RUN_METADATA:
         save_run_metadata(filename, RUN_METADATA, label)
+
+
+def report_parameter_values(initial_values, final_values, active_names):
+    names = [name for name in initial_values if name in active_names]
+    width = max([len('Parameter')] + [len(name) for name in names])
+    log_print("\nTuned Parameter Values (physical units):")
+    log_print(f"{'Parameter':<{width}} | {'Start':>14} | {'End':>14} | {'Abs. Change':>14}")
+    log_print('-' * (width + 51))
+    for name in names:
+        start, end = initial_values[name], final_values[name]
+        log_print(f"{name:<{width}} | {start:>14.10g} | {end:>14.10g} | {abs(end - start):>14.10g}")
 
 
 def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_nodes_norm, stats):
@@ -557,29 +570,32 @@ def make_perturbation_directions(active_indices, dimensions, count):
 
 
 def report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations, directions=1,
-                                active_names=None):
+                                active_names=None, initial_values=None, final_values=None):
     log_print("\nParameter Sensitivity Analysis (Average Absolute Gradient):")
-    log_print("==========================================================")
-    log_print(f"{'Parameter Name':<30} | {'Time Loss Sens.':<16} | {'Node Loss Sens.':<16} | {'Total Sens.':<12}")
-    log_print("-" * 82)
-
+    names = [name for name, *_ in PARAM_METADATA if active_names is None or name in active_names]
+    width = max([len('Parameter')] + [len(name) for name in names])
+    log_print(f"{'Parameter':<{width}} | {'Time Loss Sens.':>16} | {'Node Loss Sens.':>16} | {'Total Sens.':>12} | {'Abs. Change':>14}")
+    log_print('-' * (width + 70))
     sens_data = []
-    for i, (name, _, _, _, _, _) in enumerate(PARAM_METADATA):
-        active = active_names is None or name in active_names
-        if directions == 1 or not active:
+    for i, (name, *_) in enumerate(PARAM_METADATA):
+        if active_names is not None and name not in active_names:
+            continue
+        if directions == 1:
             avg_gt = avg_gn = total_sens = None
         else:
             avg_gt = grad_time_sum[i] / iterations
             avg_gn = grad_nodes_sum[i] / iterations
             total_sens = avg_gt + avg_gn
-        sens_data.append((name, avg_gt, avg_gn, total_sens))
-
-    sens_data.sort(key=lambda x: x[3] if x[3] is not None else -1, reverse=True)
-    for name, avg_gt, avg_gn, total_sens in sens_data:
-        if total_sens is None:
-            log_print(f"{name:<30} | {'N/A':<16} | {'N/A':<16} | {'N/A':<12}")
-        else:
-            log_print(f"{name:<30} | {avg_gt:<16.6f} | {avg_gn:<16.6f} | {total_sens:<12.6f}")
+        change = (abs(final_values[name] - initial_values[name])
+                  if initial_values is not None and final_values is not None else None)
+        sens_data.append((name, avg_gt, avg_gn, total_sens, change))
+    sens_data.sort(key=lambda row: row[3] if row[3] is not None else -1, reverse=True)
+    for name, avg_gt, avg_gn, total_sens, change in sens_data:
+        sensitivities = ['N/A' if value is None else f'{value:.6f}'
+                         for value in (avg_gt, avg_gn, total_sens)]
+        change_text = 'N/A' if change is None else f'{change:.10g}'
+        log_print(f"{name:<{width}} | {sensitivities[0]:>16} | {sensitivities[1]:>16} | "
+                  f"{sensitivities[2]:>12} | {change_text:>14}")
 
 
 # --- Comparison Runner ---
@@ -679,6 +695,11 @@ def run_spsa(args, datasets, max_workers):
     log_print(f"SPSA Batch Size configured: {batch_size}; directions: {directions}")
 
     theta = project_constraints(get_default_theta())
+    initial_values = get_physical_params(theta)
+    requested_names = get_active_param_names(args.tune_mode, args.size)
+    active_indices = [i for i, (name, pmin, pmax, *_) in enumerate(PARAM_METADATA)
+                      if pmax > pmin and name in requested_names]
+    active_names = {PARAM_METADATA[i][0] for i in active_indices}
     swa_theta = [0.0] * len(theta)
     swa_count = 0
 
@@ -691,8 +712,8 @@ def run_spsa(args, datasets, max_workers):
     log_print(f"SPSA winners file resolved to: {winners_filename}")
     global RUN_METADATA
     RUN_METADATA = build_run_metadata(
-        args, datasets, PARAM_METADATA, get_active_param_names(args.tune_mode, args.size),
-        max_workers, get_physical_params(theta))
+        args, datasets, PARAM_METADATA, active_names,
+        max_workers, initial_values)
     RUN_METADATA['sgm_shifts'] = {
         mode: dict(zip(('time', 'nodes'), get_sgm_shifts(args.size, enumeration)))
         for mode, enumeration in [('single', False), ('enumeration', True)]}
@@ -731,9 +752,6 @@ def run_spsa(args, datasets, max_workers):
             size=args.size, datasets=datasets, batch_size=batch_size,
             max_workers=max_workers, use_stdin=args.stdin,
             enumeration_only=args.enumeration_only))
-        active_names = get_active_param_names(args.tune_mode, args.size)
-        active_indices = [i for i, (name, pmin, pmax, _, _, _) in enumerate(PARAM_METADATA)
-                          if pmax > pmin and name in active_names]
         active_index_set = set(active_indices)
         perturbations = make_perturbation_directions(active_indices, len(theta), directions)
 
@@ -836,7 +854,7 @@ def run_spsa(args, datasets, max_workers):
             else:
                 current_theta = list(theta)
                 label = f"Iter {k}"
-            save_winners(winners_filename, current_theta, label, args.size)
+            save_winners(winners_filename, current_theta, label, args.size, active_names)
             log_print(f"Iter {k:3d} | Intermediate SPSA winners written to {winners_filename}")
 
     log_print("\nSPSA tuning completed!")
@@ -847,15 +865,12 @@ def run_spsa(args, datasets, max_workers):
     else:
         theta_final = list(theta)
 
-    phys_best = get_physical_params(theta_final)
-    log_print("\nOptimal Parameter Values:")
-    log_print("=======================================")
-    for name, val in phys_best.items():
-        log_print(f"{name} = {val}")
-
-    report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations, directions, active_names)
-
-    save_winners(winners_filename, theta_final, "Final SWA" if swa_count > 0 else "Final", args.size)
+    final_values = get_physical_params(theta_final)
+    report_parameter_values(initial_values, final_values, active_names)
+    report_sensitivity_analysis(grad_time_sum, grad_nodes_sum, iterations, directions,
+                                active_names, initial_values, final_values)
+    save_winners(winners_filename, theta_final, "Final SWA" if swa_count > 0 else "Final",
+                 args.size, active_names)
     log_print(f"\nOptimal generalizing definitions written to {winners_filename}")
 
     return theta_final

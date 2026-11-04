@@ -22,6 +22,14 @@ the machine and system load. Each winner has an adjacent JSON sidecar containing
 mode, seed, defaults, projected initial values, active parameters, optimizer
 settings, revision, source/binary hashes, and hashes/counts of the loaded datasets.
 Metadata starts as incomplete and is marked complete with the final winner.
+Winner text files (including intermediate checkpoints) contain only parameters
+actually tuned for the selected mode and size; frozen parameters are excluded.
+Active parameters whose final value happens to equal their start value are still
+included. The JSON sidecar retains full defaults and initial values for provenance.
+The final console/log table shows each tuned parameter's projected starting value,
+final SWA value and absolute change in physical units (rounded for integer settings).
+The sensitivity table also reports that absolute change and includes only tuned
+parameters.
 The tuner defaults to four perturbation pairs per iteration; `--directions N`
 controls this, and `--directions 1` retains the original single-pair sampling
 and optimizer behavior. Each direction uses a portion of the configured batch,
@@ -33,8 +41,8 @@ must not exceed the batch size. Full-batch monitoring remains unchanged.
 
 For two or more directions, sensitivity reports the average across iterations
 of the absolute *combined* raw gradient (after directional averaging, before
-clipping and momentum). One direction reports N/A, as do inactive parameters;
-a single SPSA pair cannot distinguish per-parameter absolute sensitivity.
+clipping and momentum). One direction reports N/A for sensitivity, while still showing absolute parameter
+changes; a single SPSA pair cannot distinguish per-parameter absolute sensitivity.
 
 Post-tuning comparisons honor `--max-workers` and `--no-stdin`. By default they
 run two rounds, baseline/optimized followed by optimized/baseline, with one
