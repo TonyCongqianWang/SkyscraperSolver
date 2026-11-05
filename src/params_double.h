@@ -15,7 +15,6 @@
 
 extern double	g_sel_period_coef_sqrt;
 extern double	g_sel_period_coef_inv;
-extern double	g_root_period_tier_complement_mult;
 
 extern double	g_root_lookahead_continue_slope;
 extern double	g_root_period_coef_scale;

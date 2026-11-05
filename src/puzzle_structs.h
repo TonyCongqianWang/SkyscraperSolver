@@ -126,7 +126,7 @@ typedef struct s_node_state
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
 	int						remaining_entropy;
-	int						last_entropy[4];
+	int						last_entropy[3];
 	t_sol_count				max_solutions;
 	t_grid_state			grid;
 	t_constrs_state			constrs;

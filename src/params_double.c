@@ -14,7 +14,6 @@
 
 double	g_sel_period_coef_sqrt = 3421.2006;
 double	g_sel_period_coef_inv = 23249.973;
-double	g_root_period_tier_complement_mult = 7.2992648;
 double	g_root_lookahead_continue_slope = 0.35277743;
 double	g_root_period_coef_scale = 52.000729;
 double	g_root_period_coef_unset = 6.1950063;

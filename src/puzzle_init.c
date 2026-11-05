@@ -36,7 +36,6 @@ static void	init_puzzle_entropy(t_puzzle *puzzle, int size)
 	node->last_entropy[0] = node->remaining_entropy;
 	node->last_entropy[1] = node->remaining_entropy;
 	node->last_entropy[2] = node->remaining_entropy;
-	node->last_entropy[3] = node->remaining_entropy;
 }
 
 static void	init_constraints_all(t_puzzle *puzzle, int size)

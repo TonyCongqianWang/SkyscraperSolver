@@ -42,7 +42,6 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->last_entropy[0] = 0;
 	node->last_entropy[1] = 0;
 	node->last_entropy[2] = 0;
-	node->last_entropy[3] = 0;
 	node->max_solutions = node->puzzle->max_solutions;
 }
 
