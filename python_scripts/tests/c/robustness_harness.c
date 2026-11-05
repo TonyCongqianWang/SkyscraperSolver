@@ -10,6 +10,15 @@
 
 static t_puzzle g_puzzle;
 
+static void test_exact_width_types(void)
+{
+    assert(sizeof(t_u16) * CHAR_BIT == 16);
+    assert(sizeof(t_u64) * CHAR_BIT == 64);
+    assert(sizeof(t_sol_count) * CHAR_BIT == 64);
+    assert(sizeof(t_node_count) * CHAR_BIT == 64);
+    assert(sizeof(t_dp_bound) * CHAR_BIT == 8);
+}
+
 static void test_signed_dp_sentinels(void)
 {
     t_dp_tables dp;
@@ -43,7 +52,7 @@ static void test_one_cell_scores(void)
 
 static void test_storage_overflow(void)
 {
-    assert(!init_solution_storage(&g_puzzle, ULLONG_MAX));
+    assert(!init_solution_storage(&g_puzzle, MAX_SOL_COUNT));
     assert(g_puzzle.solutions == NULL);
     assert(init_solution_storage(&g_puzzle, 0));
     assert(g_puzzle.solutions == &g_puzzle.sol_node_storage);
@@ -51,6 +60,7 @@ static void test_storage_overflow(void)
 
 int main(void)
 {
+    test_exact_width_types();
     test_signed_dp_sentinels();
     test_one_cell_scores();
     test_storage_overflow();
