@@ -41,7 +41,7 @@ static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 		if (is_neg)
 		{
 			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
-				g_check_constr);
+					g_check_constr);
 			if (result == 0)
 				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
 					g_check_constr);
