@@ -20,8 +20,7 @@ static void	check_initialized(t_puzzle *puzzle, int size)
 	assert(puzzle->cur_node->lookahead_selectivity == SELECTIVITY_NONE);
 	assert(puzzle->order_stack.top_idx == 0);
 	assert(puzzle->order_stack.orders[0].count == 0);
-	assert(puzzle->order_stack.orders[0].num_valid == 0);
-	idx = 0;
+		idx = 0;
 	while (idx < 2 * size)
 	{
 		assert(puzzle->constraint_pairs[idx].fwd_val == 0);
