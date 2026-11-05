@@ -81,9 +81,7 @@ static t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transitio
 			cur_node->remaining_entropy, is_neg);
 	*cur_node = old_state;
 	sync_cache_stacks(puzzle);
-	if (local_sols.solutions_found > 0)
-		return (DIVE_PASS);
-	return (DIVE_FAIL);
+	return (DIVE_FAIL + (local_sols.solutions_found > 0));
 }
 
 t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
