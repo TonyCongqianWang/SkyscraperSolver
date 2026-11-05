@@ -16,7 +16,6 @@
 void	init_prune_cfg(t_prune_routine_cfg *cfg,
 			t_selectivity_level selectivity)
 {
-
 	cfg->run_check_constr = 0;
 	cfg->check_constr_selectivity = selectivity;
 	cfg->check_constr_min_entropy = 0.35;
