@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "lookahead_dive.h"
+#include "lookahead_dive_internal.h"
 #include "grid_manipulation.h"
 #include "cell_bounds.h"
 #include "tree_search.h"
@@ -73,7 +73,7 @@ static int	begin_dive(t_puzzle *puzzle, int depth)
 	return (is_neg);
 }
 
-static t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle,
+t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle,
 		t_node_transition next, int depth, t_check_mode mode)
 {
 	t_sol_info			local_sols;
@@ -92,18 +92,4 @@ static t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle,
 		return (DIVE_PASS);
 	else
 		return (DIVE_FAIL);
-}
-
-t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
-		int depth, t_check_mode mode)
-{
-	return (do_l_ahead_dive_internal(puzzle, next, depth, mode));
-}
-
-t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
-		int depth, t_check_mode mode)
-{
-	if (puzzle->cur_node->is_in_neg_lookahead)
-		return (DIVE_SKIP);
-	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
 }
