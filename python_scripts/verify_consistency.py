@@ -51,8 +51,10 @@ def verification_signature(node_counts):
     """
     if not node_counts:
         raise ValueError("Cannot sign a verification run with no instances")
-    encoded = "".join(f"{count}\n" for count in node_counts).encode("ascii")
-    digest = hashlib.sha256(encoded).hexdigest()[:16]
+    hasher = hashlib.sha256()
+    for count in node_counts:
+        hasher.update(f"{count}\n".encode("ascii"))
+    digest = hasher.hexdigest()[:16]
     return f"{sum(node_counts)}:{min(node_counts)}:{max(node_counts)}:{digest}"
 
 
