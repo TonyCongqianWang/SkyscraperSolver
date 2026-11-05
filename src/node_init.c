@@ -89,4 +89,3 @@ static void	init_node_grid(t_node_state *node, int size)
 		idx++;
 	}
 }
-
