@@ -12,6 +12,7 @@
 
 #include "solution_storage.h"
 #include <stdlib.h>
+#include <stdint.h>
 
 int	found_enough_solutions(t_node_state *node)
 {
@@ -19,16 +20,16 @@ int	found_enough_solutions(t_node_state *node)
 		&& node->solutions_found >= node->max_solutions);
 }
 
-void	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
+int	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
 {
 	puzzle->solutions_found = 0;
 	puzzle->max_solutions = max_sols;
-	if (max_sols == 1)
+	puzzle->solutions = NULL;
+	if (max_sols <= 1)
 		puzzle->solutions = &puzzle->sol_node_storage;
-	else if (max_sols > 1)
-		puzzle->solutions = malloc(sizeof(t_node_state) * max_sols);
-	else
-		puzzle->solutions = &puzzle->sol_node_storage;
+	else if (max_sols <= SIZE_MAX / sizeof(t_node_state))
+		puzzle->solutions = malloc(sizeof(t_node_state) * (size_t)max_sols);
+	return (puzzle->solutions != NULL);
 }
 
 void	free_solution_storage(t_puzzle *puzzle)
