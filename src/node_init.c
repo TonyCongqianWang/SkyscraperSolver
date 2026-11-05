@@ -12,6 +12,7 @@
 
 #include "node_init.h"
 #include "cell_bounds.h"
+#include <stddef.h>
 
 static void	init_node_grid(t_node_state *node, int size);
 static void	init_node_order_ptrs(t_node_state *node);
@@ -33,6 +34,11 @@ void	init_root_node(t_node_state *root_node, int size)
 	root_node->rows_invalid_since_prune = 0xffff;
 	root_node->cols_invalid_since_prune = 0xffff;
 	root_node->is_in_lookahead_select = 0;
+	root_node->is_in_neg_lookahead = 0;
+	root_node->lookahead_selectivity = SELECTIVITY_NONE;
+	root_node->lookahead_ctx = NULL;
+	root_node->dirty_constrs.count = 0;
+	root_node->dirty_constrs.in_stack_bmp = 0;
 	init_node_order_ptrs(root_node);
 	root_node->remaining_entropy = 0;
 	root_node->last_entropy[0] = 0;
