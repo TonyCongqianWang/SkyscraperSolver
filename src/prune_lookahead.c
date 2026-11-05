@@ -33,7 +33,7 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 				const t_lookahead_config *config, int is_neg)
 {
-	int	result;
+	t_dive_result	result;
 
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
@@ -42,14 +42,18 @@ static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 		{
 			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
 					g_check_constr);
-			if (result == 0)
+			if (result == DIVE_FAIL)
 				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
 					g_check_constr);
 		}
-		else if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
-				config->check_mode))
-			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
-				g_check_constr);
+		else
+		{
+			result = do_l_ahead_dive(puzzle, *tr, config->max_depth,
+					config->check_mode);
+			if (result == DIVE_FAIL)
+				set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
+					g_check_constr);
+		}
 	}
 }
 
