@@ -12,14 +12,17 @@
 
 #ifndef TYPES_H
 # define TYPES_H
+# include <stdint.h>
 
 /* Bitmasks and counters. */
-typedef unsigned short		t_u16;
-typedef unsigned long long	t_u64;
-typedef t_u64				t_sol_count;
-typedef t_u64				t_node_count;
+typedef uint16_t			t_u16;
+typedef uint64_t			t_u64;
+typedef uint64_t			t_sol_count;
+typedef uint64_t			t_node_count;
+
+# define MAX_SOL_COUNT ((t_sol_count)-1)
 
 /* Signed DP bound: -1 denotes an unreachable state. */
-typedef signed char			t_dp_bound;
+typedef int8_t				t_dp_bound;
 
 #endif
