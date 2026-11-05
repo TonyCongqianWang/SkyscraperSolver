@@ -51,7 +51,7 @@ static void	init_constraints_all(t_puzzle *puzzle, int size)
 	}
 }
 
-void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
+int	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 {
 	puzzle->size = size;
 	puzzle->squared_size = size * size;
@@ -61,7 +61,8 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	init_cell_distance_order(puzzle, size);
 	puzzle->constr_max_entropy = size * get_log2_scaled(size)
 		* get_weight_constr(size) / ENTROPY_SCALE;
-	init_solution_storage(puzzle, max_sols);
+	if (!init_solution_storage(puzzle, max_sols))
+		return (0);
 	puzzle->nodes_visited = 0;
 	puzzle->main_nodes_visited = 0;
 	puzzle->prune_runs_count = 0;
@@ -74,6 +75,7 @@ void	init_puzzle(t_puzzle *puzzle, int size, t_sol_count max_sols)
 	init_constraints_all(puzzle, size);
 	init_puzzle_entropy(puzzle, size);
 	init_line_order_stack(puzzle);
+	return (1);
 }
 
 static void	init_constraint(t_puzzle *puzzle, int idx, int size)

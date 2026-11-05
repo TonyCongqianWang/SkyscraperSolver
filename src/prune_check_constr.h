@@ -17,10 +17,10 @@
 
 typedef struct s_dp_tables
 {
-	char	pref_max[MAX_SIZE + 1][MAX_SIZE + 1];
-	char	pref_min[MAX_SIZE + 1][MAX_SIZE + 1];
-	char	suff_max[MAX_SIZE + 1][MAX_SIZE + 1];
-	char	suff_min[MAX_SIZE + 1][MAX_SIZE + 1];
+	t_dp_bound	pref_max[MAX_SIZE + 1][MAX_SIZE + 1];
+	t_dp_bound	pref_min[MAX_SIZE + 1][MAX_SIZE + 1];
+	t_dp_bound	suff_max[MAX_SIZE + 1][MAX_SIZE + 1];
+	t_dp_bound	suff_min[MAX_SIZE + 1][MAX_SIZE + 1];
 }	t_dp_tables;
 
 typedef struct s_prune_args

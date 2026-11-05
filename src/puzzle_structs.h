@@ -13,6 +13,7 @@
 #ifndef PUZZLE_STRUCTS_H
 # define PUZZLE_STRUCTS_H
 # include "strategy_config.h"
+# include "types.h"
 
 # define MAX_N_CONSTR_PAIRS 18
 # define MAX_CELL_COUNT 81
@@ -20,10 +21,6 @@
 # define C_PAIRS_PER_CELL 2
 # define MAX_DIRTY_CONSTRS 36
 
-typedef unsigned short		t_u16;
-typedef unsigned long long	t_u64;
-typedef t_u64				t_sol_count;
-typedef t_u64				t_node_count;
 typedef struct s_puzzle		t_puzzle;
 
 typedef struct s_node_transition

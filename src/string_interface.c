@@ -17,21 +17,25 @@
 static int		parse_puzzle_size_from_constr_str(char *str);
 static int		try_add_constr_values(t_puzzle *puzzle, char *str);
 
-static t_sol_count	parse_max_solution(char *str)
+static int	parse_max_solution(char *str, t_sol_count *result)
 {
-	t_sol_count	result;
-	char		digit;
+	int	digit;
 
+	*result = 1;
 	if (!str)
 		return (1);
-	result = 0;
+	if (!*str)
+		return (0);
+	*result = 0;
 	while (*str >= '0' && *str <= '9')
 	{
 		digit = *str - '0';
-		result = (10 * result) + digit;
+		if (*result > (MAX_SOL_COUNT - digit) / 10)
+			return (0);
+		*result = 10 * *result + digit;
 		str++;
 	}
-	return (result);
+	return (*str == '\0');
 }
 
 int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol)
@@ -39,12 +43,12 @@ int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol)
 	int			size;
 	t_sol_count	max_solutions;
 
-	max_solutions = parse_max_solution(max_sol);
 	puzzle->solutions = (0);
-	size = parse_puzzle_size_from_constr_str(str);
-	if (!size)
+	if (!parse_max_solution(max_sol, &max_solutions))
 		return (0);
-	init_puzzle(puzzle, size, max_solutions);
+	size = parse_puzzle_size_from_constr_str(str);
+	if (!size || !init_puzzle(puzzle, size, max_solutions))
+		return (0);
 	return (try_add_constr_values(puzzle, str));
 }
 
