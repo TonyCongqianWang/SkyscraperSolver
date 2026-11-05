@@ -65,6 +65,7 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
+	int					is_neg;
 
 	is_neg = (depth < 0);
 	if (is_neg)
