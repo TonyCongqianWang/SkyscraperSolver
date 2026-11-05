@@ -21,6 +21,8 @@
 # define C_PAIRS_PER_CELL 2
 # define MAX_DIRTY_CONSTRS 36
 
+typedef struct s_puzzle		t_puzzle;
+
 typedef struct s_node_transition
 {
 	int					cell_idx;
