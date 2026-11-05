@@ -11,16 +11,9 @@
 /* ************************************************************************** */
 
 #include "prune_lookahead.h"
-#include "node_selection.h"
+#include "strategy_routing.h"
 #include "node_selection_cache.h"
 #include "selectivity.h"
-
-typedef struct s_saved_lookahead
-{
-	t_lookahead_ctx		*ctx;
-	t_selectivity_level	selectivity;
-	int					selecting;
-}	t_saved_lookahead;
 
 static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 				int size)
@@ -38,21 +31,6 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	}
 }
 
-static void	save_lookahead_state(t_node_state *node, t_saved_lookahead *save)
-{
-	save->ctx = node->lookahead_ctx;
-	save->selectivity = node->lookahead_selectivity;
-	save->selecting = node->is_in_lookahead_select;
-}
-
-static void	restore_lookahead_state(t_node_state *node,
-				const t_saved_lookahead *save)
-{
-	node->lookahead_ctx = save->ctx;
-	node->lookahead_selectivity = save->selectivity;
-	node->is_in_lookahead_select = save->selecting;
-}
-
 static void	mark_negative_pass_cache(t_node_state *node,
 				const t_lookahead_config *config)
 {
@@ -63,25 +41,38 @@ static void	mark_negative_pass_cache(t_node_state *node,
 	node->order_cache->needs_rebuild = 1;
 }
 
+static void	prepare_lookahead_cache(t_puzzle *puzzle, t_node_state *node,
+				const t_lookahead_config *config)
+{
+	t_node_select_config	ns_cfg;
+
+	select_node_select_config(puzzle, &ns_cfg);
+	ns_cfg.selectivity = config->selectivity;
+	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
+}
+
 void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 			const t_lookahead_config *config)
 {
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
-	t_node_select_config	ns_cfg;
-	t_saved_lookahead		saved;
+	t_lookahead_ctx			*prev_ctx;
+	t_selectivity_level	prev_selectivity;
+	int						prev_selecting;
 
 	if (should_exit_selectivity(node, config->selectivity))
 		return ;
-	save_lookahead_state(node, &saved);
+	prev_ctx = node->lookahead_ctx;
+	prev_selectivity = node->lookahead_selectivity;
+	prev_selecting = node->is_in_lookahead_select;
 	node->is_in_lookahead_select = 1;
 	node->lookahead_selectivity = config->selectivity;
-	select_node_select_config(puzzle, &ns_cfg);
-	ns_cfg.selectivity = config->selectivity;
-	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
+	prepare_lookahead_cache(puzzle, node, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
 	run_lookahead_transitions(puzzle, &tr, config);
-	restore_lookahead_state(node, &saved);
+	node->lookahead_ctx = prev_ctx;
+	node->is_in_lookahead_select = prev_selecting;
+	node->lookahead_selectivity = prev_selectivity;
 	mark_negative_pass_cache(node, config);
 }
