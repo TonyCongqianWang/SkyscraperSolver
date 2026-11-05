@@ -22,6 +22,8 @@ void	init_order_stacks(t_puzzle *puzzle)
 	while (stack_idx < MAX_STACK_DEPTH)
 	{
 		order = &puzzle->order_stack.orders[stack_idx];
+		order->count = 0;
+		order->num_valid = 0;
 		order->last_build_entropy = -1;
 		order->lookahead_build_entropy = -1;
 		order->needs_rebuild = 0;
