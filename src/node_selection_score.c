@@ -32,6 +32,12 @@ static void	get_normalized_entropies(t_node_state *node,
 	double	max_e;
 
 	max_e = (double)node->puzzle->max_entropy;
+	if (max_e <= 0.0)
+	{
+		*e_pos = 0.0;
+		*e_neg = 0.0;
+		return ;
+	}
 	*e_pos = (double)node->remaining_entropy / max_e;
 	if (meta->entropy_pos >= 0)
 		*e_pos = (double)meta->entropy_pos / max_e;
