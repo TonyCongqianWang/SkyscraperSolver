@@ -91,7 +91,6 @@ DOUBLE_BASE_VARS = [
 DOUBLE_VARS = [
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_root_period_tier_complement_mult", "ROOT_PERIOD_TIER_COMPLEMENT_MULTIPLIER", "double"),
     ("g_root_lookahead_continue_slope", "ROOT_LOOKAHEAD_CONTINUE_SLOPE", "double"),
     ("g_root_period_coef_scale", "ROOT_PERIOD_COEF_SCALE", "double"),
     ("g_root_period_coef_unset", "ROOT_PERIOD_COEF_UNSET", "double"),

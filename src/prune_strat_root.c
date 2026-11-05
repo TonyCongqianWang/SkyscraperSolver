@@ -53,11 +53,6 @@ static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy)
 	init_prune_cfg(&cfg, get_prune_tier_selectivity(tier));
 	populate_limits(&lim);
 	setup_cfg_thresholds(&cfg, &lim, remaining_entropy);
-	if (tier == 3)
-	{
-		cfg.run_gac = 0;
-		cfg.run_check_constr = 0;
-	}
 	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->num_unset, puzzle->size);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
@@ -80,26 +75,19 @@ int	prune_strat_root(t_puzzle *puzzle)
 {
 	t_node_state	*node;
 	double			period;
-	int				pruned;
 
 	node = puzzle->cur_node;
 	if (node->is_invalid || node->is_complete || node->num_unset == 0
 		|| node->remaining_entropy < g_root_min_entropy)
 		return (0);
 	period = calc_period(puzzle, node);
-	pruned = 0;
 	if (node->last_entropy[0] - node->remaining_entropy > period)
-		pruned = run_tier(puzzle, 0, node->remaining_entropy);
-	else if (node->last_entropy[1] - node->remaining_entropy
+		return (run_tier(puzzle, 0, node->remaining_entropy));
+	if (node->last_entropy[1] - node->remaining_entropy
 		> period * g_root_period_tier_medium_mult)
-		pruned = run_tier(puzzle, 1, node->remaining_entropy);
-	else if (node->last_entropy[2] - node->remaining_entropy
+		return (run_tier(puzzle, 1, node->remaining_entropy));
+	if (node->last_entropy[2] - node->remaining_entropy
 		> period * g_root_period_tier_heavy_mult)
-		pruned = run_tier(puzzle, 2, node->remaining_entropy);
-	if (pruned)
-		return (1);
-	if (node->last_entropy[3] - node->remaining_entropy
-		> period * g_root_period_tier_complement_mult)
-		return (run_tier(puzzle, 3, node->remaining_entropy));
+		return (run_tier(puzzle, 2, node->remaining_entropy));
 	return (0);
 }
