@@ -50,7 +50,13 @@ endif
 debug: CFLAGS += -fsanitize=address,undefined -g
 debug: re
 
-test: $(BINARY)
+$(OBJ_DIR)/test_root_initialization: tests/test_root_initialization.c $(filter-out $(OBJ_DIR)/main.o,$(OBJS))
+	$(CC) $(CFLAGS) -I$(SRC_DIR) $^ -o $@
+
+test-root: $(OBJ_DIR)/test_root_initialization
+	./$(OBJ_DIR)/test_root_initialization
+
+test: $(BINARY) test-root
 	python python_scripts/verify_consistency.py -c $(BINARY)
 
 # Skip including dependency files if we are cleaning/rebuilding
@@ -58,6 +64,6 @@ ifeq ($(filter clean fclean re debug,$(MAKECMDGOALS)),)
 -include $(DEPS)
 endif
 
-.PHONY: all clean fclean re debug test
+.PHONY: all clean fclean re debug test test-root
 
 
