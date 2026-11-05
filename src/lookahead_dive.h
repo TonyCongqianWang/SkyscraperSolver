@@ -14,9 +14,16 @@
 # define LOOKAHEAD_DIVE_H
 # include "grid_interface.h"
 
-int	do_l_ahead_dive(
-		t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode);
-int	do_l_ahead_dive_neg(
-		t_puzzle *puzzle, t_node_transition next, int depth, t_check_mode mode);
+typedef enum e_dive_result
+{
+	DIVE_SKIP = -1,
+	DIVE_FAIL = 0,
+	DIVE_PASS = 1
+}	t_dive_result;
+
+t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
+				int depth, t_check_mode mode);
+t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
+				int depth, t_check_mode mode);
 
 #endif
