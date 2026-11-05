@@ -20,7 +20,7 @@ typedef uint64_t			t_u64;
 typedef uint64_t			t_sol_count;
 typedef uint64_t			t_node_count;
 
-# define MAX_SOL_COUNT ((t_sol_count)-1)
+# define MAX_SOL_COUNT 18446744073709551615ULL
 
 /* Signed DP bound: -1 denotes an unreachable state. */
 typedef int8_t				t_dp_bound;
