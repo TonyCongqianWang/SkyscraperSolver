@@ -57,8 +57,8 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
 	t_lookahead_ctx			*prev_ctx;
-	t_selectivity_level	prev_selectivity;
-	int						prev_selecting;
+	t_selectivity_level		prev_selectivity;
+	int					prev_selecting;
 
 	if (should_exit_selectivity(node, config->selectivity))
 		return ;
