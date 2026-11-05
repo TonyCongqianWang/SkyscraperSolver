@@ -22,7 +22,5 @@ typedef t_u64				t_node_count;
 /* Signed DP bound: -1 denotes an unreachable state. */
 typedef signed char			t_dp_bound;
 
-/* Opaque puzzle reference. */
-typedef struct s_puzzle		t_puzzle;
 
 #endif
