@@ -20,7 +20,6 @@
 #include "node_selection_cache.h"
 #include "strategy_routing.h"
 #include "selectivity.h"
-#include <stddef.h>
 
 void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 {
@@ -34,23 +33,23 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 				const t_lookahead_config *config, int is_neg)
 {
+	int	result;
+
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
 	{
 		if (is_neg)
 		{
-			if (!do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
-					g_check_constr))
+			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
+					g_check_constr);
+			if (result == 0)
 				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
 					g_check_constr);
 		}
-		else
-		{
-			if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
+		else if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
 					config->check_mode))
-				set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
-					g_check_constr);
-		}
+			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
+				g_check_constr);
 	}
 }
 
@@ -59,7 +58,8 @@ static void	run_lookahead_transitions(t_puzzle *puzzle,
 {
 	if (config->lookahead_side != LOOKAHEAD_SIDE_NEG)
 		run_dive_transitions(puzzle, tr, config, 0);
-	if (config->lookahead_side != LOOKAHEAD_SIDE_POS)
+	if (config->lookahead_side != LOOKAHEAD_SIDE_POS
+		&& !puzzle->cur_node->is_in_neg_lookahead)
 		run_dive_transitions(puzzle, tr, config, 1);
 }
 
@@ -85,9 +85,15 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
 	t_node_select_config	ns_cfg;
+	t_lookahead_ctx		*prev_ctx;
+	t_selectivity_level	prev_selectivity;
+	int					prev_selecting;
 
 	if (should_exit_selectivity(node, config->selectivity))
 		return ;
+	prev_ctx = node->lookahead_ctx;
+	prev_selectivity = node->lookahead_selectivity;
+	prev_selecting = node->is_in_lookahead_select;
 	node->is_in_lookahead_select = 1;
 	node->lookahead_selectivity = config->selectivity;
 	select_node_select_config(puzzle, &ns_cfg);
@@ -96,10 +102,12 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
 	run_lookahead_transitions(puzzle, &tr, config);
-	node->lookahead_ctx = NULL;
-	node->is_in_lookahead_select = 0;
-	if (config->lookahead_side == LOOKAHEAD_SIDE_NEG
-		|| config->lookahead_side == LOOKAHEAD_SIDE_BOTH)
+	node->lookahead_ctx = prev_ctx;
+	node->is_in_lookahead_select = prev_selecting;
+	node->lookahead_selectivity = prev_selectivity;
+	if (!node->is_in_neg_lookahead
+		&& (config->lookahead_side == LOOKAHEAD_SIDE_NEG
+			|| config->lookahead_side == LOOKAHEAD_SIDE_BOTH))
 	{
 		node->order_cache->lookahead_build_entropy = node->remaining_entropy;
 		node->order_cache->needs_rebuild = 1;
