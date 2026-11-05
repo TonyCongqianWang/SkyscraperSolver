@@ -41,13 +41,13 @@ static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 		if (is_neg)
 		{
 			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
-					g_check_constr);
+				g_check_constr);
 			if (result == 0)
 				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
 					g_check_constr);
 		}
 		else if (!do_l_ahead_dive(puzzle, *tr, config->max_depth,
-					config->check_mode))
+				config->check_mode))
 			set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
 				g_check_constr);
 	}
@@ -62,4 +62,3 @@ void	run_lookahead_transitions(t_puzzle *puzzle,
 		&& !puzzle->cur_node->is_in_neg_lookahead)
 		run_dive_transitions(puzzle, tr, config, 1);
 }
-
