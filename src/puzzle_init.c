@@ -83,6 +83,8 @@ static void	init_constraint(t_puzzle *puzzle, int idx, int size)
 
 	sub_index = 0;
 	grid_index = 0;
+	puzzle->constraint_pairs[idx].fwd_val = 0;
+	puzzle->constraint_pairs[idx].bwd_val = 0;
 	while (sub_index < size)
 	{
 		if (idx < size)
