@@ -32,7 +32,7 @@ Run the solver with a space-separated list of clues:
 
 Grids up to 9×9 are supported. Clues are ordered top (left to right), bottom (left to right), left (top to bottom), and right (top to bottom). Use `0` for an unspecified clue. An optional second space-separated argument supplies pre-filled grid values, with `0` for empty cells.
 
-The optional `-s <n_solutions>` flag controls solution enumeration. By default, the solver stops after the first solution. A positive value searches for up to that many solutions; `-s 0` counts all solutions without printing individual grids.
+The optional `-s <n_solutions>` flag controls solution enumeration. By default, the solver stops after the first solution. A positive value searches for up to that many solutions. `-s 0` enumerates and counts **all** solutions, retaining the most recently found solution grid and displaying that one grid in the normal CLI. The argument must be a nonnegative decimal integer within the supported unsigned 64-bit range.
 
 ## Python cross-checking solver
 
