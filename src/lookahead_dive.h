@@ -22,8 +22,8 @@ typedef enum e_dive_result
 }	t_dive_result;
 
 t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
-				int depth, t_check_mode mode);
+					int depth, t_check_mode mode);
 t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
-				int depth, t_check_mode mode);
+					int depth, t_check_mode mode);
 
 #endif
