@@ -16,13 +16,13 @@
 
 static void	init_node_grid(t_node_state *node, int size);
 static void	init_root_search_state(t_node_state *node, int size);
-static void	init_root_pruning_state(t_node_state *node, int size);
+static void	init_root_pruning_state(t_node_state *node);
 static void	init_root_selection_state(t_node_state *node);
 
 void	init_root_node(t_node_state *root_node, int size)
 {
 	init_root_search_state(root_node, size);
-	init_root_pruning_state(root_node, size);
+	init_root_pruning_state(root_node);
 	init_root_selection_state(root_node);
 	init_node_grid(root_node, size);
 }
@@ -43,13 +43,11 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->last_entropy[1] = 0;
 	node->last_entropy[2] = 0;
 	node->last_entropy[3] = 0;
-	node->solutions_found = 0;
 	node->max_solutions = node->puzzle->max_solutions;
 }
 
-static void	init_root_pruning_state(t_node_state *node, int size)
+static void	init_root_pruning_state(t_node_state *node)
 {
-	node->last_prune_nunset = size * size + 1;
 	node->rows_changed_since_prune = 0xffff;
 	node->cols_changed_since_prune = 0xffff;
 	node->rows_invalid_since_prune = 0xffff;

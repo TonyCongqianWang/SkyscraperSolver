@@ -10,12 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include <unistd.h>
 #include "print_grid.h"
 #include "print_io.h"
-#include "grid_availability.h"
-#include "cell_bounds.h"
-#include "puzzle_solver.h"
 
 void	print_solution_grid(t_puzzle *puzzle, int append_nl)
 {
@@ -39,58 +35,4 @@ void	print_solution_grid(t_puzzle *puzzle, int append_nl)
 	}
 	if (append_nl)
 		put_char('\n');
-}
-
-void	print_bmp_grid(t_puzzle *puzzle, int cell_val)
-{
-	int				cell_idx;
-	char			print_val;
-	t_node_state	*node_state;
-
-	cell_idx = 0;
-	node_state = puzzle->cur_node;
-	while (cell_idx < puzzle->squared_size)
-	{
-		print_val = '0';
-		print_val += is_valid_value(node_state, cell_idx, cell_val) != 0;
-		put_char(print_val);
-		if (cell_idx % puzzle->size != puzzle->size - 1)
-		{
-			put_char(' ');
-		}
-		else
-		{
-			put_char('\n');
-		}
-		cell_idx++;
-	}
-}
-
-void	print_bound_grid(t_node_state *node_state, int is_ub)
-{
-	int				cell_idx;
-	short			cell_lb;
-	short			cell_ub;
-	char			print_val;
-
-	cell_idx = 0;
-	while (cell_idx < node_state->size * node_state->size)
-	{
-		print_val = '0';
-		get_cell_bounds(node_state, cell_idx, &cell_lb, &cell_ub);
-		if (!is_ub)
-			print_val += cell_lb;
-		else
-			print_val += cell_ub;
-		put_char(print_val);
-		if (cell_idx % node_state->size != node_state->size - 1)
-		{
-			put_char(' ');
-		}
-		else
-		{
-			put_char('\n');
-		}
-		cell_idx++;
-	}
 }

@@ -11,11 +11,8 @@
 /* ************************************************************************** */
 
 #include "node_selection_eval.h"
-#include "node_selection_transition.h"
-#include "node_selection_score.h"
 #include "grid_availability.h"
 #include "cell_bounds.h"
-#include "transition_scoring.h"
 
 int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
 {
@@ -35,29 +32,4 @@ int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
 		cell_val++;
 	}
 	return (0);
-}
-
-void	sort_node_order(t_node_transition *entries, int count,
-			t_selection_criterion criterion)
-{
-	int					i;
-	int					j;
-	t_node_transition	key;
-
-	i = 1;
-	while (i < count)
-	{
-		key = entries[i];
-		j = i - 1;
-		while (j >= 0 && ((criterion == SELECT_MAX
-					&& entries[j].score < key.score)
-				|| (criterion == SELECT_MIN
-					&& entries[j].score > key.score)))
-		{
-			entries[j + 1] = entries[j];
-			j--;
-		}
-		entries[j + 1] = key;
-		i++;
-	}
 }

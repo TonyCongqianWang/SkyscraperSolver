@@ -14,12 +14,6 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-int	found_enough_solutions(t_node_state *node)
-{
-	return (node->max_solutions > 0
-		&& node->solutions_found >= node->max_solutions);
-}
-
 int	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
 {
 	puzzle->solutions_found = 0;

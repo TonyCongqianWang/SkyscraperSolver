@@ -33,8 +33,6 @@ void	init_order_stacks(t_puzzle *puzzle);
 int		get_cell_priority_pass(t_node_state *node, int cell_idx, int size);
 
 /* node_selection_cache_update.c */
-int		try_cached_entry(t_puzzle *puzzle, t_node_transition *next,
-			t_node_order *cache, int i);
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			t_node_select_config *config);
 #endif
