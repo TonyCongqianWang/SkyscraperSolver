@@ -30,7 +30,7 @@ static const int					g_lh_criterion_defined = 0;
 
 #endif
 
-static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
+static void	init_select_config(t_puzzle *puzzle,
 				t_node_select_config *config)
 {
 	t_node_state	*node;
@@ -39,10 +39,6 @@ static void	init_select_config(t_puzzle *puzzle, t_node_transition *next,
 	select_node_select_config(puzzle, config);
 	if (node->is_in_lookahead_select)
 	{
-		config->start_cell_idx = next->cell_idx;
-		config->start_cell_val = 1;
-		if (next->cell_idx >= 0)
-			config->start_cell_val = next->cell_val + 1;
 		config->selectivity = node->lookahead_selectivity;
 		if (g_lh_criterion_defined)
 			config->criterion = g_lh_criterion;
@@ -53,7 +49,7 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
 
-	init_select_config(puzzle, next, &config);
+	init_select_config(puzzle, &config);
 	rebuild_cache_if_stale(puzzle, &config, 1);
 	return (get_best_from_cache(puzzle, next, &config));
 }
@@ -66,7 +62,7 @@ int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
 	node = puzzle->cur_node;
 	if (node->is_complete || node->is_invalid)
 		return (0);
-	init_select_config(puzzle, next, &config);
+	init_select_config(puzzle, &config);
 	rebuild_cache_if_stale(puzzle, &config, 0);
 	return (get_next_from_cache(puzzle, next, &config));
 }
