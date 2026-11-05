@@ -13,7 +13,6 @@
 #include "string_interface.h"
 #include "puzzle_init.h"
 #include "grid_manipulation.h"
-#include <limits.h>
 
 static int		parse_puzzle_size_from_constr_str(char *str);
 static int		try_add_constr_values(t_puzzle *puzzle, char *str);
@@ -31,7 +30,7 @@ static int	parse_max_solution(char *str, t_sol_count *result)
 	while (*str >= '0' && *str <= '9')
 	{
 		digit = *str - '0';
-		if (*result > (ULLONG_MAX - digit) / 10)
+		if (*result > (MAX_SOL_COUNT - digit) / 10)
 			return (0);
 		*result = 10 * *result + digit;
 		str++;
