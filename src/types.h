@@ -22,5 +22,4 @@ typedef t_u64				t_node_count;
 /* Signed DP bound: -1 denotes an unreachable state. */
 typedef signed char			t_dp_bound;
 
-
 #endif
