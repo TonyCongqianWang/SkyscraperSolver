@@ -50,7 +50,6 @@ typedef struct s_node_order
 	t_node_transition	entries[MAX_TRANSITIONS];
 	t_transition_meta	meta[MAX_TRANSITIONS];
 	int					count;
-	int					num_valid;
 	int					last_build_entropy;
 	int					lookahead_build_entropy;
 	int					needs_rebuild;
@@ -128,10 +127,8 @@ typedef struct s_node_state
 	int						is_in_lookahead_select;
 	int						is_in_neg_lookahead;
 	t_selectivity_level		lookahead_selectivity;
-	double					lookahead_scores[MAX_CELL_COUNT][MAX_SIZE + 1];
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
-	int						lowest_empty_idx;
 	int						remaining_entropy;
 	int						last_entropy[4];
 	t_sol_count				max_solutions;
