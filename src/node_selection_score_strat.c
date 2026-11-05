@@ -16,5 +16,9 @@
 void	score_transition_strat(t_node_state *state, t_node_transition *next)
 {
 	score_transition_full(state, next);
-	next->score = 1.0 - next->score / state->puzzle->selection_lut.min_score;
+	if (state->puzzle->selection_lut.min_score == 0.0)
+		next->score = 0.0;
+	else
+		next->score = 1.0 - next->score
+			/ state->puzzle->selection_lut.min_score;
 }
