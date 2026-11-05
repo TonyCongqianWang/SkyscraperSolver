@@ -60,12 +60,15 @@ static void	update_cache_entropy(t_node_order *cache, t_node_transition next,
 }
 
 static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
-		int depth, t_check_mode mode, int is_neg)
+		int depth, t_check_mode mode)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
 
+	is_neg = (depth < 0);
+	if (is_neg)
+		depth = -depth;
 	cur_node = puzzle->cur_node;
 	if (is_neg && cur_node->is_in_neg_lookahead)
 		return (-1);
@@ -85,11 +88,11 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
 		t_check_mode mode)
 {
-	return (do_l_ahead_dive_internal(puzzle, next, depth, mode, 0));
+	return (do_l_ahead_dive_internal(puzzle, next, depth, mode));
 }
 
 int	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next, int depth,
 		t_check_mode mode)
 {
-	return (do_l_ahead_dive_internal(puzzle, next, depth, mode, 1));
+	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
 }
