@@ -53,6 +53,16 @@ static void	restore_lookahead_state(t_node_state *node,
 	node->is_in_lookahead_select = save->selecting;
 }
 
+static void	mark_negative_pass_cache(t_node_state *node,
+				const t_lookahead_config *config)
+{
+	if (node->is_in_neg_lookahead
+		|| config->lookahead_side == LOOKAHEAD_SIDE_POS)
+		return ;
+	node->order_cache->lookahead_build_entropy = node->remaining_entropy;
+	node->order_cache->needs_rebuild = 1;
+}
+
 void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 			const t_lookahead_config *config)
 {
@@ -73,11 +83,5 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	node->lookahead_ctx = &ctx;
 	run_lookahead_transitions(puzzle, &tr, config);
 	restore_lookahead_state(node, &saved);
-	if (!node->is_in_neg_lookahead
-		&& (config->lookahead_side == LOOKAHEAD_SIDE_NEG
-			|| config->lookahead_side == LOOKAHEAD_SIDE_BOTH))
-	{
-		node->order_cache->lookahead_build_entropy = node->remaining_entropy;
-		node->order_cache->needs_rebuild = 1;
-	}
+	mark_negative_pass_cache(node, config);
 }
