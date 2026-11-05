@@ -69,7 +69,7 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	int	i;
 
 	ctx->curr_pass = 1;
-	ctx->curr_index = node->lowest_empty_idx;
+	ctx->curr_index = 0;
 	i = -1;
 	while (++i < node->order_cache->count)
 	{
