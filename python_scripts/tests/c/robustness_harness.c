@@ -6,6 +6,7 @@
 #include <assert.h>
 #include <limits.h>
 #include <math.h>
+#include <stddef.h>
 
 static t_puzzle g_puzzle;
 
