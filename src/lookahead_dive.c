@@ -71,8 +71,6 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 	if (is_neg)
 		depth = -depth;
 	cur_node = puzzle->cur_node;
-	if (is_neg && cur_node->is_in_neg_lookahead)
-		return (-1);
 	old_state = *cur_node;
 	if (is_neg)
 		cur_node->is_in_neg_lookahead = 1;
@@ -95,5 +93,7 @@ int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
 int	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next, int depth,
 		t_check_mode mode)
 {
+	if (puzzle->cur_node->is_in_neg_lookahead)
+		return (-1);
 	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
 }
