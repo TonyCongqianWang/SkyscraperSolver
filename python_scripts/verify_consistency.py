@@ -5,6 +5,7 @@ import shlex
 import concurrent.futures
 import argparse
 import os
+import hashlib
 
 def run_solver(binary, options, clues):
     cmd = [binary] + shlex.split(options) + [clues]
@@ -42,37 +43,57 @@ def run_solver(binary, options, clues):
         
     return {"solutions": solutions_found, "nodes": nodes_visited}
 
+def verification_signature(node_counts):
+    """Sign the ordered sequence of node counts from one enumeration run.
+
+    The hash is the first 16 hexadecimal characters of SHA-256 over decimal
+    node counts separated by newlines, including a final newline.
+    """
+    if not node_counts:
+        raise ValueError("Cannot sign a verification run with no instances")
+    hasher = hashlib.sha256()
+    for count in node_counts:
+        hasher.update(f"{count}\n".encode("ascii"))
+    digest = hasher.hexdigest()[:16]
+    return f"{sum(node_counts)}:{min(node_counts)}:{max(node_counts)}:{digest}"
+
+
 def run_pass(name, instances, candidate, reference, options, jobs):
-    """Execute one verification mode across its entire selected dataset."""
+    """Check a pass and return its node counts in benchmark input order."""
     print(f"  Pass: {name} ({len(instances)} instances, {options})", flush=True)
 
     def check(item):
         idx, clues, expected = item
         result = run_solver(candidate, options, clues)
         if "error" in result:
-            return idx, f"candidate error: {result['error']}"
+            return idx, f"candidate error: {result['error']}", None
         wanted = min(int(shlex.split(options)[1]), expected) if options != "-s 0" else expected
         if result["solutions"] != wanted:
-            return idx, f"got {result['solutions']}, expected {wanted} (nodes: {result['nodes']})"
+            return idx, f"got {result['solutions']}, expected {wanted} (nodes: {result['nodes']})", None
+        if result["nodes"] is None:
+            return idx, "candidate did not report Nodes visited", None
         if reference:
             ref_result = run_solver(reference, options, clues)
             if "error" in ref_result:
-                return idx, f"reference error: {ref_result['error']}"
+                return idx, f"reference error: {ref_result['error']}", None
             if result["solutions"] != ref_result["solutions"]:
-                return idx, f"candidate {result['solutions']} vs reference {ref_result['solutions']}"
-        return idx, None
+                return idx, f"candidate {result['solutions']} vs reference {ref_result['solutions']}", None
+        return idx, None, result["nodes"]
 
     failures = 0
+    nodes_by_idx = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=jobs) as executor:
         futures = [executor.submit(check, item) for item in instances]
         for future in concurrent.futures.as_completed(futures):
-            idx, error = future.result()
+            idx, error, nodes = future.result()
             if error:
                 failures += 1
                 print(f"[FAIL] {name}, instance {idx}: {error}")
+            else:
+                nodes_by_idx[idx] = nodes
     print(f"  {name}: {len(instances) - failures}/{len(instances)} passed", flush=True)
-    return failures == 0
-
+    ordered_nodes = [nodes_by_idx[idx] for idx, _, _ in instances] if not failures else None
+    return failures == 0, ordered_nodes
 
 def verify_file(benchmark_file, expected_file, candidate, reference, options, jobs,
                 num_instances=None, limit_instances=None):
@@ -98,6 +119,9 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
         return False
 
     total = min(len(clues), num_instances) if num_instances is not None else len(clues)
+    if total == 0:
+        print(f"Error: {benchmark_file} contains no instances to verify.")
+        return False
     items = [(i + 1, clues[i], expected[i]) for i in range(total)]
     limit_count = min(total, limit_instances) if limit_instances is not None else total
     limited_items = items[:limit_count]
@@ -107,8 +131,9 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
     print(f"  Finite limits: first {limit_count} instances")
 
     # Finish all exhaustive checks before starting any limited-search pass.
-    success = run_pass("enumeration", items, candidate, reference, options, jobs)
-    success = run_pass("-s 10", limited_items, candidate, None, "-s 10", jobs) and success
+    success, enum_nodes = run_pass("enumeration", items, candidate, reference, options, jobs)
+    limited_success, _ = run_pass("-s 10", limited_items, candidate, None, "-s 10", jobs)
+    success = success and limited_success
 
     # Each instance has its own exact count; execute these in a separate pass.
     exact_items = [item for item in limited_items if item[2] > 0]
@@ -132,6 +157,8 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
                 failures += 1
                 print(f"[FAIL] exact-count instance {idx}: {error}")
     print(f"  Exact count: {len(exact_items) - failures}/{len(exact_items)} passed")
+    if success and failures == 0:
+        print(f"  Verification signature: {verification_signature(enum_nodes)}")
     return success and failures == 0
 
 
