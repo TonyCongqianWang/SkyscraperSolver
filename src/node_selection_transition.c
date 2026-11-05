@@ -12,30 +12,6 @@
 
 #include "node_selection_transition.h"
 
-int	check_sel(t_node_state *node, int idx, t_node_select_config *conf)
-{
-	int	r;
-	int	c;
-
-	if (!node->is_in_lookahead_select || conf->selectivity == SELECTIVITY_NONE)
-		return (1);
-	r = idx / node->size;
-	c = idx % node->size;
-	if (conf->selectivity == SELECTIVITY_ANY_CHANGE)
-	{
-		return ((node->rows_changed_since_prune & (1 << r))
-			|| (node->cols_changed_since_prune & (1 << c))
-			|| (node->rows_invalid_since_prune & (1 << r))
-			|| (node->cols_invalid_since_prune & (1 << c)));
-	}
-	else if (conf->selectivity == SELECTIVITY_VALUE_SET)
-	{
-		return ((node->rows_changed_since_prune & (1 << r))
-			|| (node->cols_changed_since_prune & (1 << c)));
-	}
-	return (1);
-}
-
 void	init_node_transition(t_node_transition *tr)
 {
 	tr->cell_idx = -1;
@@ -59,24 +35,4 @@ void	sync_cache_stacks(t_puzzle *puzzle)
 		while (++idx < MAX_STACK_DEPTH)
 			puzzle->order_stack.orders[idx].build_depth = -1;
 	}
-}
-
-int	check_sel_filter(t_node_state *node, int cell_idx,
-		int size, t_selectivity_level selectivity)
-{
-	if (!node->is_in_lookahead_select || selectivity == SELECTIVITY_NONE)
-		return (1);
-	if (selectivity == SELECTIVITY_ANY_CHANGE)
-	{
-		return ((node->rows_changed_since_prune & (1 << (cell_idx / size)))
-			|| (node->cols_changed_since_prune & (1 << (cell_idx % size)))
-			|| (node->rows_invalid_since_prune & (1 << (cell_idx / size)))
-			|| (node->cols_invalid_since_prune & (1 << (cell_idx % size))));
-	}
-	else if (selectivity == SELECTIVITY_VALUE_SET)
-	{
-		return ((node->rows_changed_since_prune & (1 << (cell_idx / size)))
-			|| (node->cols_changed_since_prune & (1 << (cell_idx % size))));
-	}
-	return (1);
 }

@@ -108,7 +108,6 @@ typedef struct s_lookahead_ctx
 typedef struct s_node_state
 {
 	int						size;
-	int						last_prune_nunset;
 	int						cur_depth;
 	int						max_depth;
 	int						last_set_idx;
@@ -129,7 +128,6 @@ typedef struct s_node_state
 	int						remaining_entropy;
 	int						last_entropy[4];
 	t_sol_count				max_solutions;
-	t_sol_count				solutions_found;
 	t_grid_state			grid;
 	t_constrs_state			constrs;
 	t_dirty_constr_stack	dirty_constrs;
@@ -159,14 +157,6 @@ typedef struct s_constraint_bounds
 	int					max_height_lb;
 	int					max_height_ub;
 }		t_constraint_bounds;
-
-typedef struct s_node_pruning_state
-{
-	int		can_reiterate;
-	int		last_iteration_succeeded;
-	int		cur_pruning_depth;
-	int		max_pruning_depth;
-}		t_node_pruning_state;
 
 typedef struct s_selection_lut
 {

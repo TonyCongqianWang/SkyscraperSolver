@@ -58,10 +58,8 @@ static int	check_early_skips(t_node_state *node,
 	return (0);
 }
 
-static void	post_prune_update(t_node_state *node, int prev_num_unset,
-				int only_val_set)
+static void	post_prune_update(t_node_state *node, int only_val_set)
 {
-	node->last_prune_nunset = prev_num_unset;
 	node->rows_changed_since_prune = 0;
 	node->cols_changed_since_prune = 0;
 	if (!only_val_set)
@@ -92,8 +90,7 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	i = -1;
 	while (++i <= cfg_idx)
 		node->last_entropy[i] = prev_entropy;
-	post_prune_update(node, node->num_unset,
-		is_only_selectivity_value_set(cfg));
+	post_prune_update(node, is_only_selectivity_value_set(cfg));
 	if (node->remaining_entropy == prev_entropy)
 		return (0);
 	return (1);

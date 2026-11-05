@@ -14,11 +14,7 @@
 # define NODE_SELECTION_TRANSITION_H
 # include "puzzle_structs.h"
 
-int		check_sel(t_node_state *node, int idx,
-			t_node_select_config *conf);
 void	init_node_transition(t_node_transition *tr);
 void	sync_cache_stacks(t_puzzle *puzzle);
-int		check_sel_filter(t_node_state *node, int cell_idx,
-			int size, t_selectivity_level selectivity);
 
 #endif
