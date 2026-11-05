@@ -2,9 +2,9 @@ name: PR website preview
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    # Source-only PRs can request a preview with workflow_dispatch.
     paths:
       - 'web/**'
-      - 'src/**'
       - 'puzzle_bank/**'
       - 'python_scripts/puzzle_bank/export_api_metadata.py'
       - '.github/workflows/preview-pages.yml'
