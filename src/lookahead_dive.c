@@ -59,7 +59,7 @@ static void	update_cache_entropy(t_node_order *cache, t_node_transition next,
 	}
 }
 
-static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
+static t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 		int depth, t_check_mode mode)
 {
 	t_sol_info			local_sols;
@@ -81,19 +81,21 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 			cur_node->remaining_entropy, is_neg);
 	*cur_node = old_state;
 	sync_cache_stacks(puzzle);
-	return (local_sols.solutions_found > 0);
+	if (local_sols.solutions_found > 0)
+		return (DIVE_PASS);
+	return (DIVE_FAIL);
 }
 
-int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
-		t_check_mode mode)
+t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
+		int depth, t_check_mode mode)
 {
 	return (do_l_ahead_dive_internal(puzzle, next, depth, mode));
 }
 
-int	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next, int depth,
-		t_check_mode mode)
+t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
+		int depth, t_check_mode mode)
 {
 	if (puzzle->cur_node->is_in_neg_lookahead)
-		return (-1);
+		return (DIVE_SKIP);
 	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
 }
