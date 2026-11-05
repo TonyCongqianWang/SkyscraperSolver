@@ -531,8 +531,14 @@ def report_parameter_values(initial_values, final_values, active_names):
         log_print(f"{name:<{width}} | {start:>14.10g} | {end:>14.10g} | {abs(end - start):>14.10g}")
 
 
-def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_nodes_norm, stats):
-    prefix = f"Iter {k:3d} | Loss(T/N): {loss_time:.3f}/{loss_nodes:.3f} | GradNorm(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} |"
+def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_nodes_norm,
+                         stats, ema_time_norm, ema_nodes_norm):
+    normalized_time = grad_time_norm / max(1e-5, ema_time_norm)
+    normalized_nodes = grad_nodes_norm / max(1e-5, ema_nodes_norm)
+    prefix = (f"Iter {k:3d} | Loss(T/N): {loss_time:.3f}/{loss_nodes:.3f} | "
+              f"GradNormClipped(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | "
+              f"GradEMA(T/N): {ema_time_norm:.4f}/{ema_nodes_norm:.4f} | "
+              f"GradNormalized(T/N): {normalized_time:.4f}/{normalized_nodes:.4f} |")
     if size == 7:
         log_print(f"{prefix} S7 Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S7 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
     elif size == 8:
@@ -845,7 +851,8 @@ def run_spsa(args, datasets, max_workers):
             best_loss = loss_monitor
             best_theta = list(theta)
 
-        log_iteration_status(args.size, k, loss_time_curr, loss_nodes_curr, grad_time_norm, grad_nodes_norm, stats)
+        log_iteration_status(args.size, k, loss_time_curr, loss_nodes_curr,
+                             grad_time_norm, grad_nodes_norm, stats, ema_time_norm, ema_nodes_norm)
 
         if k % 100 == 0:
             if swa_count > 0:
