@@ -35,7 +35,7 @@ static void	mark_negative_pass_cache(t_node_state *node,
 				const t_lookahead_config *config)
 {
 	if (node->is_in_neg_lookahead
-		|| config->lookahead_side == LOOKAHEAD_SIDE_POS)
+		|| config->lookahead_side != LOOKAHEAD_SIDE_BOTH)
 		return ;
 	node->order_cache->lookahead_build_entropy = node->remaining_entropy;
 	node->order_cache->needs_rebuild = 1;
