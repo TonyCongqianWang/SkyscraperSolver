@@ -60,24 +60,24 @@ static void	update_cache_entropy(t_node_order *cache, t_node_transition next,
 }
 
 static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
-		int depth, t_check_mode mode)
+		int depth, t_check_mode mode, int is_neg)
 {
 	t_sol_info			local_sols;
 	t_node_state		old_state;
 	t_node_state		*cur_node;
-	int					is_neg;
 
-	is_neg = (depth < 0);
-	if (depth < 0)
-		depth = -depth;
 	cur_node = puzzle->cur_node;
-	old_state = *(cur_node);
+	if (is_neg && cur_node->is_in_neg_lookahead)
+		return (-1);
+	old_state = *cur_node;
+	if (is_neg)
+		cur_node->is_in_neg_lookahead = 1;
 	transition_node(puzzle, depth);
 	local_sols = tree_recursion(puzzle, next, mode, is_neg);
 	if (local_sols.solutions_found > 0)
 		update_cache_entropy(old_state.order_cache, next,
 			cur_node->remaining_entropy, is_neg);
-	*(cur_node) = old_state;
+	*cur_node = old_state;
 	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);
 }
@@ -85,11 +85,11 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 int	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next, int depth,
 		t_check_mode mode)
 {
-	return (do_l_ahead_dive_internal(puzzle, next, depth, mode));
+	return (do_l_ahead_dive_internal(puzzle, next, depth, mode, 0));
 }
 
 int	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next, int depth,
 		t_check_mode mode)
 {
-	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
+	return (do_l_ahead_dive_internal(puzzle, next, depth, mode, 1));
 }
