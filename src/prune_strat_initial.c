@@ -18,11 +18,8 @@ int	prune_strat_initial(t_puzzle *puzzle)
 {
 	t_prune_routine_cfg		cfg;
 
-	get_prune_cfg_heavy(&cfg);
+	init_prune_cfg(&cfg, SELECTIVITY_NONE);
 	cfg.run_gac = 1;
 	cfg.run_check_constr = 1;
-	cfg.check_constr_selectivity = SELECTIVITY_NONE;
-	cfg.lookahead.selectivity = SELECTIVITY_NONE;
-	cfg.lookahead.check_mode = g_check_constr;
 	return (run_pruning_routine(puzzle, &cfg, 2));
 }

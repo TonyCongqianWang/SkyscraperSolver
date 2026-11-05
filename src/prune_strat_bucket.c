@@ -50,12 +50,7 @@ static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy,
 	t_prune_routine_cfg	cfg;
 	t_prune_limits		lim;
 
-	if (tier == 0)
-		get_prune_cfg_light(&cfg);
-	else if (tier == 1)
-		get_prune_cfg_medium(&cfg);
-	else
-		get_prune_cfg_heavy(&cfg);
+	init_prune_cfg(&cfg, get_prune_tier_selectivity(tier));
 	populate_limits(&lim, b);
 	setup_cfg_thresholds(&cfg, &lim, remaining_entropy);
 	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->num_unset, puzzle->size);
