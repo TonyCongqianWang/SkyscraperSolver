@@ -65,13 +65,11 @@ static void	init_root_selection_state(t_node_state *node)
 	node->lookahead_selectivity = SELECTIVITY_NONE;
 	node->lookahead_ctx = NULL;
 	node->order_cache = &node->puzzle->order_stack.orders[0];
-	node->lowest_empty_idx = 0;
 }
 
 static void	init_node_grid(t_node_state *node, int size)
 {
 	int		idx;
-	int		v;
 
 	idx = 0;
 	while (idx < size * size)
@@ -80,12 +78,6 @@ static void	init_node_grid(t_node_state *node, int size)
 		node->grid.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(node, idx);
 		node->grid.num_cell_vals[idx] = size;
-		v = 0;
-		while (v < MAX_SIZE + 1)
-		{
-			node->lookahead_scores[idx][v] = 0.0;
-			v++;
-		}
 		idx++;
 	}
 }

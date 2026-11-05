@@ -57,7 +57,6 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 		cache->count = 0;
 		cache->lookahead_build_entropy = -1;
 		cache->needs_rebuild = 0;
-		n->lowest_empty_idx = 0;
 		cache->build_depth = n->cur_depth;
 		collect_cache_entries(puzzle, cache, config);
 		recalculate_cache_scores(n, cache);

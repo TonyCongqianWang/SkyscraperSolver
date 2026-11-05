@@ -77,12 +77,6 @@ static int	do_l_ahead_dive_internal(t_puzzle *puzzle, t_node_transition next,
 	if (local_sols.solutions_found > 0)
 		update_cache_entropy(old_state.order_cache, next,
 			cur_node->remaining_entropy, is_neg);
-	if (!is_neg)
-	{
-		old_state.lookahead_scores[next.cell_idx][(int)next.cell_val]
-			= (double)(old_state.remaining_entropy
-				- cur_node->remaining_entropy);
-	}
 	*(cur_node) = old_state;
 	sync_cache_stacks(puzzle);
 	return (local_sols.solutions_found > 0);

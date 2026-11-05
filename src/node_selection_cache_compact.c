@@ -68,7 +68,6 @@ void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
 		read_idx++;
 	}
 	cache->count = write_idx;
-	cache->num_valid = write_idx;
 	recalculate_cache_scores(node, cache);
 	sort_cached_orders(node, cache, criterion);
 }

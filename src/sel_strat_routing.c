@@ -25,9 +25,7 @@ void	select_node_select_config(t_puzzle *puzzle,
 	int				rem;
 
 	node = puzzle->cur_node;
-	config->score_family = SCORE_BRANCHING;
 	config->criterion = SELECT_MAX;
-	config->enable_cache = 1;
 	rem = node->remaining_entropy;
 	if (rem < 1)
 		rem = 1;
@@ -35,7 +33,5 @@ void	select_node_select_config(t_puzzle *puzzle,
 	term1 = g_sel_period_coef_sqrt * dsqrt_approx(raw);
 	term2 = g_sel_period_coef_inv * raw;
 	config->rebuild_period = (int)(term1 + term2);
-	config->start_cell_idx = -1;
-	config->start_cell_val = 1;
 	config->selectivity = SELECTIVITY_NONE;
 }
