@@ -41,7 +41,7 @@ static void	mark_negative_pass_cache(t_node_state *node,
 	node->order_cache->needs_rebuild = 1;
 }
 
-static void	prepare_lookahead_cache(t_puzzle *puzzle, t_node_state *node,
+static void	prepare_lookahead_cache(t_puzzle *puzzle,
 				const t_lookahead_config *config)
 {
 	t_node_select_config	ns_cfg;
@@ -67,7 +67,7 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	prev_selecting = node->is_in_lookahead_select;
 	node->is_in_lookahead_select = 1;
 	node->lookahead_selectivity = config->selectivity;
-	prepare_lookahead_cache(puzzle, node, config);
+	prepare_lookahead_cache(puzzle, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
 	run_lookahead_transitions(puzzle, &tr, config);
