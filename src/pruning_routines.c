@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "pruning_routines.h"
-#include "pruning_configs.h"
 #include "prune_gac.h"
 #include "prune_lookahead.h"
 #include "prune_check_constr.h"
