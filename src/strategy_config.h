@@ -13,14 +13,6 @@
 #ifndef STRATEGY_CONFIG_H
 # define STRATEGY_CONFIG_H
 
-typedef enum e_prune_strategy
-{
-	PRUNE_LOOKAHEAD_DIVE,
-	PRUNE_GAC,
-	PRUNE_HYBRID,
-	PRUNE_NONE
-}	t_prune_strategy;
-
 typedef enum e_selectivity_level
 {
 	SELECTIVITY_NONE,
@@ -60,10 +52,7 @@ typedef struct s_lookahead_config
 {
 	t_selectivity_level	selectivity;
 	int					max_depth;
-	int					branching_budget;
-	int					enable_node_select;
 	t_lookahead_side	lookahead_side;
-	int					pruning_level;
 	t_check_mode		check_mode;
 }	t_lookahead_config;
 
@@ -78,20 +67,6 @@ typedef struct s_gac_config
 	int					global_min_entropy;
 }	t_gac_config;
 
-typedef struct s_prune_config
-{
-	t_prune_strategy	strategy;
-	t_lookahead_config	lookahead;
-	t_gac_config		gac;
-}	t_prune_config;
-
-typedef enum e_score_family
-{
-	SCORE_BRANCHING,
-	SCORE_MIN_CANDIDATES,
-	SCORE_PROGRESS
-}	t_score_family;
-
 typedef enum e_selection_criterion
 {
 	SELECT_MAX,
@@ -100,12 +75,8 @@ typedef enum e_selection_criterion
 
 typedef struct s_node_select_config
 {
-	t_score_family			score_family;
 	t_selection_criterion	criterion;
-	int						enable_cache;
 	int						rebuild_period;
-	int						start_cell_idx;
-	char					start_cell_val;
 	t_selectivity_level		selectivity;
 }	t_node_select_config;
 
