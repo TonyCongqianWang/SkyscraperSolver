@@ -7,7 +7,7 @@
 
 static t_puzzle puzzle;
 
-static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
+static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
 {
     t_lookahead_config config;
     t_node_order *cache;
@@ -18,14 +18,14 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
     memset(&config, 0, sizeof(config));
     config.selectivity = selectivity;
     config.max_depth = 1;
-    config.lookahead_side = side;
+    config.passes = side;
     config.check_mode = g_check_constr;
-    run_lookahead_loop(&puzzle, puzzle.cur_node, &config);
+    run_lookahead(&puzzle, puzzle.cur_node, &config);
     assert(!puzzle.cur_node->is_invalid);
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
-    if (side == LOOKAHEAD_SIDE_BOTH)
+    if (side == LOOKAHEAD_BOTH)
     {
         assert(cache->lookahead_build_entropy == puzzle.cur_node->remaining_entropy);
         assert(cache->needs_rebuild == 1);
@@ -37,11 +37,11 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
     }
     for (i = 0; i < cache->count; i++)
     {
-        if (side != LOOKAHEAD_SIDE_NEG)
+        if (side != LOOKAHEAD_NEG)
             assert(cache->meta[i].entropy_pos >= 0);
         else
             assert(cache->meta[i].entropy_pos == -1);
-        if (side != LOOKAHEAD_SIDE_POS)
+        if (side != LOOKAHEAD_POS)
             assert(cache->meta[i].entropy_neg >= 0);
         else
             assert(cache->meta[i].entropy_neg == -1);
@@ -52,13 +52,13 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
         cache->meta[i].entropy_pos = -1;
         cache->meta[i].entropy_neg = -1;
     }
-    run_lookahead_loop(&puzzle, puzzle.cur_node, &config);
+    run_lookahead(&puzzle, puzzle.cur_node, &config);
     cache = puzzle.cur_node->order_cache;
     for (i = 0; i < cache->count; i++)
     {
-        if (side != LOOKAHEAD_SIDE_NEG)
+        if (side != LOOKAHEAD_NEG)
             assert(cache->meta[i].entropy_pos >= 0);
-        if (side != LOOKAHEAD_SIDE_POS)
+        if (side != LOOKAHEAD_POS)
             assert(cache->meta[i].entropy_neg >= 0);
     }
     free_solution_storage(&puzzle);
@@ -66,8 +66,8 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
 
 int main(void)
 {
-    t_lookahead_side sides[] = {
-        LOOKAHEAD_SIDE_POS, LOOKAHEAD_SIDE_NEG, LOOKAHEAD_SIDE_BOTH};
+    t_lookahead_pass sides[] = {
+        LOOKAHEAD_POS, LOOKAHEAD_NEG, LOOKAHEAD_BOTH};
     t_selectivity_level levels[] = {
         SELECTIVITY_VALUE_SET, SELECTIVITY_ANY_CHANGE, SELECTIVITY_NONE};
     int i;

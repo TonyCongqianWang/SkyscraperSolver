@@ -30,15 +30,15 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	run_pruning_routine(puzzle, &cfg, 1);
 }
 
-static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
-				const t_lookahead_config *config, int is_neg)
+void	probe_candidates(t_puzzle *puzzle, t_node_transition *tr,
+			const t_lookahead_config *config, t_lookahead_pass pass)
 {
 	t_dive_result	result;
 
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
 	{
-		if (is_neg)
+		if (pass == LOOKAHEAD_NEG)
 		{
 			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
 					g_check_constr);
@@ -57,12 +57,3 @@ static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 	}
 }
 
-void	run_lookahead_transitions(t_puzzle *puzzle,
-				t_node_transition *tr, const t_lookahead_config *config,
-				t_lookahead_pass passes)
-{
-	if (passes & LOOKAHEAD_PASS_POS)
-		run_dive_transitions(puzzle, tr, config, 0);
-	if (passes & LOOKAHEAD_PASS_NEG)
-		run_dive_transitions(puzzle, tr, config, 1);
-}
