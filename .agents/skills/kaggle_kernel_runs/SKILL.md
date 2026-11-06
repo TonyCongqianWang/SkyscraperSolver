@@ -1,99 +1,104 @@
 ---
 name: kaggle_kernel_runs
-description: Workflow, scripts, and API integration for querying, inspecting, and downloading outputs and winner files from specific historical versions of Kaggle tuning kernels.
+description: Inspect historical Kaggle tuning versions and execution statuses, download winner files with provenance and comparison artifacts, and prepare an auditable sample for SPSA analysis.
 ---
 
-# Kaggle Kernel Runs & Artifact Downloader Guide
+# Kaggle tuning run artifacts
 
-This skill documents how to inspect historical Kaggle notebook versions, resolve version discrepancies, and selectively download tuning artifacts (such as `*winners*.txt` files) directly into the `scratch/` directory as `.txt` files for multi-run statistical analysis.
+Use `python_scripts/fetch_kaggle_runs.py` from the repository root. The configured
+SDK environment is `micromamba run -n default python3`; network access and normal
+Kaggle authentication are required. Keep downloaded artifacts and manifests under
+`scratch/`. For analysis and application, follow the
+[SPSA analysis skill](../spsa_analysis_and_winners/SKILL.md).
 
----
-
-## 1. Core Workflow
-
-```mermaid
-graph TD
-    A["Kaggle SPSA Runs Executed in Cloud"] --> B["Inspect Versions & Commands (fetch_kaggle_runs.py --list N)"]
-    B --> C["Filter by Puzzle Size & Mode (e.g. Size 8 vs Size 9)"]
-    C --> D["Download Historical Winners (fetch_kaggle_runs.py --size S --count K)"]
-    D --> E["Stored in scratch/ as run_s<size>_<index>.txt"]
-    E --> F["Statistical Analysis (analyze_spsa_runs.py)"]
-```
-
----
-
-## 2. Key Kaggle API Nuances & Architecture
-
-1. **Version Label Format**:
-   - Kaggle's backend assigns a monotonic integer version (`currentVersionNumber`), but the API strictly requires the label formatted with a **`v` prefix** (`v665`, `v664`, etc.). Passing an unadorned integer (`665`) causes a `404 Not Found`.
-2. **Kaggle CLI Limitation**:
-   - The official CLI (`kaggle kernels output <kernel>/<version>`) parses the version string out of the argument but omits setting `version_label` in the underlying `ApiListKernelSessionOutputRequest`, always returning the latest output. The helper script bypasses this bug by setting `req.version_label = f"v{version_number}"` directly via the Python SDK.
-3. **User Commit Names vs. API Metadata**:
-   - Custom version commit titles entered in the Kaggle UI are not exposed in Kaggle's public `KernelsApiService` REST endpoints.
-   - However, each version's **exact notebook cell code**, **execution timestamp**, and **output files** can be queried directly via `client.kernels.kernels_api_client.get_kernel` and `list_kernel_session_output`.
-4. **Pagination Required for Repository Outputs**:
-   - Notebook runs that clone the git repository produce 400+ output files. Because Kaggle paginates output listings (max 200 items per page), scripts must follow `next_page_token` to reach files stored in `scratch/`.
-5. **Strict File Naming**:
-   - All downloaded runs are saved directly as `.txt` files in `scratch/` (e.g. `scratch/run_s8_00.txt`, `scratch/run_s9_00.txt`) without symlinks, ensuring full compatibility with downstream globbing in `analyze_spsa_runs.py`.
-6. **Execution Environment**:
-   - Kaggle SDK requires the `default` micromamba environment with network access enabled:
-     ```bash
-     micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py ...
-     ```
-
----
-
-## 3. Graceful Handling of Variations (`fetch_kaggle_runs.py`)
-
-The helper script `python_scripts/fetch_kaggle_runs.py` is designed to handle variable run requirements flexibly:
-
-### A. Automatic Size-Aware Run Discovery
-Instead of manually calculating Kaggle version numbers, specify the puzzle size and the desired number of runs. The script scans backwards from the latest version, finds matching runs, and numbers them chronologically:
+## Select and freeze the versions
 
 ```bash
-# Automatically fetch the last 10 Size-8 runs -> scratch/run_s8_00.txt .. run_s8_09.txt
-micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py --size 8 --count 10
-
-# Automatically fetch the last 15 Size-9 runs -> scratch/run_s9_00.txt .. run_s9_14.txt
-micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py --size 9 --count 15
-
-# Fetch any custom count (e.g. 5, 20, 25 runs)
-micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py --size 9 --count 25
-```
-
-### B. Inspect Recent Versions & Tuning Configurations
-Inspect recent runs to check command line parameters, puzzle sizes, and timestamps:
-
-```bash
-micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py --list 30
-```
-
-### C. Explicit Version Range or List
-When specific version numbers are needed:
-
-```bash
-# Explicit range of versions:
+micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py --list 10 --workers 2
 micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py \
-    --versions 656..665 --filter "*winner*.txt" --dest "scratch/run_s8_{index:02d}.txt"
-
-# Specific comma-separated versions:
-micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py \
-    --versions 665,660,650 --filter "*winner*.txt" --dest "scratch/run_s8_{index:02d}.txt"
+  --size 8 --count 10 --workers 2 --dest 'scratch/kaggle_s8/v{version}/{filename}'
 ```
 
-> [!TIP]
-> The destination filename template supports `{index}`, `{size}`, `{version}`, and `{filename}` placeholders. If the `.txt` extension is omitted, the tool automatically appends `.txt`.
-
----
-
-## 4. Downstream Analysis Pipeline
-
-Once run files are saved to `scratch/`, proceed with standard SPSA statistical analysis:
+- Default kernel: `tony14587/spsa-tuning`; override with `--kernel` as needed.
+- For “last N runs,” determine the latest version once and record the exact
+  version interval, size/mode commands and included files. Distinguish the latest
+  submitted versions from the latest N completed tuning winners. Missing artifacts
+  must not silently change the requested sample; report gaps or state a backfill.
+- `--count`/`--size` select matching notebook versions, not a guarantee of that
+  many downloadable final winners. Inspect the resulting coverage.
+- For a frozen interval, use `--versions FIRST..LAST` or a comma-separated list
+  with the actual numeric bounds. Example of a historical interval:
 
 ```bash
-# Analyze Size 8 runs
-python3 python_scripts/analyze_spsa_runs.py --size 8 scratch/run_s8_*.txt
-
-# Analyze Size 9 runs
-python3 python_scripts/analyze_spsa_runs.py --size 9 scratch/run_s9_*.txt
+micromamba run -n default python3 python_scripts/fetch_kaggle_runs.py \
+  --versions 717..766 --filter '*winner*.txt' \
+  --dest 'scratch/kaggle_snapshot/v{version}/{filename}'
 ```
+
+Destination templates support `{index}`, `{size}`, `{version}` and `{filename}`.
+Use version directories and original filenames to avoid collisions or overwriting
+local winners. Preserve user-supplied files; checksum/copy them separately when
+combining local and remote evidence.
+
+## Historical API details that affect correctness
+
+- Every historical request must set `version_label = f"v{version}"`. An unprefixed
+  number can return 404. Do not assume `kaggle kernels output owner/slug/version`
+  retrieves that historical version: the CLI version-label omission was observed
+  in this workflow. The helper explicitly supplies it.
+- `get_kernel` supplies notebook source/commands; custom UI commit titles are not
+  exposed by the helper's metadata. Historical `last_run_time` responses can
+  repeat the latest notebook timestamp, so do not use them to infer each historical
+  session's duration or ordering. Use version IDs and recorded run provenance.
+- Output listings are paginated, typically 200 files per page, and cloned repos
+  have hundreds of files. Follow `next_page_token` until exhausted; an early page
+  may omit all `scratch/` winners and logs.
+- `get_kernel_session_status` accepts the same user/slug/version label. Record
+  its status and failure message. `RUNNING` with no outputs is not a failure;
+  cancellation for platform duration is distinct from a solver-instance timeout.
+- Notebook status is not tuning completion. A failed or cancelled notebook can
+  contain a final winner whose adjacent JSON has `complete: true`, because tuning
+  finished before comparison failed. Preserve that winner for analysis. Separate
+  intermediate checkpoints (`complete: false`) from final results.
+
+## Download the evidence efficiently
+
+The helper exposes `get_latest_version_number`, `inspect_version`,
+`list_version_output_files`, and `download_file` for targeted workflows. Reuse
+these instead of fetching whole output archives or reimplementing pagination.
+
+- The winner CLI automatically downloads the adjacent JSON sidecar when present
+  and distinguishes multiple winners. Winner text remains `.txt`; sidecars retain
+  `.json`. Do not mistake a sparse winner for an incomplete parameter dump.
+- For deeper investigation, select tuning/comparison logs, train/validation summary
+  JSON and (only when needed) per-instance JSONL. Use `download_file` with their
+  actual extensions; the general CLI destination is always forced to `.txt`.
+  Solver binaries and large puzzle banks are usually unnecessary for winner analysis.
+- Create an audit manifest with frozen selection, version, remote filenames,
+  local paths/checksums, commands, status and missing artifacts. The winner CLI
+  does not automatically create this full manifest. Avoid persisting signed URLs.
+- Preserve metadata containing initial/default values, active parameters, seed,
+  optimizer options, source revision/hashes and dataset identities. Do not infer
+  historical starts from today's defaults when a sidecar or archived snapshot exists.
+- Transient download/API failures are retried by the helper with bounded backoff,
+  but exhausted retries and SDK-specific errors still require checking coverage.
+  If throttled (429), reduce concurrency and retry only missing versions/files,
+  sequentially if needed. Keep successful downloads and flush progress. Do not
+  repeatedly restart an entire large batch.
+- An inaccessible mamba cache lock can be avoided with
+  `XDG_CACHE_HOME="$PWD/scratch/mamba_cache"`; do not alter the global environment
+  just to fetch artifacts.
+
+## Hand off to analysis
+
+```bash
+python3 python_scripts/analyze_spsa_runs.py \
+  'scratch/kaggle_snapshot/v*/spsa_winners*.txt' \
+  --alpha 0.05 --json scratch/kaggle_analysis.json
+```
+
+Report actual counts by size, final versus intermediate coverage, local files and
+notebook statuses. Pass along script/direction-count changes, dataset identities,
+provenance gaps and the comparison timeout/penalty policy. The analyzer uses
+strict cohorts and exact sign tests with Holm correction; cross-version pooling
+must be explicit and preserve subgroup evidence, as described in the analysis skill.

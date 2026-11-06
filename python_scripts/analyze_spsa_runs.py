@@ -17,6 +17,7 @@ if SCRIPT_DIR not in sys.path:
     sys.path.append(SCRIPT_DIR)
 
 from param_metadata import PARAM_METADATA, get_active_param_names
+from spsa_statistics import binomial_sign_test, adjust_direction_tests
 
 DEFAULTS = {p[0]: p[3] for p in PARAM_METADATA}
 
@@ -77,7 +78,7 @@ def cohort_key(size, mode, metadata, provenance):
     # Seeds differ by design. Changes to defaults, data or optimizer settings must
     # not silently become another sample in the same statistical population.
     config_keys = ('iterations', 'lr', 'alpha', 'perturb', 'gamma', 'batch_size',
-                   'grad_clip', 'mom_clip', 'beta', 'stdin', 'enumeration_only')
+                   'grad_clip', 'mom_clip', 'beta', 'stdin', 'enumeration_only', 'directions')
     config = metadata.get('config', {})
     identity = {
         'defaults': metadata.get('defaults', DEFAULTS),
@@ -115,10 +116,10 @@ def parameter_statistics(values, baseline):
     return {'n': n, 'baseline': baseline, 'median': median, 'mean': mean,
             'std': std, 'shift_pct': shift / abs(baseline) * 100 if baseline else None,
             's_ratio': ratio, 'up': up, 'down': down, 'ties': n - up - down,
-            'signal': signal}
+            'signal': signal, 'sign_test': binomial_sign_test(up, down)}
 
 
-def analyze_files(files, size_filter=None):
+def analyze_files(files, size_filter=None, alpha=0.05):
     cohorts = {}
     for filepath in files:
         size, mode, values = parse_run_file(filepath)
@@ -158,6 +159,7 @@ def analyze_files(files, size_filter=None):
         reports.append({'size': size, 'mode': mode, 'cohort': identity,
                         'runs': len(runs), 'files': [row[0] for row in runs],
                         'baseline_source': runs[0][3], 'parameters': parameters})
+    adjust_direction_tests([row for report in reports for row in report['parameters'].values()], alpha)
     return reports
 
 
@@ -165,26 +167,33 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('files', nargs='*', help='Winner text files or glob patterns')
     parser.add_argument('--size', type=int, choices=[7, 8, 9])
+    parser.add_argument('--alpha', type=float, default=0.05, help='Family-wise significance level for exact sign tests with Holm correction')
     parser.add_argument('--json', dest='json_path', help='Optional machine-readable analysis')
     args = parser.parse_args()
     patterns = args.files or [os.path.join(ROOT_DIR, 'scratch', 'run_*.txt')]
     files = sorted({os.path.abspath(path) for pattern in patterns for path in glob.glob(pattern)})
     if not files:
         parser.error('No run files found')
-    reports = analyze_files(files, args.size)
+    if not math.isfinite(args.alpha) or not 0 < args.alpha < 1:
+        parser.error('alpha must be finite and strictly between 0 and 1')
+    reports = analyze_files(files, args.size, args.alpha)
     print(f'Found {len(files)} unique winner files; {len(reports)} compatible cohorts.')
+    print(f'Exact two-sided sign tests; Holm correction across all displayed parameter/cohort tests; alpha={args.alpha:g}.')
     for report in reports:
         print(f"\nSIZE {report['size']} | MODE {report['mode']} | "
               f"{report['runs']} RUNS | COHORT {report['cohort']}")
         print(f"Baseline: {report['baseline_source']}")
         print(f"{'PARAMETER':42} | {'N':>3} | {'START':>12} | {'MEDIAN':>12} | "
-              f"{'STD':>10} | {'SHIFT %':>9} | {'UP/DOWN/TIE':>12} | {'S_RATIO':>7} | SIGNAL")
+              f"{'STD':>10} | {'SHIFT %':>9} | {'UP/DOWN/TIE':>12} | {'P SIGN':>9} | {'P HOLM':>9} | {'DIRECTION':>12} | {'S_RATIO':>7} | SPREAD LABEL")
         for name, row in report['parameters'].items():
             shift = f"{row['shift_pct']:+.4f}" if row['shift_pct'] is not None else 'n/a'
             agreement = f"{row['up']}/{row['down']}/{row['ties']}"
+            test = row['sign_test']
+            direction = test['direction'] if test['significant'] else 'inconclusive'
             print(f"{name:42} | {row['n']:3} | {row['baseline']:12.8g} | "
                   f"{row['median']:12.8g} | {row['std']:10.4g} | {shift:>9} | "
-                  f"{agreement:>12} | {row['s_ratio']:7.2f} | {row['signal']}")
+                  f"{agreement:>12} | {test['p_value']:9.3g} | {test['p_holm']:9.3g} | "
+                  f"{direction:>12} | {row['s_ratio']:7.2f} | {row['signal']}")
     if args.json_path:
         # JSON has no infinity literal; preserve an exact zero-spread signal as text.
         serializable = [dict(report, parameters={

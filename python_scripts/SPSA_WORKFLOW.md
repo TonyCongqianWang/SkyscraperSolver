@@ -131,3 +131,21 @@ Every parameter reports its own sample count and up/down/tied counts. The signal
 to spread thresholds are exactly 2 for strong and 1 for moderate, with no extra
 percentage-shift threshold. A single sample is insufficient. This ratio measures
 parameter displacement, not statistical significance or measured performance.
+
+Directional evidence uses an exact two-sided binomial sign test against a 50/50
+up/down null, excluding numerical ties from its sample size. The direction is
+not assumed in advance. The analyzer reports raw `P SIGN`, Holm-adjusted
+`P HOLM`, and a supported direction at family-wise alpha 0.05 (`--alpha` changes
+this). The correction family includes **all parameter/cohort tests displayed by
+that invocation**, not just promising parameters. Different direction counts are
+also part of cohort identity. A fixed agreement percentage is not a selection rule.
+
+Holm accommodates dependence between parameter tests, but sign-test calibration
+still assumes independent runs with fair signs under the null. This tests update
+direction repeatability conditional on the data/optimizer, not runtime benefit;
+projection or optimizer bias can also cause directional drift. Keep effect sizes,
+provenance and optimizer-family comparisons alongside the p-values. The existing
+signal-to-spread labels remain descriptive heuristics, not significance decisions.
+
+Method references: [exact binomial test](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/binom.test.html)
+and [Holm adjustment](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html).
