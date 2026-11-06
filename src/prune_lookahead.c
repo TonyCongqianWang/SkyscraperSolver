@@ -60,9 +60,13 @@ static void	run_dive_transitions(t_puzzle *puzzle, t_node_transition *tr,
 void	run_lookahead_transitions(t_puzzle *puzzle,
 				t_node_transition *tr, const t_lookahead_config *config)
 {
-	if (config->lookahead_side != LOOKAHEAD_SIDE_NEG)
+	t_lookahead_side	side;
+
+	side = config->lookahead_side;
+	if (puzzle->cur_node->is_in_neg_lookahead)
+		side = LOOKAHEAD_SIDE_POS;
+	if (side != LOOKAHEAD_SIDE_NEG)
 		run_dive_transitions(puzzle, tr, config, 0);
-	if (config->lookahead_side != LOOKAHEAD_SIDE_POS
-		&& !puzzle->cur_node->is_in_neg_lookahead)
+	if (side != LOOKAHEAD_SIDE_POS)
 		run_dive_transitions(puzzle, tr, config, 1);
 }
