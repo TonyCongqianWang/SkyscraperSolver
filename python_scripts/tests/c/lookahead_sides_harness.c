@@ -25,6 +25,10 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
+    if (side == LOOKAHEAD_SIDE_BOTH)
+        assert(cache->lookahead_build_entropy == puzzle.cur_node->remaining_entropy);
+    else
+        assert(cache->lookahead_build_entropy == -1);
     for (i = 0; i < cache->count; i++)
     {
         if (side != LOOKAHEAD_SIDE_NEG)
@@ -50,6 +54,13 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
             assert(cache->meta[i].entropy_pos >= 0);
         if (side != LOOKAHEAD_SIDE_POS)
             assert(cache->meta[i].entropy_neg >= 0);
+    }
+    if (side == LOOKAHEAD_SIDE_BOTH && selectivity == SELECTIVITY_NONE)
+    {
+        cache->lookahead_build_entropy = -1;
+        puzzle.cur_node->sub_node_depth = 1;
+        run_lookahead_loop(&puzzle, puzzle.cur_node, &config);
+        assert(puzzle.cur_node->order_cache->lookahead_build_entropy == -1);
     }
     free_solution_storage(&puzzle);
 }

@@ -59,6 +59,7 @@ static void test_nested_dispatch_and_context_restore(void)
     assert(puzzle.cur_node->lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->lookahead_ctx == &outer);
     cache = puzzle.cur_node->order_cache;
+    assert(cache->lookahead_build_entropy == -1);
     for (i = 0; i < cache->count; ++i)
     {
         assert(cache->meta[i].entropy_pos >= 0);
