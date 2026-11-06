@@ -51,7 +51,7 @@ static void	prepare_lookahead_cache(t_puzzle *puzzle,
 }
 
 static void	run_lookahead_loop_effective(t_puzzle *puzzle,
-					 t_node_state *node, const t_lookahead_config *config)
+				t_node_state *node, const t_lookahead_config *config)
 {
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
