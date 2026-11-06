@@ -58,7 +58,36 @@ static void test_nested_dispatch_and_context_restore(void)
     assert(puzzle.cur_node->is_in_lookahead_select == 1);
     assert(puzzle.cur_node->lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->lookahead_ctx == &outer);
+    assert(cfg.lookahead_side == LOOKAHEAD_SIDE_BOTH);
     cache = puzzle.cur_node->order_cache;
+    assert(cache->lookahead_build_entropy == -1);
+    assert(cache->needs_rebuild == 0);
+    for (i = 0; i < cache->count; ++i)
+    {
+        assert(cache->meta[i].entropy_pos >= 0);
+        assert(cache->meta[i].entropy_neg == -1);
+    }
+    free_solution_storage(&puzzle);
+}
+
+static void test_nested_negative_side_downgrades_to_positive(void)
+{
+    t_lookahead_config cfg;
+    t_node_order *cache;
+    int i;
+
+    reset_puzzle();
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.selectivity = SELECTIVITY_NONE;
+    cfg.max_depth = 1;
+    cfg.lookahead_side = LOOKAHEAD_SIDE_NEG;
+    cfg.check_mode = g_check_constr;
+    puzzle.cur_node->is_in_neg_lookahead = 1;
+    run_lookahead_loop(&puzzle, puzzle.cur_node, &cfg);
+    cache = puzzle.cur_node->order_cache;
+    assert(cfg.lookahead_side == LOOKAHEAD_SIDE_NEG);
+    assert(cache->lookahead_build_entropy == -1);
+    assert(cache->needs_rebuild == 0);
     for (i = 0; i < cache->count; ++i)
     {
         assert(cache->meta[i].entropy_pos >= 0);
@@ -90,6 +119,7 @@ int main(void)
 {
     test_block_nested_negative();
     test_nested_dispatch_and_context_restore();
+    test_nested_negative_side_downgrades_to_positive();
     test_regular_dfs_branching_allowed();
     return (0);
 }
