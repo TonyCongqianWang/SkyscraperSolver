@@ -83,3 +83,6 @@ jobs:
           path: public
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # Large puzzle banks can spend more than 10 minutes syncing in Pages.
+          timeout: 1200000
