@@ -32,7 +32,7 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg,
 	cfg->run_lookahead = 1;
 	cfg->lookahead.selectivity = selectivity;
 	cfg->lookahead.max_depth = 1;
-	cfg->lookahead.lookahead_side = LOOKAHEAD_SIDE_BOTH;
+	cfg->lookahead.passes = LOOKAHEAD_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }
 

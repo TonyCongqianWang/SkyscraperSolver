@@ -31,16 +31,6 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	}
 }
 
-static void	mark_negative_pass_cache(t_node_state *node,
-				const t_lookahead_config *config)
-{
-	if (node->sub_node_depth != 0
-		|| config->lookahead_side != LOOKAHEAD_SIDE_BOTH)
-		return ;
-	node->order_cache->lookahead_build_entropy = node->remaining_entropy;
-	node->order_cache->needs_rebuild = 1;
-}
-
 static void	prepare_lookahead_cache(t_puzzle *puzzle,
 				const t_lookahead_config *config)
 {
@@ -51,8 +41,9 @@ static void	prepare_lookahead_cache(t_puzzle *puzzle,
 	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
 }
 
-void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
-			const t_lookahead_config *config)
+static void	execute_lookahead(t_puzzle *puzzle,
+				t_node_state *node, const t_lookahead_config *config,
+				t_lookahead_pass passes)
 {
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
@@ -60,8 +51,6 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	t_selectivity_level		prev_selectivity;
 	int						prev_selecting;
 
-	if (should_exit_selectivity(node, config->selectivity))
-		return ;
 	prev_ctx = node->lookahead_ctx;
 	prev_selectivity = node->lookahead_selectivity;
 	prev_selecting = node->is_in_lookahead_select;
@@ -70,9 +59,32 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	prepare_lookahead_cache(puzzle, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
-	run_lookahead_transitions(puzzle, &tr, config);
+	if (passes & LOOKAHEAD_POS)
+		probe_candidates(puzzle, &tr, config, LOOKAHEAD_POS);
+	if (passes & LOOKAHEAD_NEG)
+		probe_candidates(puzzle, &tr, config, LOOKAHEAD_NEG);
 	node->lookahead_ctx = prev_ctx;
 	node->is_in_lookahead_select = prev_selecting;
 	node->lookahead_selectivity = prev_selectivity;
-	mark_negative_pass_cache(node, config);
+}
+
+void	run_lookahead(t_puzzle *puzzle, t_node_state *node,
+			const t_lookahead_config *config)
+{
+	t_lookahead_pass	passes;
+
+	if (should_exit_selectivity(node, config->selectivity))
+		return ;
+	passes = config->passes;
+	if (node->is_in_neg_lookahead)
+		passes &= ~LOOKAHEAD_NEG;
+	if (passes == LOOKAHEAD_NONE)
+		return ;
+	execute_lookahead(puzzle, node, config, passes);
+	if (node->sub_node_depth == 0 && passes == LOOKAHEAD_BOTH)
+	{
+		node->order_cache->lookahead_build_entropy
+			= node->remaining_entropy;
+		node->order_cache->needs_rebuild = 1;
+	}
 }
