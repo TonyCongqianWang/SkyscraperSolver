@@ -31,10 +31,10 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	}
 }
 
-static void	mark_negative_pass_cache(t_node_state *node,
+static void	update_cache_after_full_lookahead(t_node_state *node,
 				const t_lookahead_config *config)
 {
-	if (node->sub_node_depth != 0
+	if (node->sub_node_depth != 0 || node->is_in_neg_lookahead
 		|| config->lookahead_side != LOOKAHEAD_SIDE_BOTH)
 		return ;
 	node->order_cache->lookahead_build_entropy = node->remaining_entropy;
@@ -74,5 +74,5 @@ void	run_lookahead_loop(t_puzzle *puzzle, t_node_state *node,
 	node->lookahead_ctx = prev_ctx;
 	node->is_in_lookahead_select = prev_selecting;
 	node->lookahead_selectivity = prev_selectivity;
-	mark_negative_pass_cache(node, config);
+	update_cache_after_full_lookahead(node, config);
 }
