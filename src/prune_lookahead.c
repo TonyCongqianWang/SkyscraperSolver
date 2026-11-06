@@ -56,4 +56,3 @@ void	probe_candidates(t_puzzle *puzzle, t_node_transition *tr,
 		}
 	}
 }
-
