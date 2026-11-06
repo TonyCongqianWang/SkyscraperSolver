@@ -67,6 +67,33 @@ static void test_nested_dispatch_and_context_restore(void)
     free_solution_storage(&puzzle);
 }
 
+static void test_nested_negative_only_has_no_updates(void)
+{
+    t_lookahead_config cfg;
+    t_node_order *cache;
+    t_node_count visited;
+    int i;
+
+    reset_puzzle();
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.selectivity = SELECTIVITY_NONE;
+    cfg.max_depth = 1;
+    cfg.lookahead_side = LOOKAHEAD_SIDE_NEG;
+    cfg.check_mode = g_check_constr;
+    puzzle.cur_node->is_in_neg_lookahead = 1;
+    visited = puzzle.nodes_visited;
+    run_lookahead_loop(&puzzle, puzzle.cur_node, &cfg);
+    assert(puzzle.nodes_visited == visited);
+    assert(cfg.lookahead_side == LOOKAHEAD_SIDE_NEG);
+    cache = puzzle.cur_node->order_cache;
+    for (i = 0; i < cache->count; ++i)
+    {
+        assert(cache->meta[i].entropy_pos == -1);
+        assert(cache->meta[i].entropy_neg == -1);
+    }
+    free_solution_storage(&puzzle);
+}
+
 static void test_regular_dfs_branching_allowed(void)
 {
     t_search_frame frames[2];
@@ -90,6 +117,7 @@ int main(void)
 {
     test_block_nested_negative();
     test_nested_dispatch_and_context_restore();
+    test_nested_negative_only_has_no_updates();
     test_regular_dfs_branching_allowed();
     return (0);
 }
