@@ -25,6 +25,16 @@ static void check_side(t_lookahead_side side, t_selectivity_level selectivity)
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
+    if (side == LOOKAHEAD_SIDE_BOTH)
+    {
+        assert(cache->lookahead_build_entropy == puzzle.cur_node->remaining_entropy);
+        assert(cache->needs_rebuild == 1);
+    }
+    else
+    {
+        assert(cache->lookahead_build_entropy == -1);
+        assert(cache->needs_rebuild == 0);
+    }
     for (i = 0; i < cache->count; i++)
     {
         if (side != LOOKAHEAD_SIDE_NEG)
