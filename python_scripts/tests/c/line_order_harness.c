@@ -160,11 +160,11 @@ static void test_lookahead_restoration(void)
     assert(get_best_from_cache(&puzzle, &next, &config));
     snapshot = *get_line_order(puzzle.cur_node);
     old_top = puzzle.order_stack.top_idx;
-    do_l_ahead_dive(&puzzle, next, 2, g_check_constr);
+    probe_assumption(&puzzle, next, 2, g_check_constr);
     assert(puzzle.order_stack.top_idx == old_top);
     assert(puzzle.cur_node->cur_depth == 0);
     assert(memcmp(get_line_order(puzzle.cur_node), &snapshot, sizeof(snapshot)) == 0);
-    do_l_ahead_dive_neg(&puzzle, next, 2, g_check_constr);
+    probe_exclusion(&puzzle, next, 2, g_check_constr);
     assert(puzzle.order_stack.top_idx == old_top);
     assert(puzzle.cur_node->cur_depth == 0);
     assert(memcmp(get_line_order(puzzle.cur_node), &snapshot, sizeof(snapshot)) == 0);

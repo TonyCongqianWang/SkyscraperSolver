@@ -30,29 +30,33 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	run_pruning_routine(puzzle, &cfg, 1);
 }
 
+static void	probe_and_prune_candidate(t_puzzle *puzzle,
+				t_node_transition next, const t_lookahead_config *cfg,
+				t_lookahead_pass pass)
+{
+	t_probe_result	result;
+
+	if (pass == LOOKAHEAD_NEG)
+		result = probe_exclusion(puzzle, next, cfg->max_depth, g_check_constr);
+	else
+		result = probe_assumption(puzzle, next, cfg->max_depth,
+				cfg->check_mode);
+	if (result.status == DIVE_PASS)
+		node_order_record_probe(puzzle->cur_node->order_cache, next,
+			pass, result.remaining_entropy);
+	if (result.status != DIVE_FAIL)
+		return ;
+	if (pass == LOOKAHEAD_NEG)
+		set_cell_val(puzzle, next.cell_idx, next.cell_val, g_check_constr);
+	else
+		set_cell_invalid(puzzle, next.cell_idx, next.cell_val,
+			g_check_constr);
+}
+
 void	probe_candidates(t_puzzle *puzzle, t_node_transition *tr,
 			const t_lookahead_config *config, t_lookahead_pass pass)
 {
-	t_dive_result	result;
-
 	init_node_transition(tr);
 	while (try_get_next_transition(puzzle, tr))
-	{
-		if (pass == LOOKAHEAD_NEG)
-		{
-			result = do_l_ahead_dive_neg(puzzle, *tr, config->max_depth,
-					g_check_constr);
-			if (result == DIVE_FAIL)
-				set_cell_val(puzzle, tr->cell_idx, tr->cell_val,
-					g_check_constr);
-		}
-		else
-		{
-			result = do_l_ahead_dive(puzzle, *tr, config->max_depth,
-					config->check_mode);
-			if (result == DIVE_FAIL)
-				set_cell_invalid(puzzle, tr->cell_idx, tr->cell_val,
-					g_check_constr);
-		}
-	}
+		probe_and_prune_candidate(puzzle, *tr, config, pass);
 }

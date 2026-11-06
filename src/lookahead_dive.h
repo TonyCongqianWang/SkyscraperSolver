@@ -21,9 +21,15 @@ typedef enum e_dive_result
 	DIVE_PASS = 1
 }	t_dive_result;
 
-t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
+typedef struct s_probe_result
+{
+	t_dive_result	status;
+	int				remaining_entropy;
+}	t_probe_result;
+
+t_probe_result	probe_assumption(t_puzzle *puzzle, t_node_transition next,
 					int depth, t_check_mode mode);
-t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	probe_exclusion(t_puzzle *puzzle, t_node_transition next,
 					int depth, t_check_mode mode);
 
 #endif
