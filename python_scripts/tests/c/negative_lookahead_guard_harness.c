@@ -29,7 +29,7 @@ static void test_block_nested_negative(void)
     puzzle.cur_node->is_in_neg_lookahead = 1;
     before = *puzzle.cur_node;
     visited = puzzle.nodes_visited;
-    assert(do_l_ahead_dive_neg(&puzzle, tr, 2, g_check_constr) == DIVE_SKIP);
+    assert(probe_exclusion(&puzzle, tr, 2, g_check_constr).status == DIVE_SKIP);
     assert(memcmp(&before, puzzle.cur_node, sizeof(before)) == 0);
     assert(puzzle.nodes_visited == visited);
     free_solution_storage(&puzzle);

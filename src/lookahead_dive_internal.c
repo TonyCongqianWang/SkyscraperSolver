@@ -36,29 +36,6 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	return (0);
 }
 
-static void	update_cache_entropy(t_node_order *cache, t_node_transition next,
-				int rem_entropy, int is_neg)
-{
-	int	i;
-
-	if (!cache)
-		return ;
-	i = 0;
-	while (i < cache->count)
-	{
-		if (cache->entries[i].cell_idx == next.cell_idx
-			&& cache->entries[i].cell_val == next.cell_val)
-		{
-			if (is_neg)
-				cache->meta[i].entropy_neg = rem_entropy;
-			else
-				cache->meta[i].entropy_pos = rem_entropy;
-			break ;
-		}
-		i++;
-	}
-}
-
 static int	begin_dive(t_puzzle *puzzle, int depth)
 {
 	int	is_neg;
@@ -73,23 +50,24 @@ static int	begin_dive(t_puzzle *puzzle, int depth)
 	return (is_neg);
 }
 
-t_dive_result	do_l_ahead_dive_internal(t_puzzle *puzzle,
-		t_node_transition next, int depth, t_check_mode mode)
+t_probe_result	search_probe(t_puzzle *puzzle, t_node_transition next,
+		int depth, t_check_mode mode)
 {
-	t_sol_info			local_sols;
-	t_node_state		old_state;
-	int					is_neg;
+	t_sol_info		local_sols;
+	t_node_state	saved;
+	t_probe_result	result;
 
-	old_state = *puzzle->cur_node;
-	is_neg = begin_dive(puzzle, depth);
-	local_sols = tree_recursion(puzzle, next, mode, is_neg);
+	saved = *puzzle->cur_node;
+	begin_dive(puzzle, depth);
+	local_sols = tree_recursion(puzzle, next, mode, depth < 0);
+	result.status = DIVE_FAIL;
+	result.remaining_entropy = -1;
 	if (local_sols.solutions_found > 0)
-		update_cache_entropy(old_state.order_cache, next,
-			puzzle->cur_node->remaining_entropy, is_neg);
-	*puzzle->cur_node = old_state;
+	{
+		result.status = DIVE_PASS;
+		result.remaining_entropy = puzzle->cur_node->remaining_entropy;
+	}
+	*puzzle->cur_node = saved;
 	sync_cache_stacks(puzzle);
-	if (local_sols.solutions_found > 0)
-		return (DIVE_PASS);
-	else
-		return (DIVE_FAIL);
+	return (result);
 }

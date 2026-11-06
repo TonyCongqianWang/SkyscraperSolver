@@ -81,10 +81,5 @@ void	run_lookahead(t_puzzle *puzzle, t_node_state *node,
 	if (passes == LOOKAHEAD_NONE)
 		return ;
 	execute_lookahead(puzzle, node, config, passes);
-	if (node->sub_node_depth == 0 && passes == LOOKAHEAD_BOTH)
-	{
-		node->order_cache->lookahead_build_entropy
-			= node->remaining_entropy;
-		node->order_cache->needs_rebuild = 1;
-	}
+	node_order_finish_lookahead(node, passes);
 }

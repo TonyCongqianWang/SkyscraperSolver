@@ -12,16 +12,20 @@
 
 #include "lookahead_dive_internal.h"
 
-t_dive_result	do_l_ahead_dive(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	probe_assumption(t_puzzle *puzzle, t_node_transition next,
 		int depth, t_check_mode mode)
 {
-	return (do_l_ahead_dive_internal(puzzle, next, depth, mode));
+	return (search_probe(puzzle, next, depth, mode));
 }
 
-t_dive_result	do_l_ahead_dive_neg(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	probe_exclusion(t_puzzle *puzzle, t_node_transition next,
 		int depth, t_check_mode mode)
 {
+	t_probe_result	result;
+
+	result.status = DIVE_SKIP;
+	result.remaining_entropy = -1;
 	if (puzzle->cur_node->is_in_neg_lookahead)
-		return (DIVE_SKIP);
-	return (do_l_ahead_dive_internal(puzzle, next, -depth, mode));
+		return (result);
+	return (search_probe(puzzle, next, -depth, mode));
 }

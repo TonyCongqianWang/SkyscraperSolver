@@ -32,6 +32,12 @@ int		get_max_allowed_pass(t_selectivity_level selectivity);
 void	init_order_stacks(t_puzzle *puzzle);
 int		get_cell_priority_pass(t_node_state *node, int cell_idx, int size);
 
+/* node_selection_cache_lookahead.c */
+void	node_order_record_probe(t_node_order *cache, t_node_transition next,
+			t_lookahead_pass pass, int entropy);
+void	node_order_finish_lookahead(t_node_state *node,
+			t_lookahead_pass passes);
+
 /* node_selection_cache_update.c */
 void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
 			t_node_select_config *config);
