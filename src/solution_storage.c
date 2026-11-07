@@ -34,7 +34,7 @@ void	free_solution_storage(t_puzzle *puzzle)
 
 void	store_node_if_solution(t_puzzle *puzzle)
 {
-	if (puzzle->cur_node->sub_node_depth == 0
+	if (puzzle->cur_node->tree.lookahead_depth == 0
 		&& !puzzle->cur_node->is_invalid
 		&& puzzle->cur_node->is_complete)
 	{
