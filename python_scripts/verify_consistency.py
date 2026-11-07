@@ -8,7 +8,10 @@ import os
 import hashlib
 
 def run_solver(binary, options, clues):
-    cmd = [binary] + shlex.split(options) + [clues]
+    # Legacy sets contain one bare clue sequence; mixed sets quote the edge
+    # sequence and given-cell sequence separately, as accepted by both CLIs.
+    puzzle_args = shlex.split(clues) if clues.startswith(('"', "'")) else [clues]
+    cmd = [binary] + shlex.split(options) + puzzle_args
     try:
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         stdout, stderr = proc.communicate()
@@ -109,7 +112,7 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
         return False
 
     with open(benchmark_file, "r") as stream:
-        clues = [line.strip().strip('"') for line in stream if line.strip()]
+        clues = [line.strip() for line in stream if line.strip()]
     with open(expected_file, "r") as stream:
         expected = [int(line.strip()) for line in stream if line.strip()]
 
@@ -164,7 +167,7 @@ def verify_file(benchmark_file, expected_file, candidate, reference, options, jo
 
 def main():
     parser = argparse.ArgumentParser(description="Verify solution count consistency between candidate and reference C solvers.")
-    parser.add_argument("benchmark_file", nargs="?", default=None, help="Path to the benchmark set file. If omitted, runs default Size 7 and Size 8 tests.")
+    parser.add_argument("benchmark_file", nargs="?", default=None, help="Path to the benchmark set file. If omitted, runs default Size 7, 8 and 9 tests.")
     parser.add_argument("-c", "--candidate", default="./skyscraper_solver", help="Path to the candidate solver binary.")
     parser.add_argument("-r", "--reference", default=None, help="Path to the reference solver binary (optional).")
     parser.add_argument("-e", "--expected", default=None, help="Path to the expected solution counts file.")
@@ -203,10 +206,11 @@ def main():
             sys.exit(0)
     else:
         # Run default sets
-        print("No benchmark file provided. Running default verification on Size 7 and Size 8 sets...")
+        print("No benchmark file provided. Running default verification on Size 7, 8 and 9 sets...")
         default_sets = [
             ("benchmark_sets/benchmarkSet7_easy500.txt", "benchmark_sets/_num_solutions_benchmarkSet7_easy500.txt"),
-            ("benchmark_sets/benchmarkSet8_easy50.txt", "benchmark_sets/_num_solutions_benchmarkSet8_easy50.txt")
+            ("benchmark_sets/benchmarkSet8_easy50.txt", "benchmark_sets/_num_solutions_benchmarkSet8_easy50.txt"),
+            ("benchmark_sets/benchmarkSet9_minimal20.txt", "benchmark_sets/_num_solutions_benchmarkSet9_minimal20.txt")
         ]
         all_success = True
         # Regression: the old finite-limit accounting returned only 1 for -s 2,

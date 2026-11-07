@@ -1,0 +1,156 @@
+{
+  "source": "puzzle_bank/unique/v1/minimal/size_9.json",
+  "selection": "First puzzle of each of the first 20 solution groups. Remove the first active edge clue on odd rows and first two on even rows, except row 18 uses one to keep exhaustive verification practical. Given cells are unchanged. Indices are zero-based in N, S, W, E order.",
+  "validation": "Each source has one solution with native -s 2. Each variant count agrees between exhaustive native C and OR-Tools CP-SAT 9.15.6755; CP-SAT returned OPTIMAL.",
+  "instances": [
+    {
+      "source_id": "s9-00001-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 148
+    },
+    {
+      "source_id": "s9-00002-p001",
+      "removed_clue_indices": [
+        2,
+        3
+      ],
+      "solutions": 302
+    },
+    {
+      "source_id": "s9-00003-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 5561
+    },
+    {
+      "source_id": "s9-00004-p001",
+      "removed_clue_indices": [
+        1,
+        2
+      ],
+      "solutions": 48
+    },
+    {
+      "source_id": "s9-00005-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 48
+    },
+    {
+      "source_id": "s9-00006-p001",
+      "removed_clue_indices": [
+        0,
+        2
+      ],
+      "solutions": 38
+    },
+    {
+      "source_id": "s9-00007-p001",
+      "removed_clue_indices": [
+        2
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s9-00008-p001",
+      "removed_clue_indices": [
+        0,
+        2
+      ],
+      "solutions": 1691
+    },
+    {
+      "source_id": "s9-00009-p001",
+      "removed_clue_indices": [
+        1
+      ],
+      "solutions": 126
+    },
+    {
+      "source_id": "s9-00010-p001",
+      "removed_clue_indices": [
+        0,
+        1
+      ],
+      "solutions": 569
+    },
+    {
+      "source_id": "s9-00011-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 1800
+    },
+    {
+      "source_id": "s9-00012-p001",
+      "removed_clue_indices": [
+        0,
+        1
+      ],
+      "solutions": 532
+    },
+    {
+      "source_id": "s9-00013-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 590
+    },
+    {
+      "source_id": "s9-00014-p001",
+      "removed_clue_indices": [
+        0,
+        1
+      ],
+      "solutions": 102
+    },
+    {
+      "source_id": "s9-00015-p001",
+      "removed_clue_indices": [
+        1
+      ],
+      "solutions": 129
+    },
+    {
+      "source_id": "s9-00016-p001",
+      "removed_clue_indices": [
+        1,
+        2
+      ],
+      "solutions": 13678
+    },
+    {
+      "source_id": "s9-00017-p001",
+      "removed_clue_indices": [
+        0
+      ],
+      "solutions": 518
+    },
+    {
+      "source_id": "s9-00018-p001",
+      "removed_clue_indices": [
+        1
+      ],
+      "solutions": 4271
+    },
+    {
+      "source_id": "s9-00019-p001",
+      "removed_clue_indices": [
+        3
+      ],
+      "solutions": 43
+    },
+    {
+      "source_id": "s9-00020-p001",
+      "removed_clue_indices": [
+        1,
+        2
+      ],
+      "solutions": 1555
+    }
+  ]
+}
