@@ -52,10 +52,10 @@ static void	execute_lookahead(t_puzzle *puzzle,
 	int						prev_selecting;
 
 	prev_ctx = node->lookahead_ctx;
-	prev_selectivity = node->lookahead_selectivity;
-	prev_selecting = node->is_in_lookahead_select;
-	node->is_in_lookahead_select = 1;
-	node->lookahead_selectivity = config->selectivity;
+	prev_selectivity = node->search_policy.branch.lookahead_selectivity;
+	prev_selecting = node->search_policy.branch.is_in_lookahead_select;
+	node->search_policy.branch.is_in_lookahead_select = 1;
+	node->search_policy.branch.lookahead_selectivity = config->selectivity;
 	prepare_lookahead_cache(puzzle, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	node->lookahead_ctx = &ctx;
@@ -64,8 +64,8 @@ static void	execute_lookahead(t_puzzle *puzzle,
 	if (passes & LOOKAHEAD_NEG)
 		probe_candidates(puzzle, &tr, config, LOOKAHEAD_NEG);
 	node->lookahead_ctx = prev_ctx;
-	node->is_in_lookahead_select = prev_selecting;
-	node->lookahead_selectivity = prev_selectivity;
+	node->search_policy.branch.is_in_lookahead_select = prev_selecting;
+	node->search_policy.branch.lookahead_selectivity = prev_selectivity;
 }
 
 void	run_lookahead(t_puzzle *puzzle, t_node_state *node,

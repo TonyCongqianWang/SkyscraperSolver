@@ -16,8 +16,8 @@ static void	check_initialized(t_puzzle *puzzle, int size)
 	assert(puzzle->cur_node->dirty_constrs.in_stack_bmp == 0);
 	assert(puzzle->cur_node->lookahead_ctx == NULL);
 	assert(puzzle->cur_node->is_in_neg_lookahead == 0);
-	assert(puzzle->cur_node->is_in_lookahead_select == 0);
-	assert(puzzle->cur_node->lookahead_selectivity == SELECTIVITY_NONE);
+	assert(puzzle->cur_node->search_policy.branch.is_in_lookahead_select == 0);
+	assert(puzzle->cur_node->search_policy.branch.lookahead_selectivity == SELECTIVITY_NONE);
 	assert(puzzle->order_stack.top_idx == 0);
 	assert(puzzle->order_stack.orders[0].count == 0);
 		idx = 0;

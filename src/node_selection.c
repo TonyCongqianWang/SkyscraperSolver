@@ -37,9 +37,9 @@ static void	init_select_config(t_puzzle *puzzle,
 
 	node = puzzle->cur_node;
 	select_node_select_config(puzzle, config);
-	if (node->is_in_lookahead_select)
+	if (node->search_policy.branch.is_in_lookahead_select)
 	{
-		config->selectivity = node->lookahead_selectivity;
+		config->selectivity = node->search_policy.branch.lookahead_selectivity;
 		if (g_lh_criterion_defined)
 			config->criterion = g_lh_criterion;
 	}

@@ -50,13 +50,13 @@ static void test_nested_dispatch_and_context_restore(void)
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->is_in_neg_lookahead = 1;
-    puzzle.cur_node->is_in_lookahead_select = 1;
-    puzzle.cur_node->lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
+    puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
+    puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
     puzzle.cur_node->lookahead_ctx = &outer;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
     assert(puzzle.cur_node->is_in_neg_lookahead == 1);
-    assert(puzzle.cur_node->is_in_lookahead_select == 1);
-    assert(puzzle.cur_node->lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
+    assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select == 1);
+    assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->lookahead_ctx == &outer);
     assert(cfg.passes == LOOKAHEAD_BOTH);
     cache = puzzle.cur_node->order_cache;
@@ -129,7 +129,7 @@ static void test_regular_dfs_branching_allowed(void)
     reset_puzzle();
     puzzle.cur_node->is_in_neg_lookahead = 1;
     puzzle.cur_node->cur_depth = 1;
-    puzzle.cur_node->max_depth = 3;
+    puzzle.cur_node->search_policy.limits.max_depth = 3;
     puzzle.cur_node->remaining_entropy = 0;
     init_sol_info(&frames[0].node_sols, puzzle.squared_size, 0);
     depth = 0;
