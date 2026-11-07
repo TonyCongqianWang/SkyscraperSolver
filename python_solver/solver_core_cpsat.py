@@ -34,7 +34,7 @@ def _build_integer_grid(model: cp_model.CpModel, puzzle: Puzzle) -> List[List[cp
     return grid
 
 
-def _build_boolean_channeling(model: cp_model.CpModel, grid: List[List[cp_model.IntVar]], n: int) -> Tuple[List[List[Dict[int, cp_model.BoolVar]]], List[List[Dict[int, cp_model.BoolVar]]]]:
+def _build_boolean_channeling(model: cp_model.CpModel, grid: List[List[cp_model.IntVar]], n: int) -> Tuple[List[List[Dict[int, cp_model.IntVar]]], List[List[Dict[int, cp_model.IntVar]]]]:
     """Generates the 3D boolean grids and channels them to the integer domains."""
     # Use dictionaries for the height dimension to strictly map 1 to n, avoiding unconstrained 0-index variables
     b_grid = [[{h: model.NewBoolVar(f"b_{r}_{c}_{h}") for h in range(1, n + 1)} for c in range(n)] for r in range(n)]
@@ -57,7 +57,7 @@ def _build_boolean_channeling(model: cp_model.CpModel, grid: List[List[cp_model.
 
 
 def _apply_line_shadow_visibility(model: cp_model.CpModel, coords: List[Tuple[int, int]], clue: int, n: int,
-                                  b_grid: List[List[Dict[int, cp_model.BoolVar]]], ge_grid: List[List[Dict[int, cp_model.BoolVar]]],
+                                  b_grid: List[List[Dict[int, cp_model.IntVar]]], ge_grid: List[List[Dict[int, cp_model.IntVar]]],
                                   direction: str, idx: int):
     """Encodes the Tseytin Prefix Shadow transformations and geometric constraints for a single line of sight."""
     vis_bits = [model.NewBoolVar(f"v_{direction}_{idx}_{i}") for i in range(n)]
@@ -108,7 +108,7 @@ def _apply_line_shadow_visibility(model: cp_model.CpModel, coords: List[Tuple[in
 
 
 def _apply_all_visibility_clues(model: cp_model.CpModel, puzzle: Puzzle,
-                                b_grid: List[List[List[cp_model.BoolVar]]], ge_grid: List[List[List[cp_model.BoolVar]]]):
+                                b_grid: List[List[Dict[int, cp_model.IntVar]]], ge_grid: List[List[Dict[int, cp_model.IntVar]]]):
     """Iterates through all puzzle perimeter definitions and applies the structural visibility constraints."""
     n = puzzle.n
     directions = {
