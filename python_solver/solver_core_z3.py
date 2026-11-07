@@ -1,4 +1,3 @@
-import math
 import random
 from typing import List, Tuple, Dict, Any
 from z3 import Solver, Int, And, Distinct, If, Or, Not, Bool, Implies
@@ -24,19 +23,11 @@ def _build_core_model(n: int, randomize: bool = False) -> Tuple[Solver, List[Lis
             for h in range(1, n + 1):
                 s.add(b_grid[r][c][h] == (grid[r][c] == h))
 
-    # 2. Sudoku Pigeonhole Injections (Hidden Single Accelerators)
+    # 2. Row/column pigeonhole constraints implied by the Latin square rules
     for r in range(n):
         for h in range(1, n + 1):
             s.add(Or([b_grid[r][c][h] for c in range(n)]))
             s.add(Or([b_grid[c][r][h] for c in range(n)]))
-
-    box_size = int(math.sqrt(n))
-    if box_size * box_size == n:
-        for b_r in range(box_size):
-            for b_c in range(box_size):
-                for h in range(1, n + 1):
-                    s.add(Or([b_grid[r][c][h] for r in range(b_r * box_size, (b_r + 1) * box_size)
-                                              for c in range(b_c * box_size, (b_c + 1) * box_size)]))
 
     return s, grid, b_grid
 
