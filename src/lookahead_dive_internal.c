@@ -28,10 +28,10 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	target_nunset = cur_node->num_unset - depth;
 	if (target_nunset <= 0)
 		target_nunset = 0;
-	cur_node->max_solutions = 1;
-	cur_node->target_nunset = target_nunset;
-	cur_node->max_depth = cur_node->cur_depth;
-	cur_node->max_depth += depth;
+	cur_node->search_policy.limits.max_solutions = 1;
+	cur_node->search_policy.limits.target_nunset = target_nunset;
+	cur_node->search_policy.limits.max_depth = cur_node->cur_depth;
+	cur_node->search_policy.limits.max_depth += depth;
 	cur_node->sub_node_depth++;
 	return (0);
 }

@@ -105,29 +105,44 @@ typedef struct s_lookahead_ctx
 	char					cell_passes[MAX_CELL_COUNT];
 }		t_lookahead_ctx;
 
+typedef struct s_branch_policy
+{
+	int						is_in_lookahead_select;
+	t_selectivity_level		lookahead_selectivity;
+}		t_branch_policy;
+
+typedef struct s_search_limits
+{
+	int						max_depth;
+	int						target_nunset;
+	t_sol_count				max_solutions;
+}		t_search_limits;
+
+typedef struct s_search_policy
+{
+	t_branch_policy			branch;
+	t_search_limits			limits;
+}		t_search_policy;
+
 typedef struct s_node_state
 {
 	int						size;
 	int						cur_depth;
-	int						max_depth;
 	int						last_set_idx;
 	int						is_complete;
 	int						is_invalid;
 	int						sub_node_depth;
-	int						target_nunset;
 	int						num_unset;
 	t_u16					rows_changed_since_prune;
 	t_u16					cols_changed_since_prune;
 	t_u16					rows_invalid_since_prune;
 	t_u16					cols_invalid_since_prune;
-	int						is_in_lookahead_select;
 	int						is_in_neg_lookahead;
-	t_selectivity_level		lookahead_selectivity;
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
 	int						remaining_entropy;
 	int						last_entropy[3];
-	t_sol_count				max_solutions;
+	t_search_policy			search_policy;
 	t_grid_state			grid;
 	t_constrs_state			constrs;
 	t_dirty_constr_stack	dirty_constrs;

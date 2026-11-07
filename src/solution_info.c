@@ -29,9 +29,9 @@ int	update_sol_info(t_sol_info *n_info, t_sol_info *o_info)
 
 int	check_sol_target(t_sol_info *info, t_node_state *node)
 {
-	if (node->max_solutions <= 0
-		|| info->solutions_found < node->max_solutions
-		|| info->min_nunset > node->target_nunset)
+	if (node->search_policy.limits.max_solutions <= 0
+		|| info->solutions_found < node->search_policy.limits.max_solutions
+		|| info->min_nunset > node->search_policy.limits.target_nunset)
 		return (0);
 	else
 		return (1);

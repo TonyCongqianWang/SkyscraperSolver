@@ -35,14 +35,14 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->sub_node_depth = 0;
 	node->cur_depth = 0;
 	node->last_set_idx = -1;
-	node->max_depth = size * size;
+	node->search_policy.limits.max_depth = size * size;
 	node->num_unset = size * size;
-	node->target_nunset = 0;
+	node->search_policy.limits.target_nunset = 0;
 	node->remaining_entropy = 0;
 	node->last_entropy[0] = 0;
 	node->last_entropy[1] = 0;
 	node->last_entropy[2] = 0;
-	node->max_solutions = node->puzzle->max_solutions;
+	node->search_policy.limits.max_solutions = node->puzzle->max_solutions;
 }
 
 static void	init_root_pruning_state(t_node_state *node)
@@ -57,9 +57,9 @@ static void	init_root_pruning_state(t_node_state *node)
 
 static void	init_root_selection_state(t_node_state *node)
 {
-	node->is_in_lookahead_select = 0;
+	node->search_policy.branch.is_in_lookahead_select = 0;
 	node->is_in_neg_lookahead = 0;
-	node->lookahead_selectivity = SELECTIVITY_NONE;
+	node->search_policy.branch.lookahead_selectivity = SELECTIVITY_NONE;
 	node->lookahead_ctx = NULL;
 	node->order_cache = &node->puzzle->order_stack.orders[0];
 }

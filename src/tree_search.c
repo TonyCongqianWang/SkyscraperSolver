@@ -22,7 +22,8 @@ int	has_reached_terminal_state(t_node_state *cur_node)
 {
 	int				is_leaf_node;
 
-	is_leaf_node = (cur_node->cur_depth >= cur_node->max_depth);
+	is_leaf_node = (cur_node->cur_depth
+			>= cur_node->search_policy.limits.max_depth);
 	is_leaf_node |= cur_node->is_complete;
 	is_leaf_node |= cur_node->is_invalid;
 	return (is_leaf_node);
