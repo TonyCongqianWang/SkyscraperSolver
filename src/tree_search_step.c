@@ -54,7 +54,7 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 		frames[*d - 1].next.cell_val, g_check_constr);
 	cur_node->cur_depth++;
 	puzzle->nodes_visited++;
-	if (cur_node->sub_node_depth == 0)
+	if (cur_node->tree.lookahead_depth == 0)
 		puzzle->main_nodes_visited++;
 }
 

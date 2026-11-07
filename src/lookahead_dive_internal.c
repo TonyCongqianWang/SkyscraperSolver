@@ -32,7 +32,7 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 	cur_node->search_policy.limits.target_nunset = target_nunset;
 	cur_node->search_policy.limits.max_depth = cur_node->cur_depth;
 	cur_node->search_policy.limits.max_depth += depth;
-	cur_node->sub_node_depth++;
+	cur_node->tree.lookahead_depth++;
 	return (0);
 }
 
@@ -43,7 +43,7 @@ static int	begin_dive(t_puzzle *puzzle, int depth)
 	is_neg = (depth < 0);
 	if (is_neg)
 	{
-		puzzle->cur_node->is_in_neg_lookahead = 1;
+		puzzle->cur_node->tree.neg_lookahead_depth++;
 		depth = -depth;
 	}
 	transition_node(puzzle, depth);

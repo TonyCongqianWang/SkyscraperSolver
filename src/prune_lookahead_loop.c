@@ -73,10 +73,11 @@ void	run_lookahead(t_puzzle *puzzle, t_node_state *node,
 {
 	t_lookahead_pass	passes;
 
-	if (should_exit_selectivity(node, config->selectivity))
+	if (node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
+		|| should_exit_selectivity(node, config->selectivity))
 		return ;
 	passes = config->passes;
-	if (node->is_in_neg_lookahead)
+	if (node->tree.neg_lookahead_depth >= MAX_NEG_LOOKAHEAD_DEPTH)
 		passes &= ~LOOKAHEAD_NEG;
 	if (passes == LOOKAHEAD_NONE)
 		return ;
