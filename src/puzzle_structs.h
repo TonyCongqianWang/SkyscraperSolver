@@ -124,6 +124,15 @@ typedef struct s_search_policy
 	t_search_limits			limits;
 }		t_search_policy;
 
+# define MAX_LOOKAHEAD_DEPTH 3
+# define MAX_NEG_LOOKAHEAD_DEPTH 1
+
+typedef struct s_tree_context
+{
+	int		lookahead_depth;
+	int		neg_lookahead_depth;
+}		t_tree_context;
+
 typedef struct s_node_state
 {
 	int						size;
@@ -131,17 +140,16 @@ typedef struct s_node_state
 	int						last_set_idx;
 	int						is_complete;
 	int						is_invalid;
-	int						sub_node_depth;
 	int						num_unset;
 	t_u16					rows_changed_since_prune;
 	t_u16					cols_changed_since_prune;
 	t_u16					rows_invalid_since_prune;
 	t_u16					cols_invalid_since_prune;
-	int						is_in_neg_lookahead;
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
 	int						remaining_entropy;
 	int						last_entropy[3];
+	t_tree_context			tree;
 	t_search_policy			search_policy;
 	t_grid_state			grid;
 	t_constrs_state			constrs;
