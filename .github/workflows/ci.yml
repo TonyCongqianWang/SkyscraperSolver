@@ -25,6 +25,7 @@ jobs:
     outputs:
       native: ${{ steps.filter.outputs.native }}
       python: ${{ steps.filter.outputs.python }}
+      python_solver: ${{ steps.filter.outputs.python_solver }}
       wasm: ${{ steps.filter.outputs.wasm }}
       pages: ${{ steps.filter.outputs.pages }}
       spsa: ${{ steps.filter.outputs.spsa }}
@@ -56,6 +57,8 @@ jobs:
               - 'python_scripts/**'
               - 'puzzle_bank/curated/**'
               - '.github/workflows/ci.yml'
+            python_solver:
+              - 'python_solver/**'
             wasm:
               - 'src/**'
               - 'web/wasm_api.c'
@@ -101,13 +104,34 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.13'
-      - name: Install solver dependencies
-        run: |
-          if [ -f python_solver/requirements.txt ]; then pip install -r python_solver/requirements.txt; fi
       - name: Build and verify
         run: |
           make
           make test
+
+  python-solver-verification:
+    name: Verify Python solver (${{ matrix.backend }})
+    needs: changes
+    if: needs.changes.outputs.python_solver == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        backend: [z3, cpsat]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: python_solver/requirements.txt
+      - name: Install solver dependencies
+        run: python -m pip install -r python_solver/requirements.txt pytest
+      - name: Run backend regression tests
+        run: python -m pytest python_scripts/tests/test_${{ matrix.backend }}_backend.py python_scripts/tests/test_python_solver_verification.py -q
+      - name: Verify exhaustive counts for sizes 7, 8 and 9
+        run: python python_solver/verify.py --backend ${{ matrix.backend }} --case-timeout 10 --total-timeout 180
 
   pytest:
     needs: changes
@@ -181,7 +205,7 @@ jobs:
 
   ci-gate:
     if: always()
-    needs: [changes, norminette-formatting, verify-correctness, pytest, spsa-tuning, wasm-build, pages-index-check]
+    needs: [changes, norminette-formatting, verify-correctness, python-solver-verification, pytest, spsa-tuning, wasm-build, pages-index-check]
     runs-on: ubuntu-24.04
     steps:
       - name: Require all selected checks to pass

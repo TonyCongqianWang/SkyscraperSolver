@@ -37,11 +37,13 @@ def test_mixed_puzzle_arguments_are_preserved():
         assert popen.call_args.args[0] == ["solver", "-s", "0", *args]
 
 
-def test_size9_fixture_matches_minimal_sources():
+@pytest.mark.parametrize("size", [7, 8, 9])
+def test_fixture_matches_minimal_sources(size):
     directory = ROOT / "benchmark_sets"
-    rows = (directory / "benchmarkSet9_minimal20.txt").read_text().splitlines()
-    counts = [int(v) for v in (directory / "_num_solutions_benchmarkSet9_minimal20.txt").read_text().splitlines()]
-    provenance = json.loads((directory / "benchmarkSet9_minimal20.json").read_text())
+    name = f"benchmarkSet{size}_" + ("minimal20" if size == 9 else "python20")
+    rows = (directory / f"{name}.txt").read_text().splitlines()
+    counts = [int(v) for v in (directory / f"_num_solutions_{name}.txt").read_text().splitlines()]
+    provenance = json.loads((directory / f"{name}.json").read_text())
     bank = json.loads((ROOT / provenance["source"]).read_text())
     sources = {p["id"]: p for g in bank["groups"] for p in g["puzzles"]}
     assert len(rows) == len(counts) == len(provenance["instances"]) == 20
@@ -50,10 +52,10 @@ def test_size9_fixture_matches_minimal_sources():
     for row, count, record in zip(rows, counts, provenance["instances"]):
         edges, givens = [list(map(int, arg.split())) for arg in shlex.split(row)]
         source = sources[record["source_id"]]
-        assert len(edges) == 36 and len(givens) == 81
+        assert len(edges) == 4 * size and len(givens) == size * size
         assert givens == source["givens"]
         removed = record["removed_clue_indices"]
-        assert len(removed) in (1, 2)
+        assert len(removed) == 1
         assert [i for i, (a, b) in enumerate(zip(source["clues"], edges)) if a != b] == removed
         assert all(source["clues"][i] > 0 and edges[i] == 0 for i in removed)
-        assert count == record["solutions"] > 1
+        assert count == record["solutions"] and 2 <= count <= 4

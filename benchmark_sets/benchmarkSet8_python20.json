@@ -1,0 +1,147 @@
+{
+  "source": "puzzle_bank/unique/v1/minimal/size_8.json",
+  "selection": "Sort solution groups by (first puzzle nodes_visited, group ID). For each first puzzle, try removing active edge clues in index order, retaining the first variant with 2-4 exhaustive solutions and both Python CLI runtimes under 4 seconds. Keep one variant per group until 20 pass. Givens are unchanged. Timing-based acceptance may vary by machine. Indices are zero-based N, S, W, E.",
+  "validation": "Each source checked unique with native -s 2. Each variant exhaustively matched across native C, explicit Z3, and explicit CP-SAT. Measured seconds include Python CLI startup.",
+  "instances": [
+    {
+      "source_id": "s8-00237-p001",
+      "removed_clue_indices": [
+        5
+      ],
+      "solutions": 4
+    },
+    {
+      "source_id": "s8-00694-p001",
+      "removed_clue_indices": [
+        10
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00869-p001",
+      "removed_clue_indices": [
+        10
+      ],
+      "solutions": 4
+    },
+    {
+      "source_id": "s8-00097-p001",
+      "removed_clue_indices": [
+        9
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00005-p001",
+      "removed_clue_indices": [
+        23
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00997-p001",
+      "removed_clue_indices": [
+        13
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00233-p001",
+      "removed_clue_indices": [
+        7
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00060-p001",
+      "removed_clue_indices": [
+        6
+      ],
+      "solutions": 4
+    },
+    {
+      "source_id": "s8-00443-p001",
+      "removed_clue_indices": [
+        11
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00817-p001",
+      "removed_clue_indices": [
+        9
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00098-p001",
+      "removed_clue_indices": [
+        9
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00200-p001",
+      "removed_clue_indices": [
+        11
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00482-p001",
+      "removed_clue_indices": [
+        13
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00366-p001",
+      "removed_clue_indices": [
+        3
+      ],
+      "solutions": 4
+    },
+    {
+      "source_id": "s8-00738-p001",
+      "removed_clue_indices": [
+        14
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00389-p001",
+      "removed_clue_indices": [
+        19
+      ],
+      "solutions": 4
+    },
+    {
+      "source_id": "s8-00026-p001",
+      "removed_clue_indices": [
+        28
+      ],
+      "solutions": 3
+    },
+    {
+      "source_id": "s8-00864-p001",
+      "removed_clue_indices": [
+        8
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-00153-p001",
+      "removed_clue_indices": [
+        21
+      ],
+      "solutions": 2
+    },
+    {
+      "source_id": "s8-01000-p001",
+      "removed_clue_indices": [
+        25
+      ],
+      "solutions": 3
+    }
+  ]
+}
