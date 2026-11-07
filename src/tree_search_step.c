@@ -48,7 +48,8 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 	puzzle->cur_node = &puzzle->node_stack[*d];
 	cur_node = puzzle->cur_node;
 	if (cur_node->search_policy.limits.max_solutions > 0)
-		cur_node->search_policy.limits.max_solutions -= frames[*d - 1].node_sols.solutions_found;
+		cur_node->search_policy.limits.max_solutions
+			-= frames[*d - 1].node_sols.solutions_found;
 	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
 		frames[*d - 1].next.cell_val, g_check_constr);
 	cur_node->cur_depth++;

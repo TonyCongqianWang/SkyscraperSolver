@@ -76,7 +76,8 @@ int	solve_puzzle(t_puzzle *puzzle, int max_depth)
 		return (0);
 	if (max_depth >= 0)
 	{
-		puzzle->cur_node->search_policy.limits.target_nunset = puzzle->squared_size - max_depth;
+		puzzle->cur_node->search_policy.limits.target_nunset
+			= puzzle->squared_size - max_depth;
 		puzzle->cur_node->search_policy.limits.max_depth = max_depth;
 	}
 	node_sols = tree_search(puzzle);

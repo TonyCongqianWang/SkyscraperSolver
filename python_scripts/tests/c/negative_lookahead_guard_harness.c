@@ -124,6 +124,7 @@ static void test_subnode_both_sides_does_not_mark_cache(void)
 static void test_regular_dfs_branching_allowed(void)
 {
     t_search_frame frames[2];
+    t_search_policy parent_policy;
     int depth;
 
     reset_puzzle();
@@ -131,12 +132,23 @@ static void test_regular_dfs_branching_allowed(void)
     puzzle.cur_node->cur_depth = 1;
     puzzle.cur_node->search_policy.limits.max_depth = 3;
     puzzle.cur_node->remaining_entropy = 0;
+    puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
+    puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
+    parent_policy = puzzle.cur_node->search_policy;
     init_sol_info(&frames[0].node_sols, puzzle.squared_size, 0);
     depth = 0;
     assert(process_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
     assert(depth == 1);
     assert(puzzle.cur_node == &puzzle.node_stack[1]);
     assert(puzzle.cur_node->is_in_neg_lookahead == 1);
+    assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select
+        == parent_policy.branch.is_in_lookahead_select);
+    assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity
+        == parent_policy.branch.lookahead_selectivity);
+    assert(puzzle.cur_node->search_policy.limits.max_depth
+        == parent_policy.limits.max_depth);
+    assert(puzzle.node_stack[0].search_policy.limits.max_solutions
+        == parent_policy.limits.max_solutions);
     free_solution_storage(&puzzle);
 }
 
