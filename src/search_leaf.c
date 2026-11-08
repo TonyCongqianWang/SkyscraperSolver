@@ -35,6 +35,7 @@ t_sol_info	handle_leaf_node(t_solver_state *puzzle)
 
 	cur_node = puzzle->cur_node;
 	init_sol_info(&node_sols, cur_node->domain.is_invalid, 0);
+	node_sols.min_valid_depth = get_valid_depth(cur_node);
 	if (!cur_node->domain.is_invalid && cur_node->domain.is_complete)
 	{
 		node_sols.solutions_registered = store_node_if_solution(puzzle);

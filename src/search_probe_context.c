@@ -30,7 +30,6 @@ static void	prepare_probe(t_solver_state *puzzle, int depth)
 	node->search_policy.mode = SEARCH_DFS;
 	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
 	node->search_policy.branch.eligibility = CANDIDATES_VALID;
-	node->search_policy.limits.max_solutions = 1;
 	set_search_bounds(node, node->tree.depth + depth, target);
 	node->tree.lookahead_depth++;
 }
