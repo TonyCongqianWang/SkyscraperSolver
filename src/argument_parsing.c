@@ -22,9 +22,9 @@ skyscraper_solver [-s <max_num_solutions>] <constrait_vals> [<grid_vals>]"
 
 static int	has_set_max_solution_flag(int argc, char **argv);
 static int	is_correct_argument_count(int argc, char **argv);
-static int	parse_grid_argument(t_puzzle *puzzle, char *grid);
+static int	parse_grid_argument(t_solver_state *puzzle, char *grid);
 
-int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv)
+int	init_puzzle_from_argv(t_solver_state *puzzle, int argc, char **argv)
 {
 	char	*constr;
 	char	*grid;
@@ -71,7 +71,7 @@ static int	is_correct_argument_count(int argc, char **argv)
 	return (1);
 }
 
-static int	parse_grid_argument(t_puzzle *puzzle, char *grid)
+static int	parse_grid_argument(t_solver_state *puzzle, char *grid)
 {
 	if (grid)
 	{

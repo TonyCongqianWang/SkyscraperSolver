@@ -33,13 +33,13 @@ void	update_cell_bounds(t_node_state *state, int idx)
 	}
 	lb &= 0x0F;
 	ub = (ub & 0x0F) << 4;
-	state->grid.cell_bounds[idx] = lb;
-	state->grid.cell_bounds[idx] |= ub;
+	state->domain.cell_bounds[idx] = lb;
+	state->domain.cell_bounds[idx] |= ub;
 }
 
 void	get_cell_bounds(t_node_state *state, int idx, short *lb, short *ub)
 {
-	*lb = state->grid.cell_bounds[idx] & 0x0F;
-	*ub = state->grid.cell_bounds[idx] & 0xF0;
+	*lb = state->domain.cell_bounds[idx] & 0x0F;
+	*ub = state->domain.cell_bounds[idx] & 0xF0;
 	*ub >>= 4;
 }

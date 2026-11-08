@@ -37,7 +37,7 @@ static void check_cell(int size, int row, int col)
 
 static void check_order(int size)
 {
-    static t_puzzle puzzle;
+    static t_solver_state puzzle;
     int seen[MAX_CELL_COUNT] = {0};
     int i;
     int idx;

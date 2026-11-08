@@ -16,8 +16,8 @@
 # include "puzzle_structs.h"
 
 t_line_order	*get_line_order(t_node_state *node);
-void			init_line_order_stack(t_puzzle *puzzle);
-void			copy_line_order(t_puzzle *puzzle, int parent_idx);
+void			init_line_order_stack(t_solver_state *puzzle);
+void			copy_line_order(t_solver_state *puzzle, int parent_idx);
 void			sort_line_order(t_node_state *node);
 
 #endif

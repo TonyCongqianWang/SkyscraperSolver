@@ -15,7 +15,7 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
-int	get_best_from_cache(t_puzzle *puzzle, t_node_transition *next,
+int	get_best_from_cache(t_solver_state *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_state	*node;

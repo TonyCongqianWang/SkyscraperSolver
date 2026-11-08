@@ -16,7 +16,7 @@
 
 int	is_cell_empty(t_node_state *state, int cell_idx)
 {
-	return (state->grid.vals[cell_idx] == 0);
+	return (state->domain.vals[cell_idx] == 0);
 }
 
 int	is_valid_value(t_node_state *state, int cell_idx, int val)
@@ -25,7 +25,7 @@ int	is_valid_value(t_node_state *state, int cell_idx, int val)
 	short	bitmap;
 
 	bitmask = 1 << (val - 1);
-	bitmap = state->grid.valid_val_bmps[cell_idx];
+	bitmap = state->domain.valid_val_bmps[cell_idx];
 	return (bitmask & bitmap);
 }
 
@@ -33,19 +33,19 @@ int	get_col_num_valids(t_node_state *state, int cell_idx, int val)
 {
 	int		constr_idx;
 
-	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
-	return (state->constrs.num_val_positions[constr_idx][val - 1]);
+	constr_idx = state->solver->grid_constr_map[cell_idx][0];
+	return (state->domain.constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
 {
 	int		constr_idx;
 
-	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
-	return (state->constrs.num_val_positions[constr_idx][val - 1]);
+	constr_idx = state->solver->grid_constr_map[cell_idx][1];
+	return (state->domain.constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 int	get_cell_num_valids(t_node_state *state, int idx)
 {
-	return (state->grid.num_cell_vals[idx]);
+	return (state->domain.num_cell_vals[idx]);
 }

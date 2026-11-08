@@ -15,6 +15,6 @@
 # include "puzzle_structs.h"
 
 void	init_node_transition(t_node_transition *tr);
-void	sync_cache_stacks(t_puzzle *puzzle);
+void	sync_cache_stacks(t_solver_state *puzzle);
 
 #endif

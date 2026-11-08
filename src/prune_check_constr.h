@@ -25,16 +25,16 @@ typedef struct s_dp_tables
 
 typedef struct s_prune_args
 {
-	t_puzzle		*puzzle;
-	t_node_state	*state;
-	t_dp_tables		*dp;
-	int				*grid_indices;
-	int				size;
-	int				target_clue;
+	t_solver_state		*solver;
+	t_node_state		*state;
+	t_dp_tables			*dp;
+	int					*grid_indices;
+	int					size;
+	int					target_clue;
 }	t_prune_args;
 
-void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
-			t_constr_limits *limits);
+void	prune_check_constr(t_solver_state *puzzle,
+			t_selectivity_level selectivity, t_constr_limits *limits);
 void	init_dp_tables(t_dp_tables *dp, int size);
 void	fill_pref_dp(t_dp_tables *dp, int *cell_domains, int size);
 void	fill_suff_dp(t_dp_tables *dp, int *cell_domains, int size);
@@ -42,10 +42,10 @@ int		collect_domains(t_node_state *state, int *grid_indices,
 			int size, int *cell_domains);
 int		prune_candidates(t_prune_args *args);
 int		propagate_single_direction(t_prune_args *args);
-int		process_constraint(t_puzzle *puzzle, int idx, int size,
+int		process_constraint(t_solver_state *puzzle, int idx, int size,
 			t_constr_limits *limits);
-void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size);
-int		check_ratios(t_puzzle *puzzle, int constr_idx, int size,
+void	copy_indices(t_solver_state *puzzle, int *grid, int *rev, int size);
+int		check_ratios(t_solver_state *puzzle, int constr_idx, int size,
 			t_constr_limits *limits);
 int		run_propagate(t_prune_args *args, int clue, int *indices);
 

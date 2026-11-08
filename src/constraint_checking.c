@@ -14,7 +14,7 @@
 #include "constraint_selection.h"
 #include "constraint_update.h"
 
-int	check_constraints(t_puzzle *puzzle, int insert_idx)
+int	check_constraints(t_solver_state *puzzle, int insert_idx)
 {
 	int					rel_idx;
 	int					abs_idx;
@@ -34,7 +34,7 @@ int	check_constraints(t_puzzle *puzzle, int insert_idx)
 	return (1);
 }
 
-int	check_active_constr(t_puzzle *puzzle)
+int	check_active_constr(t_solver_state *puzzle)
 {
 	int					sub_idx;
 	int					grid_idx;

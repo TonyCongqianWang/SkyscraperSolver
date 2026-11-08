@@ -35,8 +35,8 @@ void	push_dirty_constraints(t_node_state *state, int cell_idx)
 	rel = 0;
 	while (rel < 2)
 	{
-		constr_idx = state->puzzle->grid_constr_map[cell_idx][rel];
-		pair = &state->puzzle->constraint_pairs[constr_idx];
+		constr_idx = state->solver->grid_constr_map[cell_idx][rel];
+		pair = &state->solver->constraint_pairs[constr_idx];
 		if (pair->fwd_val != 0)
 			push_entry(stack, constr_idx * 2);
 		if (pair->bwd_val != 0)

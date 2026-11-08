@@ -38,8 +38,8 @@ void	node_order_record_probe(t_node_order *cache, t_node_transition next,
 void	node_order_finish_lookahead(t_node_state *node,
 			t_lookahead_pass passes)
 {
-	if (node->sub_node_depth != 0 || passes != LOOKAHEAD_BOTH)
+	if (node->tree.lookahead_depth != 0 || passes != LOOKAHEAD_BOTH)
 		return ;
-	node->order_cache->lookahead_build_entropy = node->remaining_entropy;
+	node->order_cache->lookahead_build_entropy = node->domain.remaining_entropy;
 	node->order_cache->needs_rebuild = 1;
 }

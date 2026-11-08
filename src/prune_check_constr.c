@@ -16,25 +16,25 @@
 #include "check_node_validity.h"
 #include "line_order.h"
 
-static int	do_prop(t_puzzle *puzzle, int *clues, int *grid, int *rev)
+static int	do_prop(t_solver_state *puzzle, int *clues, int *grid, int *rev)
 {
 	t_prune_args	args;
 	int				changed;
 
 	changed = 0;
-	args.puzzle = puzzle;
+	args.solver = puzzle;
 	args.state = puzzle->cur_node;
 	args.size = puzzle->cur_node->size;
 	if (run_propagate(&args, clues[0], grid))
 		changed = 1;
-	if (puzzle->cur_node->is_invalid)
+	if (puzzle->cur_node->domain.is_invalid)
 		return (changed);
 	if (run_propagate(&args, clues[1], rev))
 		changed = 1;
 	return (changed);
 }
 
-int	process_constraint(t_puzzle *puzzle, int idx, int size,
+int	process_constraint(t_solver_state *puzzle, int idx, int size,
 		t_constr_limits *limits)
 {
 	int				grid_indices[MAX_SIZE];
@@ -50,7 +50,7 @@ int	process_constraint(t_puzzle *puzzle, int idx, int size,
 	return (do_prop(puzzle, clues, grid_indices, rev_indices));
 }
 
-static int	check_constr_lines(t_puzzle *puzzle, t_node_state *state,
+static int	check_constr_lines(t_solver_state *puzzle, t_node_state *state,
 				t_selectivity_level selectivity, t_constr_limits *limits)
 {
 	t_line_order	*order;
@@ -61,7 +61,7 @@ static int	check_constr_lines(t_puzzle *puzzle, t_node_state *state,
 	order = get_line_order(state);
 	changed = 0;
 	i = 0;
-	while (i < order->count && !state->is_invalid)
+	while (i < order->count && !state->domain.is_invalid)
 	{
 		idx = order->entries[i].constr_idx;
 		if (should_process_line(state, idx, selectivity))
@@ -74,8 +74,8 @@ static int	check_constr_lines(t_puzzle *puzzle, t_node_state *state,
 	return (changed);
 }
 
-void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
-			t_constr_limits *limits)
+void	prune_check_constr(t_solver_state *puzzle,
+			t_selectivity_level selectivity, t_constr_limits *limits)
 {
 	t_node_state	*state;
 	int				changed;
@@ -86,7 +86,7 @@ void	prune_check_constr(t_puzzle *puzzle, t_selectivity_level selectivity,
 		return ;
 	changed = 1;
 	iterations = 0;
-	while (changed && !state->is_invalid && iterations++ < 100)
+	while (changed && !state->domain.is_invalid && iterations++ < 100)
 	{
 		changed = check_constr_lines(puzzle, state, selectivity, limits);
 	}

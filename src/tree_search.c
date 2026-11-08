@@ -22,28 +22,28 @@ int	has_reached_terminal_state(t_node_state *cur_node)
 {
 	int				is_leaf_node;
 
-	is_leaf_node = (cur_node->cur_depth
+	is_leaf_node = (cur_node->tree.depth
 			>= cur_node->search_policy.limits.max_depth);
-	is_leaf_node |= cur_node->is_complete;
-	is_leaf_node |= cur_node->is_invalid;
+	is_leaf_node |= cur_node->domain.is_complete;
+	is_leaf_node |= cur_node->domain.is_invalid;
 	return (is_leaf_node);
 }
 
-t_sol_info	handle_leaf_node(t_puzzle *puzzle)
+t_sol_info	handle_leaf_node(t_solver_state *puzzle)
 {
 	t_node_state	*cur_node;
 	t_sol_info		node_sols;
 
 	cur_node = puzzle->cur_node;
-	if (cur_node->is_invalid)
+	if (cur_node->domain.is_invalid)
 		init_sol_info(&node_sols, puzzle->squared_size, 0);
 	else
-		init_sol_info(&node_sols, cur_node->num_unset, 1);
+		init_sol_info(&node_sols, cur_node->domain.num_unset, 1);
 	store_node_if_solution(puzzle);
 	return (node_sols);
 }
 
-t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next,
+t_sol_info	tree_recursion(t_solver_state *puzzle, t_node_transition next,
 				t_check_mode mode, int is_neg)
 {
 	if (has_reached_terminal_state(puzzle->cur_node))
@@ -52,11 +52,11 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next,
 		set_cell_invalid(puzzle, next.cell_idx, next.cell_val, mode);
 	else
 		set_cell_val(puzzle, next.cell_idx, next.cell_val, mode);
-	puzzle->cur_node->cur_depth++;
+	puzzle->cur_node->tree.depth++;
 	return (tree_search(puzzle));
 }
 
-t_sol_info	tree_search(t_puzzle *puzzle)
+t_sol_info	tree_search(t_solver_state *puzzle)
 {
 	t_search_frame		frames[MAX_STACK_DEPTH];
 	int					d;
@@ -65,7 +65,7 @@ t_sol_info	tree_search(t_puzzle *puzzle)
 	start_d = puzzle->node_stack_top;
 	d = start_d;
 	puzzle->nodes_visited++;
-	if (puzzle->cur_node->sub_node_depth == 0)
+	if (puzzle->cur_node->tree.lookahead_depth == 0)
 		puzzle->main_nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));

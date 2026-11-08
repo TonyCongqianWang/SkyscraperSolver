@@ -13,7 +13,7 @@
 #include "print_grid.h"
 #include "print_io.h"
 
-void	print_solution_grid(t_puzzle *puzzle, int append_nl)
+void	print_solution_grid(t_solver_state *puzzle, int append_nl)
 {
 	int		counter;
 	char	val;
@@ -21,7 +21,7 @@ void	print_solution_grid(t_puzzle *puzzle, int append_nl)
 	counter = 0;
 	while (counter < puzzle->squared_size)
 	{
-		val = '0' + puzzle->cur_node->grid.vals[counter];
+		val = '0' + puzzle->cur_node->domain.vals[counter];
 		put_char(val);
 		if (counter % puzzle->size != puzzle->size - 1)
 		{

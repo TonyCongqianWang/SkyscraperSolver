@@ -12,9 +12,10 @@
 
 #include "rule_checking.h"
 
-static int	is_rule_violated(t_puzzle *puzzle, int constr_idx, int reverse);
+static int	is_rule_violated(t_solver_state *puzzle, int constr_idx,
+				int reverse);
 
-int	check_rule_violations(t_puzzle *puzzle)
+int	check_rule_violations(t_solver_state *puzzle)
 {
 	int		constr_idx;
 
@@ -54,7 +55,8 @@ static int	try_add_value(t_constr_check_state *state, int val)
 	return (1);
 }
 
-static int	is_rule_violated(t_puzzle *puzzle, int constr_idx, int reverse)
+static int	is_rule_violated(t_solver_state *puzzle, int constr_idx,
+			int reverse)
 {
 	t_constr_check_state	state;
 	int						idx;
@@ -70,7 +72,7 @@ static int	is_rule_violated(t_puzzle *puzzle, int constr_idx, int reverse)
 			grid_idx = state.constr_pair.grid_indeces[idx];
 		else
 			grid_idx = state.constr_pair.grid_indeces[puzzle->size - idx - 1];
-		grid_val = puzzle->cur_node->grid.vals[grid_idx];
+		grid_val = puzzle->cur_node->domain.vals[grid_idx];
 		if (!try_add_value(&state, grid_val))
 			return (1);
 		idx++;

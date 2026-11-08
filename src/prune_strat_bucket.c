@@ -44,7 +44,7 @@ static void	populate_limits(t_prune_limits *lim, int b)
 		= g_depth_lookahead_gac_global_min_entropy[b];
 }
 
-static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy,
+static int	run_tier(t_solver_state *puzzle, int tier, int remaining_entropy,
 				int b)
 {
 	t_prune_routine_cfg	cfg;
@@ -53,41 +53,43 @@ static int	run_tier(t_puzzle *puzzle, int tier, int remaining_entropy,
 	init_prune_cfg(&cfg, get_prune_tier_selectivity(tier));
 	populate_limits(&lim, b);
 	setup_cfg_thresholds(&cfg, &lim, remaining_entropy);
-	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->num_unset, puzzle->size);
+	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->domain.num_unset,
+		puzzle->size);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 
-static double	calc_period(t_puzzle *puzzle, t_node_state *node, int b)
+static double	calc_period(t_solver_state *puzzle, t_node_state *node, int b)
 {
 	double	raw;
 	int		rem;
 
-	rem = node->remaining_entropy;
+	rem = node->domain.remaining_entropy;
 	if (rem < 1)
 		rem = 1;
 	raw = (double)(puzzle->max_entropy - rem) / rem;
 	return (g_depth_period_coef_scale[b] * dpow075_approx(raw)
 		+ g_depth_period_coef_unset[b]
-		* (puzzle->squared_size - node->num_unset));
+		* (puzzle->squared_size - node->domain.num_unset));
 }
 
-int	prune_strat_depth_bucket(t_puzzle *puzzle, int b)
+int	prune_strat_depth_bucket(t_solver_state *puzzle, int b)
 {
 	t_node_state	*node;
 	double			period;
 
 	node = puzzle->cur_node;
-	if (node->is_invalid || node->is_complete || node->num_unset == 0
-		|| node->remaining_entropy < g_depth_min_entropy[b])
+	if (node->domain.is_invalid || node->domain.is_complete
+		|| node->domain.num_unset == 0
+		|| node->domain.remaining_entropy < g_depth_min_entropy[b])
 		return (0);
 	period = calc_period(puzzle, node, b);
-	if (node->last_entropy[0] - node->remaining_entropy > period)
-		return (run_tier(puzzle, 0, node->remaining_entropy, b));
-	if (node->last_entropy[1] - node->remaining_entropy
+	if (node->last_entropy[0] - node->domain.remaining_entropy > period)
+		return (run_tier(puzzle, 0, node->domain.remaining_entropy, b));
+	if (node->last_entropy[1] - node->domain.remaining_entropy
 		> period * g_depth_period_tier_medium_mult[b])
-		return (run_tier(puzzle, 1, node->remaining_entropy, b));
-	if (node->last_entropy[2] - node->remaining_entropy
+		return (run_tier(puzzle, 1, node->domain.remaining_entropy, b));
+	if (node->last_entropy[2] - node->domain.remaining_entropy
 		> period * g_depth_period_tier_heavy_mult[b])
-		return (run_tier(puzzle, 2, node->remaining_entropy, b));
+		return (run_tier(puzzle, 2, node->domain.remaining_entropy, b));
 	return (0);
 }

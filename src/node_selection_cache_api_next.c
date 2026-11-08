@@ -39,7 +39,7 @@ int	get_max_allowed_pass(t_selectivity_level selectivity)
 	return (3);
 }
 
-static int	get_next_in_pass(t_puzzle *puzzle, t_node_transition *next,
+static int	get_next_in_pass(t_solver_state *puzzle, t_node_transition *next,
 				int *i, int pass)
 {
 	t_node_state	*node;
@@ -88,7 +88,7 @@ static void	get_resume_pos(t_node_state *node, t_node_transition *next,
 	}
 }
 
-int	get_next_from_cache(t_puzzle *puzzle, t_node_transition *next,
+int	get_next_from_cache(t_solver_state *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_state	*node;

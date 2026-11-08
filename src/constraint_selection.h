@@ -14,8 +14,8 @@
 # define CONSTRAINT_SELECTION_H
 # include "puzzle_structs.h"
 
-void	set_active_constraint(t_puzzle *puzzle, int constr_idx);
-void	reverse_constr_direction(t_puzzle *constr);
-void	reset_constraint_bounds(t_puzzle *puzzle);
+void	set_active_constraint(t_solver_state *puzzle, int constr_idx);
+void	reverse_constr_direction(t_solver_state *constr);
+void	reset_constraint_bounds(t_solver_state *puzzle);
 
 #endif

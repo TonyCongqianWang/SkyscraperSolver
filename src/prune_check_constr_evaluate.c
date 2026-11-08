@@ -20,8 +20,8 @@ static int	get_cell_domain(t_node_state *state, int cell_idx, int size)
 	int	v;
 
 	domain_mask = 0;
-	if (state->grid.vals[cell_idx] != 0)
-		return (1 << (state->grid.vals[cell_idx] - 1));
+	if (state->domain.vals[cell_idx] != 0)
+		return (1 << (state->domain.vals[cell_idx] - 1));
 	v = 1;
 	while (v <= size)
 	{
@@ -44,7 +44,7 @@ int	collect_domains(t_node_state *state, int *grid_indices,
 		mask = get_cell_domain(state, grid_indices[i], size);
 		if (mask == 0)
 		{
-			state->is_invalid = 1;
+			state->domain.is_invalid = 1;
 			return (0);
 		}
 		cell_domains[i] = mask;
@@ -113,13 +113,13 @@ int	prune_candidates(t_prune_args *args)
 	while (i < args->size)
 	{
 		cell = args->grid_indices[i];
-		if (args->state->grid.vals[cell] == 0)
+		if (args->state->domain.vals[cell] == 0)
 			collect_cell_prunes(args, i, updates, &count);
 		i++;
 	}
 	if (count > 0)
 	{
-		set_cells_invalid_batch(args->puzzle, updates, count, g_check_none);
+		set_cells_invalid_batch(args->solver, updates, count, g_check_none);
 		return (1);
 	}
 	return (0);

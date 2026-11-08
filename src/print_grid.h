@@ -14,6 +14,6 @@
 # define PRINT_GRID_H
 # include "puzzle_structs.h"
 
-void	print_solution_grid(t_puzzle *grid, int append_nl);
+void	print_solution_grid(t_solver_state *grid, int append_nl);
 
 #endif

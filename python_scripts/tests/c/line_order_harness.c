@@ -11,7 +11,7 @@
 #include "check_node_validity.h"
 #include "selectivity.h"
 
-static t_puzzle puzzle;
+static t_solver_state puzzle;
 
 static void reset_puzzle(int size)
 {
@@ -24,7 +24,7 @@ static void set_line_count(t_node_state *node, int line, int count)
     int value;
 
     for (value = 0; value < node->size; value++)
-        node->constrs.num_val_positions[line][value] = count;
+        node->domain.constrs.num_val_positions[line][value] = count;
 }
 
 static void check_order(t_node_state *node)
@@ -122,7 +122,7 @@ static void test_branch_isolation_and_restoration(void)
     parent_cache = *puzzle.cur_node->order_cache;
     puzzle.node_stack[1] = puzzle.node_stack[0];
     puzzle.cur_node = &puzzle.node_stack[1];
-    puzzle.cur_node->cur_depth = 1;
+    puzzle.cur_node->tree.depth = 1;
     puzzle.node_stack_top = 1;
     set_line_count(puzzle.cur_node, 6, 1);
     assert(get_line_order(puzzle.cur_node) == &puzzle.line_order_stack.orders[1]);
@@ -140,7 +140,7 @@ static void test_branch_isolation_and_restoration(void)
     assert(memcmp(get_line_order(puzzle.cur_node), &parent_order, sizeof(parent_order)) == 0);
     puzzle.node_stack[1] = puzzle.node_stack[0];
     puzzle.cur_node = &puzzle.node_stack[1];
-    puzzle.cur_node->cur_depth = 1;
+    puzzle.cur_node->tree.depth = 1;
     build_node_order(&puzzle, &config);
     check_order(puzzle.cur_node);
     assert(memcmp(get_line_order(puzzle.cur_node), &parent_order, sizeof(parent_order)) == 0);
@@ -162,11 +162,11 @@ static void test_lookahead_restoration(void)
     old_top = puzzle.order_stack.top_idx;
     probe_assumption(&puzzle, next, 2, g_check_constr);
     assert(puzzle.order_stack.top_idx == old_top);
-    assert(puzzle.cur_node->cur_depth == 0);
+    assert(puzzle.cur_node->tree.depth == 0);
     assert(memcmp(get_line_order(puzzle.cur_node), &snapshot, sizeof(snapshot)) == 0);
     probe_exclusion(&puzzle, next, 2, g_check_constr);
     assert(puzzle.order_stack.top_idx == old_top);
-    assert(puzzle.cur_node->cur_depth == 0);
+    assert(puzzle.cur_node->tree.depth == 0);
     assert(memcmp(get_line_order(puzzle.cur_node), &snapshot, sizeof(snapshot)) == 0);
     free_solution_storage(&puzzle);
 }

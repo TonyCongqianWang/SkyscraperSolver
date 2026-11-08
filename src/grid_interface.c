@@ -19,50 +19,53 @@ const t_check_mode	g_check_none = {
 const t_check_mode	g_check_constr = {
 	1, 0, 0, 0, 0.0, {0.35, 0.70, 0}, {0.35, 0.70, 0}};
 
-int	set_cell_val(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
+int	set_cell_val(t_solver_state *puzzle, int cell_idx, int val,
+		t_check_mode mode)
 {
 	set_grid_val_internal(puzzle->cur_node, cell_idx, val, 0);
 	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
-	return (!puzzle->cur_node->is_invalid);
+	return (!puzzle->cur_node->domain.is_invalid);
 }
 
-int	set_cell_invalid(t_puzzle *puzzle, int cell_idx, int val, t_check_mode mode)
+int	set_cell_invalid(t_solver_state *puzzle, int cell_idx, int val,
+		t_check_mode mode)
 {
 	set_value_invalid_internal(puzzle->cur_node, cell_idx, val);
 	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
-	return (!puzzle->cur_node->is_invalid);
+	return (!puzzle->cur_node->domain.is_invalid);
 }
 
-int	set_cell_vals_batch(t_puzzle *puzzle, const t_grid_update *updates,
+int	set_cell_vals_batch(t_solver_state *puzzle, const t_grid_update *updates,
 		int count, t_check_mode mode)
 {
 	int	i;
 
 	i = 0;
-	while (i < count && !puzzle->cur_node->is_invalid)
+	while (i < count && !puzzle->cur_node->domain.is_invalid)
 	{
-		if (puzzle->cur_node->grid.vals[updates[i].cell_idx] == 0)
+		if (puzzle->cur_node->domain.vals[updates[i].cell_idx] == 0)
 			set_grid_val_internal(puzzle->cur_node, updates[i].cell_idx,
 				updates[i].val, 0);
-		else if (puzzle->cur_node->grid.vals[updates[i].cell_idx]
+		else if (puzzle->cur_node->domain.vals[updates[i].cell_idx]
 			!= updates[i].val)
-			puzzle->cur_node->is_invalid = 1;
+			puzzle->cur_node->domain.is_invalid = 1;
 		i++;
 	}
 	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
-	return (!puzzle->cur_node->is_invalid);
+	return (!puzzle->cur_node->domain.is_invalid);
 }
 
-int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates,
+int	set_cells_invalid_batch(t_solver_state *puzzle,
+		const t_grid_update *updates,
 		int count, t_check_mode mode)
 {
 	int	i;
 
 	i = 0;
-	while (i < count && !puzzle->cur_node->is_invalid)
+	while (i < count && !puzzle->cur_node->domain.is_invalid)
 	{
 		set_value_invalid_internal(puzzle->cur_node, updates[i].cell_idx,
 			updates[i].val);
@@ -70,5 +73,5 @@ int	set_cells_invalid_batch(t_puzzle *puzzle, const t_grid_update *updates,
 	}
 	if (mode.run_constr)
 		return (check_node_validity(puzzle, mode));
-	return (!puzzle->cur_node->is_invalid);
+	return (!puzzle->cur_node->domain.is_invalid);
 }

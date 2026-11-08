@@ -8,7 +8,7 @@
 #include <math.h>
 #include <stddef.h>
 
-static t_puzzle g_puzzle;
+static t_solver_state g_puzzle;
 
 static void test_exact_width_types(void)
 {

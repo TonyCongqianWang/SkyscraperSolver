@@ -18,7 +18,7 @@
 #include "solution_info.h"
 #include "node_selection_cache.h"
 
-void	backtrack_to_parent(t_puzzle *puzzle, int *d,
+void	backtrack_to_parent(t_solver_state *puzzle, int *d,
 			t_search_frame *frames)
 {
 	t_sol_info	rec_sols;
@@ -37,7 +37,7 @@ void	backtrack_to_parent(t_puzzle *puzzle, int *d,
 	}
 }
 
-void	descend_to_child(t_puzzle *puzzle, int *d,
+void	descend_to_child(t_solver_state *puzzle, int *d,
 			t_search_frame *frames)
 {
 	t_node_state	*cur_node;
@@ -52,13 +52,13 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 			-= frames[*d - 1].node_sols.solutions_found;
 	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
 		frames[*d - 1].next.cell_val, g_check_constr);
-	cur_node->cur_depth++;
+	cur_node->tree.depth++;
 	puzzle->nodes_visited++;
-	if (cur_node->sub_node_depth == 0)
+	if (cur_node->tree.lookahead_depth == 0)
 		puzzle->main_nodes_visited++;
 }
 
-t_search_result	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	check_backtrack(t_solver_state *puzzle, int *d, int start_d,
 		t_search_frame *frames)
 {
 	if (*d == start_d)
@@ -67,7 +67,7 @@ t_search_result	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
 	return (SEARCH_CONTINUE);
 }
 
-static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
+static t_search_result	check_early_states(t_solver_state *puzzle, int *d,
 							int start_d, t_search_frame *frames)
 {
 	t_sol_info	rec_sols;
@@ -87,7 +87,7 @@ static t_search_result	check_early_states(t_puzzle *puzzle, int *d,
 	return (SEARCH_PROCEED_TO_BRANCH);
 }
 
-t_search_result	process_frame(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
 		t_search_frame *frames)
 {
 	t_search_result	early_res;

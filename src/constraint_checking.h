@@ -14,8 +14,8 @@
 # define CONSTRAINT_CHECKING_H
 # include "puzzle_structs.h"
 
-int		check_constraints(t_puzzle *puzzle, int insert_idx);
-int		check_active_constr(t_puzzle *puzzle);
+int		check_constraints(t_solver_state *puzzle, int insert_idx);
+int		check_active_constr(t_solver_state *puzzle);
 int		check_constr_bounds_violations(t_constraint_bounds *constr);
 
 #endif

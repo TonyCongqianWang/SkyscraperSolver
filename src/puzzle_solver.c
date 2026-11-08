@@ -14,16 +14,17 @@
 #include "tree_search.h"
 #include "grid_interface.h"
 
-static void	clear_grid(t_puzzle *puzzle)
+static void	clear_grid(t_solver_state *puzzle)
 {
 	int	idx;
 
 	idx = 0;
 	while (idx < puzzle->squared_size)
-		puzzle->cur_node->grid.vals[idx++] = 0;
+		puzzle->cur_node->domain.vals[idx++] = 0;
 }
 
-static int	collect_initial_updates(t_puzzle *puzzle, const t_node_state *input,
+static int	collect_initial_updates(t_solver_state *puzzle,
+		const t_node_state *input,
 				t_grid_update *updates, int *count)
 {
 	int	idx;
@@ -33,16 +34,16 @@ static int	collect_initial_updates(t_puzzle *puzzle, const t_node_state *input,
 	*count = 0;
 	while (idx < puzzle->squared_size)
 	{
-		val = input->grid.vals[idx];
+		val = input->domain.vals[idx];
 		if (val != 0)
 		{
-			if (puzzle->cur_node->grid.vals[idx] == 0)
+			if (puzzle->cur_node->domain.vals[idx] == 0)
 			{
 				updates[*count].cell_idx = idx;
 				updates[*count].val = val;
 				(*count)++;
 			}
-			else if (puzzle->cur_node->grid.vals[idx] != val)
+			else if (puzzle->cur_node->domain.vals[idx] != val)
 				return (0);
 		}
 		idx++;
@@ -50,7 +51,7 @@ static int	collect_initial_updates(t_puzzle *puzzle, const t_node_state *input,
 	return (1);
 }
 
-static int	insert_initial_grid(t_puzzle *puzzle)
+static int	insert_initial_grid(t_solver_state *puzzle)
 {
 	t_node_state	input_state;
 	t_grid_update	updates[MAX_CELL_COUNT];
@@ -68,7 +69,7 @@ static int	insert_initial_grid(t_puzzle *puzzle)
 	return (1);
 }
 
-int	solve_puzzle(t_puzzle *puzzle, int max_depth)
+int	solve_puzzle(t_solver_state *puzzle, int max_depth)
 {
 	t_sol_info			node_sols;
 

@@ -12,7 +12,7 @@
 
 #include "node_selection_cache.h"
 
-void	init_order_stacks(t_puzzle *puzzle)
+void	init_order_stacks(t_solver_state *puzzle)
 {
 	int				stack_idx;
 	t_node_order	*order;
@@ -31,7 +31,7 @@ void	init_order_stacks(t_puzzle *puzzle)
 	}
 }
 
-void	rebuild_cache_if_stale(t_puzzle *puzzle,
+void	rebuild_cache_if_stale(t_solver_state *puzzle,
 			t_node_select_config *config, int allow_stale_rebuild)
 {
 	t_node_state	*node;
@@ -45,7 +45,7 @@ void	rebuild_cache_if_stale(t_puzzle *puzzle,
 	else if (!allow_stale_rebuild)
 		is_stale = 0;
 	else
-		is_stale = (cache->last_build_entropy - node->remaining_entropy
+		is_stale = (cache->last_build_entropy - node->domain.remaining_entropy
 				> config->rebuild_period);
 	if (is_stale)
 		build_node_order(puzzle, config);

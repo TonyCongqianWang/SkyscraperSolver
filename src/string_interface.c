@@ -15,7 +15,7 @@
 #include "grid_manipulation.h"
 
 static int		parse_puzzle_size_from_constr_str(char *str);
-static int		try_add_constr_values(t_puzzle *puzzle, char *str);
+static int		try_add_constr_values(t_solver_state *puzzle, char *str);
 
 static int	parse_max_solution(char *str, t_sol_count *result)
 {
@@ -38,7 +38,8 @@ static int	parse_max_solution(char *str, t_sol_count *result)
 	return (*str == '\0');
 }
 
-int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol)
+int	init_puzzle_from_constr_str(t_solver_state *puzzle, char *str,
+		char *max_sol)
 {
 	int			size;
 	t_sol_count	max_solutions;
@@ -52,7 +53,7 @@ int	init_puzzle_from_constr_str(t_puzzle *puzzle, char *str, char *max_sol)
 	return (try_add_constr_values(puzzle, str));
 }
 
-int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
+int	set_puzzle_grid_to_str_vals(t_solver_state *puzzle, char *str)
 {
 	int		idx;
 	int		new_val;
@@ -65,7 +66,7 @@ int	set_puzzle_grid_to_str_vals(t_puzzle *puzzle, char *str)
 			new_val = str[idx] - '0';
 			if (new_val < 0 || new_val > puzzle->size)
 				return (0);
-			puzzle->cur_node->grid.vals[idx / 2] = new_val;
+			puzzle->cur_node->domain.vals[idx / 2] = new_val;
 		}
 		else if (str[idx] != ' ')
 			return (0);
@@ -101,7 +102,7 @@ static int	parse_puzzle_size_from_constr_str(char *str)
 	return (counter / 4);
 }
 
-static int	try_add_constr_values(t_puzzle *puzzle, char *str)
+static int	try_add_constr_values(t_solver_state *puzzle, char *str)
 {
 	int		word_idx;
 	int		pair_idx;

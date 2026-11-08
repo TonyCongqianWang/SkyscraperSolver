@@ -16,6 +16,6 @@
 
 # define MAX_CLI_ARGS 5
 
-int	init_puzzle_from_argv(t_puzzle *puzzle, int argc, char **argv);
+int	init_puzzle_from_argv(t_solver_state *puzzle, int argc, char **argv);
 
 #endif

@@ -16,8 +16,8 @@
 
 static void	get_clamped_splits(t_node_state *node, double *s0, double *s1)
 {
-	*s0 = get_lookahead_score_weight_split0(node->puzzle->size);
-	*s1 = get_lookahead_score_weight_split1(node->puzzle->size);
+	*s0 = get_lookahead_score_weight_split0(node->solver->size);
+	*s1 = get_lookahead_score_weight_split1(node->solver->size);
 	if (*s0 < 0.0)
 		*s0 = 0.0;
 	if (*s1 < *s0)
@@ -31,17 +31,17 @@ static void	get_normalized_entropies(t_node_state *node,
 {
 	double	max_e;
 
-	max_e = (double)node->puzzle->max_entropy;
+	max_e = (double)node->solver->max_entropy;
 	if (max_e <= 0.0)
 	{
 		*e_pos = 0.0;
 		*e_neg = 0.0;
 		return ;
 	}
-	*e_pos = (double)node->remaining_entropy / max_e;
+	*e_pos = (double)node->domain.remaining_entropy / max_e;
 	if (meta->entropy_pos >= 0)
 		*e_pos = (double)meta->entropy_pos / max_e;
-	*e_neg = (double)node->remaining_entropy / max_e;
+	*e_neg = (double)node->domain.remaining_entropy / max_e;
 	if (meta->entropy_neg >= 0)
 		*e_neg = (double)meta->entropy_neg / max_e;
 }
@@ -59,14 +59,14 @@ double	calculate_blended_score(t_node_state *node,
 		return (cache->meta[idx].cached_br_score);
 	get_clamped_splits(node, &s0, &s1);
 	get_normalized_entropies(node, &cache->meta[idx], &e_pos, &e_neg);
-	age_lim = get_lookahead_score_age_limit_ratio(node->puzzle->size)
-		* node->puzzle->max_entropy;
-	if (cache->lookahead_build_entropy - node->remaining_entropy >= age_lim
-		|| age_lim <= 0.0)
+	age_lim = get_lookahead_score_age_limit_ratio(node->solver->size)
+		* node->solver->max_entropy;
+	if (cache->lookahead_build_entropy - node->domain.remaining_entropy
+		>= age_lim || age_lim <= 0.0)
 		return (cache->meta[idx].cached_br_score);
 	age_lim = (age_lim - (cache->lookahead_build_entropy
-				- node->remaining_entropy)) / age_lim;
-	return (age_lim * get_lookahead_entropy_weight(node->puzzle->size)
+				- node->domain.remaining_entropy)) / age_lim;
+	return (age_lim * get_lookahead_entropy_weight(node->solver->size)
 		* (1.0 - (s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos
 				* e_neg)) + cache->meta[idx].cached_br_score);
 }
