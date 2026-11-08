@@ -68,11 +68,13 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 
 	constr_idx = state->solver->grid_constr_map[cell_idx][0];
 	old_col = state->constrs.num_val_positions[constr_idx][val - 1];
-	state->domain.remaining_entropy -= entropy_delta_constr(old_col, state->size);
+	state->domain.remaining_entropy -= entropy_delta_constr(
+		old_col, state->size);
 	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	constr_idx = state->solver->grid_constr_map[cell_idx][1];
 	old_row = state->constrs.num_val_positions[constr_idx][val - 1];
-	state->domain.remaining_entropy -= entropy_delta_constr(old_row, state->size);
+	state->domain.remaining_entropy -= entropy_delta_constr(
+		old_row, state->size);
 	num_valids_row = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	if (num_valids_col == 0 || num_valids_row == 0)
 	{

@@ -75,10 +75,10 @@ static int	read_and_strip_line(char *line, int size)
 int	run_stdin_mode(int argc, char **argv)
 {
 	static t_solver_state	puzzle;
-	char			*max_solutions;
-	char			line[4096];
-	char			*fake_argv[MAX_CLI_ARGS + 1];
-	int				ret;
+	char					*max_solutions;
+	char					line[4096];
+	char					*fake_argv[MAX_CLI_ARGS + 1];
+	int						ret;
 
 	max_solutions = find_max_solutions_arg(argc, argv);
 	while (1)

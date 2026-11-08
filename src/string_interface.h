@@ -15,7 +15,7 @@
 # include "puzzle_structs.h"
 
 int		init_puzzle_from_constr_str(t_solver_state *puzzle, char *str,
-		char *max_sol);
+			char *max_sol);
 int		set_puzzle_grid_to_str_vals(t_solver_state *puzzle, char *str);
 
 #endif

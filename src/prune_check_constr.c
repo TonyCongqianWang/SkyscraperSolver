@@ -74,8 +74,8 @@ static int	check_constr_lines(t_solver_state *puzzle, t_node_state *state,
 	return (changed);
 }
 
-void	prune_check_constr(t_solver_state *puzzle, t_selectivity_level selectivity,
-			t_constr_limits *limits)
+void	prune_check_constr(t_solver_state *puzzle,
+			t_selectivity_level selectivity, t_constr_limits *limits)
 {
 	t_node_state	*state;
 	int				changed;

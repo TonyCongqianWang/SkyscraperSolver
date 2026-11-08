@@ -15,7 +15,7 @@
 t_line_order	*get_line_order(t_node_state *node)
 {
 	t_solver_state	*puzzle;
-	int			idx;
+	int				idx;
 
 	puzzle = node->solver;
 	idx = node->order_cache - puzzle->order_stack.orders;

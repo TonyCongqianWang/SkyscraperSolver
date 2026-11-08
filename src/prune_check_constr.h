@@ -26,15 +26,15 @@ typedef struct s_dp_tables
 typedef struct s_prune_args
 {
 	t_solver_state		*puzzle;
-	t_node_state	*state;
-	t_dp_tables		*dp;
-	int				*grid_indices;
-	int				size;
-	int				target_clue;
+	t_node_state		*state;
+	t_dp_tables			*dp;
+	int					*grid_indices;
+	int					size;
+	int					target_clue;
 }	t_prune_args;
 
-void	prune_check_constr(t_solver_state *puzzle, t_selectivity_level selectivity,
-			t_constr_limits *limits);
+void	prune_check_constr(t_solver_state *puzzle,
+			t_selectivity_level selectivity, t_constr_limits *limits);
 void	init_dp_tables(t_dp_tables *dp, int size);
 void	fill_pref_dp(t_dp_tables *dp, int *cell_domains, int size);
 void	fill_suff_dp(t_dp_tables *dp, int *cell_domains, int size);

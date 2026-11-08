@@ -24,7 +24,7 @@ static void	solve_puzzle_and_print_result(t_solver_state *puzzle);
 int	main(int argc, char **argv)
 {
 	static t_solver_state	puzzle;
-	int				parsing_retcode;
+	int						parsing_retcode;
 
 	if (has_stdin_flag(argc, argv))
 		return (run_stdin_mode(argc, argv));

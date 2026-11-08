@@ -61,8 +61,8 @@ double	calculate_blended_score(t_node_state *node,
 	get_normalized_entropies(node, &cache->meta[idx], &e_pos, &e_neg);
 	age_lim = get_lookahead_score_age_limit_ratio(node->solver->size)
 		* node->solver->max_entropy;
-	if (cache->lookahead_build_entropy - node->domain.remaining_entropy >= age_lim
-		|| age_lim <= 0.0)
+	if (cache->lookahead_build_entropy - node->domain.remaining_entropy
+		>= age_lim || age_lim <= 0.0)
 		return (cache->meta[idx].cached_br_score);
 	age_lim = (age_lim - (cache->lookahead_build_entropy
 				- node->domain.remaining_entropy)) / age_lim;
