@@ -13,7 +13,7 @@
 #include "rule_checking.h"
 
 static int	is_rule_violated(t_solver_state *puzzle, int constr_idx,
-			int reverse);
+				int reverse);
 
 int	check_rule_violations(t_solver_state *puzzle)
 {
