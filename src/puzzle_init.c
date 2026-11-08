@@ -92,7 +92,8 @@ static void	init_constraint(t_solver_state *puzzle, int idx, int size)
 			grid_index = idx + sub_index * size;
 		else if (idx < 2 * size)
 			grid_index = (idx % size) * size + sub_index;
-		puzzle->cur_node->constrs.num_val_positions[idx][sub_index] = size;
+		puzzle->cur_node->domain.constrs.num_val_positions[idx][sub_index]
+			= size;
 		puzzle->constraint_pairs[idx].grid_indeces[sub_index] = grid_index;
 		puzzle->grid_constr_map[grid_index][idx / size] = idx;
 		sub_index++;

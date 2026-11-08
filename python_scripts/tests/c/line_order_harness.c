@@ -24,7 +24,7 @@ static void set_line_count(t_node_state *node, int line, int count)
     int value;
 
     for (value = 0; value < node->size; value++)
-        node->constrs.num_val_positions[line][value] = count;
+        node->domain.constrs.num_val_positions[line][value] = count;
 }
 
 static void check_order(t_node_state *node)

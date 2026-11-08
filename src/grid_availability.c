@@ -34,7 +34,7 @@ int	get_col_num_valids(t_node_state *state, int cell_idx, int val)
 	int		constr_idx;
 
 	constr_idx = state->solver->grid_constr_map[cell_idx][0];
-	return (state->constrs.num_val_positions[constr_idx][val - 1]);
+	return (state->domain.constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
@@ -42,7 +42,7 @@ int	get_row_num_valids(t_node_state *state, int cell_idx, int val)
 	int		constr_idx;
 
 	constr_idx = state->solver->grid_constr_map[cell_idx][1];
-	return (state->constrs.num_val_positions[constr_idx][val - 1]);
+	return (state->domain.constrs.num_val_positions[constr_idx][val - 1]);
 }
 
 int	get_cell_num_valids(t_node_state *state, int idx)

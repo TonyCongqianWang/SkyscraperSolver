@@ -43,7 +43,7 @@ static int	initial_constr_entropy(t_node_state *node, int size)
 		v = 0;
 		while (v < size)
 		{
-			pos_count = (int)node->constrs.num_val_positions[i][v];
+			pos_count = (int)node->domain.constrs.num_val_positions[i][v];
 			entropy += get_log2_scaled(pos_count)
 				* get_weight_constr(size) / ENTROPY_SCALE;
 			v++;

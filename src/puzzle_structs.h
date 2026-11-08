@@ -78,6 +78,11 @@ typedef struct s_line_orders_stack
 	t_line_order	orders[MAX_STACK_DEPTH];
 }		t_line_orders_stack;
 
+typedef struct s_constrs_state
+{
+	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
+}		t_constrs_state;
+
 typedef struct s_domain_state
 {
 	char		vals[MAX_CELL_COUNT];
@@ -88,12 +93,8 @@ typedef struct s_domain_state
 	int			is_complete;
 	int			is_invalid;
 	int			remaining_entropy;
+	t_constrs_state	constrs;
 }		t_domain_state;
-
-typedef struct s_constrs_state
-{
-	char		num_val_positions[MAX_N_CONSTR_PAIRS][MAX_SIZE];
-}		t_constrs_state;
 
 typedef struct s_dirty_constr_stack
 {
@@ -152,7 +153,6 @@ typedef struct s_node_state
 	t_tree_context			tree;
 	t_search_policy			search_policy;
 	t_domain_state			domain;
-	t_constrs_state			constrs;
 	t_dirty_constr_stack	dirty_constrs;
 	t_solver_state			*solver;
 }		t_node_state;
