@@ -17,6 +17,7 @@ t_probe_result	probe_assumption(t_solver_state *puzzle, t_node_transition next,
 {
 	t_probe_result	result;
 
+	result.outcome.min_valid_depth = VALID_DEPTH_UNSET;
 	result.outcome.exhausted = 0;
 	result.outcome.solutions_registered = 0;
 	result.status = DIVE_SKIP;
@@ -31,6 +32,7 @@ t_probe_result	probe_exclusion(t_solver_state *puzzle, t_node_transition next,
 {
 	t_probe_result	result;
 
+	result.outcome.min_valid_depth = VALID_DEPTH_UNSET;
 	result.outcome.exhausted = 0;
 	result.outcome.solutions_registered = 0;
 	result.status = DIVE_SKIP;

@@ -45,6 +45,7 @@ void	descend_to_child(t_solver_state *puzzle, int *d,
 t_search_result	check_backtrack(t_solver_state *puzzle, int *d, int start_d,
 		t_search_frame *frames)
 {
+	finalize_valid_depth(&frames[*d].node_sols, puzzle->cur_node);
 	if (*d == start_d)
 		return (SEARCH_TERMINATE);
 	backtrack_to_parent(puzzle, d, frames);

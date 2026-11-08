@@ -178,8 +178,12 @@ typedef struct s_node_state
 	t_solver_state			*solver;
 }		t_node_state;
 
+/* -1 is valid for an invalid root; unset means no contribution yet. */
+# define VALID_DEPTH_UNSET -2
+
 typedef struct s_sol_info
 {
+	int						min_valid_depth;
 	int						exhausted;
 	t_sol_count				solutions_registered;
 }		t_sol_info;
