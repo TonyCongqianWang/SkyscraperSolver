@@ -50,7 +50,7 @@ static int	run_tier(t_solver_state *puzzle, int tier, int remaining_entropy,
 	t_prune_routine_cfg	cfg;
 	t_prune_limits		lim;
 
-	init_prune_cfg(&cfg, get_prune_tier_selectivity(tier));
+	init_prune_cfg(&cfg, tier);
 	populate_limits(&lim, b);
 	setup_cfg_thresholds(&cfg, &lim, remaining_entropy);
 	setup_cfg_bounds(&cfg, &lim, puzzle->cur_node->domain.num_unset,
