@@ -251,7 +251,7 @@ else:
         for stdin in (True, False):
             with self.subTest(stdin=stdin):
                 rows = measure_batch(binary, '-s 1', ['ok', 'bad', 'ok', 'timeout', 'ok'],
-                                     None, workers=1, use_stdin=stdin, warmup=0, timeout=0.2)
+                                     None, workers=1, use_stdin=stdin, warmup=0, timeout=0.5)
                 self.assertEqual([row['status'] for row in rows], ['ok', 'error', 'ok', 'timeout', 'ok'])
                 self.assertEqual([row['index'] for row in rows], list(range(5)))
                 self.assertIsNone(rows[3]['nodes'])

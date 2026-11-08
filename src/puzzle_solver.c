@@ -71,14 +71,11 @@ static int	insert_initial_grid(t_solver_state *puzzle)
 
 int	solve_puzzle(t_solver_state *puzzle, int max_depth)
 {
-	t_sol_info			node_sols;
-
 	if (!insert_initial_grid(puzzle))
 		return (0);
 	if (max_depth >= 0)
 		set_search_bounds(puzzle->cur_node, max_depth,
 			puzzle->squared_size - max_depth);
-	node_sols = tree_search(puzzle);
-	puzzle->solutions_found = node_sols.solutions_registered;
+	tree_search(puzzle);
 	return (puzzle->solutions_found);
 }

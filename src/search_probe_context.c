@@ -12,6 +12,7 @@
 
 #include "search_context.h"
 #include "tree_search.h"
+#include "solution_storage.h"
 
 static void	prepare_probe(t_solver_state *puzzle, int depth)
 {
@@ -19,6 +20,8 @@ static void	prepare_probe(t_solver_state *puzzle, int depth)
 	int				target;
 
 	node = puzzle->cur_node;
+	if (node->tree.lookahead_depth == 0)
+		node->tree.unbounded_depth = node->tree.depth;
 	if (depth < 0)
 	{
 		node->tree.neg_lookahead_depth++;
@@ -37,6 +40,7 @@ static void	prepare_probe(t_solver_state *puzzle, int depth)
 int	enter_probe(t_solver_state *puzzle, const t_probe_request *request,
 			t_node_state *saved)
 {
+	rollback_provisional_solution(puzzle);
 	*saved = *puzzle->cur_node;
 	prepare_probe(puzzle, request->depth);
 	if (has_reached_terminal_state(puzzle->cur_node))

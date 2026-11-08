@@ -17,6 +17,7 @@
 int	init_solution_storage(t_solver_state *puzzle, t_sol_count max_sols)
 {
 	puzzle->solutions_found = 0;
+	puzzle->provisional_solution = 0;
 	puzzle->max_solutions = max_sols;
 	puzzle->solutions = NULL;
 	if (max_sols <= 1)
@@ -34,19 +35,16 @@ void	free_solution_storage(t_solver_state *puzzle)
 
 int	store_node_if_solution(t_solver_state *puzzle)
 {
-	if (puzzle->max_solutions > 0
-		&& puzzle->solutions_found >= puzzle->max_solutions)
+	t_registration_kind	kind;
+
+	kind = get_solution_registration(puzzle);
+	if (kind == REGISTRATION_NONE)
 		return (0);
-	if (puzzle->cur_node->tree.lookahead_depth == 0
-		&& !puzzle->cur_node->domain.is_invalid
-		&& puzzle->cur_node->domain.is_complete)
-	{
-		if (puzzle->max_solutions <= 1)
-			puzzle->solutions[0] = *(puzzle->cur_node);
-		else if (puzzle->solutions_found < puzzle->max_solutions)
-			puzzle->solutions[puzzle->solutions_found] = *(puzzle->cur_node);
-		puzzle->solutions_found++;
-		return (1);
-	}
-	return (0);
+	if (puzzle->max_solutions <= 1)
+		puzzle->solutions[0] = *puzzle->cur_node;
+	else
+		puzzle->solutions[puzzle->solutions_found] = *puzzle->cur_node;
+	puzzle->solutions_found++;
+	puzzle->provisional_solution = (kind == REGISTRATION_PROVISIONAL);
+	return (1);
 }

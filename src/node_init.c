@@ -36,6 +36,7 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->tree.lookahead_depth = 0;
 	node->tree.neg_lookahead_depth = 0;
 	node->tree.depth = 0;
+	node->tree.unbounded_depth = 0;
 	node->last_set_idx = -1;
 	node->domain.num_unset = size * size;
 	node->domain.remaining_entropy = 0;

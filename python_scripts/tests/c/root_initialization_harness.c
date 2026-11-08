@@ -17,6 +17,8 @@ static void	check_initialized(t_solver_state *puzzle, int size)
 	assert(puzzle->cur_node->lookahead_ctx == NULL);
 	assert(puzzle->cur_node->tree.neg_lookahead_depth == 0);
 	assert(puzzle->cur_node->tree.lookahead_depth == 0);
+	assert(puzzle->cur_node->tree.unbounded_depth == 0);
+	assert(puzzle->provisional_solution == 0);
 	assert(puzzle->cur_node->search_policy.mode == SEARCH_DFS);
 	assert(puzzle->cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
 	assert(puzzle->cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);

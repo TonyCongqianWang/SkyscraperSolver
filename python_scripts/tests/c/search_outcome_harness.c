@@ -36,8 +36,9 @@ static void test_leaves(void)
     set_cell_val(&puzzle, 0, 1, g_check_constr);
     assert(puzzle.cur_node->domain.is_complete);
     puzzle.cur_node->tree.lookahead_depth = 1;
-    check_result(tree_search(&puzzle), 0, 0);
-    assert(puzzle.solutions_found == 0);
+    check_result(tree_search(&puzzle), 1, 0);
+    assert(puzzle.solutions_found == 1);
+    assert(puzzle.provisional_solution);
     puzzle.cur_node->tree.lookahead_depth = 0;
     result = tree_search(&puzzle);
     check_result(result, 1, 1);

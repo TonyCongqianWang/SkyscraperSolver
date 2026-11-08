@@ -38,7 +38,7 @@ t_probe_result	search_probe(t_solver_state *puzzle, t_node_transition next,
 	result.outcome = local_sols;
 	result.status = DIVE_FAIL;
 	result.remaining_entropy = -1;
-	if (!local_sols.exhausted)
+	if (!local_sols.exhausted || local_sols.solutions_registered > 0)
 	{
 		result.status = DIVE_PASS;
 		result.remaining_entropy = puzzle->cur_node->domain.remaining_entropy;

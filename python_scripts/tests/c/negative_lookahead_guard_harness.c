@@ -145,6 +145,7 @@ static void test_regular_dfs_branching_allowed(void)
     outer.selectivity = SELECTIVITY_ANY_CHANGE;
     parent_policy = puzzle.cur_node->search_policy;
     init_sol_info(&frames[0].node_sols, 1, 0);
+    frames[0].registered_start = puzzle.solutions_found;
     depth = 0;
     assert(process_search_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
     assert(depth == 1);

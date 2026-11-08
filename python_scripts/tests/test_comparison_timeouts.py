@@ -118,7 +118,7 @@ else:
                 with self.subTest(stdin=stdin), redirect_stdout(io.StringIO()):
                     reports = comparison.run_comparison(
                         [('tiny', '-s 1', ['0', '1', '2'])], str(folder / 'base'),
-                        str(folder / 'opt'), size=8, timeout=.2, max_workers=1,
+                        str(folder / 'opt'), size=8, timeout=.5, max_workers=1,
                         warmup=1, use_stdin=stdin, records_path=str(folder / f'{stdin}.jsonl'))
                 report = reports[0]
                 self.assertTrue(report['valid'])

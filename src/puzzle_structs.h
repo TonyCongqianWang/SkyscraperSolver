@@ -156,6 +156,7 @@ typedef struct s_search_policy
 typedef struct s_tree_context
 {
 	int		depth;
+	int		unbounded_depth;
 	int		lookahead_depth;
 	int		neg_lookahead_depth;
 }		t_tree_context;
@@ -221,6 +222,7 @@ typedef struct s_solver_state
 	int						constr_max_entropy;
 	t_sol_count				max_solutions;
 	t_sol_count				solutions_found;
+	int						provisional_solution;
 	t_node_count			nodes_visited;
 	t_node_count			main_nodes_visited;
 	int						prune_runs_count;

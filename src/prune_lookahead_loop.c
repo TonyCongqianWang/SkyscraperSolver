@@ -16,6 +16,7 @@
 #include "selectivity.h"
 #include "search_context.h"
 #include "tree_search.h"
+#include "solution_storage.h"
 
 static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 				int size)
@@ -55,7 +56,7 @@ static void	execute_lookahead(t_solver_state *puzzle,
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	if (passes & LOOKAHEAD_POS)
 		run_tree_search(puzzle, config, LOOKAHEAD_POS);
-	if (passes & LOOKAHEAD_NEG)
+	if ((passes & LOOKAHEAD_NEG) && !solution_limit_reached(puzzle))
 		run_tree_search(puzzle, config, LOOKAHEAD_NEG);
 	leave_lookahead(node, &saved);
 }
@@ -65,7 +66,8 @@ void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
 {
 	t_lookahead_pass	passes;
 
-	if (node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
+	if (solution_limit_reached(puzzle)
+		|| node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
 		|| should_exit_selectivity(node, config->selectivity))
 		return ;
 	passes = config->passes;
