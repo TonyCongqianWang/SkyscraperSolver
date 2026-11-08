@@ -93,7 +93,7 @@ typedef struct s_domain_state
 	int			is_complete;
 	int			is_invalid;
 	int			remaining_entropy;
-	t_constrs_state	constrs;
+	t_constrs_state		constrs;
 }		t_domain_state;
 
 typedef struct s_dirty_constr_stack
