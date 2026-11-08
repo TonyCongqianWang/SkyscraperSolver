@@ -31,29 +31,6 @@ void	leave_lookahead(t_node_state *node, const t_search_scope *saved)
 	node->lookahead_ctx = saved->cursor;
 }
 
-void	enter_probe(t_solver_state *puzzle, int depth, t_node_state *saved)
-{
-	t_node_state	*node;
-	int				target;
-
-	node = puzzle->cur_node;
-	*saved = *node;
-	if (depth < 0)
-	{
-		node->tree.neg_lookahead_depth++;
-		depth = -depth;
-	}
-	target = node->domain.num_unset - depth;
-	if (target < 0)
-		target = 0;
-	node->search_policy.mode = SEARCH_DFS;
-	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
-	node->search_policy.branch.eligibility = CANDIDATES_VALID;
-	node->search_policy.limits.max_solutions = 1;
-	set_search_bounds(node, node->tree.depth + depth, target);
-	node->tree.lookahead_depth++;
-}
-
 void	leave_probe(t_solver_state *puzzle, const t_node_state *saved)
 {
 	*puzzle->cur_node = *saved;
@@ -64,4 +41,13 @@ void	set_search_bounds(t_node_state *node, int max_depth, int target)
 {
 	node->search_policy.limits.max_depth = max_depth;
 	node->search_policy.limits.target_nunset = target;
+}
+
+void	init_root_search_policy(t_node_state *node)
+{
+	node->search_policy.mode = SEARCH_DFS;
+	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
+	node->search_policy.branch.eligibility = CANDIDATES_VALID;
+	node->search_policy.limits.max_solutions = node->solver->max_solutions;
+	set_search_bounds(node, node->size * node->size, 0);
 }

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "node_init.h"
+#include "search_context.h"
 #include "cell_bounds.h"
 #include <stddef.h>
 
@@ -36,14 +37,12 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->tree.neg_lookahead_depth = 0;
 	node->tree.depth = 0;
 	node->last_set_idx = -1;
-	node->search_policy.limits.max_depth = size * size;
 	node->domain.num_unset = size * size;
-	node->search_policy.limits.target_nunset = 0;
 	node->domain.remaining_entropy = 0;
 	node->last_entropy[0] = 0;
 	node->last_entropy[1] = 0;
 	node->last_entropy[2] = 0;
-	node->search_policy.limits.max_solutions = node->solver->max_solutions;
+	init_root_search_policy(node);
 }
 
 static void	init_root_pruning_state(t_node_state *node)
@@ -58,9 +57,6 @@ static void	init_root_pruning_state(t_node_state *node)
 
 static void	init_root_selection_state(t_node_state *node)
 {
-	node->search_policy.mode = SEARCH_DFS;
-	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
-	node->search_policy.branch.eligibility = CANDIDATES_VALID;
 	node->lookahead_ctx = NULL;
 	node->order_cache = &node->solver->order_stack.orders[0];
 }

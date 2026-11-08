@@ -19,15 +19,6 @@
 #include "solution_info.h"
 #include "node_selection_cache.h"
 
-t_sol_info	tree_recursion(t_solver_state *puzzle, t_node_transition next,
-				t_check_mode mode, int is_neg)
-{
-	if (has_reached_terminal_state(puzzle->cur_node))
-		return (handle_leaf_node(puzzle));
-	apply_search_transition(puzzle, next, mode, is_neg);
-	return (tree_search(puzzle));
-}
-
 t_sol_info	tree_search(t_solver_state *puzzle)
 {
 	t_search_frame		frames[MAX_STACK_DEPTH];
