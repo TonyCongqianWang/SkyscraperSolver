@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "tree_search.h"
+#include "solution_storage.h"
 #include "search_result.h"
 #include "search_context.h"
 #include "node_selection_transition.h"
@@ -37,6 +38,9 @@ void	backtrack_to_parent(t_solver_state *puzzle, int *d,
 void	descend_to_child(t_solver_state *puzzle, int *d,
 			t_search_frame *frames)
 {
+	rollback_provisional_solution(puzzle);
+	sync_frame_registrations(puzzle, &frames[*d]);
+	frames[*d + 1].registered_start = puzzle->solutions_found;
 	enter_search_child(puzzle, frames[*d].next,
 		frames[*d].node_sols.solutions_registered);
 	*d = puzzle->node_stack_top;
@@ -52,38 +56,12 @@ t_search_result	check_backtrack(t_solver_state *puzzle, int *d, int start_d,
 	return (SEARCH_CONTINUE);
 }
 
-static t_search_result	check_early_states(t_solver_state *puzzle, int *d,
-							int start_d, t_search_frame *frames)
-{
-	t_sol_info	rec_sols;
-	int			pruned;
-
-	if (puzzle->cur_node->search_policy.mode == SEARCH_LOOKAHEAD)
-		return (SEARCH_PROCEED_TO_BRANCH);
-	if (!frames[*d].node_sols.exhausted
-		|| check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
-	{
-		frames[*d].node_sols.exhausted = 0;
-		return (check_backtrack(puzzle, d, start_d, frames));
-	}
-	pruned = prune_current_step(puzzle);
-	if (has_reached_terminal_state(puzzle->cur_node))
-	{
-		rec_sols = handle_leaf_node(puzzle);
-		update_sol_info(&rec_sols, &frames[*d].node_sols);
-		return (check_backtrack(puzzle, d, start_d, frames));
-	}
-	if (pruned)
-		return (SEARCH_CONTINUE);
-	return (SEARCH_PROCEED_TO_BRANCH);
-}
-
 t_search_result	process_search_frame(t_solver_state *puzzle, int *d,
 					int start_d, t_search_frame *frames)
 {
 	t_search_result	early_res;
 
-	early_res = check_early_states(puzzle, d, start_d, frames);
+	early_res = check_search_frame(puzzle, d, start_d, frames);
 	if (early_res != SEARCH_PROCEED_TO_BRANCH)
 		return (early_res);
 	if (puzzle->cur_node->search_policy.mode == SEARCH_DFS)

@@ -11,17 +11,21 @@
 /* ************************************************************************** */
 
 #include "search_context.h"
+#include "solution_storage.h"
 #include "grid_interface.h"
 #include "node_selection_transition.h"
 
 void	apply_search_transition(t_solver_state *puzzle, t_node_transition next,
 			t_check_mode mode, int is_neg)
 {
+	rollback_provisional_solution(puzzle);
 	if (is_neg)
 		set_cell_invalid(puzzle, next.cell_idx, next.cell_val, mode);
 	else
 		set_cell_val(puzzle, next.cell_idx, next.cell_val, mode);
 	puzzle->cur_node->tree.depth++;
+	if (puzzle->cur_node->tree.lookahead_depth == 0)
+		puzzle->cur_node->tree.unbounded_depth = puzzle->cur_node->tree.depth;
 }
 
 void	enter_search_child(t_solver_state *puzzle, t_node_transition next,

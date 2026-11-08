@@ -14,8 +14,20 @@
 # define SOLUTION_STORAGE_H
 # include "puzzle_structs.h"
 
-int		init_solution_storage(t_solver_state *puzzle, t_sol_count max_sols);
-void	free_solution_storage(t_solver_state *puzzle);
-int		store_node_if_solution(t_solver_state *puzzle);
+typedef enum e_registration_kind
+{
+	REGISTRATION_NONE,
+	REGISTRATION_PERMANENT,
+	REGISTRATION_PROVISIONAL
+}	t_registration_kind;
+
+t_registration_kind	get_solution_registration(const t_solver_state *puzzle);
+int					solution_limit_reached(const t_solver_state *puzzle);
+void				rollback_provisional_solution(t_solver_state *puzzle);
+
+int					init_solution_storage(t_solver_state *puzzle,
+						t_sol_count max_sols);
+void				free_solution_storage(t_solver_state *puzzle);
+int					store_node_if_solution(t_solver_state *puzzle);
 
 #endif

@@ -13,6 +13,7 @@
 #include "tree_search.h"
 #include "node_selection_transition.h"
 #include "solution_info.h"
+#include "solution_storage.h"
 #include <stddef.h>
 
 static int	enter_search_run(t_solver_state *puzzle)
@@ -32,11 +33,13 @@ t_sol_info	run_tree_search(t_solver_state *puzzle,
 	int				d;
 	int				start_d;
 
+	rollback_provisional_solution(puzzle);
 	if (enter_search_run(puzzle))
 		return (handle_leaf_node(puzzle));
 	start_d = puzzle->node_stack_top;
 	d = start_d;
 	init_sol_info(&frames[d].node_sols, 1, 0);
+	frames[d].registered_start = puzzle->solutions_found;
 	init_node_transition(&frames[d].next);
 	frames[d].probe_config = config;
 	frames[d].probe_pass = pass;
