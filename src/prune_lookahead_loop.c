@@ -15,6 +15,7 @@
 #include "node_selection_cache.h"
 #include "selectivity.h"
 #include "search_context.h"
+#include "tree_search.h"
 
 static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 				int size)
@@ -46,7 +47,6 @@ static void	execute_lookahead(t_solver_state *puzzle,
 				t_node_state *node, const t_lookahead_config *config,
 				t_lookahead_pass passes)
 {
-	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
 	t_search_scope			saved;
 
@@ -54,9 +54,9 @@ static void	execute_lookahead(t_solver_state *puzzle,
 	prepare_lookahead_cache(puzzle, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	if (passes & LOOKAHEAD_POS)
-		probe_candidates(puzzle, &tr, config, LOOKAHEAD_POS);
+		run_tree_search(puzzle, config, LOOKAHEAD_POS);
 	if (passes & LOOKAHEAD_NEG)
-		probe_candidates(puzzle, &tr, config, LOOKAHEAD_NEG);
+		run_tree_search(puzzle, config, LOOKAHEAD_NEG);
 	leave_lookahead(node, &saved);
 }
 

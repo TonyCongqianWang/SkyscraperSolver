@@ -19,7 +19,5 @@
 void	prune_lookahead(t_solver_state *puzzle, t_lookahead_config *config);
 void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
 			const t_lookahead_config *config);
-void	probe_candidates(t_solver_state *puzzle, t_node_transition *tr,
-			const t_lookahead_config *config, t_lookahead_pass pass);
 
 #endif

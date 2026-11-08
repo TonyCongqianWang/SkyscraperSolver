@@ -32,12 +32,18 @@ typedef enum e_search_result
 
 typedef struct s_search_frame
 {
-	t_sol_info			node_sols;
-	t_node_transition	next;
+	t_sol_info					node_sols;
+	t_node_transition			next;
+	const t_lookahead_config	*probe_config;
+	t_lookahead_pass			probe_pass;
 }		t_search_frame;
 
 /* tree_search.c */
 t_sol_info		tree_search(t_solver_state *puzzle);
+t_sol_info		run_tree_search(t_solver_state *puzzle,
+					const t_lookahead_config *config, t_lookahead_pass pass);
+void			advance_search_frame(t_solver_state *puzzle, int *d,
+					t_search_frame *frames);
 t_leaf_state	classify_search_leaf(const t_node_state *node);
 int				has_reached_terminal_state(t_node_state *cur_node);
 t_sol_info		handle_leaf_node(t_solver_state *puzzle);
