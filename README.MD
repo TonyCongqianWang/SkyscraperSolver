@@ -24,6 +24,31 @@ Or compile directly:
 cc -Wall -Wextra -Werror -O2 -o skyscraper_solver src/*.c
 ```
 
+Lookahead probe depths are defined per pruning tier (light, medium, heavy) in
+`src/lookahead_depth.c`, using the extern array declared in `lookahead_depth.h`.
+All three default to depth 1; initial pruning uses the heavy tier.
+
+CI tests depths `{3, 2, 1}` for light, medium, and heavy tiers by replacing that
+definition before building the normal solver.
+To reproduce in a separate checkout:
+
+```sh
+cp python_scripts/tests/config/lookahead_depth_ci.c src/lookahead_depth.c
+make re
+for dataset in benchmark_sets/benchmarkSet7_python20.txt \
+               benchmark_sets/benchmarkSet8_python20.txt \
+               benchmark_sets/benchmarkSet9_minimal20.txt; do
+  counts="benchmark_sets/_num_solutions_$(basename "$dataset")"
+  make test VERIFY_ARGS="$dataset --expected $counts"
+done
+```
+
+CI verifies all 20 puzzles in each Python solver dataset, including exhaustive and
+finite-limit counts. Omit `VERIFY_ARGS` to run the default verification suite.
+
+Probe depth bounds the search beneath each hypothesis; it is separate from
+`MAX_LOOKAHEAD_DEPTH`, which limits nested lookahead contexts.
+
 Run the solver with a space-separated list of clues:
 
 ```sh

@@ -18,7 +18,7 @@ int	prune_strat_initial(t_solver_state *puzzle)
 {
 	t_prune_routine_cfg		cfg;
 
-	init_prune_cfg(&cfg, SELECTIVITY_NONE);
+	init_prune_cfg(&cfg, 2);
 	cfg.run_gac = 1;
 	cfg.run_check_constr = 1;
 	return (run_pruning_routine(puzzle, &cfg, 2));

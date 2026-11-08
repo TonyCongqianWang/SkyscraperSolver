@@ -13,16 +13,15 @@
 #include "pruning_configs.h"
 #include "params_math.h"
 
-void	init_prune_cfg(t_prune_routine_cfg *cfg,
-			t_selectivity_level selectivity)
+void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier)
 {
 	cfg->run_check_constr = 0;
-	cfg->check_constr_selectivity = selectivity;
+	cfg->check_constr_selectivity = get_prune_tier_selectivity(tier);
 	cfg->check_constr_min_entropy = 0.35;
 	cfg->check_constr_max_entropy = 0.70;
 	cfg->check_constr_global_min_entropy = 513540;
 	cfg->run_gac = 0;
-	cfg->gac.selectivity = selectivity;
+	cfg->gac.selectivity = cfg->check_constr_selectivity;
 	cfg->gac.max_k = 3;
 	cfg->gac.analyse_naked = 1;
 	cfg->gac.analyse_hidden = 1;
@@ -30,8 +29,8 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg,
 	cfg->gac.max_entropy = 0.70;
 	cfg->gac.global_min_entropy = 513540;
 	cfg->run_lookahead = 1;
-	cfg->lookahead.selectivity = selectivity;
-	cfg->lookahead.max_depth = 1;
+	cfg->lookahead.selectivity = cfg->check_constr_selectivity;
+	cfg->lookahead.max_depth = g_lookahead_probe_depth[tier];
 	cfg->lookahead.passes = LOOKAHEAD_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }

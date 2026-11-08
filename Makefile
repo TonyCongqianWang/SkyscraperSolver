@@ -50,8 +50,9 @@ endif
 debug: CFLAGS += -fsanitize=address,undefined -g
 debug: re
 
+# VERIFY_ARGS optionally limits verification samples; the default runs all.
 test: $(BINARY)
-	python python_scripts/verify_consistency.py -c $(BINARY)
+	python python_scripts/verify_consistency.py -c $(BINARY) $(VERIFY_ARGS)
 
 # Skip including dependency files if we are cleaning/rebuilding
 ifeq ($(filter clean fclean re debug,$(MAKECMDGOALS)),)
