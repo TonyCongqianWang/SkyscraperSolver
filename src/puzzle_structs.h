@@ -85,14 +85,14 @@ typedef struct s_constrs_state
 
 typedef struct s_domain_state
 {
-	char			vals[MAX_CELL_COUNT];
-	short			valid_val_bmps[MAX_CELL_COUNT];
-	char			cell_bounds[MAX_CELL_COUNT];
-	char			num_cell_vals[MAX_CELL_COUNT];
 	int				num_unset;
 	int				is_complete;
 	int				is_invalid;
 	int				remaining_entropy;
+	char			vals[MAX_CELL_COUNT];
+	short			valid_val_bmps[MAX_CELL_COUNT];
+	char			cell_bounds[MAX_CELL_COUNT];
+	char			num_cell_vals[MAX_CELL_COUNT];
 	t_constrs_state	constrs;
 }		t_domain_state;
 
