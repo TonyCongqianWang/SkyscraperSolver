@@ -7,6 +7,7 @@
 #include "solution_info.h"
 #include "tree_search.h"
 #include "search_context.h"
+#include "grid_availability.h"
 #include "node_selection.h"
 #include "node_selection_transition.h"
 
@@ -164,6 +165,7 @@ static void test_probe_scope_and_leaf_states(void)
     t_node_state saved;
     t_search_scope scope;
     t_lookahead_ctx cursor;
+    t_probe_request request;
 
     reset_puzzle();
     assert(classify_search_leaf(puzzle.cur_node) == LEAF_NONE);
@@ -173,7 +175,14 @@ static void test_probe_scope_and_leaf_states(void)
     assert(puzzle.cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_REQUIRED);
     assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_LOOKAHEAD);
     assert(cursor.selectivity == SELECTIVITY_NONE);
-    enter_probe(&puzzle, -2, &saved);
+    init_node_transition(&request.next);
+    request.next.cell_idx = 0;
+    request.next.cell_val = 1;
+    request.check_mode = g_check_constr;
+    request.depth = -2;
+    assert(enter_probe(&puzzle, &request, &saved));
+    assert(puzzle.cur_node->tree.depth == saved.tree.depth + 1);
+    assert(!is_valid_value(puzzle.cur_node, 0, 1));
     assert(puzzle.cur_node->search_policy.mode == SEARCH_DFS);
     assert(puzzle.cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
     assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);

@@ -26,9 +26,15 @@ t_probe_result	search_probe(t_solver_state *puzzle, t_node_transition next,
 	t_sol_info		local_sols;
 	t_node_state	saved;
 	t_probe_result	result;
+	t_probe_request	request;
 
-	enter_probe(puzzle, depth, &saved);
-	local_sols = tree_recursion(puzzle, next, mode, depth < 0);
+	request.next = next;
+	request.check_mode = mode;
+	request.depth = depth;
+	if (enter_probe(puzzle, &request, &saved))
+		local_sols = tree_search(puzzle);
+	else
+		local_sols = handle_leaf_node(puzzle);
 	result.status = DIVE_FAIL;
 	result.remaining_entropy = -1;
 	if (local_sols.solutions_found > 0)
