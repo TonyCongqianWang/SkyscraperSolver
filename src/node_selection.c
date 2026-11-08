@@ -37,32 +37,28 @@ static void	init_select_config(t_solver_state *puzzle,
 
 	node = puzzle->cur_node;
 	select_node_select_config(puzzle, config);
-	if (node->search_policy.branch.is_in_lookahead_select)
+	if (node->lookahead_ctx)
 	{
-		config->selectivity = node->search_policy.branch.lookahead_selectivity;
+		config->selectivity = node->lookahead_ctx->selectivity;
 		if (g_lh_criterion_defined)
 			config->criterion = g_lh_criterion;
 	}
 }
 
-int	try_get_best_transition(t_solver_state *puzzle, t_node_transition *next)
-{
-	t_node_select_config	config;
-
-	init_select_config(puzzle, &config);
-	rebuild_cache_if_stale(puzzle, &config, 1);
-	return (get_best_from_cache(puzzle, next, &config));
-}
-
-int	try_get_next_transition(t_solver_state *puzzle, t_node_transition *next)
+int	try_select_transition(t_solver_state *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
 	t_node_state			*node;
+	int						refresh_stale;
 
 	node = puzzle->cur_node;
 	if (node->domain.is_complete || node->domain.is_invalid)
 		return (0);
 	init_select_config(puzzle, &config);
-	rebuild_cache_if_stale(puzzle, &config, 0);
-	return (get_next_from_cache(puzzle, next, &config));
+	refresh_stale = (node->search_policy.branch.cache_refresh
+			== CACHE_REFRESH_STALE);
+	rebuild_cache_if_stale(puzzle, &config, refresh_stale);
+	if (node->search_policy.branch.eligibility == CANDIDATES_LOOKAHEAD)
+		return (get_next_lookahead(puzzle, next));
+	return (get_best_from_cache(puzzle, next, &config));
 }

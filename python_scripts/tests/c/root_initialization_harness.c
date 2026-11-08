@@ -17,8 +17,9 @@ static void	check_initialized(t_solver_state *puzzle, int size)
 	assert(puzzle->cur_node->lookahead_ctx == NULL);
 	assert(puzzle->cur_node->tree.neg_lookahead_depth == 0);
 	assert(puzzle->cur_node->tree.lookahead_depth == 0);
-	assert(puzzle->cur_node->search_policy.branch.is_in_lookahead_select == 0);
-	assert(puzzle->cur_node->search_policy.branch.lookahead_selectivity == SELECTIVITY_NONE);
+	assert(puzzle->cur_node->search_policy.mode == SEARCH_DFS);
+	assert(puzzle->cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
+	assert(puzzle->cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);
 	assert(puzzle->order_stack.top_idx == 0);
 	assert(puzzle->order_stack.orders[0].count == 0);
 		idx = 0;

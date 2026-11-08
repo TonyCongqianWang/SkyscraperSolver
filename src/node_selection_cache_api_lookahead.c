@@ -70,8 +70,7 @@ static void	update_resume_index(t_node_state *node, t_node_transition *next)
 			= find_resume_index(node->order_cache, next) + 1;
 }
 
-int	get_next_lookahead(t_solver_state *puzzle, t_node_transition *next,
-		t_node_select_config *config)
+int	get_next_lookahead(t_solver_state *puzzle, t_node_transition *next)
 {
 	t_node_state	*node;
 	int				max_pass;
@@ -84,7 +83,7 @@ int	get_next_lookahead(t_solver_state *puzzle, t_node_transition *next,
 		node->lookahead_ctx->curr_pass = 1;
 		node->lookahead_ctx->curr_index = 0;
 	}
-	max_pass = get_max_allowed_pass(config->selectivity);
+	max_pass = get_max_allowed_pass(node->lookahead_ctx->selectivity);
 	while (node->lookahead_ctx->curr_pass <= max_pass)
 	{
 		if (scan_lookahead_pass(puzzle, next, node->lookahead_ctx->curr_pass))

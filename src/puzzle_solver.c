@@ -12,6 +12,7 @@
 
 #include "puzzle_solver.h"
 #include "tree_search.h"
+#include "search_context.h"
 #include "grid_interface.h"
 
 static void	clear_grid(t_solver_state *puzzle)
@@ -24,8 +25,7 @@ static void	clear_grid(t_solver_state *puzzle)
 }
 
 static int	collect_initial_updates(t_solver_state *puzzle,
-		const t_node_state *input,
-				t_grid_update *updates, int *count)
+				const t_node_state *input, t_grid_update *updates, int *count)
 {
 	int	idx;
 	int	val;
@@ -76,11 +76,8 @@ int	solve_puzzle(t_solver_state *puzzle, int max_depth)
 	if (!insert_initial_grid(puzzle))
 		return (0);
 	if (max_depth >= 0)
-	{
-		puzzle->cur_node->search_policy.limits.target_nunset
-			= puzzle->squared_size - max_depth;
-		puzzle->cur_node->search_policy.limits.max_depth = max_depth;
-	}
+		set_search_bounds(puzzle->cur_node, max_depth,
+			puzzle->squared_size - max_depth);
 	node_sols = tree_search(puzzle);
 	puzzle->solutions_found = node_sols.solutions_found;
 	return (puzzle->solutions_found);

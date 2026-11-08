@@ -57,6 +57,6 @@ void	probe_candidates(t_solver_state *puzzle, t_node_transition *tr,
 			const t_lookahead_config *config, t_lookahead_pass pass)
 {
 	init_node_transition(tr);
-	while (try_get_next_transition(puzzle, tr))
+	while (try_select_transition(puzzle, tr))
 		probe_and_prune_candidate(puzzle, *tr, config, pass);
 }
