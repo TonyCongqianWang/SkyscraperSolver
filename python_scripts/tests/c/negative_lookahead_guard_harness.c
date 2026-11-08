@@ -6,6 +6,8 @@
 #include "solution_storage.h"
 #include "solution_info.h"
 #include "tree_search.h"
+#include "search_context.h"
+#include "node_selection.h"
 #include "node_selection_transition.h"
 
 static t_solver_state puzzle;
@@ -50,14 +52,16 @@ static void test_nested_dispatch_and_context_restore(void)
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
-    puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
-    puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
+    puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_LOOKAHEAD;
+    outer.selectivity = SELECTIVITY_ANY_CHANGE;
+    puzzle.cur_node->search_policy.mode = SEARCH_LOOKAHEAD;
     puzzle.cur_node->lookahead_ctx = &outer;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
     assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
-    assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select == 1);
-    assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
+    assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_LOOKAHEAD);
+    assert(outer.selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->lookahead_ctx == &outer);
+    assert(puzzle.cur_node->search_policy.mode == SEARCH_LOOKAHEAD);
     assert(cfg.passes == LOOKAHEAD_BOTH);
     cache = puzzle.cur_node->order_cache;
     assert(cache->lookahead_build_entropy == -1);
@@ -125,15 +129,18 @@ static void test_regular_dfs_branching_allowed(void)
 {
     t_search_frame frames[2];
     t_search_policy parent_policy;
+    t_lookahead_ctx outer;
     int depth;
 
     reset_puzzle();
+    memset(&outer, 0, sizeof(outer));
+    puzzle.cur_node->lookahead_ctx = &outer;
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
     puzzle.cur_node->tree.depth = 1;
     puzzle.cur_node->search_policy.limits.max_depth = 3;
     puzzle.cur_node->domain.remaining_entropy = 0;
-    puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
-    puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
+    puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_VALID;
+    outer.selectivity = SELECTIVITY_ANY_CHANGE;
     parent_policy = puzzle.cur_node->search_policy;
     init_sol_info(&frames[0].node_sols, puzzle.squared_size, 0);
     depth = 0;
@@ -141,14 +148,95 @@ static void test_regular_dfs_branching_allowed(void)
     assert(depth == 1);
     assert(puzzle.cur_node == &puzzle.node_stack[1]);
     assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
-    assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select
-        == parent_policy.branch.is_in_lookahead_select);
-    assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity
-        == parent_policy.branch.lookahead_selectivity);
+    assert(puzzle.cur_node->search_policy.branch.eligibility
+        == parent_policy.branch.eligibility);
+    assert(puzzle.cur_node->lookahead_ctx == &outer);
+    assert(outer.selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->search_policy.limits.max_depth
         == parent_policy.limits.max_depth);
     assert(puzzle.node_stack[0].search_policy.limits.max_solutions
         == parent_policy.limits.max_solutions);
+    free_solution_storage(&puzzle);
+}
+
+static void test_probe_scope_and_leaf_states(void)
+{
+    t_node_state saved;
+    t_search_scope scope;
+    t_lookahead_ctx cursor;
+
+    reset_puzzle();
+    assert(classify_search_leaf(puzzle.cur_node) == LEAF_NONE);
+    enter_lookahead(puzzle.cur_node, &cursor, SELECTIVITY_NONE, &scope);
+    assert(puzzle.node_stack_top == 0);
+    assert(puzzle.cur_node->search_policy.mode == SEARCH_LOOKAHEAD);
+    assert(puzzle.cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_REQUIRED);
+    assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_LOOKAHEAD);
+    assert(cursor.selectivity == SELECTIVITY_NONE);
+    enter_probe(&puzzle, -2, &saved);
+    assert(puzzle.cur_node->search_policy.mode == SEARCH_DFS);
+    assert(puzzle.cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
+    assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);
+    assert(puzzle.cur_node->lookahead_ctx == &cursor);
+    assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
+    assert(puzzle.cur_node->tree.lookahead_depth == 1);
+    puzzle.cur_node->tree.depth = puzzle.cur_node->search_policy.limits.max_depth;
+    assert(classify_search_leaf(puzzle.cur_node) == LEAF_DEPTH_LIMIT);
+    puzzle.cur_node->domain.is_complete = 1;
+    assert(classify_search_leaf(puzzle.cur_node) == LEAF_COMPLETE);
+    puzzle.cur_node->domain.is_invalid = 1;
+    assert(classify_search_leaf(puzzle.cur_node) == LEAF_INVALID);
+    leave_probe(&puzzle, &saved);
+    assert(memcmp(&saved, puzzle.cur_node, sizeof(saved)) == 0);
+    leave_lookahead(puzzle.cur_node, &scope);
+    assert(puzzle.cur_node->search_policy.mode == SEARCH_DFS);
+    assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);
+    assert(puzzle.cur_node->lookahead_ctx == NULL);
+    free_solution_storage(&puzzle);
+}
+
+static void test_eligibility_independent_of_cache_refresh(void)
+{
+    t_lookahead_ctx ctx;
+    t_search_scope saved;
+    t_node_order *cache;
+    t_node_transition next;
+    int stale_entropy;
+
+    reset_puzzle();
+    memset(&ctx, 0, sizeof(ctx));
+    enter_lookahead(puzzle.cur_node, &ctx, SELECTIVITY_VALUE_SET, &saved);
+    cache = puzzle.cur_node->order_cache;
+    cache->count = 2;
+    cache->build_depth = 0;
+    stale_entropy = puzzle.cur_node->domain.remaining_entropy + 1000000;
+    cache->last_build_entropy = stale_entropy;
+    cache->entries[0].cell_idx = 0;
+    cache->entries[0].cell_val = 1;
+    cache->entries[0].score = 100;
+    cache->entries[1].cell_idx = 1;
+    cache->entries[1].cell_val = 1;
+    cache->entries[1].score = 50;
+    ctx.cell_passes[0] = 3;
+    ctx.cell_passes[1] = 1;
+    puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_VALID;
+    init_node_transition(&next);
+    assert(try_select_transition(&puzzle, &next));
+    assert(next.cell_idx == 0);
+    assert(ctx.curr_index == 0 && ctx.curr_pass == 0);
+    assert(cache->last_build_entropy == stale_entropy);
+    puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_LOOKAHEAD;
+    init_node_transition(&next);
+    assert(try_select_transition(&puzzle, &next));
+    assert(next.cell_idx == 1);
+    assert(!try_select_transition(&puzzle, &next));
+    assert(cache->last_build_entropy == stale_entropy);
+    puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_VALID;
+    puzzle.cur_node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
+    assert(try_select_transition(&puzzle, &next));
+    assert(cache->last_build_entropy == puzzle.cur_node->domain.remaining_entropy);
+    assert(ctx.curr_pass == 2);
+    leave_lookahead(puzzle.cur_node, &saved);
     free_solution_storage(&puzzle);
 }
 
@@ -187,11 +275,13 @@ static void test_nesting_limits(void)
 
 int main(void)
 {
+    test_eligibility_independent_of_cache_refresh();
+    test_probe_scope_and_leaf_states();
+    test_nesting_limits();
     test_block_nested_negative();
     test_nested_dispatch_and_context_restore();
     test_nested_negative_side_skips_all_passes();
     test_subnode_both_sides_does_not_mark_cache();
     test_regular_dfs_branching_allowed();
-    test_nesting_limits();
     return (0);
 }

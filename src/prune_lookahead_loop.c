@@ -14,6 +14,7 @@
 #include "strategy_routing.h"
 #include "node_selection_cache.h"
 #include "selectivity.h"
+#include "search_context.h"
 
 static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 				int size)
@@ -47,25 +48,16 @@ static void	execute_lookahead(t_solver_state *puzzle,
 {
 	t_node_transition		tr;
 	t_lookahead_ctx			ctx;
-	t_lookahead_ctx			*prev_ctx;
-	t_selectivity_level		prev_selectivity;
-	int						prev_selecting;
+	t_search_scope			saved;
 
-	prev_ctx = node->lookahead_ctx;
-	prev_selectivity = node->search_policy.branch.lookahead_selectivity;
-	prev_selecting = node->search_policy.branch.is_in_lookahead_select;
-	node->search_policy.branch.is_in_lookahead_select = 1;
-	node->search_policy.branch.lookahead_selectivity = config->selectivity;
+	enter_lookahead(node, &ctx, config->selectivity, &saved);
 	prepare_lookahead_cache(puzzle, config);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
-	node->lookahead_ctx = &ctx;
 	if (passes & LOOKAHEAD_POS)
 		probe_candidates(puzzle, &tr, config, LOOKAHEAD_POS);
 	if (passes & LOOKAHEAD_NEG)
 		probe_candidates(puzzle, &tr, config, LOOKAHEAD_NEG);
-	node->lookahead_ctx = prev_ctx;
-	node->search_policy.branch.is_in_lookahead_select = prev_selecting;
-	node->search_policy.branch.lookahead_selectivity = prev_selectivity;
+	leave_lookahead(node, &saved);
 }
 
 void	run_lookahead(t_solver_state *puzzle, t_node_state *node,

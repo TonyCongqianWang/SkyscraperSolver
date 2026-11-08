@@ -14,6 +14,14 @@
 # define TREE_SEARCH_H
 # include "grid_interface.h"
 
+typedef enum e_leaf_state
+{
+	LEAF_NONE,
+	LEAF_INVALID,
+	LEAF_COMPLETE,
+	LEAF_DEPTH_LIMIT
+}	t_leaf_state;
+
 typedef enum e_search_result
 {
 	SEARCH_CONTINUE = 0,
@@ -31,6 +39,7 @@ typedef struct s_search_frame
 t_sol_info		tree_search(t_solver_state *puzzle);
 t_sol_info		tree_recursion(t_solver_state *puzzle, t_node_transition next,
 					t_check_mode mode, int is_neg);
+t_leaf_state	classify_search_leaf(const t_node_state *node);
 int				has_reached_terminal_state(t_node_state *cur_node);
 t_sol_info		handle_leaf_node(t_solver_state *puzzle);
 

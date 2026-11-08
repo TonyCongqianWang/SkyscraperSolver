@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "tree_search.h"
+#include "search_context.h"
 #include "node_selection_transition.h"
 #include "grid_interface.h"
 #include "strategy_routing.h"
@@ -24,10 +25,8 @@ void	backtrack_to_parent(t_solver_state *puzzle, int *d,
 	t_sol_info	rec_sols;
 
 	rec_sols = frames[*d].node_sols;
-	(*d)--;
-	puzzle->node_stack_top = *d;
-	puzzle->cur_node = &puzzle->node_stack[*d];
-	sync_cache_stacks(puzzle);
+	leave_search_child(puzzle);
+	*d = puzzle->node_stack_top;
 	if (update_sol_info(&rec_sols, &frames[*d].node_sols)
 		|| !check_sol_target(&frames[*d].node_sols, puzzle->cur_node)
 		|| rec_sols.min_nunset == puzzle->squared_size)
@@ -40,22 +39,9 @@ void	backtrack_to_parent(t_solver_state *puzzle, int *d,
 void	descend_to_child(t_solver_state *puzzle, int *d,
 			t_search_frame *frames)
 {
-	t_node_state	*cur_node;
-
-	(*d)++;
-	puzzle->node_stack_top = *d;
-	puzzle->node_stack[*d] = puzzle->node_stack[*d - 1];
-	puzzle->cur_node = &puzzle->node_stack[*d];
-	cur_node = puzzle->cur_node;
-	if (cur_node->search_policy.limits.max_solutions > 0)
-		cur_node->search_policy.limits.max_solutions
-			-= frames[*d - 1].node_sols.solutions_found;
-	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
-		frames[*d - 1].next.cell_val, g_check_constr);
-	cur_node->tree.depth++;
-	puzzle->nodes_visited++;
-	if (cur_node->tree.lookahead_depth == 0)
-		puzzle->main_nodes_visited++;
+	enter_search_child(puzzle, frames[*d].next,
+		frames[*d].node_sols.solutions_found);
+	*d = puzzle->node_stack_top;
 }
 
 t_search_result	check_backtrack(t_solver_state *puzzle, int *d, int start_d,
@@ -96,7 +82,7 @@ t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
 	if (early_res != SEARCH_PROCEED_TO_BRANCH)
 		return (early_res);
 	init_node_transition(&frames[*d].next);
-	if (!try_get_best_transition(puzzle, &frames[*d].next))
+	if (!try_select_transition(puzzle, &frames[*d].next))
 		return (check_backtrack(puzzle, d, start_d, frames));
 	descend_to_child(puzzle, d, frames);
 	if (has_reached_terminal_state(puzzle->cur_node))

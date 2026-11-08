@@ -16,9 +16,6 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-int		try_get_best_transition(t_solver_state *puzzle,
-			t_node_transition *next);
-int		try_get_next_transition(t_solver_state *puzzle,
-			t_node_transition *next);
+int		try_select_transition(t_solver_state *puzzle, t_node_transition *next);
 
 #endif

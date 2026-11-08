@@ -97,8 +97,6 @@ int	get_next_from_cache(t_solver_state *puzzle, t_node_transition *next,
 	int				i;
 
 	node = puzzle->cur_node;
-	if (node->lookahead_ctx)
-		return (get_next_lookahead(puzzle, next, config));
 	get_resume_pos(node, next, &curr_pass, &i);
 	max_pass = get_max_allowed_pass(config->selectivity);
 	while (curr_pass <= max_pass)

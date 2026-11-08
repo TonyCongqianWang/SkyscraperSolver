@@ -58,8 +58,9 @@ static void	init_root_pruning_state(t_node_state *node)
 
 static void	init_root_selection_state(t_node_state *node)
 {
-	node->search_policy.branch.is_in_lookahead_select = 0;
-	node->search_policy.branch.lookahead_selectivity = SELECTIVITY_NONE;
+	node->search_policy.mode = SEARCH_DFS;
+	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
+	node->search_policy.branch.eligibility = CANDIDATES_VALID;
 	node->lookahead_ctx = NULL;
 	node->order_cache = &node->solver->order_stack.orders[0];
 }

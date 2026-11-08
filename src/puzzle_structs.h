@@ -105,15 +105,35 @@ typedef struct s_dirty_constr_stack
 
 typedef struct s_lookahead_ctx
 {
+	t_selectivity_level		selectivity;
 	int						curr_pass;
 	int						curr_index;
 	char					cell_passes[MAX_CELL_COUNT];
 }		t_lookahead_ctx;
 
+typedef enum e_search_mode
+{
+	SEARCH_DFS,
+	SEARCH_LOOKAHEAD
+}	t_search_mode;
+
+/* Both refresh modes rebuild missing or explicitly invalidated caches. */
+typedef enum e_cache_refresh
+{
+	CACHE_REFRESH_STALE,
+	CACHE_REFRESH_REQUIRED
+}	t_cache_refresh;
+
+typedef enum e_candidate_eligibility
+{
+	CANDIDATES_VALID,
+	CANDIDATES_LOOKAHEAD
+}	t_candidate_eligibility;
+
 typedef struct s_branch_policy
 {
-	int						is_in_lookahead_select;
-	t_selectivity_level		lookahead_selectivity;
+	t_cache_refresh			cache_refresh;
+	t_candidate_eligibility	eligibility;
 }		t_branch_policy;
 
 typedef struct s_search_limits
@@ -125,6 +145,7 @@ typedef struct s_search_limits
 
 typedef struct s_search_policy
 {
+	t_search_mode			mode;
 	t_branch_policy			branch;
 	t_search_limits			limits;
 }		t_search_policy;
