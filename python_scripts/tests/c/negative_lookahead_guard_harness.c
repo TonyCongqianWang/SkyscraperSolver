@@ -26,7 +26,7 @@ static void test_block_nested_negative(void)
     init_node_transition(&tr);
     tr.cell_idx = 0;
     tr.cell_val = 1;
-    puzzle.cur_node->is_in_neg_lookahead = 1;
+    puzzle.cur_node->tree.neg_lookahead_depth = 1;
     before = *puzzle.cur_node;
     visited = puzzle.nodes_visited;
     assert(probe_exclusion(&puzzle, tr, 2, g_check_constr).status == DIVE_SKIP);
@@ -49,12 +49,12 @@ static void test_nested_dispatch_and_context_restore(void)
     cfg.max_depth = 1;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
-    puzzle.cur_node->is_in_neg_lookahead = 1;
+    puzzle.cur_node->tree.neg_lookahead_depth = 1;
     puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
     puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
     puzzle.cur_node->lookahead_ctx = &outer;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
-    assert(puzzle.cur_node->is_in_neg_lookahead == 1);
+    assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
     assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select == 1);
     assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity == SELECTIVITY_ANY_CHANGE);
     assert(puzzle.cur_node->lookahead_ctx == &outer);
@@ -82,7 +82,7 @@ static void test_nested_negative_side_skips_all_passes(void)
     cfg.max_depth = 1;
     cfg.passes = LOOKAHEAD_NEG;
     cfg.check_mode = g_check_constr;
-    puzzle.cur_node->is_in_neg_lookahead = 1;
+    puzzle.cur_node->tree.neg_lookahead_depth = 1;
     cache = puzzle.cur_node->order_cache;
     visited = puzzle.nodes_visited;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
@@ -107,7 +107,7 @@ static void test_subnode_both_sides_does_not_mark_cache(void)
     cfg.max_depth = 1;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
-    puzzle.cur_node->sub_node_depth = 1;
+    puzzle.cur_node->tree.lookahead_depth = 1;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
@@ -128,7 +128,7 @@ static void test_regular_dfs_branching_allowed(void)
     int depth;
 
     reset_puzzle();
-    puzzle.cur_node->is_in_neg_lookahead = 1;
+    puzzle.cur_node->tree.neg_lookahead_depth = 1;
     puzzle.cur_node->cur_depth = 1;
     puzzle.cur_node->search_policy.limits.max_depth = 3;
     puzzle.cur_node->remaining_entropy = 0;
@@ -140,7 +140,7 @@ static void test_regular_dfs_branching_allowed(void)
     assert(process_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
     assert(depth == 1);
     assert(puzzle.cur_node == &puzzle.node_stack[1]);
-    assert(puzzle.cur_node->is_in_neg_lookahead == 1);
+    assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
     assert(puzzle.cur_node->search_policy.branch.is_in_lookahead_select
         == parent_policy.branch.is_in_lookahead_select);
     assert(puzzle.cur_node->search_policy.branch.lookahead_selectivity
@@ -152,6 +152,39 @@ static void test_regular_dfs_branching_allowed(void)
     free_solution_storage(&puzzle);
 }
 
+static void test_nesting_limits(void)
+{
+    t_node_transition tr;
+    t_node_state before;
+    t_node_count visited;
+    t_lookahead_config cfg;
+
+    reset_puzzle();
+    init_node_transition(&tr);
+    tr.cell_idx = 0;
+    tr.cell_val = 1;
+    puzzle.cur_node->tree.lookahead_depth = MAX_LOOKAHEAD_DEPTH;
+    before = *puzzle.cur_node;
+    visited = puzzle.nodes_visited;
+    assert(probe_assumption(&puzzle, tr, 1, g_check_constr).status == DIVE_SKIP);
+    assert(probe_exclusion(&puzzle, tr, 1, g_check_constr).status == DIVE_SKIP);
+    assert(memcmp(&before, puzzle.cur_node, sizeof(before)) == 0);
+    assert(puzzle.nodes_visited == visited);
+    memset(&cfg, 0, sizeof(cfg));
+    cfg.selectivity = SELECTIVITY_NONE;
+    cfg.passes = LOOKAHEAD_BOTH;
+    cfg.max_depth = 1;
+    cfg.check_mode = g_check_constr;
+    run_lookahead(&puzzle, puzzle.cur_node, &cfg);
+    assert(puzzle.nodes_visited == visited);
+    puzzle.cur_node->tree.lookahead_depth = MAX_LOOKAHEAD_DEPTH - 1;
+    puzzle.cur_node->tree.neg_lookahead_depth = MAX_NEG_LOOKAHEAD_DEPTH;
+    before = *puzzle.cur_node;
+    assert(probe_exclusion(&puzzle, tr, 1, g_check_constr).status == DIVE_SKIP);
+    assert(memcmp(&before, puzzle.cur_node, sizeof(before)) == 0);
+    free_solution_storage(&puzzle);
+}
+
 int main(void)
 {
     test_block_nested_negative();
@@ -159,5 +192,6 @@ int main(void)
     test_nested_negative_side_skips_all_passes();
     test_subnode_both_sides_does_not_mark_cache();
     test_regular_dfs_branching_allowed();
+    test_nesting_limits();
     return (0);
 }

@@ -32,7 +32,8 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->size = size;
 	node->is_complete = 0;
 	node->is_invalid = 0;
-	node->sub_node_depth = 0;
+	node->tree.lookahead_depth = 0;
+	node->tree.neg_lookahead_depth = 0;
 	node->cur_depth = 0;
 	node->last_set_idx = -1;
 	node->search_policy.limits.max_depth = size * size;
@@ -58,7 +59,6 @@ static void	init_root_pruning_state(t_node_state *node)
 static void	init_root_selection_state(t_node_state *node)
 {
 	node->search_policy.branch.is_in_lookahead_select = 0;
-	node->is_in_neg_lookahead = 0;
 	node->search_policy.branch.lookahead_selectivity = SELECTIVITY_NONE;
 	node->lookahead_ctx = NULL;
 	node->order_cache = &node->puzzle->order_stack.orders[0];

@@ -15,6 +15,12 @@
 t_probe_result	probe_assumption(t_puzzle *puzzle, t_node_transition next,
 		int depth, t_check_mode mode)
 {
+	t_probe_result	result;
+
+	result.status = DIVE_SKIP;
+	result.remaining_entropy = -1;
+	if (puzzle->cur_node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH)
+		return (result);
 	return (search_probe(puzzle, next, depth, mode));
 }
 
@@ -25,7 +31,9 @@ t_probe_result	probe_exclusion(t_puzzle *puzzle, t_node_transition next,
 
 	result.status = DIVE_SKIP;
 	result.remaining_entropy = -1;
-	if (puzzle->cur_node->is_in_neg_lookahead)
+	if (puzzle->cur_node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
+		|| puzzle->cur_node->tree.neg_lookahead_depth
+		>= MAX_NEG_LOOKAHEAD_DEPTH)
 		return (result);
 	return (search_probe(puzzle, next, -depth, mode));
 }
