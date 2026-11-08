@@ -25,7 +25,7 @@ typedef struct s_dp_tables
 
 typedef struct s_prune_args
 {
-	t_solver_state		*puzzle;
+	t_solver_state		*solver;
 	t_node_state		*state;
 	t_dp_tables			*dp;
 	int					*grid_indices;
