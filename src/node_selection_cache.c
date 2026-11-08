@@ -57,7 +57,7 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 		cache->count = 0;
 		cache->lookahead_build_entropy = -1;
 		cache->needs_rebuild = 0;
-		cache->build_depth = n->cur_depth;
+		cache->build_depth = n->tree.depth;
 		collect_cache_entries(puzzle, cache, config);
 		recalculate_cache_scores(n, cache);
 		sort_cached_orders(n, cache, config->criterion);
@@ -65,7 +65,7 @@ static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
 	else
 	{
 		*cache = *parent_cache;
-		cache->build_depth = n->cur_depth;
+		cache->build_depth = n->tree.depth;
 		compact_and_sort_cache(n, cache, config->criterion);
 	}
 }
@@ -95,7 +95,7 @@ static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
 
 	old_lh_entropy = cache->lookahead_build_entropy;
 	backup_cache(cache, old_entries, old_meta, &old_count);
-	cache->build_depth = puzzle->cur_node->cur_depth;
+	cache->build_depth = puzzle->cur_node->tree.depth;
 	collect_cache_entries(puzzle, cache, config);
 	cache->lookahead_build_entropy = old_lh_entropy;
 	cache->needs_rebuild = 0;
@@ -113,7 +113,7 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 	n = puzzle->cur_node;
 	cache = n->order_cache;
 	top = puzzle->order_stack.top_idx;
-	if (!cache || cache->build_depth < n->cur_depth)
+	if (!cache || cache->build_depth < n->tree.depth)
 	{
 		puzzle->order_stack.top_idx++;
 		if (puzzle->order_stack.top_idx >= MAX_STACK_DEPTH)

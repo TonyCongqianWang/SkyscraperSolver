@@ -129,7 +129,7 @@ static void test_regular_dfs_branching_allowed(void)
 
     reset_puzzle();
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
-    puzzle.cur_node->cur_depth = 1;
+    puzzle.cur_node->tree.depth = 1;
     puzzle.cur_node->search_policy.limits.max_depth = 3;
     puzzle.cur_node->remaining_entropy = 0;
     puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;

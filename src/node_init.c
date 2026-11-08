@@ -34,7 +34,7 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->is_invalid = 0;
 	node->tree.lookahead_depth = 0;
 	node->tree.neg_lookahead_depth = 0;
-	node->cur_depth = 0;
+	node->tree.depth = 0;
 	node->last_set_idx = -1;
 	node->search_policy.limits.max_depth = size * size;
 	node->num_unset = size * size;

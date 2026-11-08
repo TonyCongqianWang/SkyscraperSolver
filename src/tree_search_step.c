@@ -52,7 +52,7 @@ void	descend_to_child(t_puzzle *puzzle, int *d,
 			-= frames[*d - 1].node_sols.solutions_found;
 	set_cell_val(puzzle, frames[*d - 1].next.cell_idx,
 		frames[*d - 1].next.cell_val, g_check_constr);
-	cur_node->cur_depth++;
+	cur_node->tree.depth++;
 	puzzle->nodes_visited++;
 	if (cur_node->tree.lookahead_depth == 0)
 		puzzle->main_nodes_visited++;

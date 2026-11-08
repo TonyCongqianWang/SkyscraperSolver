@@ -22,7 +22,7 @@ int	has_reached_terminal_state(t_node_state *cur_node)
 {
 	int				is_leaf_node;
 
-	is_leaf_node = (cur_node->cur_depth
+	is_leaf_node = (cur_node->tree.depth
 			>= cur_node->search_policy.limits.max_depth);
 	is_leaf_node |= cur_node->is_complete;
 	is_leaf_node |= cur_node->is_invalid;
@@ -52,7 +52,7 @@ t_sol_info	tree_recursion(t_puzzle *puzzle, t_node_transition next,
 		set_cell_invalid(puzzle, next.cell_idx, next.cell_val, mode);
 	else
 		set_cell_val(puzzle, next.cell_idx, next.cell_val, mode);
-	puzzle->cur_node->cur_depth++;
+	puzzle->cur_node->tree.depth++;
 	return (tree_search(puzzle));
 }
 

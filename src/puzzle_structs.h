@@ -129,6 +129,7 @@ typedef struct s_search_policy
 
 typedef struct s_tree_context
 {
+	int		depth;
 	int		lookahead_depth;
 	int		neg_lookahead_depth;
 }		t_tree_context;
@@ -136,7 +137,6 @@ typedef struct s_tree_context
 typedef struct s_node_state
 {
 	int						size;
-	int						cur_depth;
 	int						last_set_idx;
 	int						is_complete;
 	int						is_invalid;

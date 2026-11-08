@@ -30,7 +30,7 @@ static int	transition_node(t_puzzle *puzzle, int depth)
 		target_nunset = 0;
 	cur_node->search_policy.limits.max_solutions = 1;
 	cur_node->search_policy.limits.target_nunset = target_nunset;
-	cur_node->search_policy.limits.max_depth = cur_node->cur_depth;
+	cur_node->search_policy.limits.max_depth = cur_node->tree.depth;
 	cur_node->search_policy.limits.max_depth += depth;
 	cur_node->tree.lookahead_depth++;
 	return (0);

@@ -19,7 +19,7 @@ int	prune_current_step(t_puzzle *puzzle)
 {
 	int	d;
 
-	if (puzzle->cur_node->cur_depth == 0)
+	if (puzzle->cur_node->tree.depth == 0)
 	{
 		if (puzzle->prune_runs_count == 0)
 			return (prune_strat_initial(puzzle));
@@ -28,7 +28,7 @@ int	prune_current_step(t_puzzle *puzzle)
 	}
 	else
 	{
-		d = puzzle->cur_node->cur_depth;
+		d = puzzle->cur_node->tree.depth;
 		return (prune_strat_depth_bucket(puzzle, d));
 	}
 }
