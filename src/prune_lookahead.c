@@ -11,6 +11,8 @@
 /* ************************************************************************** */
 
 #include "prune_lookahead.h"
+#include "search_result.h"
+#include <stddef.h>
 #include "node_selection_transition.h"
 #include "pruning_routines.h"
 #include "pruning_configs.h"
@@ -34,9 +36,12 @@ static void	probe_and_prune_candidate(t_solver_state *puzzle,
 				t_node_transition next, const t_lookahead_config *cfg,
 				t_lookahead_pass pass)
 {
-	t_probe_result	result;
+	t_probe_result		result;
+	t_result_transition	transition;
 
-	if (pass == LOOKAHEAD_NEG)
+	transition.next = next;
+	transition.is_neg = (pass == LOOKAHEAD_NEG);
+	if (transition.is_neg)
 		result = probe_exclusion(puzzle, next, cfg->max_depth, g_check_constr);
 	else
 		result = probe_assumption(puzzle, next, cfg->max_depth,
@@ -44,13 +49,7 @@ static void	probe_and_prune_candidate(t_solver_state *puzzle,
 	if (result.status == DIVE_PASS)
 		node_order_record_probe(puzzle->cur_node->order_cache, next,
 			pass, result.remaining_entropy);
-	if (result.status != DIVE_FAIL)
-		return ;
-	if (pass == LOOKAHEAD_NEG)
-		set_cell_val(puzzle, next.cell_idx, next.cell_val, g_check_constr);
-	else
-		set_cell_invalid(puzzle, next.cell_idx, next.cell_val,
-			g_check_constr);
+	consume_child_result(puzzle, &transition, &result.outcome, NULL);
 }
 
 void	probe_candidates(t_solver_state *puzzle, t_node_transition *tr,

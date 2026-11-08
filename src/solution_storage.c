@@ -32,8 +32,11 @@ void	free_solution_storage(t_solver_state *puzzle)
 		free(puzzle->solutions);
 }
 
-void	store_node_if_solution(t_solver_state *puzzle)
+int	store_node_if_solution(t_solver_state *puzzle)
 {
+	if (puzzle->max_solutions > 0
+		&& puzzle->solutions_found >= puzzle->max_solutions)
+		return (0);
 	if (puzzle->cur_node->tree.lookahead_depth == 0
 		&& !puzzle->cur_node->domain.is_invalid
 		&& puzzle->cur_node->domain.is_complete)
@@ -43,5 +46,7 @@ void	store_node_if_solution(t_solver_state *puzzle)
 		else if (puzzle->solutions_found < puzzle->max_solutions)
 			puzzle->solutions[puzzle->solutions_found] = *(puzzle->cur_node);
 		puzzle->solutions_found++;
+		return (1);
 	}
+	return (0);
 }

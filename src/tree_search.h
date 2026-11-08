@@ -19,7 +19,8 @@ typedef enum e_leaf_state
 	LEAF_NONE,
 	LEAF_INVALID,
 	LEAF_COMPLETE,
-	LEAF_DEPTH_LIMIT
+	LEAF_DEPTH_LIMIT,
+	LEAF_PROGRESS_LIMIT
 }	t_leaf_state;
 
 typedef enum e_search_result

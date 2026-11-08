@@ -35,9 +35,10 @@ t_probe_result	search_probe(t_solver_state *puzzle, t_node_transition next,
 		local_sols = tree_search(puzzle);
 	else
 		local_sols = handle_leaf_node(puzzle);
+	result.outcome = local_sols;
 	result.status = DIVE_FAIL;
 	result.remaining_entropy = -1;
-	if (local_sols.solutions_found > 0)
+	if (!local_sols.exhausted)
 	{
 		result.status = DIVE_PASS;
 		result.remaining_entropy = puzzle->cur_node->domain.remaining_entropy;

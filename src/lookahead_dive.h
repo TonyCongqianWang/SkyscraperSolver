@@ -14,6 +14,7 @@
 # define LOOKAHEAD_DIVE_H
 # include "grid_interface.h"
 
+/* PASS means unresolved after bounded verification, not proven feasible. */
 typedef enum e_dive_result
 {
 	DIVE_SKIP = -1,
@@ -23,6 +24,7 @@ typedef enum e_dive_result
 
 typedef struct s_probe_result
 {
+	t_sol_info		outcome;
 	t_dive_result	status;
 	int				remaining_entropy;
 }	t_probe_result;

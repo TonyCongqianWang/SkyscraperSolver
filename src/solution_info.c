@@ -12,27 +12,23 @@
 
 #include "solution_info.h"
 
-int	init_sol_info(t_sol_info *info, int min_nunset, int solutions_found)
+int	init_sol_info(t_sol_info *info, int exhausted, t_sol_count registered)
 {
-	info->min_nunset = min_nunset;
-	info->solutions_found = solutions_found;
+	info->exhausted = exhausted;
+	info->solutions_registered = registered;
 	return (0);
 }
 
-int	update_sol_info(t_sol_info *n_info, t_sol_info *o_info)
+int	update_sol_info(const t_sol_info *child, t_sol_info *aggregate)
 {
-	o_info->solutions_found += n_info->solutions_found;
-	if (n_info->min_nunset < o_info->min_nunset)
-		o_info->min_nunset = n_info->min_nunset;
-	return (n_info->solutions_found > 0);
+	aggregate->solutions_registered += child->solutions_registered;
+	aggregate->exhausted &= child->exhausted;
+	return (child->exhausted);
 }
 
 int	check_sol_target(t_sol_info *info, t_node_state *node)
 {
-	if (node->search_policy.limits.max_solutions <= 0
-		|| info->solutions_found < node->search_policy.limits.max_solutions
-		|| info->min_nunset > node->search_policy.limits.target_nunset)
-		return (0);
-	else
-		return (1);
+	return (node->search_policy.limits.max_solutions > 0
+		&& info->solutions_registered
+		>= node->search_policy.limits.max_solutions);
 }

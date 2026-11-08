@@ -22,6 +22,9 @@ t_leaf_state	classify_search_leaf(const t_node_state *node)
 		return (LEAF_COMPLETE);
 	if (node->tree.depth >= node->search_policy.limits.max_depth)
 		return (LEAF_DEPTH_LIMIT);
+	if (node->search_policy.limits.target_nunset > 0
+		&& node->domain.num_unset <= node->search_policy.limits.target_nunset)
+		return (LEAF_PROGRESS_LIMIT);
 	return (LEAF_NONE);
 }
 
@@ -31,11 +34,12 @@ t_sol_info	handle_leaf_node(t_solver_state *puzzle)
 	t_sol_info		node_sols;
 
 	cur_node = puzzle->cur_node;
-	if (classify_search_leaf(cur_node) == LEAF_INVALID)
-		init_sol_info(&node_sols, puzzle->squared_size, 0);
-	else
-		init_sol_info(&node_sols, cur_node->domain.num_unset, 1);
-	store_node_if_solution(puzzle);
+	init_sol_info(&node_sols, cur_node->domain.is_invalid, 0);
+	if (!cur_node->domain.is_invalid && cur_node->domain.is_complete)
+	{
+		node_sols.solutions_registered = store_node_if_solution(puzzle);
+		node_sols.exhausted = (node_sols.solutions_registered > 0);
+	}
 	return (node_sols);
 }
 

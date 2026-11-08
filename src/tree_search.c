@@ -32,7 +32,7 @@ t_sol_info	tree_search(t_solver_state *puzzle)
 		puzzle->main_nodes_visited++;
 	if (has_reached_terminal_state(puzzle->cur_node))
 		return (handle_leaf_node(puzzle));
-	init_sol_info(&frames[d].node_sols, puzzle->squared_size, 0);
+	init_sol_info(&frames[d].node_sols, 1, 0);
 	while (1)
 	{
 		if (process_frame(puzzle, &d, start_d, frames) == SEARCH_TERMINATE)
