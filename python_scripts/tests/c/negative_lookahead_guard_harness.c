@@ -146,7 +146,7 @@ static void test_regular_dfs_branching_allowed(void)
     parent_policy = puzzle.cur_node->search_policy;
     init_sol_info(&frames[0].node_sols, 1, 0);
     depth = 0;
-    assert(process_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
+    assert(process_search_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
     assert(depth == 1);
     assert(puzzle.cur_node == &puzzle.node_stack[1]);
     assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);

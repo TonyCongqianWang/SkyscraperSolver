@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   tree_search_step.c                                 :+:      :+:    :+:   */
+/*   tree_search_frame.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -57,6 +57,8 @@ static t_search_result	check_early_states(t_solver_state *puzzle, int *d,
 	t_sol_info	rec_sols;
 	int			pruned;
 
+	if (puzzle->cur_node->search_policy.mode == SEARCH_LOOKAHEAD)
+		return (SEARCH_PROCEED_TO_BRANCH);
 	if (!frames[*d].node_sols.exhausted
 		|| check_sol_target(&frames[*d].node_sols, puzzle->cur_node))
 	{
@@ -75,29 +77,21 @@ static t_search_result	check_early_states(t_solver_state *puzzle, int *d,
 	return (SEARCH_PROCEED_TO_BRANCH);
 }
 
-t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
-		t_search_frame *frames)
+t_search_result	process_search_frame(t_solver_state *puzzle, int *d,
+					int start_d, t_search_frame *frames)
 {
 	t_search_result	early_res;
 
 	early_res = check_early_states(puzzle, d, start_d, frames);
 	if (early_res != SEARCH_PROCEED_TO_BRANCH)
 		return (early_res);
-	init_node_transition(&frames[*d].next);
+	if (puzzle->cur_node->search_policy.mode == SEARCH_DFS)
+		init_node_transition(&frames[*d].next);
 	if (!try_select_transition(puzzle, &frames[*d].next))
 	{
 		finish_candidate_search(&frames[*d].node_sols, puzzle->cur_node);
 		return (check_backtrack(puzzle, d, start_d, frames));
 	}
-	descend_to_child(puzzle, d, frames);
-	if (has_reached_terminal_state(puzzle->cur_node))
-	{
-		frames[*d].node_sols = handle_leaf_node(puzzle);
-		backtrack_to_parent(puzzle, d, frames);
-	}
-	else
-	{
-		init_sol_info(&frames[*d].node_sols, 1, 0);
-	}
+	execute_search_transition(puzzle, d, frames);
 	return (SEARCH_CONTINUE);
 }

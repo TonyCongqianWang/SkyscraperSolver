@@ -32,6 +32,8 @@ void	consume_child_result(t_solver_state *puzzle,
 
 void	finish_candidate_search(t_sol_info *result, const t_node_state *node)
 {
-	if (node->search_policy.branch.eligibility != CANDIDATES_VALID)
+	if (node->domain.is_invalid)
+		result->exhausted = 1;
+	else if (node->search_policy.branch.eligibility != CANDIDATES_VALID)
 		result->exhausted = 0;
 }
