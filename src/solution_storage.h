@@ -16,6 +16,6 @@
 
 int		init_solution_storage(t_solver_state *puzzle, t_sol_count max_sols);
 void	free_solution_storage(t_solver_state *puzzle);
-void	store_node_if_solution(t_solver_state *puzzle);
+int		store_node_if_solution(t_solver_state *puzzle);
 
 #endif

@@ -7,6 +7,7 @@
 #include "solution_info.h"
 #include "tree_search.h"
 #include "search_context.h"
+#include "search_result.h"
 #include "grid_availability.h"
 #include "node_selection.h"
 #include "node_selection_transition.h"
@@ -143,7 +144,7 @@ static void test_regular_dfs_branching_allowed(void)
     puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_VALID;
     outer.selectivity = SELECTIVITY_ANY_CHANGE;
     parent_policy = puzzle.cur_node->search_policy;
-    init_sol_info(&frames[0].node_sols, puzzle.squared_size, 0);
+    init_sol_info(&frames[0].node_sols, 1, 0);
     depth = 0;
     assert(process_frame(&puzzle, &depth, 0, frames) == SEARCH_CONTINUE);
     assert(depth == 1);

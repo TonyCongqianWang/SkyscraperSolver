@@ -79,6 +79,6 @@ int	solve_puzzle(t_solver_state *puzzle, int max_depth)
 		set_search_bounds(puzzle->cur_node, max_depth,
 			puzzle->squared_size - max_depth);
 	node_sols = tree_search(puzzle);
-	puzzle->solutions_found = node_sols.solutions_found;
+	puzzle->solutions_found = node_sols.solutions_registered;
 	return (puzzle->solutions_found);
 }

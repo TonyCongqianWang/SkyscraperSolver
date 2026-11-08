@@ -180,8 +180,8 @@ typedef struct s_node_state
 
 typedef struct s_sol_info
 {
-	int						min_nunset;
-	t_sol_count				solutions_found;
+	int						exhausted;
+	t_sol_count				solutions_registered;
 }		t_sol_info;
 
 typedef struct s_constraint_pair
