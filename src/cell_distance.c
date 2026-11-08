@@ -38,7 +38,7 @@ static int	get_cell_dist_val(int idx, int size)
 	return (score_component);
 }
 
-static void	init_scores(t_puzzle *puzzle, int *temp_scores, int size)
+static void	init_scores(t_solver_state *puzzle, int *temp_scores, int size)
 {
 	int	i;
 
@@ -51,7 +51,7 @@ static void	init_scores(t_puzzle *puzzle, int *temp_scores, int size)
 	}
 }
 
-static void	sort_cell_order(t_puzzle *puzzle, int *temp_scores)
+static void	sort_cell_order(t_solver_state *puzzle, int *temp_scores)
 {
 	int	i;
 	int	j;
@@ -77,7 +77,7 @@ static void	sort_cell_order(t_puzzle *puzzle, int *temp_scores)
 	}
 }
 
-void	init_cell_distance_order(t_puzzle *puzzle, int size)
+void	init_cell_distance_order(t_solver_state *puzzle, int size)
 {
 	int	temp_scores[MAX_CELL_COUNT];
 

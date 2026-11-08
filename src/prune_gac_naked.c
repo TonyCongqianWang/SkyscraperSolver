@@ -19,8 +19,8 @@ static void	check_pair(int *cells, int count, int *pair,
 	int	u_bmp;
 	int	c;
 
-	u_bmp = batch->state->grid.valid_val_bmps[cells[pair[0]]]
-		| batch->state->grid.valid_val_bmps[cells[pair[1]]];
+	u_bmp = batch->state->domain.valid_val_bmps[cells[pair[0]]]
+		| batch->state->domain.valid_val_bmps[cells[pair[1]]];
 	u_bmp &= (1 << batch->state->size) - 1;
 	if (count_bits(u_bmp) == 2)
 	{
@@ -61,9 +61,9 @@ static void	check_triple(int *cells, int count,
 	int	u_bmp;
 	int	c;
 
-	u_bmp = batch->state->grid.valid_val_bmps[cells[inds[0]]]
-		| batch->state->grid.valid_val_bmps[cells[inds[1]]]
-		| batch->state->grid.valid_val_bmps[cells[inds[2]]];
+	u_bmp = batch->state->domain.valid_val_bmps[cells[inds[0]]]
+		| batch->state->domain.valid_val_bmps[cells[inds[1]]]
+		| batch->state->domain.valid_val_bmps[cells[inds[2]]];
 	u_bmp &= (1 << batch->state->size) - 1;
 	if (count_bits(u_bmp) == 3)
 	{

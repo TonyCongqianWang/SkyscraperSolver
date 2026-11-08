@@ -28,20 +28,20 @@ typedef struct s_search_frame
 }		t_search_frame;
 
 /* tree_search.c */
-t_sol_info		tree_search(t_puzzle *puzzle);
-t_sol_info		tree_recursion(t_puzzle *puzzle, t_node_transition next,
+t_sol_info		tree_search(t_solver_state *puzzle);
+t_sol_info		tree_recursion(t_solver_state *puzzle, t_node_transition next,
 					t_check_mode mode, int is_neg);
 int				has_reached_terminal_state(t_node_state *cur_node);
-t_sol_info		handle_leaf_node(t_puzzle *puzzle);
+t_sol_info		handle_leaf_node(t_solver_state *puzzle);
 
 /* tree_search_step.c */
-void			backtrack_to_parent(t_puzzle *puzzle, int *d,
+void			backtrack_to_parent(t_solver_state *puzzle, int *d,
 					t_search_frame *frames);
-void			descend_to_child(t_puzzle *puzzle, int *d,
+void			descend_to_child(t_solver_state *puzzle, int *d,
 					t_search_frame *frames);
-t_search_result	check_backtrack(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	check_backtrack(t_solver_state *puzzle, int *d, int start_d,
 					t_search_frame *frames);
-t_search_result	process_frame(t_puzzle *puzzle, int *d, int start_d,
+t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
 					t_search_frame *frames);
 
 #endif

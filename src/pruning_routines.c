@@ -17,7 +17,7 @@
 #include "selectivity.h"
 #include <stddef.h>
 
-static void	run_check_constr_routine(t_puzzle *puzzle,
+static void	run_check_constr_routine(t_solver_state *puzzle,
 				const t_prune_routine_cfg *cfg)
 {
 	t_constr_limits	limits;
@@ -40,7 +40,7 @@ static int	check_early_skips(t_node_state *node,
 	{
 		i = -1;
 		while (++i <= cfg_idx)
-			node->last_entropy[i] = node->remaining_entropy;
+			node->last_entropy[i] = node->domain.remaining_entropy;
 		return (1);
 	}
 	if (is_max_selectivity_any_change(cfg)
@@ -51,7 +51,7 @@ static int	check_early_skips(t_node_state *node,
 	{
 		i = -1;
 		while (++i <= cfg_idx)
-			node->last_entropy[i] = node->remaining_entropy;
+			node->last_entropy[i] = node->domain.remaining_entropy;
 		return (1);
 	}
 	return (0);
@@ -68,7 +68,7 @@ static void	post_prune_update(t_node_state *node, int only_val_set)
 	}
 }
 
-int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
+int	run_pruning_routine(t_solver_state *puzzle, const t_prune_routine_cfg *cfg,
 		int cfg_idx)
 {
 	t_node_state	*node;
@@ -79,7 +79,7 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	if (check_early_skips(node, cfg, cfg_idx))
 		return (0);
 	puzzle->prune_runs_count++;
-	prev_entropy = node->remaining_entropy;
+	prev_entropy = node->domain.remaining_entropy;
 	if (cfg->run_check_constr)
 		run_check_constr_routine(puzzle, cfg);
 	if (cfg->run_gac)
@@ -90,7 +90,7 @@ int	run_pruning_routine(t_puzzle *puzzle, const t_prune_routine_cfg *cfg,
 	while (++i <= cfg_idx)
 		node->last_entropy[i] = prev_entropy;
 	post_prune_update(node, is_only_selectivity_value_set(cfg));
-	if (node->remaining_entropy == prev_entropy)
+	if (node->domain.remaining_entropy == prev_entropy)
 		return (0);
 	return (1);
 }

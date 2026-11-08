@@ -9,7 +9,7 @@
 #include <stdio.h>
 #include <string.h>
 
-static t_puzzle web_puzzle;
+static t_solver_state web_puzzle;
 static char result[512];
 
 const char *solve_web(const char *clues, const char *grid, int max_solutions)
@@ -41,7 +41,8 @@ const char *solve_web(const char *clues, const char *grid, int max_solutions)
         (unsigned long long)web_puzzle.nodes_visited, web_puzzle.size);
     if (web_puzzle.solutions_found > 0 && web_puzzle.solutions) {
         for (i = 0; i < web_puzzle.squared_size && used + 2 < sizeof(result); ++i)
-            result[used++] = (char)('0' + web_puzzle.solutions[0].grid.vals[i]);
+            result[used++] =
+                (char)('0' + web_puzzle.solutions[0].domain.vals[i]);
     }
     result[used] = '\0';
     free_solution_storage(&web_puzzle);

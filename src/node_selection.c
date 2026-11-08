@@ -30,7 +30,7 @@ static const int					g_lh_criterion_defined = 0;
 
 #endif
 
-static void	init_select_config(t_puzzle *puzzle,
+static void	init_select_config(t_solver_state *puzzle,
 				t_node_select_config *config)
 {
 	t_node_state	*node;
@@ -45,7 +45,7 @@ static void	init_select_config(t_puzzle *puzzle,
 	}
 }
 
-int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
+int	try_get_best_transition(t_solver_state *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
 
@@ -54,13 +54,13 @@ int	try_get_best_transition(t_puzzle *puzzle, t_node_transition *next)
 	return (get_best_from_cache(puzzle, next, &config));
 }
 
-int	try_get_next_transition(t_puzzle *puzzle, t_node_transition *next)
+int	try_get_next_transition(t_solver_state *puzzle, t_node_transition *next)
 {
 	t_node_select_config	config;
 	t_node_state			*node;
 
 	node = puzzle->cur_node;
-	if (node->is_complete || node->is_invalid)
+	if (node->domain.is_complete || node->domain.is_invalid)
 		return (0);
 	init_select_config(puzzle, &config);
 	rebuild_cache_if_stale(puzzle, &config, 0);

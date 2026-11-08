@@ -13,7 +13,7 @@
 #include "constraint_update.h"
 #include "cell_bounds.h"
 
-int	update_constr_bounds(t_puzzle *puzzle, int abs_idx)
+int	update_constr_bounds(t_solver_state *puzzle, int abs_idx)
 {
 	t_constraint_bounds	*constr;
 	int					new_val;
@@ -21,7 +21,7 @@ int	update_constr_bounds(t_puzzle *puzzle, int abs_idx)
 	short				val_ub;
 
 	constr = &puzzle->constr_bounds;
-	new_val = puzzle->cur_node->grid.vals[abs_idx];
+	new_val = puzzle->cur_node->domain.vals[abs_idx];
 	if (new_val == 0)
 	{
 		if (constr->max_height_lb == puzzle->size)

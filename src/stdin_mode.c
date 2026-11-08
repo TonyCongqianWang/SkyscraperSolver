@@ -21,7 +21,8 @@
 #include <string.h>
 #include <stdio.h>
 
-static void	process_stdin_instance(t_puzzle *puzzle, int argc, char **argv)
+static void	process_stdin_instance(t_solver_state *puzzle, int argc,
+		char **argv)
 {
 	memset(puzzle, 0, sizeof(*puzzle));
 	if (init_puzzle_from_argv(puzzle, argc, argv) != 0)
@@ -73,7 +74,7 @@ static int	read_and_strip_line(char *line, int size)
 
 int	run_stdin_mode(int argc, char **argv)
 {
-	static t_puzzle	puzzle;
+	static t_solver_state	puzzle;
 	char			*max_solutions;
 	char			line[4096];
 	char			*fake_argv[MAX_CLI_ARGS + 1];

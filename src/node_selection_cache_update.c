@@ -32,7 +32,7 @@ static int	find_transition_in_cache(t_node_order *cache, int cell, int val)
 	return (-1);
 }
 
-static void	copy_parent_entropy(t_puzzle *puzzle, t_node_order *cache,
+static void	copy_parent_entropy(t_solver_state *puzzle, t_node_order *cache,
 				int c, int v)
 {
 	int	parent_top;
@@ -56,7 +56,7 @@ static void	copy_parent_entropy(t_puzzle *puzzle, t_node_order *cache,
 	}
 }
 
-static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
+static void	add_transition(t_solver_state *puzzle, t_node_order *cache,
 				int cv)
 {
 	t_node_transition	tr;
@@ -75,7 +75,7 @@ static void	add_transition(t_puzzle *puzzle, t_node_order *cache,
 	cache->count++;
 }
 
-void	collect_cache_entries(t_puzzle *puzzle, t_node_order *cache,
+void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 			t_node_select_config *config)
 {
 	int				i;

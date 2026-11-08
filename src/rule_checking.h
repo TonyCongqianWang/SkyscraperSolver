@@ -22,6 +22,6 @@ typedef struct s_constr_check_state
 	int					cur_num_visible;
 }		t_constr_check_state;
 
-int		check_rule_violations(t_puzzle *puzzle);
+int		check_rule_violations(t_solver_state *puzzle);
 
 #endif

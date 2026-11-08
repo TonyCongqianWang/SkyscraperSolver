@@ -21,7 +21,7 @@
 # define C_PAIRS_PER_CELL 2
 # define MAX_DIRTY_CONSTRS 36
 
-typedef struct s_puzzle		t_puzzle;
+typedef struct s_solver_state		t_solver_state;
 
 typedef struct s_node_transition
 {
@@ -78,13 +78,17 @@ typedef struct s_line_orders_stack
 	t_line_order	orders[MAX_STACK_DEPTH];
 }		t_line_orders_stack;
 
-typedef struct s_grid_state
+typedef struct s_domain_state
 {
 	char		vals[MAX_CELL_COUNT];
 	short		valid_val_bmps[MAX_CELL_COUNT];
 	char		cell_bounds[MAX_CELL_COUNT];
 	char		num_cell_vals[MAX_CELL_COUNT];
-}		t_grid_state;
+	int			num_unset;
+	int			is_complete;
+	int			is_invalid;
+	int			remaining_entropy;
+}		t_domain_state;
 
 typedef struct s_constrs_state
 {
@@ -138,23 +142,19 @@ typedef struct s_node_state
 {
 	int						size;
 	int						last_set_idx;
-	int						is_complete;
-	int						is_invalid;
-	int						num_unset;
 	t_u16					rows_changed_since_prune;
 	t_u16					cols_changed_since_prune;
 	t_u16					rows_invalid_since_prune;
 	t_u16					cols_invalid_since_prune;
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
-	int						remaining_entropy;
 	int						last_entropy[3];
 	t_tree_context			tree;
 	t_search_policy			search_policy;
-	t_grid_state			grid;
+	t_domain_state			domain;
 	t_constrs_state			constrs;
 	t_dirty_constr_stack	dirty_constrs;
-	t_puzzle				*puzzle;
+	t_solver_state			*solver;
 }		t_node_state;
 
 typedef struct s_sol_info
@@ -188,7 +188,7 @@ typedef struct s_selection_lut
 	double					min_score;
 }		t_selection_lut;
 
-typedef struct s_puzzle
+typedef struct s_solver_state
 {
 	int						size;
 	int						squared_size;
@@ -211,6 +211,6 @@ typedef struct s_puzzle
 	int						node_stack_top;
 	int						cell_distance_order[MAX_CELL_COUNT];
 	t_selection_lut			selection_lut;
-}		t_puzzle;
+}		t_solver_state;
 
 #endif

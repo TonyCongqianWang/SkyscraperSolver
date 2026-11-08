@@ -31,7 +31,7 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	}
 }
 
-static void	prepare_lookahead_cache(t_puzzle *puzzle,
+static void	prepare_lookahead_cache(t_solver_state *puzzle,
 				const t_lookahead_config *config)
 {
 	t_node_select_config	ns_cfg;
@@ -41,7 +41,7 @@ static void	prepare_lookahead_cache(t_puzzle *puzzle,
 	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
 }
 
-static void	execute_lookahead(t_puzzle *puzzle,
+static void	execute_lookahead(t_solver_state *puzzle,
 				t_node_state *node, const t_lookahead_config *config,
 				t_lookahead_pass passes)
 {
@@ -68,7 +68,7 @@ static void	execute_lookahead(t_puzzle *puzzle,
 	node->search_policy.branch.lookahead_selectivity = prev_selectivity;
 }
 
-void	run_lookahead(t_puzzle *puzzle, t_node_state *node,
+void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
 			const t_lookahead_config *config)
 {
 	t_lookahead_pass	passes;

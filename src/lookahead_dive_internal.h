@@ -14,7 +14,7 @@
 # define LOOKAHEAD_DIVE_INTERNAL_H
 # include "lookahead_dive.h"
 
-t_probe_result	search_probe(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	search_probe(t_solver_state *puzzle, t_node_transition next,
 					int depth, t_check_mode mode);
 
 #endif

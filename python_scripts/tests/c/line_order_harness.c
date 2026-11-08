@@ -11,7 +11,7 @@
 #include "check_node_validity.h"
 #include "selectivity.h"
 
-static t_puzzle puzzle;
+static t_solver_state puzzle;
 
 static void reset_puzzle(int size)
 {

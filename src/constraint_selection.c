@@ -12,14 +12,14 @@
 
 #include "constraint_selection.h"
 
-void	set_active_constraint(t_puzzle *puzzle, int constr_idx)
+void	set_active_constraint(t_solver_state *puzzle, int constr_idx)
 {
 	reset_constraint_bounds(puzzle);
 	puzzle->constr_bounds.is_reverse = 0;
 	puzzle->constr_bounds.cur_c_pair = puzzle->constraint_pairs[constr_idx];
 }
 
-void	reverse_constr_direction(t_puzzle *puzzle)
+void	reverse_constr_direction(t_solver_state *puzzle)
 {
 	int		swap_bwd;
 	int		swap_fwd;
@@ -32,7 +32,7 @@ void	reverse_constr_direction(t_puzzle *puzzle)
 	puzzle->constr_bounds.cur_c_pair.bwd_val = swap_fwd;
 }
 
-void	reset_constraint_bounds(t_puzzle *puzzle)
+void	reset_constraint_bounds(t_solver_state *puzzle)
 {
 	puzzle->constr_bounds.fwd_lb = 1;
 	puzzle->constr_bounds.lhs_ub = 0;

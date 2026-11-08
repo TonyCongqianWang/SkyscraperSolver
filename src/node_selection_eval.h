@@ -16,7 +16,7 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-int		set_next_valid_val(t_puzzle *puzzle, t_node_transition *next);
+int		set_next_valid_val(t_solver_state *puzzle, t_node_transition *next);
 void	sort_node_order_meta(t_node_transition *entries,
 			t_transition_meta *meta, int count,
 			t_selection_criterion criterion);

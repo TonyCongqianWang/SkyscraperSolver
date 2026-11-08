@@ -14,7 +14,7 @@
 #include "pruning_routines.h"
 #include "pruning_configs.h"
 
-int	prune_strat_initial(t_puzzle *puzzle)
+int	prune_strat_initial(t_solver_state *puzzle)
 {
 	t_prune_routine_cfg		cfg;
 

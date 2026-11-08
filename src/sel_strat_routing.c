@@ -15,7 +15,7 @@
 #include "math_utils.h"
 #include "params_double.h"
 
-void	select_node_select_config(t_puzzle *puzzle,
+void	select_node_select_config(t_solver_state *puzzle,
 			t_node_select_config *config)
 {
 	t_node_state	*node;
@@ -26,7 +26,7 @@ void	select_node_select_config(t_puzzle *puzzle,
 
 	node = puzzle->cur_node;
 	config->criterion = SELECT_MAX;
-	rem = node->remaining_entropy;
+	rem = node->domain.remaining_entropy;
 	if (rem < 1)
 		rem = 1;
 	raw = (double)(puzzle->max_entropy - rem) / rem;

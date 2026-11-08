@@ -16,8 +16,8 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-void	prune_gac(t_puzzle *puzzle, t_gac_config *config);
-void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
+void	prune_gac(t_solver_state *puzzle, t_gac_config *config);
+void	analyse_gac_line(t_solver_state *puzzle, int idx, int is_col,
 			t_gac_config *config);
 
 #endif

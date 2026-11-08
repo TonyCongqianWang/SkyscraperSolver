@@ -15,7 +15,7 @@
 #include "prune_strat_root.h"
 #include "prune_strat_bucket.h"
 
-int	prune_current_step(t_puzzle *puzzle)
+int	prune_current_step(t_solver_state *puzzle)
 {
 	int	d;
 

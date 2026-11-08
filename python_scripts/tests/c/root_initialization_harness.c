@@ -6,12 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void	check_initialized(t_puzzle *puzzle, int size)
+static void	check_initialized(t_solver_state *puzzle, int size)
 {
 	int	idx;
 
 	assert(puzzle->cur_node == &puzzle->node_stack[0]);
-	assert(puzzle->cur_node->puzzle == puzzle);
+	assert(puzzle->cur_node->solver == puzzle);
 	assert(puzzle->cur_node->dirty_constrs.count == 0);
 	assert(puzzle->cur_node->dirty_constrs.in_stack_bmp == 0);
 	assert(puzzle->cur_node->lookahead_ctx == NULL);
@@ -32,7 +32,7 @@ static void	check_initialized(t_puzzle *puzzle, int size)
 
 int	main(void)
 {
-	t_puzzle	*puzzle;
+	t_solver_state	*puzzle;
 	char		clues[] = "1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0";
 	char		grid[] = "1 2 3 4 2 3 4 1 3 4 1 2 4 1 2 3";
 
@@ -42,8 +42,8 @@ int	main(void)
 	init_puzzle(puzzle, 4, 1);
 	check_initialized(puzzle, 4);
 	assert(set_puzzle_grid_to_str_vals(puzzle, grid));
-	assert(puzzle->cur_node->grid.vals[0] == 1);
-	assert(puzzle->cur_node->grid.vals[15] == 3);
+	assert(puzzle->cur_node->domain.vals[0] == 1);
+	assert(puzzle->cur_node->domain.vals[15] == 3);
 	free_solution_storage(puzzle);
 	init_puzzle(puzzle, 4, 1);
 	check_initialized(puzzle, 4);

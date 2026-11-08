@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-int	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
+int	init_solution_storage(t_solver_state *puzzle, t_sol_count max_sols)
 {
 	puzzle->solutions_found = 0;
 	puzzle->max_solutions = max_sols;
@@ -26,17 +26,17 @@ int	init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols)
 	return (puzzle->solutions != NULL);
 }
 
-void	free_solution_storage(t_puzzle *puzzle)
+void	free_solution_storage(t_solver_state *puzzle)
 {
 	if (puzzle->solutions && puzzle->max_solutions > 1)
 		free(puzzle->solutions);
 }
 
-void	store_node_if_solution(t_puzzle *puzzle)
+void	store_node_if_solution(t_solver_state *puzzle)
 {
 	if (puzzle->cur_node->tree.lookahead_depth == 0
-		&& !puzzle->cur_node->is_invalid
-		&& puzzle->cur_node->is_complete)
+		&& !puzzle->cur_node->domain.is_invalid
+		&& puzzle->cur_node->domain.is_complete)
 	{
 		if (puzzle->max_solutions <= 1)
 			puzzle->solutions[0] = *(puzzle->cur_node);

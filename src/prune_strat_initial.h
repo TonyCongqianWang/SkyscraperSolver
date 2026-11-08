@@ -15,6 +15,6 @@
 
 # include "puzzle_structs.h"
 
-int		prune_strat_initial(t_puzzle *puzzle);
+int		prune_strat_initial(t_solver_state *puzzle);
 
 #endif

@@ -21,7 +21,7 @@
 #include "strategy_routing.h"
 #include "selectivity.h"
 
-void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
+void	prune_lookahead(t_solver_state *puzzle, t_lookahead_config *config)
 {
 	t_prune_routine_cfg	cfg;
 
@@ -30,7 +30,7 @@ void	prune_lookahead(t_puzzle *puzzle, t_lookahead_config *config)
 	run_pruning_routine(puzzle, &cfg, 1);
 }
 
-static void	probe_and_prune_candidate(t_puzzle *puzzle,
+static void	probe_and_prune_candidate(t_solver_state *puzzle,
 				t_node_transition next, const t_lookahead_config *cfg,
 				t_lookahead_pass pass)
 {
@@ -53,7 +53,7 @@ static void	probe_and_prune_candidate(t_puzzle *puzzle,
 			g_check_constr);
 }
 
-void	probe_candidates(t_puzzle *puzzle, t_node_transition *tr,
+void	probe_candidates(t_solver_state *puzzle, t_node_transition *tr,
 			const t_lookahead_config *config, t_lookahead_pass pass)
 {
 	init_node_transition(tr);

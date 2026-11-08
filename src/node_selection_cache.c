@@ -44,7 +44,7 @@ static void	restore_lookahead_meta(t_node_order *cache,
 	}
 }
 
-static void	init_new_cache(t_puzzle *puzzle, t_node_order *cache,
+static void	init_new_cache(t_solver_state *puzzle, t_node_order *cache,
 				t_node_select_config *config, int old_top)
 {
 	t_node_state	*n;
@@ -85,7 +85,7 @@ static void	backup_cache(t_node_order *cache,
 	}
 }
 
-static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
+static void	rebuild_existing_cache(t_solver_state *puzzle, t_node_order *cache,
 				t_node_select_config *config)
 {
 	t_transition_meta	old_meta[MAX_TRANSITIONS];
@@ -104,7 +104,7 @@ static void	rebuild_existing_cache(t_puzzle *puzzle, t_node_order *cache,
 	sort_cached_orders(puzzle->cur_node, cache, config->criterion);
 }
 
-void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
+void	build_node_order(t_solver_state *puzzle, t_node_select_config *config)
 {
 	t_node_state	*n;
 	t_node_order	*cache;
@@ -126,5 +126,5 @@ void	build_node_order(t_puzzle *puzzle, t_node_select_config *config)
 	}
 	else
 		rebuild_existing_cache(puzzle, cache, config);
-	cache->last_build_entropy = n->remaining_entropy;
+	cache->last_build_entropy = n->domain.remaining_entropy;
 }

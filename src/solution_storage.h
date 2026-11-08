@@ -14,8 +14,8 @@
 # define SOLUTION_STORAGE_H
 # include "puzzle_structs.h"
 
-int		init_solution_storage(t_puzzle *puzzle, t_sol_count max_sols);
-void	free_solution_storage(t_puzzle *puzzle);
-void	store_node_if_solution(t_puzzle *puzzle);
+int		init_solution_storage(t_solver_state *puzzle, t_sol_count max_sols);
+void	free_solution_storage(t_solver_state *puzzle);
+void	store_node_if_solution(t_solver_state *puzzle);
 
 #endif

@@ -14,15 +14,15 @@
 
 t_line_order	*get_line_order(t_node_state *node)
 {
-	t_puzzle	*puzzle;
+	t_solver_state	*puzzle;
 	int			idx;
 
-	puzzle = node->puzzle;
+	puzzle = node->solver;
 	idx = node->order_cache - puzzle->order_stack.orders;
 	return (&puzzle->line_order_stack.orders[idx]);
 }
 
-void	init_line_order_stack(t_puzzle *puzzle)
+void	init_line_order_stack(t_solver_state *puzzle)
 {
 	t_line_order	*order;
 	int				i;
@@ -38,7 +38,7 @@ void	init_line_order_stack(t_puzzle *puzzle)
 	sort_line_order(puzzle->cur_node);
 }
 
-void	copy_line_order(t_puzzle *puzzle, int parent_idx)
+void	copy_line_order(t_solver_state *puzzle, int parent_idx)
 {
 	puzzle->line_order_stack.orders[puzzle->order_stack.top_idx]
 		= puzzle->line_order_stack.orders[parent_idx];

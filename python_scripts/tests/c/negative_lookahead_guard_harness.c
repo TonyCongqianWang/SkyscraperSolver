@@ -8,7 +8,7 @@
 #include "tree_search.h"
 #include "node_selection_transition.h"
 
-static t_puzzle puzzle;
+static t_solver_state puzzle;
 
 static void reset_puzzle(void)
 {
@@ -131,7 +131,7 @@ static void test_regular_dfs_branching_allowed(void)
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
     puzzle.cur_node->tree.depth = 1;
     puzzle.cur_node->search_policy.limits.max_depth = 3;
-    puzzle.cur_node->remaining_entropy = 0;
+    puzzle.cur_node->domain.remaining_entropy = 0;
     puzzle.cur_node->search_policy.branch.is_in_lookahead_select = 1;
     puzzle.cur_node->search_policy.branch.lookahead_selectivity = SELECTIVITY_ANY_CHANGE;
     parent_policy = puzzle.cur_node->search_policy;

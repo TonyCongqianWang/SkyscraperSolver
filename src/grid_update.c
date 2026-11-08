@@ -66,22 +66,22 @@ void	decrement_constr_num_valids(t_node_state *state, int cell_idx, int val)
 	int		old_col;
 	int		old_row;
 
-	constr_idx = state->puzzle->grid_constr_map[cell_idx][0];
+	constr_idx = state->solver->grid_constr_map[cell_idx][0];
 	old_col = state->constrs.num_val_positions[constr_idx][val - 1];
-	state->remaining_entropy -= entropy_delta_constr(old_col, state->size);
+	state->domain.remaining_entropy -= entropy_delta_constr(old_col, state->size);
 	num_valids_col = --(state->constrs.num_val_positions[constr_idx][val - 1]);
-	constr_idx = state->puzzle->grid_constr_map[cell_idx][1];
+	constr_idx = state->solver->grid_constr_map[cell_idx][1];
 	old_row = state->constrs.num_val_positions[constr_idx][val - 1];
-	state->remaining_entropy -= entropy_delta_constr(old_row, state->size);
+	state->domain.remaining_entropy -= entropy_delta_constr(old_row, state->size);
 	num_valids_row = --(state->constrs.num_val_positions[constr_idx][val - 1]);
 	if (num_valids_col == 0 || num_valids_row == 0)
 	{
-		state->is_invalid = 1;
+		state->domain.is_invalid = 1;
 		return ;
 	}
-	if (num_valids_col == 1 && !state->is_invalid)
+	if (num_valids_col == 1 && !state->domain.is_invalid)
 		set_val_in_col(state, cell_idx, val);
-	if (num_valids_row == 1 && !state->is_invalid)
+	if (num_valids_row == 1 && !state->domain.is_invalid)
 		set_val_in_row(state, cell_idx, val);
 }
 
@@ -89,12 +89,12 @@ void	decrement_cell_num_valids(t_node_state *state, int idx)
 {
 	int		num_valids_cell;
 
-	num_valids_cell = --(state->grid.num_cell_vals[idx]);
+	num_valids_cell = --(state->domain.num_cell_vals[idx]);
 	if (num_valids_cell == 0)
-		state->is_invalid = 1;
+		state->domain.is_invalid = 1;
 	else if (num_valids_cell == 1
 		&& is_cell_empty(state, idx)
-		&& !state->is_invalid)
+		&& !state->domain.is_invalid)
 	{
 		set_valid_val_cell(state, idx);
 	}

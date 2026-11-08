@@ -29,7 +29,7 @@ typedef struct s_prune_routine_config
 	t_lookahead_config	lookahead;
 }	t_prune_routine_cfg;
 
-int		run_pruning_routine(t_puzzle *puzzle,
+int		run_pruning_routine(t_solver_state *puzzle,
 			const t_prune_routine_cfg *cfg, int cfg_idx);
 
 #endif

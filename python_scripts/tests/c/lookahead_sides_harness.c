@@ -5,7 +5,7 @@
 #include "grid_interface.h"
 #include "solution_storage.h"
 
-static t_puzzle puzzle;
+static t_solver_state puzzle;
 
 static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
 {
@@ -21,13 +21,14 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
     config.passes = side;
     config.check_mode = g_check_constr;
     run_lookahead(&puzzle, puzzle.cur_node, &config);
-    assert(!puzzle.cur_node->is_invalid);
+    assert(!puzzle.cur_node->domain.is_invalid);
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
     if (side == LOOKAHEAD_BOTH)
     {
-        assert(cache->lookahead_build_entropy == puzzle.cur_node->remaining_entropy);
+        assert(cache->lookahead_build_entropy
+            == puzzle.cur_node->domain.remaining_entropy);
         assert(cache->needs_rebuild == 1);
     }
     else

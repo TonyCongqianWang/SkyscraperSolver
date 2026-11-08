@@ -14,7 +14,7 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
-static int	scan_lookahead_pass(t_puzzle *puzzle, t_node_transition *next,
+static int	scan_lookahead_pass(t_solver_state *puzzle, t_node_transition *next,
 				int pass)
 {
 	t_node_state		*node;
@@ -70,7 +70,7 @@ static void	update_resume_index(t_node_state *node, t_node_transition *next)
 			= find_resume_index(node->order_cache, next) + 1;
 }
 
-int	get_next_lookahead(t_puzzle *puzzle, t_node_transition *next,
+int	get_next_lookahead(t_solver_state *puzzle, t_node_transition *next,
 		t_node_select_config *config)
 {
 	t_node_state	*node;

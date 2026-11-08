@@ -47,7 +47,7 @@ static int	collect_line_cells(t_node_state *state, int line_idx, int is_col,
 	return (count);
 }
 
-static void	run_gac_analysis_line(t_puzzle *puzzle, int *cells, int count,
+static void	run_gac_analysis_line(t_solver_state *puzzle, int *cells, int count,
 				t_gac_config *config)
 {
 	t_gac_batch	batch;
@@ -67,7 +67,7 @@ static void	run_gac_analysis_line(t_puzzle *puzzle, int *cells, int count,
 			g_check_none);
 }
 
-void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
+void	analyse_gac_line(t_solver_state *puzzle, int idx, int is_col,
 			t_gac_config *config)
 {
 	int		cells[MAX_SIZE];
@@ -75,7 +75,7 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 	int		constr_idx;
 	double	local_ratio;
 
-	if (puzzle->cur_node->remaining_entropy < config->global_min_entropy)
+	if (puzzle->cur_node->domain.remaining_entropy < config->global_min_entropy)
 		return ;
 	if (is_col)
 		constr_idx = idx;
@@ -89,7 +89,7 @@ void	analyse_gac_line(t_puzzle *puzzle, int idx, int is_col,
 	run_gac_analysis_line(puzzle, cells, count, config);
 }
 
-void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
+void	prune_gac(t_solver_state *puzzle, t_gac_config *config)
 {
 	t_node_state	*state;
 	t_line_order	*order;
@@ -101,7 +101,7 @@ void	prune_gac(t_puzzle *puzzle, t_gac_config *config)
 		return ;
 	order = get_line_order(state);
 	i = 0;
-	while (i < order->count && !state->is_invalid)
+	while (i < order->count && !state->domain.is_invalid)
 	{
 		idx = order->entries[i].constr_idx;
 		if (should_process_line(state, idx, config->selectivity))

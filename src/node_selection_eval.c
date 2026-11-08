@@ -14,7 +14,7 @@
 #include "grid_availability.h"
 #include "cell_bounds.h"
 
-int	set_next_valid_val(t_puzzle *puzzle, t_node_transition *next)
+int	set_next_valid_val(t_solver_state *puzzle, t_node_transition *next)
 {
 	short	cell_val;
 	short	cell_ub;

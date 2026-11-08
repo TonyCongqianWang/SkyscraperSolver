@@ -14,6 +14,6 @@
 # define PUZZLE_SOLVER_H
 # include "puzzle_structs.h"
 
-int	solve_puzzle(t_puzzle *puzzle, int max_depth);
+int	solve_puzzle(t_solver_state *puzzle, int max_depth);
 
 #endif

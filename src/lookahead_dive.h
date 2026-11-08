@@ -27,9 +27,9 @@ typedef struct s_probe_result
 	int				remaining_entropy;
 }	t_probe_result;
 
-t_probe_result	probe_assumption(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	probe_assumption(t_solver_state *puzzle, t_node_transition next,
 					int depth, t_check_mode mode);
-t_probe_result	probe_exclusion(t_puzzle *puzzle, t_node_transition next,
+t_probe_result	probe_exclusion(t_solver_state *puzzle, t_node_transition next,
 					int depth, t_check_mode mode);
 
 #endif

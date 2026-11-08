@@ -13,7 +13,7 @@
 #include "prune_check_constr.h"
 #include "entropy.h"
 
-void	copy_indices(t_puzzle *puzzle, int *grid, int *rev, int size)
+void	copy_indices(t_solver_state *puzzle, int *grid, int *rev, int size)
 {
 	int	i;
 
@@ -41,12 +41,12 @@ int	propagate_single_direction(t_prune_args *args)
 	return (prune_candidates(args));
 }
 
-int	check_ratios(t_puzzle *puzzle, int constr_idx, int size,
+int	check_ratios(t_solver_state *puzzle, int constr_idx, int size,
 		t_constr_limits *limits)
 {
 	double	local_ratio;
 
-	if (puzzle->cur_node->remaining_entropy
+	if (puzzle->cur_node->domain.remaining_entropy
 		< limits->global_min_entropy)
 		return (0);
 	local_ratio = get_relative_constr_entropy(puzzle->cur_node, constr_idx,

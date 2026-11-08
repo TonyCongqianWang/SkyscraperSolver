@@ -14,6 +14,6 @@
 # define CELL_DISTANCE_H
 # include "puzzle_structs.h"
 
-void	init_cell_distance_order(t_puzzle *puzzle, int size);
+void	init_cell_distance_order(t_solver_state *puzzle, int size);
 
 #endif

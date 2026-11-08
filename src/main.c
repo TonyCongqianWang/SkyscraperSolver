@@ -19,11 +19,11 @@
 #include "stdin_mode.h"
 #include "stdin_tokenize.h"
 
-static void	solve_puzzle_and_print_result(t_puzzle *puzzle);
+static void	solve_puzzle_and_print_result(t_solver_state *puzzle);
 
 int	main(int argc, char **argv)
 {
-	static t_puzzle	puzzle;
+	static t_solver_state	puzzle;
 	int				parsing_retcode;
 
 	if (has_stdin_flag(argc, argv))
@@ -39,7 +39,7 @@ int	main(int argc, char **argv)
 	return (0);
 }
 
-static void	solve_puzzle_and_print_result(t_puzzle *puzzle)
+static void	solve_puzzle_and_print_result(t_solver_state *puzzle)
 {
 	t_sol_count			solution_idx;
 	int					append_nl;
