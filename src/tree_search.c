@@ -40,7 +40,8 @@ t_sol_info	run_tree_search(t_solver_state *puzzle,
 	init_node_transition(&frames[d].next);
 	frames[d].probe_config = config;
 	frames[d].probe_pass = pass;
-	while (process_frame(puzzle, &d, start_d, frames) != SEARCH_TERMINATE)
+	while (process_search_frame(puzzle, &d, start_d, frames)
+		!= SEARCH_TERMINATE)
 		;
 	return (frames[start_d].node_sols);
 }

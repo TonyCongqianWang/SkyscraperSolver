@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   tree_search_step.c                                 :+:      :+:    :+:   */
+/*   tree_search_frame.c                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -77,8 +77,8 @@ static t_search_result	check_early_states(t_solver_state *puzzle, int *d,
 	return (SEARCH_PROCEED_TO_BRANCH);
 }
 
-t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
-		t_search_frame *frames)
+t_search_result	process_search_frame(t_solver_state *puzzle, int *d,
+					int start_d, t_search_frame *frames)
 {
 	t_search_result	early_res;
 
@@ -92,6 +92,6 @@ t_search_result	process_frame(t_solver_state *puzzle, int *d, int start_d,
 		finish_candidate_search(&frames[*d].node_sols, puzzle->cur_node);
 		return (check_backtrack(puzzle, d, start_d, frames));
 	}
-	advance_search_frame(puzzle, d, frames);
+	execute_search_transition(puzzle, d, frames);
 	return (SEARCH_CONTINUE);
 }

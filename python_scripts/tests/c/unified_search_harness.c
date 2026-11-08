@@ -53,12 +53,12 @@ static void test_frame_cursor_progress(void)
     frames[0].probe_config = &config;
     frames[0].probe_pass = LOOKAHEAD_POS;
     d = 0;
-    assert(process_frame(&puzzle, &d, 0, frames) == SEARCH_CONTINUE);
+    assert(process_search_frame(&puzzle, &d, 0, frames) == SEARCH_CONTINUE);
     assert(!frames[0].node_sols.exhausted);
     assert(frames[0].node_sols.solutions_registered == 0);
     first = frames[0].next;
     assert(puzzle.nodes_visited == 1);
-    assert(process_frame(&puzzle, &d, 0, frames) == SEARCH_CONTINUE);
+    assert(process_search_frame(&puzzle, &d, 0, frames) == SEARCH_CONTINUE);
     assert(frames[0].next.cell_idx != first.cell_idx
         || frames[0].next.cell_val != first.cell_val);
     assert(puzzle.nodes_visited == 2);
