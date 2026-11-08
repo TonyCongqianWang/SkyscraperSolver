@@ -47,8 +47,11 @@ int	get_valid_depth(const t_node_state *node)
 
 void	finalize_valid_depth(t_sol_info *result, const t_node_state *node)
 {
-	if (result->min_valid_depth == VALID_DEPTH_UNSET
-		|| (node->domain.is_invalid
-			&& get_valid_depth(node) < result->min_valid_depth))
-		result->min_valid_depth = get_valid_depth(node);
+	int	valid_depth;
+
+	valid_depth = get_valid_depth(node);
+	if (result->min_valid_depth == VALID_DEPTH_UNSET)
+		result->min_valid_depth = valid_depth;
+	else if (node->domain.is_invalid && valid_depth < result->min_valid_depth)
+		result->min_valid_depth = valid_depth;
 }
