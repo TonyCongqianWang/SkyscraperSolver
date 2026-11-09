@@ -49,10 +49,16 @@ typedef enum e_lookahead_pass
 	LOOKAHEAD_BOTH = LOOKAHEAD_POS | LOOKAHEAD_NEG
 }	t_lookahead_pass;
 
+typedef struct s_probe_depth
+{
+	int	positive;
+	int	negative;
+}	t_probe_depth;
+
 typedef struct s_lookahead_config
 {
 	t_selectivity_level	selectivity;
-	int					max_depth;
+	t_probe_depth		depth;
 	t_lookahead_pass	passes;
 	t_check_mode		check_mode;
 }	t_lookahead_config;

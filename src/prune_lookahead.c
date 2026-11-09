@@ -20,6 +20,7 @@ void	prune_lookahead(t_solver_state *puzzle, t_lookahead_config *config)
 
 	init_prune_cfg(&cfg, 0, puzzle->cur_node->tree.lookahead_depth);
 	cfg.lookahead = *config;
-	cfg.run_lookahead = (config->max_depth > 0);
+	cfg.run_lookahead = (config->depth.positive > 0
+			|| config->depth.negative > 0);
 	run_pruning_routine(puzzle, &cfg, 1);
 }

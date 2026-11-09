@@ -88,7 +88,8 @@ static void test_path_marks_survive_restoration(void)
     for (i = 0; i < puzzle.squared_size; ++i)
         ctx.explored_assignments[i] = 0xffff;
     memset(&config, 0, sizeof(config));
-    config.max_depth = 3;
+    config.depth.positive = 3;
+    config.depth.negative = 3;
     config.check_mode = g_check_constr;
     outcome = run_tree_search(&puzzle, &config, LOOKAHEAD_POS);
     assert(!outcome.exhausted && outcome.solutions_registered == 0);

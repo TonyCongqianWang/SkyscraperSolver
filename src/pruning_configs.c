@@ -13,11 +13,15 @@
 #include "pruning_configs.h"
 #include "params_math.h"
 
-static int	get_probe_depth(int tier, int nesting)
+static t_probe_depth	get_probe_depth(int tier, int nesting)
 {
-	if (nesting >= MAX_LOOKAHEAD_DEPTH)
-		return (0);
-	return (g_lookahead_probe_depth[nesting][tier]);
+	t_probe_depth	depth;
+
+	depth.positive = 0;
+	depth.negative = 0;
+	if (nesting < MAX_LOOKAHEAD_DEPTH)
+		depth = g_probe_depths[nesting][tier];
+	return (depth);
 }
 
 void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting)
@@ -36,8 +40,9 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting)
 	cfg->gac.max_entropy = 0.70;
 	cfg->gac.global_min_entropy = 513540;
 	cfg->lookahead.selectivity = cfg->check_constr_selectivity;
-	cfg->lookahead.max_depth = get_probe_depth(tier, nesting);
-	cfg->run_lookahead = (cfg->lookahead.max_depth > 0);
+	cfg->lookahead.depth = get_probe_depth(tier, nesting);
+	cfg->run_lookahead = (cfg->lookahead.depth.positive > 0
+			|| cfg->lookahead.depth.negative > 0);
 	cfg->lookahead.passes = LOOKAHEAD_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }

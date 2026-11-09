@@ -61,18 +61,30 @@ static void	execute_lookahead(t_solver_state *puzzle,
 	leave_lookahead(node, &saved);
 }
 
+static t_lookahead_pass	get_enabled_passes(const t_node_state *node,
+						const t_lookahead_config *config)
+{
+	t_lookahead_pass	passes;
+
+	passes = config->passes;
+	if (config->depth.positive <= 0)
+		passes &= ~LOOKAHEAD_POS;
+	if (config->depth.negative <= 0
+		|| node->tree.neg_lookahead_depth >= MAX_NEG_LOOKAHEAD_DEPTH)
+		passes &= ~LOOKAHEAD_NEG;
+	return (passes);
+}
+
 void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
 			const t_lookahead_config *config)
 {
 	t_lookahead_pass	passes;
 
-	if (config->max_depth <= 0 || solution_limit_reached(puzzle)
+	if (solution_limit_reached(puzzle)
 		|| node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
 		|| should_exit_selectivity(node, config->selectivity))
 		return ;
-	passes = config->passes;
-	if (node->tree.neg_lookahead_depth >= MAX_NEG_LOOKAHEAD_DEPTH)
-		passes &= ~LOOKAHEAD_NEG;
+	passes = get_enabled_passes(node, config);
 	if (passes == LOOKAHEAD_NONE)
 		return ;
 	execute_lookahead(puzzle, node, config, passes);

@@ -50,7 +50,8 @@ static void test_nested_dispatch_and_context_restore(void)
     memset(&cfg, 0, sizeof(cfg));
     memset(&outer, 0, sizeof(outer));
     cfg.selectivity = SELECTIVITY_NONE;
-    cfg.max_depth = 1;
+    cfg.depth.positive = 1;
+    cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
@@ -85,7 +86,8 @@ static void test_nested_negative_side_skips_all_passes(void)
     reset_puzzle();
     memset(&cfg, 0, sizeof(cfg));
     cfg.selectivity = SELECTIVITY_NONE;
-    cfg.max_depth = 1;
+    cfg.depth.positive = 1;
+    cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_NEG;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
@@ -110,7 +112,8 @@ static void test_subnode_both_sides_does_not_mark_cache(void)
     reset_puzzle();
     memset(&cfg, 0, sizeof(cfg));
     cfg.selectivity = SELECTIVITY_NONE;
-    cfg.max_depth = 1;
+    cfg.depth.positive = 1;
+    cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->tree.lookahead_depth = 1;
@@ -272,7 +275,8 @@ static void test_nesting_limits(void)
     memset(&cfg, 0, sizeof(cfg));
     cfg.selectivity = SELECTIVITY_NONE;
     cfg.passes = LOOKAHEAD_BOTH;
-    cfg.max_depth = 1;
+    cfg.depth.positive = 1;
+    cfg.depth.negative = 1;
     cfg.check_mode = g_check_constr;
     run_lookahead(&puzzle, puzzle.cur_node, &cfg);
     assert(puzzle.nodes_visited == visited);
