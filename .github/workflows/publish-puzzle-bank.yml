@@ -3,12 +3,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'puzzle_bank/unique/v1/**'
+      - 'puzzle_bank/unique/v1/minimal/size_*.json'
       - 'puzzle_bank/curated/v1/**'
-      - 'src/**'
       - 'web/**'
       - 'python_scripts/puzzle_bank/export_api_metadata.py'
       - '.github/workflows/publish-puzzle-bank.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'release' && !github.event.release.prerelease)
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
@@ -27,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: main
           lfs: true
       - name: Download puzzle-bank LFS content
         run: |
@@ -45,19 +47,40 @@ jobs:
                       raise RuntimeError(f'LFS content unavailable for {path}') from exc
                   assert bank.get('size') == size, path
           PY
+      - name: Resolve latest published release
+        id: release
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { data: release } = await github.rest.repos.getLatestRelease({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            core.setOutput('tag', release.tag_name);
+            core.info(`Building website solver from release ${release.tag_name}`);
+      - name: Check out released solver separately
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.release.outputs.tag }}
+          path: scratch/release-solver
       - uses: emscripten-core/setup-emsdk@v15
         with:
           version: latest
-      - name: Build static website
+      - name: Compile and smoke-test released browser solver
+        working-directory: scratch/release-solver
         run: |
-          mkdir -p public/assets/solver
           emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
             -s INVOKE_RUN=0 -s MODULARIZE=1 \
             -s EXPORT_NAME=createSkyscraperSolver \
             -s EXPORTED_FUNCTIONS='["_solve_web"]' \
             -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
             -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
-            -o public/assets/solver/solver.js
+            -o web/solver.js
+          node web/smoke_test.cjs
+      - name: Build static website
+        run: |
+          mkdir -p public/assets/solver
+          cp scratch/release-solver/web/solver.js scratch/release-solver/web/solver.wasm public/assets/solver/
           python3 web/build_site.py --output public
           test -s public/assets/index.json
           test -s public/assets/puzzles/puzzles.js

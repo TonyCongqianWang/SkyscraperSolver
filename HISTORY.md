@@ -1,5 +1,39 @@
 # Version History
 
+### v1.0.0
+
+The first release using the `vMAJOR.MINOR.PATCH` naming format, following v09.
+The solver has undergone a substantial redesign: depth-first search and
+lookahead now share one traversal model, with clearer separation of puzzle
+state, search policy, and branching scores. Two-sided lookahead and configurable
+probe depths make pruning more flexible while keeping solution registration
+and search exhaustion consistent across ordinary and speculative searches.
+
+Development now puts greater emphasis on test-driven changes and reproducible
+verification. Regression tests cover solution limits, initial givens, nested
+lookahead, and other correctness edge cases; independent Z3 and OR-Tools CP-SAT
+backends cross-check results. CI combines native verification, Python tests,
+WebAssembly smoke tests, and mixed-depth checks. Benchmarking and SPSA tooling
+also gained better dataset screening, provenance, and sensitivity reporting.
+
+The project now includes puzzle curation and a static website alongside the
+core solver. Versioned unique puzzle banks feed difficulty-rated collections,
+with published metadata, statistics, and a browser-side puzzle API. The site
+provides a WebAssembly solver demo, a curated puzzle explorer, and browsable
+assets. Its deployed solver is built from the latest published release;
+ongoing solver development continues to be checked separately in CI.
+
+- Unified DFS and lookahead traversal with explicit solution and exhaustion handling.
+- Two-sided lookahead, per-tier probe depths, and controlled nested search.
+- Corrected finite solution counting, propagated givens, and root initialization.
+- Validated solution limits and fixed small-board and constraint-bound edge cases.
+- Expanded regression coverage, reference-solver cross-checks, and node signatures.
+- Improved SPSA tuning, dataset validation, and reproducible benchmark reporting.
+- Added unique puzzle generation, canonical grouping, and difficulty-based curation.
+- Published a static puzzle API with random selection and stable versioned IDs.
+- Added a browser solver demo, puzzle statistics explorer, and asset catalog.
+- Limited website publishing to site/data changes and releases, using released solver sources.
+
 ### v09
 Large-scale refactoring and tuning across the codebase, with agent-assisted development.
 Expanded the benchmarking tools and added automated parameter tuning using SPSA.

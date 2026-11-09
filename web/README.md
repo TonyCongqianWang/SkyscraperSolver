@@ -3,6 +3,19 @@
 The site is published on GitHub Pages. All processing and random selection run
 in the browser, with no server-side endpoints.
 
+Production publishing runs when website files, published puzzle banks, or the
+metadata exporter change, and when a stable GitHub release is published. Manual
+publishing remains available. The workflow checks out the site and puzzle data
+from `main`, resolves GitHub's latest published release (excluding drafts and
+prereleases), and compiles and smoke-tests that release's C sources and WASM
+wrapper in a separate checkout. It never falls back to unreleased solver code.
+The release must contain `web/wasm_api.c` and `web/smoke_test.cjs`; v1.0.0 is the
+first release with this browser support.
+
+CI's WASM job still builds the code under test on `main` pushes and pull
+requests. PR website previews also build the PR's solver so changes can be
+reviewed before release.
+
 - `/`: homepage, with links to `/demo/`, `/curated/`, and `/assets/`
 - `/demo/`: WebAssembly solver demo; defaults to dark unless opened from the homepage
   with `?from=index&theme=light`. Direct `?theme=light` and
