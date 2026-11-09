@@ -5,10 +5,10 @@ Originally created for the Rush01 project during the C Piscine at 42 Heilbronn, 
 ## Release v1.0.0
 
 This release follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming format.
-It brings a redesigned search and lookahead engine, broader test-driven
-verification, versioned puzzle curation, and a static website with a browser
-solver and puzzle API. See the [release highlights](HISTORY.md#v100) for changes
-since v09.
+It brings improved, tuned branching rules, a redesigned search and lookahead
+engine, broader test-driven verification, versioned puzzle curation, and a static
+website with a browser solver and puzzle API. See the
+[release highlights](HISTORY.md#v100) for changes since v09.
 
 The website demo defaults to the latest stable release and offers a newer
 prerelease in its solver-version dropdown. If only a prerelease exists, it is

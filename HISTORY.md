@@ -3,12 +3,10 @@
 ### v1.0.0
 
 The v1.0.0 milestone follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming
-format. These highlights cover changes since v09. The solver has undergone a
-substantial redesign: depth-first search and
-lookahead now share one traversal model, with clearer separation of puzzle
-state, search policy, and branching scores. Two-sided lookahead and configurable
-probe depths make pruning more flexible while keeping solution registration
-and search exhaustion consistent across ordinary and speculative searches.
+format. These highlights cover changes since v09. The solver has been
+substantially reworked to make search behavior more consistent and easier to
+extend, with correctness and practical solving performance as the main
+priorities. The performance figures below are for a 2.20 GHz Intel Xeon.
 
 Development now puts greater emphasis on test-driven changes and reproducible
 verification. Regression tests cover solution limits, initial givens, nested
@@ -25,16 +23,13 @@ assets. A version selector defaults to the latest stable release and offers a
 newer prerelease, with a prerelease fallback when no stable release exists.
 Ongoing solver development continues to be checked separately in CI.
 
-- Unified DFS and lookahead traversal with explicit solution and exhaustion handling.
-- Two-sided lookahead, per-tier probe depths, and controlled nested search.
-- Corrected finite solution counting, propagated givens, and root initialization.
-- Validated solution limits and fixed small-board and constraint-bound edge cases.
-- Expanded regression coverage, reference-solver cross-checks, and node signatures.
-- Improved SPSA tuning, dataset validation, and reproducible benchmark reporting.
-- Added unique puzzle generation, canonical grouping, and difficulty-based curation.
-- Published a static puzzle API with random selection and stable versioned IDs.
-- Added a browser solver demo, puzzle statistics explorer, and asset catalog.
-- Limited site publishing to site/data changes and releases, with stable/prerelease solver selection.
+- Improved and SPSA-tuned branching rules deliver the most important performance gains.
+- Two-sided lookahead informs both branching scores and pruning decisions.
+- DFS and lookahead share one traversal model with consistent solution and exhaustion handling.
+- Configurable per-tier probe depths and controlled nesting make lookahead more flexible.
+- Symmetric puzzle variants now solve in roughly the same time.
+- The roughly 80,000 size 9 instances in the puzzle bank solve in about one hour.
+- The previous roughly 8,000-instance size 9 benchmark set solves in under 10 minutes.
 
 ### v09
 Large-scale refactoring and tuning across the codebase, with agent-assisted development.
