@@ -64,6 +64,6 @@ int	calc_effective_global_min_entropy(int base_entropy, int size)
 	double	factor;
 
 	factor = get_global_entropy_multiplier(size)
-		* compute_empty_entropy(size) / 1000000.0;
+		* compute_max_entropy(size) / 1000000.0;
 	return (schedule_int(base_entropy * factor));
 }

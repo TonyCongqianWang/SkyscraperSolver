@@ -167,7 +167,7 @@ static void check_scaling(void)
 		for (i = 0; i < 2*size; i++)
 			for (v = 0; v < size; v++)
 				empty.domain.constrs.num_val_positions[i][v] = size;
-		e = compute_empty_entropy(size);
+		e = compute_max_entropy(size);
 		assert(e == compute_initial_entropy(&empty, size));
 		assert(calc_effective_global_min_entropy(base, size) == e / 2);
 		setup_cfg_bounds(&cfg, &lim, size);
@@ -183,7 +183,7 @@ static void check_scaling(void)
 	}
 	g_global_entropy_multiplier_s8 = 2;
 	setup_cfg_bounds(&cfg, &lim, 8);
-	e = compute_empty_entropy(8);
+	e = compute_max_entropy(8);
 	assert(cfg.gac.global_min_entropy == e);
 	assert(cfg.check_constr_global_min_entropy == e);
 	assert(cfg.lookahead.check_mode.gac.global_min_entropy == e);
@@ -194,7 +194,7 @@ static void check_scaling(void)
 	assert(calc_effective_global_min_entropy(base / 2, 8) == e / 2);
 	oldscale = g_weight_total_scale_s8;
 	g_weight_total_scale_s8 *= 1.5;
-	e = compute_empty_entropy(8);
+	e = compute_max_entropy(8);
 	assert(calc_effective_global_min_entropy(base, 8) == e);
 	g_weight_total_scale_s8 = oldscale;
 	g_global_entropy_multiplier_s8 = 1;
@@ -215,7 +215,7 @@ static void check_reseed(void)
 	for (size = 4; size <= 9; size++)
 	{
 		assert(calc_effective_global_min_entropy(g_gac_global_min_entropy_p00,
-			size) == (int)(.98 * compute_empty_entropy(size)));
+			size) == (int)(.98 * compute_max_entropy(size)));
 		/* Sample all reachable effective coordinates, including overshoot. */
 		for (int k = 0; k <= 1000; k++)
 		{

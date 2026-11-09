@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "entropy.h"
-#include "params_math.h"
 
 static int	initial_cell_entropy(t_node_state *node, int size)
 {
@@ -60,13 +59,6 @@ int	compute_initial_entropy(t_node_state *node, int size)
 }
 
 int	compute_max_entropy(int size)
-{
-	return (size * size * get_log2_scaled(size)
-		* get_weight_total_scale(size)
-		/ ENTROPY_SCALE);
-}
-
-int	compute_empty_entropy(int size)
 {
 	int	cell;
 	int	constr;

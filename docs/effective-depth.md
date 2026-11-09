@@ -64,14 +64,16 @@ empty-grid entropy, rather than an absolute entropy count:
 ```
 effective_cutoff = cutoff_ppm / 1_000_000
                    * global_entropy_multiplier[size]
-                   * empty_grid_entropy(size)
+                   * compute_max_entropy(size)
 ```
 
-`compute_empty_entropy` uses the actual integer cell/constraint weights and
+`compute_max_entropy` uses the actual integer cell/constraint weights and
 per-domain truncation used by `compute_initial_entropy`. Thus the reference is
 the entropy of a genuinely empty grid, including when SPSA changes the entropy
-scale or the cell/constraint weight ratio. The existing approximate
-`compute_max_entropy` used in other scheduling calculations is unchanged.
+scale or the cell/constraint weight ratio. There is one canonical maximum-entropy
+helper; no separate empty-grid helper is needed. Runtime `puzzle->max_entropy`
+continues to come from the initialized empty node's `compute_initial_entropy`,
+so consolidating the helpers does not change existing scheduling heuristics.
 
 The same scaling function serves initial GAC/constraint pruning, regular and
 root pruning, and extra lookahead verification for both families. The formerly
