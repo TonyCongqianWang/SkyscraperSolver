@@ -13,7 +13,8 @@
 #ifndef PARAMS_DEPTH_ARRAYS_H
 # define PARAMS_DEPTH_ARRAYS_H
 
-# define DEPTH_ARRAY_SIZE 82
+# define DEPTH_STRIDE 82
+# define DEPTH_ARRAY_SIZE 6724
 
 extern int		g_depth_min_entropy[DEPTH_ARRAY_SIZE];
 extern int		g_depth_gac_min_entropy[DEPTH_ARRAY_SIZE];
@@ -37,6 +38,7 @@ extern double	g_depth_lookahead_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_lookahead_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_lookahead_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_lookahead_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
+int				schedule_int(double value);
 void			compute_catmull_weights(double t, double *w);
 void			init_depth_ints_at(int d, const double *w);
 void			init_depth_doubles_part1(int d, const double *w);

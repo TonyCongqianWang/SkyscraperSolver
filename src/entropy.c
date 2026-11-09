@@ -65,3 +65,13 @@ int	compute_max_entropy(int size)
 		* get_weight_total_scale(size)
 		/ ENTROPY_SCALE);
 }
+
+int	compute_empty_entropy(int size)
+{
+	int	cell;
+	int	constr;
+
+	cell = get_log2_scaled(size) * get_weight_cell(size) / ENTROPY_SCALE;
+	constr = get_log2_scaled(size) * get_weight_constr(size) / ENTROPY_SCALE;
+	return (size * size * (cell + 2 * constr));
+}

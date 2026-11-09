@@ -4,6 +4,25 @@ import sys
 import re
 
 MATH_VARS = [
+    ("g_num_set_warp_0_le7", "NUM_SET_WARP_0_LE7", "double"),
+    ("g_num_set_warp_1_le7", "NUM_SET_WARP_1_LE7", "double"),
+    ("g_num_set_warp_2_le7", "NUM_SET_WARP_2_LE7", "double"),
+    ("g_global_entropy_multiplier_le7", "GLOBAL_ENTROPY_MULTIPLIER_LE7", "double"),
+    ("g_num_set_warp_0_s8", "NUM_SET_WARP_0_S8", "double"),
+    ("g_num_set_warp_1_s8", "NUM_SET_WARP_1_S8", "double"),
+    ("g_num_set_warp_2_s8", "NUM_SET_WARP_2_S8", "double"),
+    ("g_global_entropy_multiplier_s8", "GLOBAL_ENTROPY_MULTIPLIER_S8", "double"),
+    ("g_num_set_warp_0_s9", "NUM_SET_WARP_0_S9", "double"),
+    ("g_num_set_warp_1_s9", "NUM_SET_WARP_1_S9", "double"),
+    ("g_num_set_warp_2_s9", "NUM_SET_WARP_2_S9", "double"),
+    ("g_global_entropy_multiplier_s9", "GLOBAL_ENTROPY_MULTIPLIER_S9", "double"),
+    ("g_effective_depth_c0", "EFFECTIVE_DEPTH_C0", "double"),
+    ("g_effective_depth_cd", "EFFECTIVE_DEPTH_CD", "double"),
+    ("g_effective_depth_cs", "EFFECTIVE_DEPTH_CS", "double"),
+    ("g_effective_depth_cdd", "EFFECTIVE_DEPTH_CDD", "double"),
+    ("g_effective_depth_cds", "EFFECTIVE_DEPTH_CDS", "double"),
+    ("g_effective_depth_css", "EFFECTIVE_DEPTH_CSS", "double"),
+
     ("g_weight_cell_constr_ratio_le7", "WEIGHT_CELL_CONSTR_RATIO_LE7", "double"),
     ("g_weight_cell_constr_ratio_s8", "WEIGHT_CELL_CONSTR_RATIO_S8", "double"),
     ("g_weight_cell_constr_ratio_s9", "WEIGHT_CELL_CONSTR_RATIO_S9", "double"),
@@ -13,9 +32,6 @@ MATH_VARS = [
     ("g_weight_total_scale_le7", "WEIGHT_TOTAL_SCALE_LE7", "double"),
     ("g_weight_total_scale_s8", "WEIGHT_TOTAL_SCALE_S8", "double"),
     ("g_weight_total_scale_s9", "WEIGHT_TOTAL_SCALE_S9", "double"),
-    ("g_global_entropy_unset_bias_le7", "GLOBAL_ENTROPY_UNSET_BIAS_LE7", "double"),
-    ("g_global_entropy_unset_bias_s8", "GLOBAL_ENTROPY_UNSET_BIAS_S8", "double"),
-    ("g_global_entropy_unset_bias_s9", "GLOBAL_ENTROPY_UNSET_BIAS_S9", "double"),
     ("g_sel_power_cell_le7", "SEL_POWER_CELL_LE7", "double"),
     ("g_sel_power_cell_s8", "SEL_POWER_CELL_S8", "double"),
     ("g_sel_power_cell_s9", "SEL_POWER_CELL_S9", "double"),
@@ -59,6 +75,9 @@ INT_BASE_VARS = [
 ]
 
 INT_VARS = [
+    ("g_initial_gac_global_min_entropy", "INITIAL_GAC_GLOBAL_MIN_ENTROPY", "int"),
+    ("g_initial_constr_global_min_entropy", "INITIAL_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
+
     ("g_root_min_entropy", "ROOT_MIN_ENTROPY", "int"),
     ("g_root_gac_min_entropy", "ROOT_GAC_MIN_ENTROPY", "int"),
     ("g_root_constr_min_entropy", "ROOT_CONSTR_MIN_ENTROPY", "int"),

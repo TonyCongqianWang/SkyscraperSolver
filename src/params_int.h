@@ -62,4 +62,7 @@ extern int	g_lookahead_constr_global_min_entropy_p25;
 extern int	g_lookahead_constr_global_min_entropy_p50;
 extern int	g_lookahead_constr_global_min_entropy_p100;
 
+extern int	g_initial_gac_global_min_entropy;
+extern int	g_initial_constr_global_min_entropy;
+
 #endif

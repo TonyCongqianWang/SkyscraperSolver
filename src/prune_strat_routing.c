@@ -14,6 +14,7 @@
 #include "prune_strat_initial.h"
 #include "prune_strat_root.h"
 #include "prune_strat_bucket.h"
+#include "params_depth_arrays.h"
 
 int	prune_current_step(t_solver_state *puzzle)
 {
@@ -28,7 +29,8 @@ int	prune_current_step(t_solver_state *puzzle)
 	}
 	else
 	{
-		d = puzzle->cur_node->tree.depth;
+		d = puzzle->cur_node->tree.depth * DEPTH_STRIDE
+			+ puzzle->squared_size - puzzle->cur_node->domain.num_unset;
 		return (prune_strat_depth_bucket(puzzle, d));
 	}
 }

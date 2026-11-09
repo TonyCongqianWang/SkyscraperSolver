@@ -35,7 +35,7 @@ int main(void)
         puzzle.cur_node->tree.lookahead_depth = nesting;
         for (tier = 0; tier < PRUNE_TIER_COUNT; ++tier)
         {
-            init_prune_cfg(&config, tier, nesting);
+            init_prune_cfg(&config, tier, nesting, puzzle.size);
             depth = nesting < MAX_LOOKAHEAD_DEPTH ? expected[nesting][tier] : 0;
             assert(config.lookahead.max_depth == depth);
             assert(config.run_lookahead == (depth > 0));
