@@ -16,10 +16,13 @@
 #include "solution_storage.h"
 #include <stddef.h>
 
-static int	enter_search_run(t_solver_state *puzzle)
+static int	enter_search_run(t_solver_state *puzzle, t_lookahead_pass pass)
 {
 	if (puzzle->cur_node->search_policy.mode == SEARCH_LOOKAHEAD)
+	{
+		puzzle->cur_node->lookahead_ctx->probe_pass = pass;
 		return (0);
+	}
 	puzzle->nodes_visited++;
 	if (puzzle->cur_node->tree.lookahead_depth == 0)
 		puzzle->main_nodes_visited++;
@@ -34,7 +37,7 @@ t_sol_info	run_tree_search(t_solver_state *puzzle,
 	int				start_d;
 
 	rollback_provisional_solution(puzzle);
-	if (enter_search_run(puzzle))
+	if (enter_search_run(puzzle, pass))
 		return (handle_leaf_node(puzzle));
 	start_d = puzzle->node_stack_top;
 	d = start_d;

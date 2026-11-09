@@ -106,6 +106,9 @@ typedef struct s_dirty_constr_stack
 
 typedef struct s_lookahead_ctx
 {
+	struct s_lookahead_ctx	*parent;
+	t_lookahead_pass		probe_pass;
+	t_u16					explored_assignments[MAX_CELL_COUNT];
 	t_selectivity_level		selectivity;
 	int						curr_pass;
 	int						curr_index;

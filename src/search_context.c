@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "search_context.h"
+#include "lookahead_marks.h"
 #include "node_selection_transition.h"
 
 void	enter_lookahead(t_node_state *node, t_lookahead_ctx *ctx,
@@ -18,6 +19,7 @@ void	enter_lookahead(t_node_state *node, t_lookahead_ctx *ctx,
 {
 	saved->policy = node->search_policy;
 	saved->cursor = node->lookahead_ctx;
+	init_lookahead_marks(ctx, saved->cursor);
 	node->search_policy.mode = SEARCH_LOOKAHEAD;
 	node->search_policy.branch.cache_refresh = CACHE_REFRESH_REQUIRED;
 	node->search_policy.branch.eligibility = CANDIDATES_LOOKAHEAD;
