@@ -2,8 +2,9 @@
 
 ### v1.0.0
 
-The first release using the `vMAJOR.MINOR.PATCH` naming format, following v09.
-The solver has undergone a substantial redesign: depth-first search and
+The v1.0.0 milestone follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming
+format. These highlights cover changes since v09. The solver has undergone a
+substantial redesign: depth-first search and
 lookahead now share one traversal model, with clearer separation of puzzle
 state, search policy, and branching scores. Two-sided lookahead and configurable
 probe depths make pruning more flexible while keeping solution registration

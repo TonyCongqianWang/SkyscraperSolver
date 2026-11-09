@@ -9,8 +9,10 @@ publishing remains available. The workflow checks out the site and puzzle data
 from `main`, resolves GitHub's latest published release (excluding drafts and
 prereleases), and compiles and smoke-tests that release's C sources and WASM
 wrapper in a separate checkout. It never falls back to unreleased solver code.
-The release must contain `web/wasm_api.c` and `web/smoke_test.cjs`; v1.0.0 is the
-first release with this browser support.
+The release must contain `web/wasm_api.c` and `web/smoke_test.cjs`. Publishing
+`v0.9.1` from the pre-v1.0.0 `main` provides this browser support for the initial
+deployment. A pushed tag alone is insufficient: it must have a published, stable
+GitHub release.
 
 CI's WASM job still builds the code under test on `main` pushes and pull
 requests. PR website previews also build the PR's solver so changes can be

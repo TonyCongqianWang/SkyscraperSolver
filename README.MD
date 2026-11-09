@@ -4,10 +4,11 @@ Originally created for the Rush01 project during the C Piscine at 42 Heilbronn, 
 
 ## Release v1.0.0
 
-This release follows v09 and introduces the `vMAJOR.MINOR.PATCH` naming format.
+This release follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming format.
 It brings a redesigned search and lookahead engine, broader test-driven
 verification, versioned puzzle curation, and a static website with a browser
-solver and puzzle API. See the [release highlights](HISTORY.md#v100) for details.
+solver and puzzle API. See the [release highlights](HISTORY.md#v100) for changes
+since v09.
 
 The published website builds its WebAssembly solver from the latest published
 GitHub release, while CI continues to build and test current development code.
