@@ -10,12 +10,6 @@ engine, broader test-driven verification, versioned puzzle curation, and a stati
 website with a browser solver and puzzle API. See the
 [release highlights](HISTORY.md#v100) for changes since v09.
 
-The website demo defaults to the latest stable release and offers a newer
-prerelease in its solver-version dropdown. If only a prerelease exists, it is
-used by default. CI continues to build and test current development code.
-Website publishing runs on website or published puzzle-data changes and new
-releases or prereleases; it can also be started manually.
-
 ## Play online
 
 - [Play the Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/)
