@@ -46,6 +46,7 @@ void	set_search_bounds(t_node_state *node, int max_depth, int target)
 void	init_root_search_policy(t_node_state *node)
 {
 	node->search_policy.mode = SEARCH_DFS;
+	node->search_policy.leaf_check_mode = g_check_constr;
 	node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
 	node->search_policy.branch.eligibility = CANDIDATES_VALID;
 	node->search_policy.limits.max_solutions = node->solver->max_solutions;

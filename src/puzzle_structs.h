@@ -148,6 +148,7 @@ typedef struct s_search_policy
 	t_search_mode			mode;
 	t_branch_policy			branch;
 	t_search_limits			limits;
+	t_check_mode			leaf_check_mode;
 }		t_search_policy;
 
 # define MAX_LOOKAHEAD_DEPTH 3

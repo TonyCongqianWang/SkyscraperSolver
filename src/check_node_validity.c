@@ -97,6 +97,7 @@ static void	drain_dirty_constraints_mode(t_solver_state *puzzle,
 
 int	check_node_validity(t_solver_state *puzzle, t_check_mode mode)
 {
+	mode = select_search_check_mode(puzzle->cur_node, mode);
 	drain_dirty_constraints_mode(puzzle, mode);
 	return (!puzzle->cur_node->domain.is_invalid);
 }
