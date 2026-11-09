@@ -10,10 +10,11 @@ verification, versioned puzzle curation, and a static website with a browser
 solver and puzzle API. See the [release highlights](HISTORY.md#v100) for changes
 since v09.
 
-The published website builds its WebAssembly solver from the latest published
-GitHub release, while CI continues to build and test current development code.
+The website demo defaults to the latest stable release and offers a newer
+prerelease in its solver-version dropdown. If only a prerelease exists, it is
+used by default. CI continues to build and test current development code.
 Website publishing runs on website or published puzzle-data changes and new
-stable releases; it can also be started manually.
+releases or prereleases; it can also be started manually.
 
 ## Play online
 

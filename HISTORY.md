@@ -21,8 +21,9 @@ The project now includes puzzle curation and a static website alongside the
 core solver. Versioned unique puzzle banks feed difficulty-rated collections,
 with published metadata, statistics, and a browser-side puzzle API. The site
 provides a WebAssembly solver demo, a curated puzzle explorer, and browsable
-assets. Its deployed solver is built from the latest published release;
-ongoing solver development continues to be checked separately in CI.
+assets. A version selector defaults to the latest stable release and offers a
+newer prerelease, with a prerelease fallback when no stable release exists.
+Ongoing solver development continues to be checked separately in CI.
 
 - Unified DFS and lookahead traversal with explicit solution and exhaustion handling.
 - Two-sided lookahead, per-tier probe depths, and controlled nested search.
@@ -33,7 +34,7 @@ ongoing solver development continues to be checked separately in CI.
 - Added unique puzzle generation, canonical grouping, and difficulty-based curation.
 - Published a static puzzle API with random selection and stable versioned IDs.
 - Added a browser solver demo, puzzle statistics explorer, and asset catalog.
-- Limited website publishing to site/data changes and releases, using released solver sources.
+- Limited site publishing to site/data changes and releases, with stable/prerelease solver selection.
 
 ### v09
 Large-scale refactoring and tuning across the codebase, with agent-assisted development.

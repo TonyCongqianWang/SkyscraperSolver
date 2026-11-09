@@ -228,6 +228,7 @@ jobs:
           node --check web/worker.js
           node web/test_puzzles.cjs
           node web/test_demo_theme.cjs
+          node --test web/test_release_versions.cjs web/test_worker.cjs
 
   ci-gate:
     if: always()
