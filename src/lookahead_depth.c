@@ -12,4 +12,8 @@
 
 #include "lookahead_depth.h"
 
-const int	g_lookahead_probe_depth[3] = {1, 1, 1};
+const int	g_lookahead_probe_depth[MAX_LOOKAHEAD_DEPTH][3] = {
+{1, 1, 1},
+{1, 1, 1},
+{1, 1, 1}
+};

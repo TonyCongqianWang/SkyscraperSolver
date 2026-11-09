@@ -66,7 +66,7 @@ void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
 {
 	t_lookahead_pass	passes;
 
-	if (solution_limit_reached(puzzle)
+	if (config->max_depth <= 0 || solution_limit_reached(puzzle)
 		|| node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
 		|| should_exit_selectivity(node, config->selectivity))
 		return ;

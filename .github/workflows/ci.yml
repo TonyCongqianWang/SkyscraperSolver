@@ -112,7 +112,7 @@ jobs:
           make test
 
   verify-deep-lookahead:
-    name: Verify lookahead tier depths 3, 2, 1
+    name: Verify nested lookahead depth matrix
     needs: changes
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
@@ -122,7 +122,7 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: '3.13'
-      - name: Build normal solver with per-tier lookahead depths 3, 2, 1
+      - name: Build normal solver with nested lookahead depths 3/2/1, 2/0/0, 1/0/0
         run: |
           cp python_scripts/tests/config/lookahead_depth_ci.c src/lookahead_depth.c
           make
