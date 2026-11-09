@@ -15,7 +15,7 @@
 
 # include "puzzle_structs.h"
 
-/* Each nesting row has light, medium, heavy {positive, negative} pairs. */
+/* Nesting rows: light, medium, heavy, extra {positive, negative} pairs. */
 /* Zero disables only the corresponding probe direction. */
 extern const t_probe_depth	g_probe_depths[][PRUNE_TIER_COUNT];
 

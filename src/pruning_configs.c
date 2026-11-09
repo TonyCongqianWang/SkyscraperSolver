@@ -13,7 +13,7 @@
 #include "pruning_configs.h"
 #include "params_math.h"
 
-static t_probe_depth	get_probe_depth(int tier, int nesting)
+t_probe_depth	get_probe_depth(int tier, int nesting)
 {
 	t_probe_depth	depth;
 
@@ -49,9 +49,9 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting)
 
 t_selectivity_level	get_prune_tier_selectivity(int tier)
 {
-	if (tier == 0)
+	if (tier == PRUNE_LIGHT)
 		return (SELECTIVITY_VALUE_SET);
-	if (tier == 1)
+	if (tier == PRUNE_MEDIUM)
 		return (SELECTIVITY_ANY_CHANGE);
 	return (SELECTIVITY_NONE);
 }

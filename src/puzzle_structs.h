@@ -20,9 +20,17 @@
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 # define MAX_DIRTY_CONSTRS 36
-# define PRUNE_TIER_COUNT 3
+# define PRUNE_TIER_COUNT 4
 
 typedef struct s_solver_state		t_solver_state;
+
+typedef enum e_prune_tier
+{
+	PRUNE_LIGHT,
+	PRUNE_MEDIUM,
+	PRUNE_HEAVY,
+	PRUNE_EXTRA
+}	t_prune_tier;
 
 typedef struct s_node_transition
 {

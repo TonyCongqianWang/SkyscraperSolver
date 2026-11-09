@@ -13,7 +13,7 @@
 #include "lookahead_depth.h"
 
 const t_probe_depth	g_probe_depths[MAX_LOOKAHEAD_DEPTH][PRUNE_TIER_COUNT] = {
-{{1, 1}, {1, 1}, {1, 1}},
-{{1, 1}, {1, 1}, {1, 1}},
-{{1, 1}, {1, 1}, {1, 1}}
+{{1, 1}, {1, 1}, {1, 1}, {0, 0}},
+{{1, 1}, {1, 1}, {1, 1}, {0, 0}},
+{{1, 1}, {1, 1}, {1, 1}, {0, 0}}
 };
