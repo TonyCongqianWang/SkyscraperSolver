@@ -40,14 +40,16 @@ static void	init_root_search_state(t_node_state *node, int size)
 	node->last_set_idx = -1;
 	node->domain.num_unset = size * size;
 	node->domain.remaining_entropy = 0;
-	node->last_entropy[0] = 0;
-	node->last_entropy[1] = 0;
-	node->last_entropy[2] = 0;
 	init_root_search_policy(node);
 }
 
 static void	init_root_pruning_state(t_node_state *node)
 {
+	int	tier;
+
+	tier = 0;
+	while (tier < PRUNE_TIER_COUNT)
+		node->last_entropy[tier++] = 0;
 	node->rows_changed_since_prune = 0xffff;
 	node->cols_changed_since_prune = 0xffff;
 	node->rows_invalid_since_prune = 0xffff;

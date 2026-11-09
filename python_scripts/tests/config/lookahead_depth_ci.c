@@ -12,7 +12,7 @@
 
 #include "lookahead_depth.h"
 
-const int	g_lookahead_probe_depth[MAX_LOOKAHEAD_DEPTH][3] = {
+const int	g_lookahead_probe_depth[MAX_LOOKAHEAD_DEPTH][PRUNE_TIER_COUNT] = {
 {3, 2, 1},
 {2, 0, 0},
 {1, 0, 0}

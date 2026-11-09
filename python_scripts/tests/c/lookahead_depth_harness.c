@@ -22,9 +22,9 @@ static void assert_skipped(t_lookahead_config *config)
 int main(void)
 {
 #ifdef CI_LOOKAHEAD_DEPTH
-    const int expected[3][3] = {{3, 2, 1}, {2, 0, 0}, {1, 0, 0}};
+    const int expected[MAX_LOOKAHEAD_DEPTH][PRUNE_TIER_COUNT] = {{3, 2, 1}, {2, 0, 0}, {1, 0, 0}};
 #else
-    const int expected[3][3] = {{1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
+    const int expected[MAX_LOOKAHEAD_DEPTH][PRUNE_TIER_COUNT] = {{1, 1, 1}, {1, 1, 1}, {1, 1, 1}};
 #endif
     t_prune_routine_cfg config;
     int nesting, tier, depth;
@@ -33,7 +33,7 @@ int main(void)
     for (nesting = 0; nesting <= MAX_LOOKAHEAD_DEPTH + 1; ++nesting)
     {
         puzzle.cur_node->tree.lookahead_depth = nesting;
-        for (tier = 0; tier < 3; ++tier)
+        for (tier = 0; tier < PRUNE_TIER_COUNT; ++tier)
         {
             init_prune_cfg(&config, tier, nesting);
             depth = nesting < MAX_LOOKAHEAD_DEPTH ? expected[nesting][tier] : 0;

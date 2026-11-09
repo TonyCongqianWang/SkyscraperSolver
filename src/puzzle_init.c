@@ -28,14 +28,15 @@ static void	init_puzzle_entropy(t_solver_state *puzzle, int size);
 static void	init_puzzle_entropy(t_solver_state *puzzle, int size)
 {
 	t_node_state	*node;
+	int				tier;
 
 	init_depth_arrays(size, puzzle->squared_size);
 	node = puzzle->cur_node;
 	node->domain.remaining_entropy = compute_initial_entropy(node, size);
 	puzzle->max_entropy = node->domain.remaining_entropy;
-	node->last_entropy[0] = node->domain.remaining_entropy;
-	node->last_entropy[1] = node->domain.remaining_entropy;
-	node->last_entropy[2] = node->domain.remaining_entropy;
+	tier = 0;
+	while (tier < PRUNE_TIER_COUNT)
+		node->last_entropy[tier++] = node->domain.remaining_entropy;
 }
 
 static void	init_constraints_all(t_solver_state *puzzle, int size)

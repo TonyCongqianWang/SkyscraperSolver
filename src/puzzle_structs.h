@@ -20,6 +20,7 @@
 # define MAX_SIZE 9
 # define C_PAIRS_PER_CELL 2
 # define MAX_DIRTY_CONSTRS 36
+# define PRUNE_TIER_COUNT 3
 
 typedef struct s_solver_state		t_solver_state;
 
@@ -172,7 +173,7 @@ typedef struct s_node_state
 	t_u16					cols_invalid_since_prune;
 	t_node_order			*order_cache;
 	t_lookahead_ctx			*lookahead_ctx;
-	int						last_entropy[3];
+	int						last_entropy[PRUNE_TIER_COUNT];
 	t_tree_context			tree;
 	t_search_policy			search_policy;
 	t_domain_state			domain;

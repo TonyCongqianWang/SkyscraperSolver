@@ -17,6 +17,6 @@
 
 /* Rows: speculative nesting level; columns: light, medium, heavy. */
 /* A zero entry disables lookahead for that tier at that nesting level. */
-extern const int	g_lookahead_probe_depth[MAX_LOOKAHEAD_DEPTH][3];
+extern const int	g_lookahead_probe_depth[][PRUNE_TIER_COUNT];
 
 #endif
