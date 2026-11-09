@@ -7,6 +7,10 @@
 #include "lookahead_dive.h"
 #include "prune_strat_root.h"
 #include "params_double.h"
+#include "params_int.h"
+#include "params_depth_arrays.h"
+#include "tree_search.h"
+#include "solution_info.h"
 
 static t_solver_state puzzle;
 
@@ -48,6 +52,80 @@ t_probe_result __wrap_probe_exclusion(t_solver_state *solver,
     assert(wanted.negative > 0 && depth == wanted.negative);
     ++negative_calls;
     return __real_probe_exclusion(solver, next, depth, mode);
+}
+
+/* Preserve real scheduling and clock updates while making each tier a no-op. */
+static int checking_schedule, scheduled_tier;
+
+int __real_run_pruning_routine(t_solver_state *, const t_prune_routine_cfg *, int);
+
+int __wrap_run_pruning_routine(t_solver_state *solver,
+    const t_prune_routine_cfg *config, int tier)
+{
+    t_prune_routine_cfg noop;
+
+    if (!checking_schedule)
+        return __real_run_pruning_routine(solver, config, tier);
+    assert(tier == scheduled_tier++);
+    noop = *config;
+    noop.run_check_constr = 0;
+    noop.run_gac = 0;
+    noop.run_lookahead = 0;
+    return __real_run_pruning_routine(solver, &noop, tier);
+}
+
+static void check_pruning_before_branch(int depth, int dirty)
+{
+    t_search_frame frame;
+    int d = 0, tier, tiers = PRUNE_EXTRA;
+    int saved_min = g_root_min_entropy;
+    double saved_scale = g_root_period_coef_scale;
+    double saved_unset = g_root_period_coef_unset;
+    int saved_depth_min = g_depth_min_entropy[depth];
+    double saved_depth_scale = g_depth_period_coef_scale[depth];
+    double saved_depth_unset = g_depth_period_coef_unset[depth];
+    t_node_count visited;
+
+#ifdef MARKING_LOOKAHEAD_DEPTH
+    tiers = PRUNE_TIER_COUNT;
+#endif
+    memset(&puzzle, 0, sizeof(puzzle));
+    memset(&frame, 0, sizeof(frame));
+    assert(init_puzzle(&puzzle, 4, 0));
+    init_sol_info(&frame.node_sols, 1, 0);
+    puzzle.cur_node->tree.depth = depth;
+    puzzle.prune_runs_count = 1; /* The initial pass is already complete. */
+    g_root_min_entropy = g_depth_min_entropy[depth] = 0;
+    g_root_period_coef_scale = g_root_period_coef_unset = 0;
+    g_depth_period_coef_scale[depth] = g_depth_period_coef_unset[depth] = 0;
+    for (tier = 0; tier < PRUNE_TIER_COUNT; ++tier)
+        puzzle.cur_node->last_entropy[tier] = puzzle.cur_node->domain.remaining_entropy + 1;
+    visited = puzzle.nodes_visited;
+    checking_schedule = 1;
+    scheduled_tier = PRUNE_LIGHT;
+    for (tier = 0; tier < tiers; ++tier)
+    {
+        /* Exercise both a genuinely processed no-op and a selectivity skip. */
+        puzzle.cur_node->rows_changed_since_prune = dirty;
+        puzzle.cur_node->cols_changed_since_prune = 0;
+        puzzle.cur_node->rows_invalid_since_prune = 0;
+        puzzle.cur_node->cols_invalid_since_prune = 0;
+        assert(check_search_frame(&puzzle, &d, 0, &frame) == SEARCH_CONTINUE);
+        assert(scheduled_tier == tier + 1);
+        assert(puzzle.cur_node->last_entropy[tier] == puzzle.cur_node->domain.remaining_entropy);
+        assert(puzzle.nodes_visited == visited);
+    }
+    assert(check_search_frame(&puzzle, &d, 0, &frame) == SEARCH_PROCEED_TO_BRANCH);
+    assert(scheduled_tier == tiers);
+    assert(puzzle.prune_runs_count == 1 + dirty * tiers);
+    checking_schedule = 0;
+    g_root_min_entropy = saved_min;
+    g_root_period_coef_scale = saved_scale;
+    g_root_period_coef_unset = saved_unset;
+    g_depth_min_entropy[depth] = saved_depth_min;
+    g_depth_period_coef_scale[depth] = saved_depth_scale;
+    g_depth_period_coef_unset[depth] = saved_depth_unset;
+    free_solution_storage(&puzzle);
 }
 
 static void check_sides(int positive, int negative)
@@ -202,5 +280,9 @@ int main(void)
     check_sides(2, 1);
     check_tier_schedule();
     check_extra_dispatch();
+    check_pruning_before_branch(0, 0);
+    check_pruning_before_branch(0, 1);
+    check_pruning_before_branch(1, 0);
+    check_pruning_before_branch(1, 1);
     return 0;
 }

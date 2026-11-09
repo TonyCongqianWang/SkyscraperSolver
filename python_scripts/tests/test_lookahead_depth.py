@@ -24,7 +24,8 @@ class LookaheadDepthTests(unittest.TestCase):
                     command = ["gcc", "-Wall", "-Wextra", "-Werror", "-O2",
                                "-I", str(ROOT / "src"), str(harness), *sources,
                                str(config), "-o", str(binary),
-                               "-Wl,--wrap=probe_assumption", "-Wl,--wrap=probe_exclusion"]
+                               "-Wl,--wrap=probe_assumption", "-Wl,--wrap=probe_exclusion",
+                               "-Wl,--wrap=run_pruning_routine"]
                     if name != "production":
                         command.append(f"-D{name.upper()}_LOOKAHEAD_DEPTH")
                     compiled = subprocess.run(command, capture_output=True, text=True)

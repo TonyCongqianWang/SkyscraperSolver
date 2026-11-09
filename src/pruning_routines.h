@@ -29,6 +29,7 @@ typedef struct s_prune_routine_config
 	t_lookahead_config	lookahead;
 }	t_prune_routine_cfg;
 
+/* A processed tier returns 1, even without domain changes or after a skip. */
 int		run_pruning_routine(t_solver_state *puzzle,
 			const t_prune_routine_cfg *cfg, int cfg_idx);
 
