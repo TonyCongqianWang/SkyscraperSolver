@@ -14,6 +14,8 @@
 # define CHECK_NODE_VALIDITY_H
 # include "grid_interface.h"
 
-int		check_node_validity(t_solver_state *puzzle, t_check_mode mode);
+t_check_mode	select_search_check_mode(const t_node_state *node,
+					t_check_mode mode);
+int				check_node_validity(t_solver_state *puzzle, t_check_mode mode);
 
 #endif
