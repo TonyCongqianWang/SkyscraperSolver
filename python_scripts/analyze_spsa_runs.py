@@ -17,7 +17,7 @@ if SCRIPT_DIR not in sys.path:
     sys.path.append(SCRIPT_DIR)
 
 from param_metadata import PARAM_METADATA, get_active_param_names
-from spsa_statistics import binomial_sign_test, adjust_direction_tests
+from spsa_statistics import TUNING_SCREEN_P, binomial_sign_test, adjust_direction_tests
 
 DEFAULTS = {p[0]: p[3] for p in PARAM_METADATA}
 
@@ -179,21 +179,23 @@ def main():
     reports = analyze_files(files, args.size, args.alpha)
     print(f'Found {len(files)} unique winner files; {len(reports)} compatible cohorts.')
     print(f'Exact two-sided sign tests; Holm correction across all displayed parameter/cohort tests; alpha={args.alpha:g}.')
+    print(f'Tuning screen: raw P SIGN <= {TUNING_SCREEN_P:g} per parameter (exploratory).')
     for report in reports:
         print(f"\nSIZE {report['size']} | MODE {report['mode']} | "
               f"{report['runs']} RUNS | COHORT {report['cohort']}")
         print(f"Baseline: {report['baseline_source']}")
         print(f"{'PARAMETER':42} | {'N':>3} | {'START':>12} | {'MEDIAN':>12} | "
-              f"{'STD':>10} | {'SHIFT %':>9} | {'UP/DOWN/TIE':>12} | {'P SIGN':>9} | {'P HOLM':>9} | {'DIRECTION':>12} | {'S_RATIO':>7} | SPREAD LABEL")
+              f"{'STD':>10} | {'SHIFT %':>9} | {'UP/DOWN/TIE':>12} | {'P SIGN':>9} | {'P HOLM':>9} | {'HOLM DIR':>12} | {'TUNE DIR':>8} | {'S_RATIO':>7} | SPREAD LABEL")
         for name, row in report['parameters'].items():
             shift = f"{row['shift_pct']:+.4f}" if row['shift_pct'] is not None else 'n/a'
             agreement = f"{row['up']}/{row['down']}/{row['ties']}"
             test = row['sign_test']
             direction = test['direction'] if test['significant'] else 'inconclusive'
+            tuning_direction = test['direction'] if test['tuning_candidate'] else '-'
             print(f"{name:42} | {row['n']:3} | {row['baseline']:12.8g} | "
                   f"{row['median']:12.8g} | {row['std']:10.4g} | {shift:>9} | "
                   f"{agreement:>12} | {test['p_value']:9.3g} | {test['p_holm']:9.3g} | "
-                  f"{direction:>12} | {row['s_ratio']:7.2f} | {row['signal']}")
+                  f"{direction:>12} | {tuning_direction:>8} | {row['s_ratio']:7.2f} | {row['signal']}")
     if args.json_path:
         # JSON has no infinity literal; preserve an exact zero-spread signal as text.
         serializable = [dict(report, parameters={

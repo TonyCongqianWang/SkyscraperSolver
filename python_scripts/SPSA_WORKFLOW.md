@@ -140,6 +140,12 @@ this). The correction family includes **all parameter/cohort tests displayed by
 that invocation**, not just promising parameters. Different direction counts are
 also part of cohort identity. A fixed agreement percentage is not a selection rule.
 
+The exploratory `TUNE DIR` column flags candidates at raw `P SIGN` ≤ 0.05.
+Six unanimous non-tied runs pass this screen in either direction (p = 0.03125).
+Five unanimous runs fall short (p = 0.0625). Use this column to shortlist
+parameter changes for validation. Screening many parameters can produce false
+positives, so `HOLM DIR` separately reports family-wise evidence.
+
 Holm accommodates dependence between parameter tests, but sign-test calibration
 still assumes independent runs with fair signs under the null. This tests update
 direction repeatability conditional on the data/optimizer, not runtime benefit;

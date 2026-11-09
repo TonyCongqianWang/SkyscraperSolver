@@ -1,6 +1,8 @@
 """Exact directional sign tests and Holm family-wise error control."""
 import math
 
+TUNING_SCREEN_P = 0.05
+
 
 def binomial_sign_test(up, down):
     """Two-sided H0: independent non-tied runs move up/down with probability 1/2."""
@@ -34,4 +36,5 @@ def adjust_direction_tests(rows, alpha=0.05):
     tests = [row['sign_test'] for row in rows]
     for test, adjusted in zip(tests, holm_adjust([test['p_value'] for test in tests])):
         test.update(p_holm=adjusted, significant=adjusted <= alpha,
-                    alpha=alpha, family_tests=len(tests))
+                    alpha=alpha, family_tests=len(tests),
+                    tuning_candidate=test['p_value'] <= TUNING_SCREEN_P)
