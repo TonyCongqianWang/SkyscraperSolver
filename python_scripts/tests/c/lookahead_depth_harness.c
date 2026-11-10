@@ -156,45 +156,49 @@ static void check_tier_schedule(void)
     t_node_state *node;
     t_prune_routine_cfg config;
     int i, extra;
+    /* Synthetic entropy and period use the 2.5x recentered units. */
+    const int base_entropy = 2500;
+    const double period = 25.0;
     memset(&puzzle, 0, sizeof(puzzle));
     assert(init_puzzle(&puzzle, 4, 0));
     node = puzzle.cur_node;
-    node->domain.remaining_entropy = 1000;
-    for (i = 0; i < PRUNE_TIER_COUNT; ++i) node->last_entropy[i] = 1000;
+    node->domain.remaining_entropy = base_entropy;
+    for (i = 0; i < PRUNE_TIER_COUNT; ++i) node->last_entropy[i] = base_entropy;
     assert(get_prune_tier_selectivity(PRUNE_EXTRA) == SELECTIVITY_NONE);
 #ifdef MARKING_LOOKAHEAD_DEPTH
     extra = PRUNE_EXTRA;
 #else
     extra = -1;
 #endif
-    node->last_entropy[PRUNE_EXTRA] = 1060;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == -1);
-    node->last_entropy[PRUNE_EXTRA] = 1061;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == extra);
+    node->last_entropy[PRUNE_EXTRA] = base_entropy + 150;
+    assert(select_prune_tier(node, period, 2.0, 3.0) == -1);
+    node->last_entropy[PRUNE_EXTRA] = base_entropy + 151;
+    assert(select_prune_tier(node, period, 2.0, 3.0) == extra);
     /* The extra threshold follows the supplied heavy multiplier. */
-    assert(select_prune_tier(node, 10.0, 2.0, 4.0) == -1);
-    node->last_entropy[PRUNE_LIGHT] = 1011;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == PRUNE_LIGHT);
-    node->last_entropy[PRUNE_LIGHT] = 1000;
-    node->last_entropy[PRUNE_MEDIUM] = 1021;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == PRUNE_MEDIUM);
-    node->last_entropy[PRUNE_MEDIUM] = 1000;
-    node->last_entropy[PRUNE_HEAVY] = 1031;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == PRUNE_HEAVY);
+    assert(select_prune_tier(node, period, 2.0, 4.0) == -1);
+    node->last_entropy[PRUNE_LIGHT] = base_entropy + 26;
+    assert(select_prune_tier(node, period, 2.0, 3.0) == PRUNE_LIGHT);
+    node->last_entropy[PRUNE_LIGHT] = base_entropy;
+    node->last_entropy[PRUNE_MEDIUM] = base_entropy + 51;
+    assert(select_prune_tier(node, period, 2.0, 3.0) == PRUNE_MEDIUM);
+    node->last_entropy[PRUNE_MEDIUM] = base_entropy;
+    node->last_entropy[PRUNE_HEAVY] = base_entropy + 76;
+    assert(select_prune_tier(node, period, 2.0, 3.0) == PRUNE_HEAVY);
     /* Heavy resets lower clocks while preserving extra's accumulated delta. */
     init_prune_cfg(&config, PRUNE_HEAVY, 0);
     config.run_lookahead = 0;
     run_pruning_routine(&puzzle, &config, PRUNE_HEAVY);
-    assert(node->last_entropy[PRUNE_EXTRA] == 1061);
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == extra);
+    assert(node->last_entropy[PRUNE_EXTRA] == base_entropy + 151);
+    assert(select_prune_tier(node, period, 2.0, 3.0) == extra);
     node->tree.lookahead_depth = 1;
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == -1);
+    assert(select_prune_tier(node, period, 2.0, 3.0) == -1);
     node->tree.lookahead_depth = 0;
     init_prune_cfg(&config, PRUNE_EXTRA, 0);
     config.run_lookahead = 0;
     run_pruning_routine(&puzzle, &config, PRUNE_EXTRA);
-    for (i = 0; i < PRUNE_TIER_COUNT; ++i) assert(node->last_entropy[i] == 1000);
-    assert(select_prune_tier(node, 10.0, 2.0, 3.0) == -1);
+    for (i = 0; i < PRUNE_TIER_COUNT; ++i)
+        assert(node->last_entropy[i] == base_entropy);
+    assert(select_prune_tier(node, period, 2.0, 3.0) == -1);
     free_solution_storage(&puzzle);
 }
 
@@ -202,6 +206,7 @@ static void check_extra_dispatch(void)
 {
 #ifdef MARKING_LOOKAHEAD_DEPTH
     int entropy, tier;
+    int saved_min = g_root_min_entropy;
     double saved_scale = g_root_period_coef_scale;
     double saved_unset = g_root_period_coef_unset;
     memset(&puzzle, 0, sizeof(puzzle));
@@ -209,16 +214,21 @@ static void check_extra_dispatch(void)
     set_cell_invalid(&puzzle, 0, 4, g_check_constr);
     entropy = puzzle.cur_node->domain.remaining_entropy;
     /* Use a controlled period and real domain reduction to make extra due. */
+    g_root_min_entropy = 0;
     g_root_period_coef_scale = 0;
     g_root_period_coef_unset = 0;
     for (tier = PRUNE_LIGHT; tier <= PRUNE_HEAVY; ++tier)
         puzzle.cur_node->last_entropy[tier] = entropy;
+    assert(select_prune_tier(puzzle.cur_node, 0.0,
+        g_root_period_tier_medium_mult,
+        g_root_period_tier_heavy_mult) == PRUNE_EXTRA);
     positive_calls = 0;
     negative_calls = 0;
     wanted.negative = 0;
     checking_extra = 1;
-    prune_strat_root(&puzzle);
+    assert(prune_strat_root(&puzzle) == 1);
     checking_extra = 0;
+    g_root_min_entropy = saved_min;
     g_root_period_coef_scale = saved_scale;
     g_root_period_coef_unset = saved_unset;
     assert(positive_calls > 0 && negative_calls == 0);
