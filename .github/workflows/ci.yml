@@ -31,7 +31,7 @@ jobs:
       spsa: ${{ steps.filter.outputs.spsa }}
       full: ${{ steps.force.outputs.full }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Decide whether to force full suite
         id: force
         env:
@@ -43,7 +43,7 @@ jobs:
           else
             echo "full=false" >> "$GITHUB_OUTPUT"
           fi
-      - uses: dorny/paths-filter@v3
+      - uses: dorny/paths-filter@v4
         id: filter
         with:
           filters: |
@@ -84,8 +84,8 @@ jobs:
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - run: pip install norminette
@@ -102,8 +102,8 @@ jobs:
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.native == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Build and verify
@@ -118,8 +118,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Build normal solver with nested lookahead depths 3/2/1, 2/0/0, 1/0/0
@@ -146,8 +146,8 @@ jobs:
       matrix:
         backend: [z3, cpsat]
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
           cache: pip
@@ -164,10 +164,10 @@ jobs:
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.python == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
-      - uses: actions/setup-python@v4
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
           cache: pip
@@ -185,8 +185,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.13'
       - name: Install solver dependencies
@@ -200,8 +200,8 @@ jobs:
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.wasm == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: actions/checkout@v5
+      - uses: emscripten-core/setup-emsdk@v15
         with:
           version: latest
       - name: Compile browser solver
@@ -220,7 +220,7 @@ jobs:
     if: needs.changes.outputs.full == 'true' || needs.changes.outputs.pages == 'true'
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Check static site and asset export
         run: |
           python3 -m unittest python_scripts.tests.test_web_assets -v
