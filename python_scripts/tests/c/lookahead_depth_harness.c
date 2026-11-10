@@ -1,6 +1,7 @@
 #include <assert.h>
 #include <string.h>
 #include "puzzle_init.h"
+#include "entropy.h"
 #include "pruning_configs.h"
 #include "prune_lookahead.h"
 #include "solution_storage.h"
@@ -30,6 +31,8 @@ int main(void)
     int nesting, tier, depth;
 
     assert(init_puzzle(&puzzle, 4, 0));
+    assert(puzzle.max_entropy == compute_max_entropy(puzzle.size));
+    assert(puzzle.cur_node->domain.remaining_entropy == puzzle.max_entropy);
     for (nesting = 0; nesting <= MAX_LOOKAHEAD_DEPTH + 1; ++nesting)
     {
         puzzle.cur_node->tree.lookahead_depth = nesting;

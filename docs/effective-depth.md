@@ -68,12 +68,15 @@ effective_cutoff = cutoff_ppm / 1_000_000
 ```
 
 `compute_max_entropy` uses the actual integer cell/constraint weights and
-per-domain truncation used by `compute_initial_entropy`. Thus the reference is
+per-domain truncation used by the domain representation. Thus the reference is
 the entropy of a genuinely empty grid, including when SPSA changes the entropy
-scale or the cell/constraint weight ratio. There is one canonical maximum-entropy
-helper; no separate empty-grid helper is needed. Runtime `puzzle->max_entropy`
-continues to come from the initialized empty node's `compute_initial_entropy`,
-so consolidating the helpers does not change existing scheduling heuristics.
+scale or the cell/constraint weight ratio. Initialization assigns this value to
+both `puzzle->max_entropy` and the empty node's `remaining_entropy`, before clues
+and givens are applied. Subsequent domain reductions lower `remaining_entropy`
+while the maximum stays fixed, so information supplied by the puzzle already
+counts as progress. The redundant full-domain initialization scan and its
+helpers are removed; an independent scan remains in tests as a reference.
+This simplification preserves the previous initialization values.
 
 The same scaling function serves initial GAC/constraint pruning, regular and
 root pruning, and extra lookahead verification for both families. The formerly

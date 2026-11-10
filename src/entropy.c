@@ -12,52 +12,6 @@
 
 #include "entropy.h"
 
-static int	initial_cell_entropy(t_node_state *node, int size)
-{
-	int	entropy;
-	int	i;
-
-	entropy = 0;
-	i = 0;
-	while (i < size * size)
-	{
-		entropy += get_log2_scaled((int)node->domain.num_cell_vals[i])
-			* get_weight_cell(size) / ENTROPY_SCALE;
-		i++;
-	}
-	return (entropy);
-}
-
-static int	initial_constr_entropy(t_node_state *node, int size)
-{
-	int	entropy;
-	int	i;
-	int	v;
-	int	pos_count;
-
-	entropy = 0;
-	i = 0;
-	while (i < 2 * size)
-	{
-		v = 0;
-		while (v < size)
-		{
-			pos_count = (int)node->domain.constrs.num_val_positions[i][v];
-			entropy += get_log2_scaled(pos_count)
-				* get_weight_constr(size) / ENTROPY_SCALE;
-			v++;
-		}
-		i++;
-	}
-	return (entropy);
-}
-
-int	compute_initial_entropy(t_node_state *node, int size)
-{
-	return (initial_cell_entropy(node, size)
-		+ initial_constr_entropy(node, size));
-}
-
 int	compute_max_entropy(int size)
 {
 	int	cell;

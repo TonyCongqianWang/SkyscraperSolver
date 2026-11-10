@@ -145,6 +145,22 @@ static void check_node_schedules(void)
 	assert(prune_current_step(&p) == -101); /* Root path unchanged. */
 }
 
+/* Independent domain scan, retained only as a test oracle. */
+static int recompute_entropy(const t_node_state *node, int size)
+{
+	int total = 0;
+
+	for (int i = 0; i < size * size; i++)
+		total += get_log2_scaled(node->domain.num_cell_vals[i])
+			* get_weight_cell(size) / ENTROPY_SCALE;
+	for (int i = 0; i < 2 * size; i++)
+		for (int v = 0; v < size; v++)
+			total += get_log2_scaled(
+				node->domain.constrs.num_val_positions[i][v])
+				* get_weight_constr(size) / ENTROPY_SCALE;
+	return (total);
+}
+
 static void check_scaling(void)
 {
 	t_prune_routine_cfg cfg;
@@ -168,7 +184,7 @@ static void check_scaling(void)
 			for (v = 0; v < size; v++)
 				empty.domain.constrs.num_val_positions[i][v] = size;
 		e = compute_max_entropy(size);
-		assert(e == compute_initial_entropy(&empty, size));
+		assert(e == recompute_entropy(&empty, size));
 		assert(calc_effective_global_min_entropy(base, size) == e / 2);
 		setup_cfg_bounds(&cfg, &lim, size);
 		assert(cfg.gac.global_min_entropy == e / 2);
