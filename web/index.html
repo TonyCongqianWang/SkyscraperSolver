@@ -25,6 +25,7 @@ label{display:block;margin:0 0 8px}
 @media(max-width:620px){.input-row{flex-wrap:wrap}.input-field{flex:1 1 100%}.input-row button{min-height:0}}
 textarea{display:block;width:100%;min-height:75px;padding:12px;background:#171717;color:#fafafa;border:1px solid #696969;border-radius:4px;font:inherit;resize:vertical}
 textarea:focus{outline:1px solid white}
+.solver-version{margin-top:24px}.solver-version select{max-width:100%;padding:9px;background:#171717;color:#fafafa;border:1px solid #696969;border-radius:4px;font:inherit}
 button{margin:20px 0;padding:11px 25px;border:1px solid #eee;border-radius:4px;background:#f4f4f4;color:#080808;font:inherit;font-weight:600;cursor:pointer}
 button:disabled{opacity:.5;cursor:wait}
 pre{white-space:pre;overflow-x:auto;line-height:1.6;font-size:clamp(12px,2.5vw,17px)}
@@ -38,6 +39,7 @@ small{font-size:.85rem;font-weight:400;color:#999}
 :root[data-theme="light"] p{color:#444}
 :root[data-theme="light"] textarea{background:#fff;color:#111;border-color:#888}
 :root[data-theme="light"] textarea:focus{outline-color:#111}
+:root[data-theme="light"] .solver-version select{background:#fff;color:#111;border-color:#888}
 :root[data-theme="light"] .input-row button{background:#111;color:#fff;border-color:#111}
 :root[data-theme="light"] .demo-toolbar a{color:#333}
 :root[data-theme="light"] .demo-toolbar button{background:#f6f6f6;color:#111;border-color:#888}
@@ -52,12 +54,16 @@ small{font-size:.85rem;font-weight:400;color:#999}
   <button id="theme-toggle" type="button">Light theme</button>
 </nav>
 <h1>Skyscraper Solver <small>/ WebAssembly</small></h1>
+<div class="solver-version">
+  <label for="solver-version">Solver version</label>
+  <select id="solver-version" disabled><option>Loading versions…</option></select>
+</div>
 <div class="input-row">
   <div class="input-field"><label for="clues">CLUES</label>
     <textarea id="clues" rows="2" spellcheck="false">1 3 3 0 0 0 0 2 0 0 0 0 0 0 0 0</textarea></div>
   <div class="input-field"><label for="grid">GRID (OPTIONAL)</label>
     <textarea id="grid" rows="2" spellcheck="false" placeholder="Leave empty for no givens"></textarea></div>
-  <button id="solve">Solve!</button>
+  <button id="solve" disabled>Solve!</button>
 </div>
 <p class="hint">Clues: 4 × N space-separated values (N = 4–9), ordered Top (→), Bottom (→), Left (↓), Right (↓).<br>
 Grid: N × N values, row by row (→, then ↓). Use 0 for missing clues or empty cells.</p>
@@ -83,6 +89,36 @@ themeToggle.onclick=()=>{
 renderThemeToggle();
 let worker=null;
 let feedbackTimer=null;
+let solverPath=null;
+const versionSelect=$("solver-version");
+const versionsReady=(async()=>{
+ try{
+  const response=await fetch("../assets/solver/versions.json");
+  if(!response.ok)throw Error("Could not load solver versions.");
+  const manifest=await response.json();
+  const versions=manifest.versions;
+  const selected=versions.find(version=>version.id===manifest.default);
+  if(!selected)throw Error("No solver version is available.");
+  versionSelect.replaceChildren(...versions.map(version=>{
+   const option=document.createElement("option");
+   option.value=version.path;
+   option.textContent=version.tag+(version.id==="development"?"":version.prerelease?" (prerelease)":" (release)");
+   return option;
+  }));
+  versionSelect.value=selected.path;solverPath=selected.path;
+  versionSelect.disabled=false;$("solve").disabled=false;
+ }catch(error){
+  versionSelect.replaceChildren();
+  $("status").className="error";$("status").textContent=error.message;
+ }
+})();
+versionSelect.onchange=()=>{
+ worker?.terminate();worker=null;
+ clearTimeout(feedbackTimer);
+ solverPath=versionSelect.value;
+ $("solve").disabled=false;$("status").className="";
+ $("status").textContent="";$("output").textContent="";
+};
 function numbers(source){
  const text=source.trim();
  if(!text)return [];
@@ -106,6 +142,7 @@ function ascii(n,clues,values){
 }
 $("solve").onclick=()=>{
  try{
+  if(!solverPath)throw Error("No solver version is available.");
   clearTimeout(feedbackTimer);
   $("status").textContent=""; $("output").textContent="";
   const clues=numbers($("clues").value),n=clues.length/4,grid=numbers($("grid").value);
@@ -114,9 +151,11 @@ $("solve").onclick=()=>{
   if(grid.length&&grid.length!==n*n)throw Error("Grid requires exactly N × N values.");
   if(grid.some(x=>x>n))throw Error("Grid numbers must be between 0 and N.");
   worker?.terminate();
-  worker=new Worker("../assets/solver/worker.js");
+  worker=new Worker("../assets/solver/worker.js?solver="+encodeURIComponent(solverPath));
+  const activeWorker=worker;
   $("solve").disabled=true;$("status").className="";$("status").textContent="Solving…";$("output").textContent="";
   worker.onmessage=({data})=>{
+   if(worker!==activeWorker)return;
    worker?.terminate();worker=null;$("solve").disabled=false;
    if(data.error||data.response?.startsWith("ERR:")){
     $("status").className="error";$("status").textContent=data.error||data.response;return;
@@ -128,7 +167,7 @@ $("solve").onclick=()=>{
    $("status").textContent=(count===1?"Unique solution.":"Not unique: at least two solutions.")+" Nodes visited: "+nodes;
    $("output").textContent=ascii(n,clues,[...solution].map(Number));
   };
-  worker.onerror=e=>{worker?.terminate();worker=null;$("solve").disabled=false;$("status").className="error";$("status").textContent=e.message};
+  worker.onerror=e=>{if(worker!==activeWorker)return;worker.terminate();worker=null;$("solve").disabled=false;$("status").className="error";$("status").textContent=e.message};
   worker.postMessage({clues:clues.join(" "),grid:grid.join(" "),limit:2});
  }catch(error){$("solve").disabled=false;$("status").className="error";
   const message=error.message;

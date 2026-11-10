@@ -11,6 +11,7 @@ if str(ROOT) not in sys.path:
 
 from python_scripts.puzzle_bank.export_api_metadata import LEVELS, export_curated
 from endpoint_registry import EndpointRegistry
+from solver_assets import register_solver_assets
 
 
 def build_site(output):
@@ -24,11 +25,7 @@ def build_site(output):
     site.add_directory(
         "/assets/solver/", footer=ROOT / "web/solver-description.html"
     )
-    for filename, description, kind in (
-        ("solver.js", "WebAssembly solver loader", "javascript"),
-        ("solver.wasm", "Compiled WebAssembly solver", "wasm"),
-    ):
-        site.add_asset(f"/assets/solver/{filename}", description=description, kind=kind)
+    register_solver_assets(site, output)
     site.add_asset("/assets/solver/worker.js", ROOT / "web/worker.js",
                    "Worker used by the solver demo", "javascript")
     site.add_asset("/assets/puzzles/puzzles.js", ROOT / "web/puzzles.js",

@@ -2,6 +2,14 @@
 
 Originally created for the Rush01 project during the C Piscine at 42 Heilbronn, this C solver now focuses on constraint propagation, search heuristics, and performance optimization.
 
+## Release v1.0.0
+
+This release follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming format.
+It brings improved, tuned branching rules, a redesigned search and lookahead
+engine, broader test-driven verification, versioned puzzle curation, and a static
+website with a browser solver and puzzle API. See the
+[release highlights](HISTORY.md#v100) for changes since v09.
+
 ## Play online
 
 - [Play the Skyscrapers web game](https://tonycongqianwang.github.io/SkyscraperGameWeb/)
@@ -71,4 +79,4 @@ pip install -r python_solver/requirements.txt
 
 [python_scripts/](python_scripts/) contains tools for puzzle generation, benchmarking, verification, and parameter tuning (including SPSA). [benchmark_sets/](benchmark_sets/) and [puzzle_bank/](puzzle_bank/) hold test and evaluation instances. These tools are not required to build or run the C solver.
 
-For the original development notes, see [Version History](HISTORY.md).
+For release highlights and earlier development notes, see [Version History](HISTORY.md).

@@ -19,7 +19,7 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           lfs: true
       - name: Download puzzle-bank LFS content
@@ -39,7 +39,7 @@ jobs:
                       raise RuntimeError(f'LFS content unavailable for {path}') from exc
                   assert bank.get('size') == size, path
           PY
-      - uses: mymindstorm/setup-emsdk@v14
+      - uses: emscripten-core/setup-emsdk@v15
         with:
           version: latest
       - name: Build static website
@@ -72,7 +72,7 @@ jobs:
                   assert shard.exists() == (count > 0), shard
           PY
       - name: Upload browsable site artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: website-preview
           path: public/

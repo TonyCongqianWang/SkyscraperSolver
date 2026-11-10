@@ -1,5 +1,36 @@
 # Version History
 
+### v1.0.0
+
+The v1.0.0 milestone follows v0.9.1 and uses the `vMAJOR.MINOR.PATCH` naming
+format. These highlights cover changes since v09. The solver has been
+substantially reworked to make search behavior more consistent and easier to
+extend, with correctness and practical solving performance as the main
+priorities. The performance figures below are for a 2.20 GHz Intel Xeon.
+
+Development now puts greater emphasis on test-driven changes and reproducible
+verification. Regression tests cover solution limits, initial givens, nested
+lookahead, and other correctness edge cases; independent Z3 and OR-Tools CP-SAT
+backends cross-check results. CI combines native verification, Python tests,
+WebAssembly smoke tests, and mixed-depth checks. Benchmarking and SPSA tooling
+also gained better dataset screening, provenance, and sensitivity reporting.
+
+The project now includes puzzle curation and a static website alongside the
+core solver. Versioned unique puzzle banks feed difficulty-rated collections,
+with published metadata, statistics, and a browser-side puzzle API. The site
+provides a WebAssembly solver demo, a curated puzzle explorer, and browsable
+assets. A version selector defaults to the latest stable release and offers a
+newer prerelease, with a prerelease fallback when no stable release exists.
+Ongoing solver development continues to be checked separately in CI.
+
+- Improved and SPSA-tuned branching rules deliver the most important performance gains.
+- Two-sided lookahead informs both branching scores and pruning decisions.
+- DFS and lookahead share one traversal model with consistent solution and exhaustion handling.
+- Configurable per-tier probe depths and controlled nesting make lookahead more flexible.
+- Symmetric puzzle variants now solve in roughly the same time.
+- The roughly 80,000 size 9 instances in the puzzle bank solve in about one hour.
+- The previous roughly 8,000-instance size 9 benchmark set solves in under 10 minutes.
+
 ### v09
 Large-scale refactoring and tuning across the codebase, with agent-assisted development.
 Expanded the benchmarking tools and added automated parameter tuning using SPSA.

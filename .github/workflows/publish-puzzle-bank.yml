@@ -3,12 +3,13 @@ on:
   push:
     branches: [main]
     paths:
-      - 'puzzle_bank/unique/v1/**'
+      - 'puzzle_bank/unique/v1/minimal/size_*.json'
       - 'puzzle_bank/curated/v1/**'
-      - 'src/**'
       - 'web/**'
       - 'python_scripts/puzzle_bank/export_api_metadata.py'
       - '.github/workflows/publish-puzzle-bank.yml'
+  release:
+    types: [published]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,7 +20,7 @@ concurrency:
   cancel-in-progress: true
 jobs:
   publish:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || github.event_name == 'release'
     runs-on: ubuntu-24.04
     environment:
       name: github-pages
@@ -27,6 +28,7 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
+          ref: main
           lfs: true
       - name: Download puzzle-bank LFS content
         run: |
@@ -45,19 +47,74 @@ jobs:
                       raise RuntimeError(f'LFS content unavailable for {path}') from exc
                   assert bank.get('size') == size, path
           PY
+      - name: Resolve published solver versions
+        id: versions
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const { selectVersions } = require(`${process.env.GITHUB_WORKSPACE}/web/release_versions.cjs`);
+            const repository = { owner: context.repo.owner, repo: context.repo.repo };
+            let stable = null;
+            try {
+              stable = (await github.rest.repos.getLatestRelease(repository)).data;
+            } catch (error) {
+              if (error.status !== 404) throw error;
+            }
+            const releases = await github.paginate(github.rest.repos.listReleases, {
+              ...repository, per_page: 100,
+            });
+            const manifest = selectVersions(releases, stable);
+            const fs = require('node:fs');
+            fs.mkdirSync('public/assets/solver', { recursive: true });
+            fs.writeFileSync('public/assets/solver/versions.json', JSON.stringify(manifest, null, 2) + '\n');
+            for (const version of manifest.versions) {
+              core.setOutput(version.id, version.tag);
+              core.info(`Building ${version.id}: ${version.tag}`);
+            }
+            core.setOutput('default', manifest.default);
+      - name: Check out stable solver separately
+        if: steps.versions.outputs.release != ''
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.versions.outputs.release }}
+          path: scratch/release-solver
+      - name: Check out prerelease solver separately
+        if: steps.versions.outputs.prerelease != ''
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ steps.versions.outputs.prerelease }}
+          path: scratch/prerelease-solver
       - uses: emscripten-core/setup-emsdk@v15
         with:
           version: latest
+      - name: Compile and smoke-test published browser solvers
+        env:
+          RELEASE_TAG: ${{ steps.versions.outputs.release }}
+          PRERELEASE_TAG: ${{ steps.versions.outputs.prerelease }}
+          DEFAULT_VERSION: ${{ steps.versions.outputs.default }}
+        run: |
+          for channel in release prerelease; do
+            if [[ "$channel" == "release" && -z "$RELEASE_TAG" ]] || \
+               [[ "$channel" == "prerelease" && -z "$PRERELEASE_TAG" ]]; then
+              continue
+            fi
+            (
+              cd "scratch/$channel-solver"
+              emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
+                -s INVOKE_RUN=0 -s MODULARIZE=1 \
+                -s EXPORT_NAME=createSkyscraperSolver \
+                -s EXPORTED_FUNCTIONS='["_solve_web"]' \
+                -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
+                -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
+                -o web/solver.js
+              node web/smoke_test.cjs
+            )
+            mkdir -p "public/assets/solver/$channel"
+            cp "scratch/$channel-solver/web/solver.js" "scratch/$channel-solver/web/solver.wasm" "public/assets/solver/$channel/"
+          done
+          cp "public/assets/solver/$DEFAULT_VERSION/solver.js" "public/assets/solver/$DEFAULT_VERSION/solver.wasm" public/assets/solver/
       - name: Build static website
         run: |
-          mkdir -p public/assets/solver
-          emcc -O3 -flto -Isrc src/*.c web/wasm_api.c \
-            -s INVOKE_RUN=0 -s MODULARIZE=1 \
-            -s EXPORT_NAME=createSkyscraperSolver \
-            -s EXPORTED_FUNCTIONS='["_solve_web"]' \
-            -s EXPORTED_RUNTIME_METHODS='["ccall"]' \
-            -s ALLOW_MEMORY_GROWTH=1 -s INITIAL_MEMORY=67108864 \
-            -o public/assets/solver/solver.js
           python3 web/build_site.py --output public
           test -s public/assets/index.json
           test -s public/assets/puzzles/puzzles.js
@@ -78,8 +135,8 @@ jobs:
                   assert shard.exists() == (count > 0), shard
           PY
       - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: public
       - id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

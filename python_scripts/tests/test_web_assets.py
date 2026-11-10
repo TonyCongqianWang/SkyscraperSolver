@@ -6,9 +6,49 @@ from pathlib import Path
 
 from python_scripts.puzzle_bank.export_api_metadata import LEVELS, export_curated
 from web.endpoint_registry import EndpointRegistry
+from web.solver_assets import register_solver_assets
 
 
 class StaticAssetsTests(unittest.TestCase):
+    def test_solver_versions_are_registered_and_required(self):
+        for channels in [("release",), ("prerelease",), ("release", "prerelease")]:
+            with self.subTest(channels=channels), tempfile.TemporaryDirectory() as temp:
+                root = Path(temp)
+                assets = root / "assets/solver"
+                assets.mkdir(parents=True)
+                manifest = {"default": channels[0], "versions": [
+                    {"id": channel, "tag": "v1.0.0", "prerelease": channel == "prerelease",
+                     "path": f"{channel}/solver.js"} for channel in channels
+                ]}
+                (assets / "versions.json").write_text(json.dumps(manifest))
+                for directory in (assets, *(assets / channel for channel in channels)):
+                    directory.mkdir(exist_ok=True)
+                    (directory / "solver.js").write_text("// test fixture")
+                    (directory / "solver.wasm").write_bytes(b"\x00asm")
+                site = EndpointRegistry(root)
+                site.add_asset("/assets/index.json", kind="json")
+                register_solver_assets(site, root)
+                catalog = site.build()
+                routes = {entry["path"] for entry in catalog["endpoints"]}
+                self.assertIn("/assets/solver/versions.json", routes)
+                for channel in channels:
+                    self.assertIn(f"/assets/solver/{channel}/solver.wasm", routes)
+                self.assertEqual(json.loads((assets / "versions.json").read_text()), manifest)
+                # A missing version binary must prevent publishing a broken option.
+                (assets / channels[-1] / "solver.wasm").unlink()
+                with self.assertRaisesRegex(FileNotFoundError, "solver.wasm"):
+                    site.build()
+
+    def test_preview_solver_gets_development_manifest(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            site = EndpointRegistry(root)
+            site.add_asset("/assets/index.json", kind="json")
+            register_solver_assets(site, root)
+            manifest = json.loads((root / "assets/solver/versions.json").read_text())
+            self.assertEqual(manifest["default"], "development")
+            self.assertEqual(manifest["versions"][0]["path"], "solver.js")
+
     def test_shards_and_statistics(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
