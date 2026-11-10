@@ -5,9 +5,7 @@
 #include "prune_lookahead.h"
 #include "solution_storage.h"
 #include "lookahead_dive.h"
-#include "prune_strat_root.h"
-#include "params_double.h"
-#include "params_int.h"
+#include "prune_strat_bucket.h"
 #include "params_depth_arrays.h"
 #include "tree_search.h"
 #include "solution_info.h"
@@ -78,12 +76,9 @@ static void check_pruning_before_branch(int depth, int dirty)
 {
     t_search_frame frame;
     int d = 0, tier, tiers = PRUNE_EXTRA;
-    int saved_min = g_root_min_entropy;
-    double saved_scale = g_root_period_coef_scale;
-    double saved_unset = g_root_period_coef_unset;
-    int saved_depth_min = g_depth_min_entropy[depth];
-    double saved_depth_scale = g_depth_period_coef_scale[depth];
-    double saved_depth_unset = g_depth_period_coef_unset[depth];
+    int b = depth * DEPTH_STRIDE;
+    int saved_depth_min;
+    double saved_depth_scale, saved_depth_unset;
     t_node_count visited;
 
 #ifdef MARKING_LOOKAHEAD_DEPTH
@@ -94,10 +89,13 @@ static void check_pruning_before_branch(int depth, int dirty)
     assert(init_puzzle(&puzzle, 4, 0));
     init_sol_info(&frame.node_sols, 1, 0);
     puzzle.cur_node->tree.depth = depth;
+    b += puzzle.squared_size - puzzle.cur_node->domain.num_unset;
+    saved_depth_min = g_depth_min_entropy[b];
+    saved_depth_scale = g_depth_period_coef_scale[b];
+    saved_depth_unset = g_depth_period_coef_unset[b];
     puzzle.prune_runs_count = 1; /* The initial pass is already complete. */
-    g_root_min_entropy = g_depth_min_entropy[depth] = 0;
-    g_root_period_coef_scale = g_root_period_coef_unset = 0;
-    g_depth_period_coef_scale[depth] = g_depth_period_coef_unset[depth] = 0;
+    g_depth_min_entropy[b] = 0;
+    g_depth_period_coef_scale[b] = g_depth_period_coef_unset[b] = 0;
     for (tier = 0; tier < PRUNE_TIER_COUNT; ++tier)
         puzzle.cur_node->last_entropy[tier] = puzzle.cur_node->domain.remaining_entropy + 1;
     visited = puzzle.nodes_visited;
@@ -119,12 +117,9 @@ static void check_pruning_before_branch(int depth, int dirty)
     assert(scheduled_tier == tiers);
     assert(puzzle.prune_runs_count == 1 + dirty * tiers);
     checking_schedule = 0;
-    g_root_min_entropy = saved_min;
-    g_root_period_coef_scale = saved_scale;
-    g_root_period_coef_unset = saved_unset;
-    g_depth_min_entropy[depth] = saved_depth_min;
-    g_depth_period_coef_scale[depth] = saved_depth_scale;
-    g_depth_period_coef_unset[depth] = saved_depth_unset;
+    g_depth_min_entropy[b] = saved_depth_min;
+    g_depth_period_coef_scale[b] = saved_depth_scale;
+    g_depth_period_coef_unset[b] = saved_depth_unset;
     free_solution_storage(&puzzle);
 }
 
@@ -185,7 +180,7 @@ static void check_tier_schedule(void)
     node->last_entropy[PRUNE_HEAVY] = base_entropy + 76;
     assert(select_prune_tier(node, period, 2.0, 3.0) == PRUNE_HEAVY);
     /* Heavy resets lower clocks while preserving extra's accumulated delta. */
-    init_prune_cfg(&config, PRUNE_HEAVY, 0);
+    init_prune_cfg(&config, PRUNE_HEAVY, 0, puzzle.size);
     config.run_lookahead = 0;
     run_pruning_routine(&puzzle, &config, PRUNE_HEAVY);
     assert(node->last_entropy[PRUNE_EXTRA] == base_entropy + 151);
@@ -193,7 +188,7 @@ static void check_tier_schedule(void)
     node->tree.lookahead_depth = 1;
     assert(select_prune_tier(node, period, 2.0, 3.0) == -1);
     node->tree.lookahead_depth = 0;
-    init_prune_cfg(&config, PRUNE_EXTRA, 0);
+    init_prune_cfg(&config, PRUNE_EXTRA, 0, puzzle.size);
     config.run_lookahead = 0;
     run_pruning_routine(&puzzle, &config, PRUNE_EXTRA);
     for (i = 0; i < PRUNE_TIER_COUNT; ++i)
@@ -206,31 +201,35 @@ static void check_extra_dispatch(void)
 {
 #ifdef MARKING_LOOKAHEAD_DEPTH
     int entropy, tier;
-    int saved_min = g_root_min_entropy;
-    double saved_scale = g_root_period_coef_scale;
-    double saved_unset = g_root_period_coef_unset;
+    double saved_scale, saved_unset;
+    int saved_min, b;
     memset(&puzzle, 0, sizeof(puzzle));
     assert(init_puzzle(&puzzle, 4, 0));
     set_cell_invalid(&puzzle, 0, 4, g_check_constr);
     entropy = puzzle.cur_node->domain.remaining_entropy;
+    b = puzzle.cur_node->tree.depth * DEPTH_STRIDE
+        + puzzle.squared_size - puzzle.cur_node->domain.num_unset;
+    saved_min = g_depth_min_entropy[b];
+    saved_scale = g_depth_period_coef_scale[b];
+    saved_unset = g_depth_period_coef_unset[b];
     /* Use a controlled period and real domain reduction to make extra due. */
-    g_root_min_entropy = 0;
-    g_root_period_coef_scale = 0;
-    g_root_period_coef_unset = 0;
+    g_depth_min_entropy[b] = 0;
+    g_depth_period_coef_scale[b] = 0;
+    g_depth_period_coef_unset[b] = 0;
     for (tier = PRUNE_LIGHT; tier <= PRUNE_HEAVY; ++tier)
         puzzle.cur_node->last_entropy[tier] = entropy;
     assert(select_prune_tier(puzzle.cur_node, 0.0,
-        g_root_period_tier_medium_mult,
-        g_root_period_tier_heavy_mult) == PRUNE_EXTRA);
+        g_depth_period_tier_medium_mult[b],
+        g_depth_period_tier_heavy_mult[b]) == PRUNE_EXTRA);
     positive_calls = 0;
     negative_calls = 0;
     wanted.negative = 0;
     checking_extra = 1;
-    assert(prune_strat_root(&puzzle) == 1);
+    assert(prune_strat_depth_bucket(&puzzle, b) == 1);
     checking_extra = 0;
-    g_root_min_entropy = saved_min;
-    g_root_period_coef_scale = saved_scale;
-    g_root_period_coef_unset = saved_unset;
+    g_depth_min_entropy[b] = saved_min;
+    g_depth_period_coef_scale[b] = saved_scale;
+    g_depth_period_coef_unset[b] = saved_unset;
     assert(positive_calls > 0 && negative_calls == 0);
     assert(!puzzle.cur_node->domain.is_invalid);
     assert(puzzle.cur_node->lookahead_ctx == NULL);
@@ -263,7 +262,7 @@ int main(void)
         puzzle.cur_node->tree.lookahead_depth = nesting;
         for (tier = 0; tier < PRUNE_TIER_COUNT; ++tier)
         {
-            init_prune_cfg(&config, tier, nesting);
+            init_prune_cfg(&config, tier, nesting, puzzle.size);
             positive = nesting < MAX_LOOKAHEAD_DEPTH ? expected[nesting][tier].positive : 0;
             negative = nesting < MAX_LOOKAHEAD_DEPTH ? expected[nesting][tier].negative : 0;
             assert(config.lookahead.depth.positive == positive);

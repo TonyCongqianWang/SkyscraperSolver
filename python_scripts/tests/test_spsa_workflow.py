@@ -175,7 +175,8 @@ class WorkflowTests(unittest.TestCase):
         size, mode, _ = analysis.parse_run_file(path)
         self.assertEqual((size, mode), (8, 'math'))
         report = analysis.analyze_files([str(path)])[0]
-        self.assertEqual(len(report['parameters']), 13)
+        self.assertEqual(len(report['parameters']),
+                         len(tuning.get_active_param_names('math', 8)))
         self.assertEqual(report['baseline_source'], 'run metadata')
 
     def test_balanced_order_fixed_workers_and_persistent_records(self):
