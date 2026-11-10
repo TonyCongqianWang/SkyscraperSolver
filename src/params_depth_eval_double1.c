@@ -65,28 +65,6 @@ static void	eval_doubles1_part3(int d, const double *w)
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_period_tier_heavy_mult[d] = val;
-	val = w[0] * g_gac_local_min_entropy_p00
-		+ w[1] * g_gac_local_min_entropy_p1_64
-		+ w[2] * g_gac_local_min_entropy_p25
-		+ w[3] * g_gac_local_min_entropy_p50
-		+ w[4] * g_gac_local_min_entropy_p100;
-	if (val < 0.0)
-		val = 0.0;
-	g_depth_gac_local_min_entropy[d] = val;
-}
-
-static void	eval_doubles1_part4(int d, const double *w)
-{
-	double	val;
-
-	val = w[0] * g_gac_local_max_entropy_p00
-		+ w[1] * g_gac_local_max_entropy_p1_64
-		+ w[2] * g_gac_local_max_entropy_p25
-		+ w[3] * g_gac_local_max_entropy_p50
-		+ w[4] * g_gac_local_max_entropy_p100;
-	if (val < 0.0)
-		val = 0.0;
-	g_depth_gac_local_max_entropy[d] = val;
 }
 
 void	init_depth_doubles_part1(int d, const double *w)
@@ -94,5 +72,4 @@ void	init_depth_doubles_part1(int d, const double *w)
 	eval_doubles1_part1(d, w);
 	eval_doubles1_part2(d, w);
 	eval_doubles1_part3(d, w);
-	eval_doubles1_part4(d, w);
 }

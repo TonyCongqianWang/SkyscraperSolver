@@ -15,25 +15,7 @@
 #include "constraint_selection.h"
 #include "constraint_checking.h"
 #include "prune_check_constr.h"
-#include "prune_gac.h"
 #include "math_utils.h"
-
-static void	run_gac_analysis(t_solver_state *puzzle, int idx, t_check_mode mode)
-{
-	t_gac_config	gac_cfg;
-	t_node_state	*node;
-
-	node = puzzle->cur_node;
-	gac_cfg.selectivity = SELECTIVITY_NONE;
-	gac_cfg.max_k = 3;
-	gac_cfg.analyse_naked = 1;
-	gac_cfg.analyse_hidden = 1;
-	gac_cfg.min_entropy = mode.gac.min_entropy;
-	gac_cfg.max_entropy = mode.gac.max_entropy;
-	gac_cfg.global_min_entropy = mode.gac.global_min_entropy;
-	analyse_gac_line(puzzle, idx % node->size, idx < node->size,
-		&gac_cfg);
-}
 
 static void	process_dirty_entry(t_solver_state *puzzle, int entry,
 		t_check_mode mode)
@@ -52,8 +34,6 @@ static void	process_dirty_entry(t_solver_state *puzzle, int entry,
 		return ;
 	if (mode.run_prop)
 		process_constraint(puzzle, idx, node->size, &mode.constr);
-	if (!node->domain.is_invalid && mode.run_gac)
-		run_gac_analysis(puzzle, idx, mode);
 }
 
 static t_check_mode	get_pass_mode(t_solver_state *puzzle, t_check_mode mode,

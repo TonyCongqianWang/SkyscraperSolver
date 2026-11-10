@@ -37,16 +37,6 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting,
 	cfg->check_constr_global_min_entropy
 		= calc_effective_global_min_entropy(g_initial_constr_global_min_entropy,
 			size);
-	cfg->run_gac = 0;
-	cfg->gac.selectivity = cfg->check_constr_selectivity;
-	cfg->gac.max_k = 3;
-	cfg->gac.analyse_naked = 1;
-	cfg->gac.analyse_hidden = 1;
-	cfg->gac.min_entropy = 0.35;
-	cfg->gac.max_entropy = 0.70;
-	cfg->gac.global_min_entropy
-		= calc_effective_global_min_entropy(
-			g_initial_gac_global_min_entropy, size);
 	cfg->lookahead.selectivity = cfg->check_constr_selectivity;
 	cfg->lookahead.depth = get_probe_depth(tier, nesting);
 	cfg->run_lookahead = (cfg->lookahead.depth.positive > 0

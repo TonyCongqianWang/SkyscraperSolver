@@ -58,8 +58,6 @@ int	is_only_selectivity_value_set(const t_prune_routine_cfg *cfg)
 	if (cfg->run_check_constr
 		&& cfg->check_constr_selectivity != SELECTIVITY_VALUE_SET)
 		return (0);
-	if (cfg->run_gac && cfg->gac.selectivity != SELECTIVITY_VALUE_SET)
-		return (0);
 	if (cfg->run_lookahead
 		&& cfg->lookahead.selectivity != SELECTIVITY_VALUE_SET)
 		return (0);
@@ -70,8 +68,6 @@ int	is_max_selectivity_any_change(const t_prune_routine_cfg *cfg)
 {
 	if (cfg->run_check_constr
 		&& cfg->check_constr_selectivity == SELECTIVITY_NONE)
-		return (0);
-	if (cfg->run_gac && cfg->gac.selectivity == SELECTIVITY_NONE)
 		return (0);
 	if (cfg->run_lookahead && cfg->lookahead.selectivity == SELECTIVITY_NONE)
 		return (0);

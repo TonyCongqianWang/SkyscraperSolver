@@ -65,17 +65,13 @@ KNOT_NAMES = ["p00", "p1_64", "p25", "p50", "p100"]
 
 INT_BASE_VARS = [
     "min_entropy",
-    "gac_min_entropy",
     "constr_min_entropy",
     "lookahead_continue_min_entropy",
-    "gac_global_min_entropy",
     "constr_global_min_entropy",
-    "lookahead_gac_global_min_entropy",
     "lookahead_constr_global_min_entropy",
 ]
 
 INT_VARS = [
-    ("g_initial_gac_global_min_entropy", "INITIAL_GAC_GLOBAL_MIN_ENTROPY", "int"),
     ("g_initial_constr_global_min_entropy", "INITIAL_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
 ]
 for base in INT_BASE_VARS:
@@ -88,12 +84,8 @@ DOUBLE_BASE_VARS = [
     "period_coef_unset",
     "period_tier_medium_mult",
     "period_tier_heavy_mult",
-    "gac_local_min_entropy",
-    "gac_local_max_entropy",
     "constr_local_min_entropy",
     "constr_local_max_entropy",
-    "lookahead_gac_local_min_entropy",
-    "lookahead_gac_local_max_entropy",
     "lookahead_constr_local_min_entropy",
     "lookahead_constr_local_max_entropy",
 ]

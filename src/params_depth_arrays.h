@@ -18,12 +18,9 @@
 # define DEPTH_ARRAY_SIZE 6724
 
 extern int		g_depth_min_entropy[DEPTH_ARRAY_SIZE];
-extern int		g_depth_gac_min_entropy[DEPTH_ARRAY_SIZE];
 extern int		g_depth_constr_min_entropy[DEPTH_ARRAY_SIZE];
 extern int		g_depth_lookahead_continue_min_entropy[DEPTH_ARRAY_SIZE];
-extern int		g_depth_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
 extern int		g_depth_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
-extern int		g_depth_lookahead_gac_global_min_entropy[DEPTH_ARRAY_SIZE];
 extern int		g_depth_lookahead_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
 
 extern double	g_depth_lookahead_continue_slope[DEPTH_ARRAY_SIZE];
@@ -31,12 +28,8 @@ extern double	g_depth_period_coef_scale[DEPTH_ARRAY_SIZE];
 extern double	g_depth_period_coef_unset[DEPTH_ARRAY_SIZE];
 extern double	g_depth_period_tier_medium_mult[DEPTH_ARRAY_SIZE];
 extern double	g_depth_period_tier_heavy_mult[DEPTH_ARRAY_SIZE];
-extern double	g_depth_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
-extern double	g_depth_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
-extern double	g_depth_lookahead_gac_local_min_entropy[DEPTH_ARRAY_SIZE];
-extern double	g_depth_lookahead_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_lookahead_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
 extern double	g_depth_lookahead_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
 int				schedule_int(double value);

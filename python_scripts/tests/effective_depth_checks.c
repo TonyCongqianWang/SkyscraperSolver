@@ -12,7 +12,7 @@
 #include "strategy_routing.h"
 
 const t_check_mode g_check_constr = {
-	1, 0, 0, 0, 0.0, {0.35, 0.70, 0}, {0.35, 0.70, 0}};
+	1, 0, 0, 0.0, {0.35, 0.70, 0}};
 static t_prune_routine_cfg captured;
 
 int run_pruning_routine(t_solver_state *p, const t_prune_routine_cfg *cfg, int tier)
@@ -204,9 +204,7 @@ static void check_scaling(void)
 
 	memset(&lim, 0, sizeof(lim));
 	base = 500000;
-	lim.gac_global_min_entropy = base;
 	lim.constr_global_min_entropy = base;
-	lim.lh_gac_global_min_entropy = base;
 	lim.lh_constr_global_min_entropy = base;
 	for (size = 4; size <= 9; size++)
 	{
@@ -220,12 +218,9 @@ static void check_scaling(void)
 		assert(e == recompute_entropy(&empty, size));
 		assert(calc_effective_global_min_entropy(base, size) == e / 2);
 		setup_cfg_bounds(&cfg, &lim, size);
-		assert(cfg.gac.global_min_entropy == e / 2);
 		assert(cfg.check_constr_global_min_entropy == e / 2);
-		assert(cfg.lookahead.check_mode.gac.global_min_entropy == e / 2);
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == e / 2);
 		init_prune_cfg(&cfg, 2, 0, size);
-		assert(cfg.gac.global_min_entropy == (int)(e * .98));
 		assert(cfg.check_constr_global_min_entropy == (int)(e * .98));
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == 0);
 		assert(calc_effective_global_min_entropy(1200000, size) > e);
@@ -233,12 +228,10 @@ static void check_scaling(void)
 	g_global_entropy_multiplier_s8 = 2;
 	setup_cfg_bounds(&cfg, &lim, 8);
 	e = compute_max_entropy(8);
-	assert(cfg.gac.global_min_entropy == e);
 	assert(cfg.check_constr_global_min_entropy == e);
-	assert(cfg.lookahead.check_mode.gac.global_min_entropy == e);
 	assert(cfg.lookahead.check_mode.constr.global_min_entropy == e);
 	init_prune_cfg(&cfg, 2, 0, 8);
-	assert(cfg.gac.global_min_entropy == (int)(e * 1.96));
+	assert(cfg.check_constr_global_min_entropy == (int)(e * 1.96));
 	/* Manual recentering leaves every effective threshold unchanged. */
 	assert(calc_effective_global_min_entropy(base / 2, 8) == e / 2);
 	oldscale = g_weight_total_scale_s8;
@@ -264,7 +257,7 @@ static void check_reseed(void)
 	assert(g_lookahead_constr_global_min_entropy_p100 == 950150);
 	for (size = 4; size <= 9; size++)
 	{
-		assert(calc_effective_global_min_entropy(g_gac_global_min_entropy_p00,
+		assert(calc_effective_global_min_entropy(g_constr_global_min_entropy_p00,
 			size) == (int)(.98 * compute_max_entropy(size)));
 		/* Sample all reachable effective coordinates, including overshoot. */
 		for (int k = 0; k <= 1000; k++)

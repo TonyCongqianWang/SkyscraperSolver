@@ -5,10 +5,9 @@
 #include "search_context.h"
 #include "solution_storage.h"
 #include "prune_check_constr.h"
-#include "prune_gac.h"
 
 static t_solver_state puzzle;
-static int propagation_calls, gac_calls, constraint_calls;
+static int propagation_calls, constraint_calls;
 
 int __real_check_active_constr(t_solver_state *solver);
 int __wrap_check_active_constr(t_solver_state *solver)
@@ -24,13 +23,6 @@ int __wrap_process_constraint(t_solver_state *solver, int idx, int size,
     (void)solver; (void)idx; (void)size; (void)limits;
     ++propagation_calls;
     return 0;
-}
-
-void __wrap_analyse_gac_line(t_solver_state *solver, int idx, int is_col,
-                            t_gac_config *config)
-{
-    (void)solver; (void)idx; (void)is_col; (void)config;
-    ++gac_calls;
 }
 
 static t_node_transition next_value(int cell, int value)
@@ -52,9 +44,7 @@ static t_probe_request reset(int depth)
     request.depth = depth;
     request.check_mode = g_check_constr;
     request.check_mode.run_prop = 1;
-    request.check_mode.run_gac = 1;
     propagation_calls = 0;
-    gac_calls = 0;
     constraint_calls = 0;
     return request;
 }
@@ -63,7 +53,6 @@ static void assert_checked(int extra)
 {
     assert(constraint_calls > 0);
     assert((propagation_calls > 0) == extra);
-    assert((gac_calls > 0) == extra);
 }
 
 static void test_depth_boundary(void)
