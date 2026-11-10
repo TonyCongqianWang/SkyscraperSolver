@@ -23,12 +23,6 @@ int run_pruning_routine(t_solver_state *p, const t_prune_routine_cfg *cfg, int t
 	return (-100);
 }
 
-int prune_strat_root(t_solver_state *p)
-{
-	(void)p;
-	return (-101);
-}
-
 int prune_strat_depth_bucket(t_solver_state *p, int b)
 {
 	(void)p;
@@ -80,18 +74,51 @@ static void check_model(void)
 	g_num_set_warp_1_s8 = .5;
 }
 
+static double interpolate(double t, const double *values)
+{
+	double w[SCHEDULE_KNOT_COUNT], result = 0;
+
+	compute_catmull_weights(t, w);
+	for (int i = 0; i < SCHEDULE_KNOT_COUNT; i++)
+		result += w[i] * values[i];
+	return (result);
+}
+
+static void check_spline_knots(void)
+{
+	const double knots[] = {0, 1.0/64, .25, .5, 1};
+	const double values[] = {3, 9, -2, 4, 7};
+	double w[SCHEDULE_KNOT_COUNT], left, right, eps = 1e-7;
+
+	assert(g_min_entropy_p00 == 66770);
+	assert(g_min_entropy_p1_64 == 74027);
+	init_depth_arrays(8, 64);
+	assert(g_depth_min_entropy[0] == g_min_entropy_p00);
+	assert(g_depth_min_entropy[DEPTH_STRIDE + 1] == g_min_entropy_p1_64);
+	for (int i = 0; i < SCHEDULE_KNOT_COUNT; i++)
+	{
+		compute_catmull_weights(knots[i], w);
+		for (int j = 0; j < SCHEDULE_KNOT_COUNT; j++)
+			near(w[j], i == j ? 1 : 0);
+		near(interpolate(knots[i], values), values[i]);
+		left = (values[i] - interpolate(knots[i] - eps, values)) / eps;
+		right = (interpolate(knots[i] + eps, values) - values[i]) / eps;
+		assert(left - right < .02 && right - left < .02);
+	}
+}
+
 static void check_boundaries(void)
 {
-	double w[4], t;
+	double w[SCHEDULE_KNOT_COUNT], t;
 	int i;
 
 	for (i = -2; i <= 6; i++)
 	{
 		t = i * .25;
 		compute_catmull_weights(t, w);
-		near(w[0] + w[1] + w[2] + w[3], 1);
+		near(w[0] + w[1] + w[2] + w[3] + w[4], 1);
 		/* These knot values define an exactly linear schedule. */
-		near(w[1]*.25 + w[2]*.5 + w[3], t);
+		near(w[1]/64 + w[2]*.25 + w[3]*.5 + w[4], t);
 	}
 	g_effective_depth_cd = 0;
 	g_effective_depth_cs = 0;
@@ -100,6 +127,7 @@ static void check_boundaries(void)
 	g_effective_depth_c0 = -2;
 	near(effective_depth(8, 16, 16), -.75);
 	g_min_entropy_p00 = 0;
+	g_min_entropy_p1_64 = 15625;
 	g_min_entropy_p25 = 250000;
 	g_min_entropy_p50 = 500000;
 	g_min_entropy_p100 = 1000000;
@@ -142,7 +170,12 @@ static void check_node_schedules(void)
 	node.tree.depth = 0;
 	assert(prune_current_step(&p) == -100); /* Initial path unchanged. */
 	p.prune_runs_count = 1;
-	assert(prune_current_step(&p) == -101); /* Root path unchanged. */
+	assert(prune_current_step(&p) == 48); /* Root uses the same table. */
+	node.domain.num_unset = 64;
+	assert(prune_current_step(&p) == 0);
+	node.domain.num_unset = 62;
+	assert(prune_current_step(&p) == 2);
+	assert(g_depth_min_entropy[0] != g_depth_min_entropy[2]);
 }
 
 /* Independent domain scan, retained only as a test oracle. */
@@ -219,9 +252,10 @@ static void check_scaling(void)
 static void check_reseed(void)
 {
 	int size;
-	double w[4], cutoff;
+	double w[SCHEDULE_KNOT_COUNT], cutoff;
 
-	assert(g_constr_global_min_entropy_p00 == 824442);
+	assert(g_constr_global_min_entropy_p00 == 980000);
+	assert(g_constr_global_min_entropy_p1_64 == 824442);
 	assert(g_constr_global_min_entropy_p25 == 757388);
 	assert(g_constr_global_min_entropy_p50 == 756665);
 	assert(g_constr_global_min_entropy_p100 == 782159);
@@ -237,9 +271,10 @@ static void check_reseed(void)
 		{
 			compute_catmull_weights(k / 1000., w);
 			cutoff = w[0]*g_lookahead_constr_global_min_entropy_p00
-				+ w[1]*g_lookahead_constr_global_min_entropy_p25
-				+ w[2]*g_lookahead_constr_global_min_entropy_p50
-				+ w[3]*g_lookahead_constr_global_min_entropy_p100;
+				+ w[1]*g_lookahead_constr_global_min_entropy_p1_64
+				+ w[2]*g_lookahead_constr_global_min_entropy_p25
+				+ w[3]*g_lookahead_constr_global_min_entropy_p50
+				+ w[4]*g_lookahead_constr_global_min_entropy_p100;
 			assert(cutoff > 950000 && cutoff < 1000000);
 		}
 	}
@@ -248,6 +283,7 @@ static void check_reseed(void)
 int main(void)
 {
 	check_model();
+	check_spline_knots();
 	check_boundaries();
 	check_node_schedules();
 	check_scaling();

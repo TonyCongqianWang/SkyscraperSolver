@@ -18,14 +18,16 @@ static void	eval_doubles1_part1(int d, const double *w)
 	double	val;
 
 	val = w[0] * g_lookahead_continue_slope_p00
-		+ w[1] * g_lookahead_continue_slope_p25
-		+ w[2] * g_lookahead_continue_slope_p50
-		+ w[3] * g_lookahead_continue_slope_p100;
+		+ w[1] * g_lookahead_continue_slope_p1_64
+		+ w[2] * g_lookahead_continue_slope_p25
+		+ w[3] * g_lookahead_continue_slope_p50
+		+ w[4] * g_lookahead_continue_slope_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_lookahead_continue_slope[d] = val;
-	val = w[0] * g_period_coef_scale_p00 + w[1] * g_period_coef_scale_p25
-		+ w[2] * g_period_coef_scale_p50 + w[3] * g_period_coef_scale_p100;
+	val = w[0] * g_period_coef_scale_p00
+		+ w[1] * g_period_coef_scale_p1_64 + w[2] * g_period_coef_scale_p25
+		+ w[3] * g_period_coef_scale_p50 + w[4] * g_period_coef_scale_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_period_coef_scale[d] = val;
@@ -35,15 +37,17 @@ static void	eval_doubles1_part2(int d, const double *w)
 {
 	double	val;
 
-	val = w[0] * g_period_coef_unset_p00 + w[1] * g_period_coef_unset_p25
-		+ w[2] * g_period_coef_unset_p50 + w[3] * g_period_coef_unset_p100;
+	val = w[0] * g_period_coef_unset_p00
+		+ w[1] * g_period_coef_unset_p1_64 + w[2] * g_period_coef_unset_p25
+		+ w[3] * g_period_coef_unset_p50 + w[4] * g_period_coef_unset_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_period_coef_unset[d] = val;
 	val = w[0] * g_period_tier_medium_mult_p00
-		+ w[1] * g_period_tier_medium_mult_p25
-		+ w[2] * g_period_tier_medium_mult_p50
-		+ w[3] * g_period_tier_medium_mult_p100;
+		+ w[1] * g_period_tier_medium_mult_p1_64
+		+ w[2] * g_period_tier_medium_mult_p25
+		+ w[3] * g_period_tier_medium_mult_p50
+		+ w[4] * g_period_tier_medium_mult_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_period_tier_medium_mult[d] = val;
@@ -54,16 +58,18 @@ static void	eval_doubles1_part3(int d, const double *w)
 	double	val;
 
 	val = w[0] * g_period_tier_heavy_mult_p00
-		+ w[1] * g_period_tier_heavy_mult_p25
-		+ w[2] * g_period_tier_heavy_mult_p50
-		+ w[3] * g_period_tier_heavy_mult_p100;
+		+ w[1] * g_period_tier_heavy_mult_p1_64
+		+ w[2] * g_period_tier_heavy_mult_p25
+		+ w[3] * g_period_tier_heavy_mult_p50
+		+ w[4] * g_period_tier_heavy_mult_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_period_tier_heavy_mult[d] = val;
 	val = w[0] * g_gac_local_min_entropy_p00
-		+ w[1] * g_gac_local_min_entropy_p25
-		+ w[2] * g_gac_local_min_entropy_p50
-		+ w[3] * g_gac_local_min_entropy_p100;
+		+ w[1] * g_gac_local_min_entropy_p1_64
+		+ w[2] * g_gac_local_min_entropy_p25
+		+ w[3] * g_gac_local_min_entropy_p50
+		+ w[4] * g_gac_local_min_entropy_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_gac_local_min_entropy[d] = val;
@@ -74,9 +80,10 @@ static void	eval_doubles1_part4(int d, const double *w)
 	double	val;
 
 	val = w[0] * g_gac_local_max_entropy_p00
-		+ w[1] * g_gac_local_max_entropy_p25
-		+ w[2] * g_gac_local_max_entropy_p50
-		+ w[3] * g_gac_local_max_entropy_p100;
+		+ w[1] * g_gac_local_max_entropy_p1_64
+		+ w[2] * g_gac_local_max_entropy_p25
+		+ w[3] * g_gac_local_max_entropy_p50
+		+ w[4] * g_gac_local_max_entropy_p100;
 	if (val < 0.0)
 		val = 0.0;
 	g_depth_gac_local_max_entropy[d] = val;

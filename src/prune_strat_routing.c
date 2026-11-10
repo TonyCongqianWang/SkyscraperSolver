@@ -12,7 +12,6 @@
 
 #include "strategy_routing.h"
 #include "prune_strat_initial.h"
-#include "prune_strat_root.h"
 #include "prune_strat_bucket.h"
 #include "params_depth_arrays.h"
 
@@ -20,17 +19,9 @@ int	prune_current_step(t_solver_state *puzzle)
 {
 	int	d;
 
-	if (puzzle->cur_node->tree.depth == 0)
-	{
-		if (puzzle->prune_runs_count == 0)
-			return (prune_strat_initial(puzzle));
-		else
-			return (prune_strat_root(puzzle));
-	}
-	else
-	{
-		d = puzzle->cur_node->tree.depth * DEPTH_STRIDE
-			+ puzzle->squared_size - puzzle->cur_node->domain.num_unset;
-		return (prune_strat_depth_bucket(puzzle, d));
-	}
+	if (puzzle->cur_node->tree.depth == 0 && puzzle->prune_runs_count == 0)
+		return (prune_strat_initial(puzzle));
+	d = puzzle->cur_node->tree.depth * DEPTH_STRIDE
+		+ puzzle->squared_size - puzzle->cur_node->domain.num_unset;
+	return (prune_strat_depth_bucket(puzzle, d));
 }

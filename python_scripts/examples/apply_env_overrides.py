@@ -61,7 +61,7 @@ MATH_VARS = [
     ("g_lookahead_score_age_limit_ratio_s9", "LOOKAHEAD_SCORE_AGE_LIMIT_RATIO_S9", "double"),
 ]
 
-KNOT_NAMES = ["p00", "p25", "p50", "p100"]
+KNOT_NAMES = ["p00", "p1_64", "p25", "p50", "p100"]
 
 INT_BASE_VARS = [
     "min_entropy",
@@ -77,15 +77,6 @@ INT_BASE_VARS = [
 INT_VARS = [
     ("g_initial_gac_global_min_entropy", "INITIAL_GAC_GLOBAL_MIN_ENTROPY", "int"),
     ("g_initial_constr_global_min_entropy", "INITIAL_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
-
-    ("g_root_min_entropy", "ROOT_MIN_ENTROPY", "int"),
-    ("g_root_gac_min_entropy", "ROOT_GAC_MIN_ENTROPY", "int"),
-    ("g_root_constr_min_entropy", "ROOT_CONSTR_MIN_ENTROPY", "int"),
-    ("g_root_gac_global_min_entropy", "ROOT_GAC_GLOBAL_MIN_ENTROPY", "int"),
-    ("g_root_constr_global_min_entropy", "ROOT_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
-    ("g_root_lookahead_gac_global_min_entropy", "ROOT_LOOKAHEAD_GAC_GLOBAL_MIN_ENTROPY", "int"),
-    ("g_root_lookahead_constr_global_min_entropy", "ROOT_LOOKAHEAD_CONSTR_GLOBAL_MIN_ENTROPY", "int"),
-    ("g_root_lookahead_continue_min_entropy", "ROOT_LOOKAHEAD_CONTINUE_MIN_ENTROPY", "int"),
 ]
 for base in INT_BASE_VARS:
     for k in KNOT_NAMES:
@@ -110,19 +101,6 @@ DOUBLE_BASE_VARS = [
 DOUBLE_VARS = [
     ("g_sel_period_coef_sqrt", "SEL_PERIOD_COEF_SQRT", "double"),
     ("g_sel_period_coef_inv", "SEL_PERIOD_COEF_INV", "double"),
-    ("g_root_lookahead_continue_slope", "ROOT_LOOKAHEAD_CONTINUE_SLOPE", "double"),
-    ("g_root_period_coef_scale", "ROOT_PERIOD_COEF_SCALE", "double"),
-    ("g_root_period_coef_unset", "ROOT_PERIOD_COEF_UNSET", "double"),
-    ("g_root_period_tier_medium_mult", "ROOT_PERIOD_TIER_MEDIUM_MULTIPLIER", "double"),
-    ("g_root_period_tier_heavy_mult", "ROOT_PERIOD_TIER_HEAVY_MULTIPLIER", "double"),
-    ("g_root_gac_local_min_entropy", "ROOT_GAC_LOCAL_MIN_ENTROPY", "double"),
-    ("g_root_gac_local_max_entropy", "ROOT_GAC_LOCAL_MAX_ENTROPY", "double"),
-    ("g_root_constr_local_min_entropy", "ROOT_CONSTR_LOCAL_MIN_ENTROPY", "double"),
-    ("g_root_constr_local_max_entropy", "ROOT_CONSTR_LOCAL_MAX_ENTROPY", "double"),
-    ("g_root_lookahead_gac_local_min_entropy", "ROOT_LOOKAHEAD_GAC_LOCAL_MIN_ENTROPY", "double"),
-    ("g_root_lookahead_gac_local_max_entropy", "ROOT_LOOKAHEAD_GAC_LOCAL_MAX_ENTROPY", "double"),
-    ("g_root_lookahead_constr_local_min_entropy", "ROOT_LOOKAHEAD_CONSTR_LOCAL_MIN_ENTROPY", "double"),
-    ("g_root_lookahead_constr_local_max_entropy", "ROOT_LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY", "double"),
 ]
 for base in DOUBLE_BASE_VARS:
     env_base = base.upper().replace("_MULT", "_MULTIPLIER")

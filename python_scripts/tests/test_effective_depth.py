@@ -57,7 +57,11 @@ class EffectiveDepthTests(unittest.TestCase):
             self.assertIn('INITIAL_GAC_GLOBAL_MIN_ENTROPY', active)
         self.assertFalse(any('WARP' in name for row in PARAM_CONSTRAINTS for name in row[:2]))
         self.assertFalse(any('UNSET_BIAS' in name for name in PARAMETER_MAPPING))
-        for name in model_names | {n for n in physical if 'GLOBAL_MIN_ENTROPY' in n}:
+        self.assertFalse(any(name.startswith('ROOT_') for name in PARAMETER_MAPPING))
+        schedule_names = {name for name in physical
+                          if name.endswith(('_P00', '_P1_64', '_P25', '_P50', '_P100'))}
+        self.assertEqual(len(schedule_names), 21 * 5)
+        for name in model_names | schedule_names | {n for n in physical if 'GLOBAL_MIN_ENTROPY' in n}:
             filepath, var, kind = PARAMETER_MAPPING[name]
             self.assertEqual(generated[name], (var, kind))
             match = re.search(rf'\b{var}\s*=\s*([^;]+)', (ROOT / filepath).read_text())

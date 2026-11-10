@@ -42,7 +42,7 @@ void	init_depth_arrays(int size, int squared_size)
 	int		b;
 	int		d;
 	int		n;
-	double	w[4];
+	double	w[SCHEDULE_KNOT_COUNT];
 
 	d = -1;
 	while (++d <= squared_size)
