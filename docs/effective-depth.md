@@ -1,8 +1,10 @@
 # Effective-depth scheduling and entropy migration
 
-This is a draft for the iteration **after** the current release candidate is
-validated and released. No SPSA campaign or performance claim accompanies it.
-The baseline is freshly fetched main, `7b4fcac`.
+This ports the methodology onto newer main while preserving four-tier pruning,
+independent positive/negative lookahead and the latest tuned defaults.
+No SPSA campaign or performance claim accompanies it.
+The baseline is main `ad5c908`, including its 2.5× numerical rescaling
+(subject to integer truncation) and subsequent tuning adjustments.
 
 ## Scheduling coordinate
 
@@ -89,7 +91,7 @@ This simplification preserves the previous initialization values.
 
 The same scaling function serves initial GAC/constraint pruning, the unified
 node schedules, and extra lookahead verification for both families. The formerly
-hardcoded initial `513540` becomes two tunable parameters,
+hardcoded initial `1283850` becomes two tunable parameters,
 `INITIAL_GAC_GLOBAL_MIN_ENTROPY` and `INITIAL_CONSTR_GLOBAL_MIN_ENTROPY`.
 The initial lookahead mode's existing zero global thresholds remain zero.
 All three size multipliers initialize to `1` and remain tunable; none is
@@ -121,15 +123,15 @@ Use size 9 as the reference because it has reachable constraint cutoffs that
 can be preserved. For each existing shared root value and curve knot `b`, form
 
 ```
-r = b * (721.984349864311 + 50) / (721.984349864311 + 81) / 442746
+r = b * (721.984349864311 + 50) / (721.984349864311 + 81) / 1108161
 seed_ppm = round(r * 1_000_000) if r <= 1 else 980000
 ```
 
-The factor is the old unset correction at an empty size 9 grid; `442746` is
+The factor is the old unset correction at an empty size 9 grid; `1108161` is
 its exact empty entropy. Initial pruning did not have the unset correction;
-its old `513540` also exceeds this reference and is seeded to `980000`.
+its old `1283850` also exceeds this reference and is seeded to `980000`.
 Reachable size 9 regular constraint knots and three extra constraint knots
-are preserved to within 0.22 raw entropy units before integer truncation.
+are preserved to within 0.56 raw entropy units before integer truncation.
 Values between 98% and 100% remain intact. Reseeding is an initializer change,
 not a formula that runs during solving or tuning.
 
@@ -158,25 +160,25 @@ remain 0% for every size and are omitted from the tables.
 
 | Size | Empty entropy | Initial GAC / CP | Root → zero GAC | Root → zero CP | Root → zero extra GAC | Root → zero extra CP |
 | --- | --- | --- | --- | --- | --- | --- |
-| 2 | 5644 | 9098.9 → 98.0% | 10124.6 → 98.0% | 11650.8 → 98.0% | 11708.8 → 98.0% | 9327.9 → 98.0% |
-| 3 | 20106 | 2554.2 → 98.0% | 2819.0 → 98.0% | 3243.9 → 98.0% | 3260.1 → 98.0% | 2597.2 → 98.0% |
-| 4 | 45152 | 1137.4 → 98.0% | 1241.1 → 98.0% | 1428.2 → 98.0% | 1435.3 → 98.0% | 1143.5 → 98.0% |
-| 5 | 81875 | 627.2 → 98.0% | 674.7 → 98.0% | 776.4 → 98.0% | 780.3 → 98.0% | 621.6 → 98.0% |
-| 6 | 131220 | 391.4 → 98.0% | 413.8 → 98.0% | 476.1 → 98.0% | 478.5 → 98.0% | 381.2 → 98.0% |
-| 7 | 194089 | 264.6 → 98.0% | 274.2 → 98.0% | 315.5 → 98.0% | 317.1 → 98.0% | 252.6 → 98.0% |
-| 8 | 270912 | 189.6 → 98.0% | 192.0 → 98.0% | 221.0 → 98.0% | 222.1 → 98.0% | 176.9 → 98.0% |
-| 9 | 442746 | 116.0 → 98.0% | 115.4 → 98.0% | 132.8 → 98.0% | 133.4 → 98.0% | 106.3 → 98.0% |
+| 2 | 13940 | 9209.8 → 98.0% | 10248.0 → 98.0% | 11792.9 → 98.0% | 11851.6 → 98.0% | 9441.7 → 98.0% |
+| 3 | 49698 | 2583.3 → 98.0% | 2851.1 → 98.0% | 3280.9 → 98.0% | 3297.3 → 98.0% | 2626.8 → 98.0% |
+| 4 | 111520 | 1151.2 → 98.0% | 1256.3 → 98.0% | 1445.7 → 98.0% | 1452.8 → 98.0% | 1157.4 → 98.0% |
+| 5 | 202300 | 634.6 → 98.0% | 682.7 → 98.0% | 785.6 → 98.0% | 789.5 → 98.0% | 628.9 → 98.0% |
+| 6 | 324252 | 395.9 → 98.0% | 418.6 → 98.0% | 481.7 → 98.0% | 484.1 → 98.0% | 385.7 → 98.0% |
+| 7 | 479367 | 267.8 → 98.0% | 277.5 → 98.0% | 319.4 → 98.0% | 321.0 → 98.0% | 255.7 → 98.0% |
+| 8 | 677760 | 189.4 → 98.0% | 191.9 → 98.0% | 220.8 → 98.0% | 221.9 → 98.0% | 176.8 → 98.0% |
+| 9 | 1108161 | 115.9 → 98.0% | 115.2 → 98.0% | 132.6 → 98.0% | 133.3 → 98.0% | 106.2 → 98.0% |
 
 | Size | GAC schedule | CP schedule | Extra GAC | Extra CP |
 | --- | --- | --- | --- | --- |
-| 2 | 8899.2–12810.3 → 98.0–98.0% | 6594.3–7234.7 → 75.1–98.0% | 9614.1–16694.9 → 98.0–98.0% | 8347.6–12865.4 → 95.1–99.0% |
-| 3 | 2477.8–3566.8 → 98.0–98.0% | 1836.0–2014.3 → 75.1–98.0% | 2676.8–4648.3 → 98.0–98.0% | 2324.2–3582.1 → 95.1–99.0% |
-| 4 | 1090.9–1570.4 → 98.0–98.0% | 808.4–886.9 → 75.1–98.0% | 1178.6–2046.6 → 98.0–98.0% | 1023.3–1577.1 → 95.1–99.0% |
-| 5 | 593.0–853.7 → 98.0–98.0% | 439.4–482.1 → 75.1–98.0% | 640.7–1112.5 → 98.0–98.0% | 556.3–857.3 → 95.1–99.0% |
-| 6 | 363.7–523.5 → 98.0–98.0% | 269.5–295.7 → 75.1–98.0% | 392.9–682.3 → 98.0–98.0% | 341.1–525.8 → 95.1–99.0% |
-| 7 | 241.0–346.9 → 98.0–98.0% | 178.6–195.9 → 75.1–98.0% | 260.4–452.1 → 98.0–98.0% | 226.1–348.4 → 95.1–99.0% |
-| 8 | 168.8–243.0 → 98.0–98.0% | 125.1–137.2 → 75.1–98.0% | 182.3–316.6 → 98.0–98.0% | 158.3–244.0 → 95.1–99.0% |
-| 9 | 101.4–146.0 → 98.0–98.0% | 75.1–82.4 → 75.1–98.0% | 109.6–190.3 → 98.0–98.0% | 95.1–146.6 → 95.1–99.0% |
+| 2 | 9007.7–12966.5 → 98.0–98.0% | 6674.7–7322.9 → 75.0–98.0% | 9731.3–16898.5 → 98.0–98.0% | 8449.4–13022.3 → 95.0–98.9% |
+| 3 | 2506.1–3607.4 → 98.0–98.0% | 1857.0–2037.3 → 75.0–98.0% | 2707.4–4701.4 → 98.0–98.0% | 2350.7–3623.0 → 95.0–98.9% |
+| 4 | 1104.2–1589.5 → 98.0–98.0% | 818.2–897.7 → 75.0–98.0% | 1192.9–2071.5 → 98.0–98.0% | 1035.8–1596.4 → 95.0–98.9% |
+| 5 | 600.0–863.7 → 98.0–98.0% | 444.6–487.8 → 75.0–98.0% | 648.2–1125.7 → 98.0–98.0% | 562.8–867.5 → 95.0–98.9% |
+| 6 | 367.9–529.6 → 98.0–98.0% | 272.6–299.1 → 75.0–98.0% | 397.5–690.3 → 98.0–98.0% | 345.1–531.9 → 95.0–98.9% |
+| 7 | 243.9–351.1 → 98.0–98.0% | 180.8–198.3 → 75.0–98.0% | 263.5–457.6 → 98.0–98.0% | 228.8–352.7 → 95.0–98.9% |
+| 8 | 168.7–242.8 → 98.0–98.0% | 125.0–137.1 → 75.0–98.0% | 182.2–316.4 → 98.0–98.0% | 158.2–243.8 → 95.0–98.9% |
+| 9 | 101.3–145.8 → 98.0–98.0% | 75.1–82.3 → 75.0–98.0% | 109.4–190.0 → 98.0–98.0% | 95.0–146.4 → 95.0–98.9% |
 
 ## Joint tuning and validation
 
