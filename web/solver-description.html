@@ -2,10 +2,11 @@
 <p>The solver runs in the browser; no download or compilation is necessary to
 <a href="../../demo/">try it</a>.</p>
 
-<p>The demo's version selector defaults to the latest stable release and also
-lists a more recently published prerelease. If no stable release exists, the
-latest prerelease is the default. <a href="versions.json"><code>versions.json</code></a>
-lists the available builds; the top-level solver files always match the default.</p>
+<p>The demo defaults to the latest stable release (or the latest prerelease if
+no stable release exists) and offers newer prereleases when available.
+<a href="versions.json"><code>versions.json</code></a> lists available builds;
+the top-level <code>solver.js</code> and <code>solver.wasm</code> intentionally
+duplicate the default build to provide stable URLs.</p>
 
 <h2>Using the solver</h2>
 <p>Load <a href="solver.js"><code>solver.js</code></a> and keep
