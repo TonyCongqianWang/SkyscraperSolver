@@ -26,7 +26,7 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting)
 	cfg->check_constr_selectivity = get_prune_tier_selectivity(tier);
 	cfg->check_constr_min_entropy = 0.35;
 	cfg->check_constr_max_entropy = 0.70;
-	cfg->check_constr_global_min_entropy = 513540;
+	cfg->check_constr_global_min_entropy = 1283850;
 	cfg->run_gac = 0;
 	cfg->gac.selectivity = cfg->check_constr_selectivity;
 	cfg->gac.max_k = 3;
@@ -34,7 +34,7 @@ void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting)
 	cfg->gac.analyse_hidden = 1;
 	cfg->gac.min_entropy = 0.35;
 	cfg->gac.max_entropy = 0.70;
-	cfg->gac.global_min_entropy = 513540;
+	cfg->gac.global_min_entropy = 1283850;
 	cfg->lookahead.selectivity = cfg->check_constr_selectivity;
 	cfg->lookahead.max_depth = get_probe_depth(tier, nesting);
 	cfg->run_lookahead = (cfg->lookahead.max_depth > 0);
