@@ -38,6 +38,6 @@ typedef struct s_prune_limits
 void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
 			const t_prune_limits *lim, int remaining_entropy);
 void	setup_cfg_bounds(t_prune_routine_cfg *cfg,
-			const t_prune_limits *lim, int num_unset, int size);
+			const t_prune_limits *lim, int size);
 
 #endif

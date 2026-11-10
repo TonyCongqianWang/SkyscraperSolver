@@ -30,11 +30,11 @@ double	get_weight_total_scale(int size)
 	return (g_weight_total_scale_s9);
 }
 
-double	get_global_entropy_unset_bias(int size)
+double	get_global_entropy_multiplier(int size)
 {
 	if (size <= 7)
-		return (g_global_entropy_unset_bias_le7);
+		return (g_global_entropy_multiplier_le7);
 	if (size == 8)
-		return (g_global_entropy_unset_bias_s8);
-	return (g_global_entropy_unset_bias_s9);
+		return (g_global_entropy_multiplier_s8);
+	return (g_global_entropy_multiplier_s9);
 }

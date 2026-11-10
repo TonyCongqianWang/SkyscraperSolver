@@ -36,41 +36,26 @@ double	g_depth_lookahead_gac_local_max_entropy[DEPTH_ARRAY_SIZE];
 double	g_depth_lookahead_constr_local_min_entropy[DEPTH_ARRAY_SIZE];
 double	g_depth_lookahead_constr_local_max_entropy[DEPTH_ARRAY_SIZE];
 
-static double	compute_warped_t(double u, int size)
-{
-	double	w0;
-	double	w1;
-	double	w2;
-
-	w0 = get_depth_warp(size, 0);
-	w1 = get_depth_warp(size, 1);
-	w2 = get_depth_warp(size, 2);
-	if (u <= 0.25)
-		return (4.0 * u * w0);
-	else if (u <= 0.50)
-		return (w0 + 4.0 * (u - 0.25) * (w1 - w0));
-	else if (u <= 0.75)
-		return (w1 + 4.0 * (u - 0.50) * (w2 - w1));
-	else
-		return (w2 + 4.0 * (u - 0.75) * (1.0 - w2));
-}
-
+/* Tables cover both physical depth and set count, including propagation. */
 void	init_depth_arrays(int size, int squared_size)
 {
+	int		b;
 	int		d;
-	double	u;
-	double	t;
-	double	w[4];
+	int		n;
+	double	w[SCHEDULE_KNOT_COUNT];
 
-	d = 0;
-	while (d <= squared_size)
+	d = -1;
+	while (++d <= squared_size)
 	{
-		u = (double)d / (double)squared_size;
-		t = compute_warped_t(u, size);
-		compute_catmull_weights(t, w);
-		init_depth_ints_at(d, w);
-		init_depth_doubles_part1(d, w);
-		init_depth_doubles_part2(d, w);
-		d++;
+		n = -1;
+		while (++n <= squared_size)
+		{
+			b = d * DEPTH_STRIDE + n;
+			compute_catmull_weights(effective_depth(size, d,
+					squared_size - n), w);
+			init_depth_ints_at(b, w);
+			init_depth_doubles_part1(b, w);
+			init_depth_doubles_part2(b, w);
+		}
 	}
 }

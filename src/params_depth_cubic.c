@@ -12,6 +12,10 @@
 
 #include "params_depth_arrays.h"
 
+static const double	g_schedule_knots[SCHEDULE_KNOT_COUNT] = {
+	0.0, 0.015625, 0.25, 0.50, 1.0
+};
+
 static void	compute_hermite_basis(double tau, double *h)
 {
 	double	tau2;
@@ -25,47 +29,37 @@ static void	compute_hermite_basis(double tau, double *h)
 	h[3] = tau3 - tau2;
 }
 
-static void	eval_seg0(const double *h, double *w)
+static void	add_tangent(double *w, double coefficient, int left, int right)
 {
-	w[0] = h[0] - h[1] - 0.5 * h[3];
-	w[1] = h[2] + h[1];
-	w[2] = 0.5 * h[3];
-	w[3] = 0.0;
-}
+	double	factor;
 
-static void	eval_seg1(const double *h, double *w)
-{
-	w[0] = -0.5 * h[1];
-	w[1] = h[0] - (1.0 / 3.0) * h[3];
-	w[2] = h[2] + 0.5 * h[1];
-	w[3] = (1.0 / 3.0) * h[3];
-}
-
-static void	eval_seg2(const double *h, double *w)
-{
-	w[0] = 0.0;
-	w[1] = -(2.0 / 3.0) * h[1];
-	w[2] = h[0] - h[3];
-	w[3] = h[2] + (2.0 / 3.0) * h[1] + h[3];
+	if (left < 0)
+		left = 0;
+	if (right >= SCHEDULE_KNOT_COUNT)
+		right = SCHEDULE_KNOT_COUNT - 1;
+	factor = coefficient / (g_schedule_knots[right] - g_schedule_knots[left]);
+	w[left] -= factor;
+	w[right] += factor;
 }
 
 void	compute_catmull_weights(double t, double *w)
 {
 	double	h[4];
+	double	width;
+	int		segment;
+	int		i;
 
-	if (t <= 0.25)
-	{
-		compute_hermite_basis(4.0 * t, h);
-		eval_seg0(h, w);
-	}
-	else if (t <= 0.50)
-	{
-		compute_hermite_basis(4.0 * (t - 0.25), h);
-		eval_seg1(h, w);
-	}
-	else
-	{
-		compute_hermite_basis(2.0 * (t - 0.50), h);
-		eval_seg2(h, w);
-	}
+	segment = 0;
+	while (segment < SCHEDULE_KNOT_COUNT - 2
+		&& t > g_schedule_knots[segment + 1])
+		segment++;
+	width = g_schedule_knots[segment + 1] - g_schedule_knots[segment];
+	compute_hermite_basis((t - g_schedule_knots[segment]) / width, h);
+	i = -1;
+	while (++i < SCHEDULE_KNOT_COUNT)
+		w[i] = 0.0;
+	w[segment] = h[0];
+	w[segment + 1] = h[2];
+	add_tangent(w, h[1] * width, segment - 1, segment + 1);
+	add_tangent(w, h[3] * width, segment, segment + 2);
 }
