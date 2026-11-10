@@ -20,7 +20,6 @@ class LookaheadVerificationTests(unittest.TestCase):
             command = ["gcc", "-Wall", "-Wextra", "-Werror", "-O2",
                        "-I", str(ROOT / "src"), str(harness), *sources,
                        "-o", str(binary), "-Wl,--wrap=process_constraint",
-                       "-Wl,--wrap=analyse_gac_line",
                        "-Wl,--wrap=check_active_constr"]
             compiled = subprocess.run(command, capture_output=True, text=True)
             self.assertEqual(compiled.returncode, 0, compiled.stderr)

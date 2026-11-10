@@ -20,13 +20,9 @@
 
 static void	populate_limits(t_prune_limits *lim, int b)
 {
-	lim->gac_min_entropy = g_depth_gac_min_entropy[b];
 	lim->constr_min_entropy = g_depth_constr_min_entropy[b];
 	lim->lh_continue_min_entropy = g_depth_lookahead_continue_min_entropy[b];
 	lim->lh_continue_slope = g_depth_lookahead_continue_slope[b];
-	lim->gac_local_min_entropy = g_depth_gac_local_min_entropy[b];
-	lim->gac_local_max_entropy = g_depth_gac_local_max_entropy[b];
-	lim->gac_global_min_entropy = g_depth_gac_global_min_entropy[b];
 	lim->constr_local_min_entropy = g_depth_constr_local_min_entropy[b];
 	lim->constr_local_max_entropy = g_depth_constr_local_max_entropy[b];
 	lim->constr_global_min_entropy = g_depth_constr_global_min_entropy[b];
@@ -36,12 +32,6 @@ static void	populate_limits(t_prune_limits *lim, int b)
 		= g_depth_lookahead_constr_local_max_entropy[b];
 	lim->lh_constr_global_min_entropy
 		= g_depth_lookahead_constr_global_min_entropy[b];
-	lim->lh_gac_local_min_entropy
-		= g_depth_lookahead_gac_local_min_entropy[b];
-	lim->lh_gac_local_max_entropy
-		= g_depth_lookahead_gac_local_max_entropy[b];
-	lim->lh_gac_global_min_entropy
-		= g_depth_lookahead_gac_global_min_entropy[b];
 }
 
 static int	run_tier(t_solver_state *puzzle, int tier, int remaining_entropy,

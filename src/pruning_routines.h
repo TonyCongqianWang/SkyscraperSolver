@@ -23,8 +23,6 @@ typedef struct s_prune_routine_config
 	double				check_constr_min_entropy;
 	double				check_constr_max_entropy;
 	int					check_constr_global_min_entropy;
-	int					run_gac;
-	t_gac_config		gac;
 	int					run_lookahead;
 	t_lookahead_config	lookahead;
 }	t_prune_routine_cfg;

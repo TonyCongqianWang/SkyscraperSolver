@@ -31,11 +31,9 @@ typedef struct s_check_mode
 {
 	int				run_constr;
 	int				run_prop;
-	int				run_gac;
 	int				lookahead_continue_min_entropy;
 	double			lookahead_continue_slope;
 	t_constr_limits	constr;
-	t_constr_limits	gac;
 }				t_check_mode;
 
 extern const t_check_mode	g_check_none;
@@ -62,17 +60,6 @@ typedef struct s_lookahead_config
 	t_lookahead_pass	passes;
 	t_check_mode		check_mode;
 }	t_lookahead_config;
-
-typedef struct s_gac_config
-{
-	t_selectivity_level	selectivity;
-	int					max_k;
-	int					analyse_naked;
-	int					analyse_hidden;
-	double				min_entropy;
-	double				max_entropy;
-	int					global_min_entropy;
-}	t_gac_config;
 
 typedef enum e_selection_criterion
 {

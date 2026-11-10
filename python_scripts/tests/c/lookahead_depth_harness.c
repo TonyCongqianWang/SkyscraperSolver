@@ -67,7 +67,6 @@ int __wrap_run_pruning_routine(t_solver_state *solver,
     assert(tier == scheduled_tier++);
     noop = *config;
     noop.run_check_constr = 0;
-    noop.run_gac = 0;
     noop.run_lookahead = 0;
     return __real_run_pruning_routine(solver, &noop, tier);
 }

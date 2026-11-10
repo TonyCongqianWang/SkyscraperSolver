@@ -22,7 +22,6 @@ static void	check_initialized(t_solver_state *puzzle, int size)
 	assert(puzzle->cur_node->search_policy.mode == SEARCH_DFS);
 	assert(puzzle->cur_node->search_policy.leaf_check_mode.run_constr == 1);
 	assert(puzzle->cur_node->search_policy.leaf_check_mode.run_prop == 0);
-	assert(puzzle->cur_node->search_policy.leaf_check_mode.run_gac == 0);
 	assert(puzzle->cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
 	assert(puzzle->cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);
 	assert(puzzle->order_stack.top_idx == 0);

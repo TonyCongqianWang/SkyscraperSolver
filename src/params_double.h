@@ -21,12 +21,8 @@ extern double	g_period_coef_scale_p00;
 extern double	g_period_coef_unset_p00;
 extern double	g_period_tier_medium_mult_p00;
 extern double	g_period_tier_heavy_mult_p00;
-extern double	g_gac_local_min_entropy_p00;
-extern double	g_gac_local_max_entropy_p00;
 extern double	g_constr_local_min_entropy_p00;
 extern double	g_constr_local_max_entropy_p00;
-extern double	g_lookahead_gac_local_min_entropy_p00;
-extern double	g_lookahead_gac_local_max_entropy_p00;
 extern double	g_lookahead_constr_local_min_entropy_p00;
 extern double	g_lookahead_constr_local_max_entropy_p00;
 
@@ -55,16 +51,6 @@ extern double	g_period_tier_heavy_mult_p25;
 extern double	g_period_tier_heavy_mult_p50;
 extern double	g_period_tier_heavy_mult_p100;
 
-extern double	g_gac_local_min_entropy_p1_64;
-extern double	g_gac_local_min_entropy_p25;
-extern double	g_gac_local_min_entropy_p50;
-extern double	g_gac_local_min_entropy_p100;
-
-extern double	g_gac_local_max_entropy_p1_64;
-extern double	g_gac_local_max_entropy_p25;
-extern double	g_gac_local_max_entropy_p50;
-extern double	g_gac_local_max_entropy_p100;
-
 extern double	g_constr_local_min_entropy_p1_64;
 extern double	g_constr_local_min_entropy_p25;
 extern double	g_constr_local_min_entropy_p50;
@@ -74,16 +60,6 @@ extern double	g_constr_local_max_entropy_p1_64;
 extern double	g_constr_local_max_entropy_p25;
 extern double	g_constr_local_max_entropy_p50;
 extern double	g_constr_local_max_entropy_p100;
-
-extern double	g_lookahead_gac_local_min_entropy_p1_64;
-extern double	g_lookahead_gac_local_min_entropy_p25;
-extern double	g_lookahead_gac_local_min_entropy_p50;
-extern double	g_lookahead_gac_local_min_entropy_p100;
-
-extern double	g_lookahead_gac_local_max_entropy_p1_64;
-extern double	g_lookahead_gac_local_max_entropy_p25;
-extern double	g_lookahead_gac_local_max_entropy_p50;
-extern double	g_lookahead_gac_local_max_entropy_p100;
 
 extern double	g_lookahead_constr_local_min_entropy_p1_64;
 extern double	g_lookahead_constr_local_min_entropy_p25;
