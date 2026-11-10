@@ -28,10 +28,10 @@ static void	execute_probe_transition(t_solver_state *puzzle,
 	transition.is_neg = (frame->probe_pass == LOOKAHEAD_NEG);
 	if (transition.is_neg)
 		result = probe_exclusion(puzzle, frame->next,
-				config->max_depth, g_check_constr);
+				config->depth.negative, g_check_constr);
 	else
 		result = probe_assumption(puzzle, frame->next,
-				config->max_depth, config->check_mode);
+				config->depth.positive, config->check_mode);
 	if (result.status == DIVE_PASS)
 		node_order_record_probe(puzzle->cur_node->order_cache, frame->next,
 			frame->probe_pass, result.remaining_entropy);

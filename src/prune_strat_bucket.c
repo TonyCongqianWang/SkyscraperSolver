@@ -76,6 +76,7 @@ int	prune_strat_depth_bucket(t_solver_state *puzzle, int b)
 {
 	t_node_state	*node;
 	double			period;
+	int				tier;
 
 	node = puzzle->cur_node;
 	if (node->domain.is_invalid || node->domain.is_complete
@@ -83,13 +84,10 @@ int	prune_strat_depth_bucket(t_solver_state *puzzle, int b)
 		|| node->domain.remaining_entropy < g_depth_min_entropy[b])
 		return (0);
 	period = calc_period(puzzle, node, b);
-	if (node->last_entropy[0] - node->domain.remaining_entropy > period)
-		return (run_tier(puzzle, 0, node->domain.remaining_entropy, b));
-	if (node->last_entropy[1] - node->domain.remaining_entropy
-		> period * g_depth_period_tier_medium_mult[b])
-		return (run_tier(puzzle, 1, node->domain.remaining_entropy, b));
-	if (node->last_entropy[2] - node->domain.remaining_entropy
-		> period * g_depth_period_tier_heavy_mult[b])
-		return (run_tier(puzzle, 2, node->domain.remaining_entropy, b));
-	return (0);
+	tier = select_prune_tier(node, period,
+			g_depth_period_tier_medium_mult[b],
+			g_depth_period_tier_heavy_mult[b]);
+	if (tier < 0)
+		return (0);
+	return (run_tier(puzzle, tier, node->domain.remaining_entropy, b));
 }

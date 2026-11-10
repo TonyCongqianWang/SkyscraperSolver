@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "node_selection_cache.h"
+#include "lookahead_marks.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 
@@ -29,7 +30,8 @@ static int	scan_lookahead_pass(t_solver_state *puzzle, t_node_transition *next,
 		if (is_cell_empty(node, cell_idx)
 			&& node->lookahead_ctx->cell_passes[cell_idx] == pass)
 		{
-			if (is_valid_value(node, cell_idx, entry.cell_val))
+			if (is_valid_value(node, cell_idx, entry.cell_val)
+				&& !is_lookahead_assignment_marked(node->lookahead_ctx, entry))
 			{
 				*next = entry;
 				return (1);
@@ -37,7 +39,6 @@ static int	scan_lookahead_pass(t_solver_state *puzzle, t_node_transition *next,
 		}
 		node->lookahead_ctx->curr_index++;
 	}
-	(void)puzzle;
 	return (0);
 }
 

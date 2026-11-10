@@ -77,7 +77,7 @@ int	run_pruning_routine(t_solver_state *puzzle, const t_prune_routine_cfg *cfg,
 
 	node = puzzle->cur_node;
 	if (check_early_skips(node, cfg, cfg_idx))
-		return (0);
+		return (1);
 	puzzle->prune_runs_count++;
 	prev_entropy = node->domain.remaining_entropy;
 	if (cfg->run_check_constr)
@@ -90,7 +90,5 @@ int	run_pruning_routine(t_solver_state *puzzle, const t_prune_routine_cfg *cfg,
 	while (++i <= cfg_idx)
 		node->last_entropy[i] = prev_entropy;
 	post_prune_update(node, is_only_selectivity_value_set(cfg));
-	if (node->domain.remaining_entropy == prev_entropy)
-		return (0);
 	return (1);
 }

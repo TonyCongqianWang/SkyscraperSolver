@@ -15,8 +15,8 @@
 
 # include "puzzle_structs.h"
 
-/* Rows: speculative nesting level; columns: light, medium, heavy. */
-/* A zero entry disables lookahead for that tier at that nesting level. */
-extern const int	g_lookahead_probe_depth[][PRUNE_TIER_COUNT];
+/* Nesting rows: light, medium, heavy, extra {positive, negative} pairs. */
+/* Zero disables only the corresponding probe direction. */
+extern const t_probe_depth	g_probe_depths[][PRUNE_TIER_COUNT];
 
 #endif

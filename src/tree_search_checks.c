@@ -42,9 +42,9 @@ static t_search_result	prune_search_frame(t_solver_state *puzzle, int *d,
 						int start_d, t_search_frame *frames)
 {
 	t_sol_info	result;
-	int			pruned;
+	int			tier_processed;
 
-	pruned = prune_current_step(puzzle);
+	tier_processed = prune_current_step(puzzle);
 	sync_frame_registrations(puzzle, &frames[*d]);
 	if (should_stop_frame(puzzle, &frames[*d]))
 		return (stop_frame(puzzle, d, start_d, frames));
@@ -54,7 +54,7 @@ static t_search_result	prune_search_frame(t_solver_state *puzzle, int *d,
 		update_sol_info(&result, &frames[*d].node_sols);
 		return (check_backtrack(puzzle, d, start_d, frames));
 	}
-	if (pruned)
+	if (tier_processed)
 		return (SEARCH_CONTINUE);
 	return (SEARCH_PROCEED_TO_BRANCH);
 }

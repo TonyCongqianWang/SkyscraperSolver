@@ -15,7 +15,8 @@ static void reset(t_lookahead_config *config)
     memset(&puzzle, 0, sizeof(puzzle));
     assert(init_puzzle(&puzzle, 4, 1));
     memset(config, 0, sizeof(*config));
-    config->max_depth = 1;
+    config->depth.positive = 1;
+    config->depth.negative = 1;
     config->selectivity = SELECTIVITY_NONE;
     config->passes = LOOKAHEAD_BOTH;
     config->check_mode = g_check_constr;

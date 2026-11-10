@@ -15,6 +15,9 @@
 # include "pruning_routines.h"
 # include "lookahead_depth.h"
 
+t_probe_depth			get_probe_depth(int tier, int nesting);
+int						select_prune_tier(const t_node_state *node,
+							double period, double medium, double heavy);
 void					init_prune_cfg(t_prune_routine_cfg *cfg, int tier,
 							int nesting);
 t_selectivity_level		get_prune_tier_selectivity(int tier);

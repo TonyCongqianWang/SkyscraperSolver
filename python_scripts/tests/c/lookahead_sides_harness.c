@@ -17,7 +17,8 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
     init_puzzle(&puzzle, 4, 1);
     memset(&config, 0, sizeof(config));
     config.selectivity = selectivity;
-    config.max_depth = 1;
+    config.depth.positive = 1;
+    config.depth.negative = 1;
     config.passes = side;
     config.check_mode = g_check_constr;
     run_lookahead(&puzzle, puzzle.cur_node, &config);
