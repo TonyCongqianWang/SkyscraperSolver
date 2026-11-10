@@ -12,13 +12,13 @@
 
 #include "params_math.h"
 
-double	g_weight_cell_constr_ratio_le7 = 0.75010017417825;
+double	g_weight_cell_constr_ratio_le7 = 0.750210382371435;
 double	g_weight_cell_constr_ratio_s8 = 0.75010017417825;
 double	g_weight_cell_constr_ratio_s9 = 0.66682762;
-double	g_sel_weight_cell_constr_ratio_le7 = 0.027763023;
+double	g_sel_weight_cell_constr_ratio_le7 = 0.027865602;
 double	g_sel_weight_cell_constr_ratio_s8 = 0.027763023;
 double	g_sel_weight_cell_constr_ratio_s9 = 0.022170491;
-double	g_weight_total_scale_le7 = 1412.44563985186;
+double	g_weight_total_scale_le7 = 1394.72177321688;
 double	g_weight_total_scale_s8 = 1412.44563985186;
 double	g_weight_total_scale_s9 = 1726.68889988888;
 double	g_global_entropy_unset_bias_le7 = 605.60942;

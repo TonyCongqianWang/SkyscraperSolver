@@ -8,6 +8,7 @@ import random
 import math
 import argparse
 import select
+from pathlib import Path
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
@@ -39,17 +40,7 @@ def resolve_binary_path(path):
 BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
 BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
 
-# Paths to datasets
-PATH_S7 = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank7.txt")
-
-# Size 8 SPSA dataset files
-PATH_S8_TRAIN = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size8_train.txt")
-PATH_S8_VAL = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size8_val.txt")
-
-# Size 9 SPSA dataset files
-PATH_S9_TRAIN = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size9_train.txt")
-PATH_S9_VAL = os.path.join(ROOT_DIR, "puzzle_bank", "spsa_datasets", "size9_val.txt")
-
+SPSA_DATASET_DIR = Path(ROOT_DIR) / 'puzzle_bank' / 'spsa_datasets'
 
 
 def project_constraints(theta):
@@ -323,24 +314,22 @@ def get_default_theta():
 # --- Dataset Loaders ---
 
 def load_datasets_size_7():
-    s7_all = read_clues(PATH_S7)
-    split_idx = int(len(s7_all) * 0.9)
-    s7_train = s7_all[:split_idx]
-    s7_val = s7_all[split_idx:]
-    log_print(f"Loaded Size 7 dataset: {len(s7_train)} train clues, {len(s7_val)} validation clues.")
+    s7_train = read_clues(SPSA_DATASET_DIR / "le7_train.txt")
+    s7_val = read_clues(SPSA_DATASET_DIR / "le7_val.txt")
+    log_print(f"Loaded le7 dataset: {len(s7_train)} train clues, {len(s7_val)} validation clues.")
     return {"s7_train": s7_train, "s7_val": s7_val}
 
 
 def load_datasets_size_8():
-    s8_train = read_clues(PATH_S8_TRAIN)
-    s8_val = read_clues(PATH_S8_VAL)
+    s8_train = read_clues(SPSA_DATASET_DIR / "size8_train.txt")
+    s8_val = read_clues(SPSA_DATASET_DIR / "size8_val.txt")
     log_print(f"Loaded Size 8 datasets: {len(s8_train)} train clues, {len(s8_val)} validation clues.")
     return {"s8_train": s8_train, "s8_val": s8_val}
 
 
 def load_datasets_size_9():
-    s9_train = read_clues(PATH_S9_TRAIN)
-    s9_val = read_clues(PATH_S9_VAL)
+    s9_train = read_clues(SPSA_DATASET_DIR / "size9_train.txt")
+    s9_val = read_clues(SPSA_DATASET_DIR / "size9_val.txt")
     log_print(f"Loaded Size 9 datasets: {len(s9_train)} train clues, {len(s9_val)} validation clues.")
     return {"s9_train": s9_train, "s9_val": s9_val}
 
@@ -610,29 +599,27 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     train_tasks = []
     validation_tasks = []
 
-    train_subset_limit = 1000
+    train_clues = datasets[f"s{args.size}_train"]
+    train_subset = train_clues[:len(train_clues) // 10]
 
     if args.size == 7:
-        s7_train_sub = datasets["s7_train"][:train_subset_limit]
         if not args.enumeration_only:
-            train_tasks.append((f"Size 7 Training Set (Single Solution) ({len(s7_train_sub)} instances)", "-s 1", s7_train_sub))
-            validation_tasks.append(("Size 7 Validation Set (Single Solution)", "-s 1", datasets["s7_val"]))
-        train_tasks.append((f"Size 7 Training Set (Full Enumeration) ({len(s7_train_sub)} instances)", "-s 0", s7_train_sub))
-        validation_tasks.append(("Size 7 Validation Set (Full Enumeration)", "-s 0", datasets["s7_val"]))
+            train_tasks.append((f"le7 Training Set (Single Solution) ({len(train_subset)} instances)", "-s 1", train_subset))
+            validation_tasks.append(("le7 Validation Set (Single Solution)", "-s 1", datasets["s7_val"]))
+        train_tasks.append((f"le7 Training Set (Full Enumeration) ({len(train_subset)} instances)", "-s 0", train_subset))
+        validation_tasks.append(("le7 Validation Set (Full Enumeration)", "-s 0", datasets["s7_val"]))
 
     elif args.size == 8:
-        s8_train_sub = datasets["s8_train"][:train_subset_limit]
         if not args.enumeration_only:
-            train_tasks.append((f"Size 8 Training Set (Single Solution) ({len(s8_train_sub)} instances)", "-s 1", s8_train_sub))
+            train_tasks.append((f"Size 8 Training Set (Single Solution) ({len(train_subset)} instances)", "-s 1", train_subset))
             validation_tasks.append(("Size 8 Validation Set (Single Solution)", "-s 1", datasets["s8_val"]))
-        train_tasks.append((f"Size 8 Training Set (Full Enumeration) ({len(s8_train_sub)} instances)", "-s 0", s8_train_sub))
+        train_tasks.append((f"Size 8 Training Set (Full Enumeration) ({len(train_subset)} instances)", "-s 0", train_subset))
         validation_tasks.append(("Size 8 Validation Set (Full Enumeration)", "-s 0", datasets["s8_val"]))
 
     elif args.size == 9:
-        s9_train_sub = datasets["s9_train"][:train_subset_limit]
         mode_flag = "-s 0" if args.enumeration_only else "-s 1"
         mode_lbl = " (Full Enumeration)" if args.enumeration_only else " (Single Solution)"
-        train_tasks.append((f"Size 9 Training Set{mode_lbl} ({len(s9_train_sub)} instances)", mode_flag, s9_train_sub))
+        train_tasks.append((f"Size 9 Training Set{mode_lbl} ({len(train_subset)} instances)", mode_flag, train_subset))
         validation_tasks.append((f"Size 9 Validation Set{mode_lbl}", mode_flag, datasets["s9_val"]))
 
     train_log_path = None
@@ -648,7 +635,7 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         baseline_bin=BIN_CURR,
         tunable_bin=BIN_CURR,
         tuned_env=get_env_for_theta(theta_final),
-        title="TRAINING SET PERFORMANCE COMPARISON (1k subsample)",
+        title="TRAINING SET PERFORMANCE COMPARISON (first 10%)",
         log_path=train_log_path,
         use_stdin=args.stdin, max_workers=min(os.cpu_count() or 1, args.max_workers),
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
@@ -886,8 +873,8 @@ def run_spsa(args, datasets, max_workers):
 # --- Main CLI Entrypoint ---
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Run SPSA tuning for a specific board size.")
-    parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver puzzle size to optimize")
+    parser = argparse.ArgumentParser(description="Run SPSA tuning for a solver size group.")
+    parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver size group to optimize (7 uses sizes 5–7)")
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
