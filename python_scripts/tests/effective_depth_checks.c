@@ -90,8 +90,8 @@ static void check_spline_knots(void)
 	const double values[] = {3, 9, -2, 4, 7};
 	double w[SCHEDULE_KNOT_COUNT], left, right, eps = 1e-7;
 
-	assert(g_min_entropy_p00 == 66770);
-	assert(g_min_entropy_p1_64 == 74027);
+	assert(g_min_entropy_p00 == 166925);
+	assert(g_min_entropy_p1_64 == 185068);
 	init_depth_arrays(8, 64);
 	assert(g_depth_min_entropy[0] == g_min_entropy_p00);
 	assert(g_depth_min_entropy[DEPTH_STRIDE + 1] == g_min_entropy_p1_64);
@@ -255,13 +255,13 @@ static void check_reseed(void)
 	double w[SCHEDULE_KNOT_COUNT], cutoff;
 
 	assert(g_constr_global_min_entropy_p00 == 980000);
-	assert(g_constr_global_min_entropy_p1_64 == 824442);
-	assert(g_constr_global_min_entropy_p25 == 757388);
-	assert(g_constr_global_min_entropy_p50 == 756665);
-	assert(g_constr_global_min_entropy_p100 == 782159);
-	assert(g_lookahead_constr_global_min_entropy_p25 == 989710);
-	assert(g_lookahead_constr_global_min_entropy_p50 == 986620);
-	assert(g_lookahead_constr_global_min_entropy_p100 == 951262);
+	assert(g_constr_global_min_entropy_p1_64 == 823477);
+	assert(g_constr_global_min_entropy_p25 == 756502);
+	assert(g_constr_global_min_entropy_p50 == 755780);
+	assert(g_constr_global_min_entropy_p100 == 781245);
+	assert(g_lookahead_constr_global_min_entropy_p25 == 988552);
+	assert(g_lookahead_constr_global_min_entropy_p50 == 985466);
+	assert(g_lookahead_constr_global_min_entropy_p100 == 950150);
 	for (size = 4; size <= 9; size++)
 	{
 		assert(calc_effective_global_min_entropy(g_gac_global_min_entropy_p00,

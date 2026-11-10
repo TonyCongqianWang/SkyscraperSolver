@@ -198,16 +198,18 @@ static void check_extra_dispatch(void)
 #ifdef MARKING_LOOKAHEAD_DEPTH
     int entropy, tier;
     double saved_scale, saved_unset;
-    int b;
+    int saved_min, b;
     memset(&puzzle, 0, sizeof(puzzle));
     assert(init_puzzle(&puzzle, 4, 0));
     set_cell_invalid(&puzzle, 0, 4, g_check_constr);
     entropy = puzzle.cur_node->domain.remaining_entropy;
     b = puzzle.cur_node->tree.depth * DEPTH_STRIDE
         + puzzle.squared_size - puzzle.cur_node->domain.num_unset;
+    saved_min = g_depth_min_entropy[b];
     saved_scale = g_depth_period_coef_scale[b];
     saved_unset = g_depth_period_coef_unset[b];
     /* Use a controlled period and real domain reduction to make extra due. */
+    g_depth_min_entropy[b] = 0;
     g_depth_period_coef_scale[b] = 0;
     g_depth_period_coef_unset[b] = 0;
     for (tier = PRUNE_LIGHT; tier <= PRUNE_HEAVY; ++tier)
@@ -218,6 +220,7 @@ static void check_extra_dispatch(void)
     checking_extra = 1;
     prune_strat_depth_bucket(&puzzle, b);
     checking_extra = 0;
+    g_depth_min_entropy[b] = saved_min;
     g_depth_period_coef_scale[b] = saved_scale;
     g_depth_period_coef_unset[b] = saved_unset;
     assert(positive_calls > 0 && negative_calls == 0);
