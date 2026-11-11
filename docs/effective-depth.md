@@ -69,7 +69,7 @@ runtime cap and no runtime requirement that a pruning gate remain reachable.
 
 ## Entropy units and parameter migration
 
-Every tunable `*_GLOBAL_MIN_ENTROPY*` is now an integer in millionths of
+Every tunable `PRUNE_MIN_ENTROPY_*_GRID*` is now an integer in millionths of
 empty-grid entropy, rather than an absolute entropy count:
 
 ```
@@ -90,9 +90,12 @@ helpers are removed; an independent scan remains in tests as a reference.
 This simplification preserves the previous initialization values.
 
 The same scaling function serves initial constraint pruning, the unified
-node schedules, and extra lookahead constraint verification. The formerly
+node schedules, and extra lookahead constraint verification. Scheduled
+constraint propagation uses `PRUNE_MIN_ENTROPY_CONSTR_PROP_GRID_*` both to
+skip the pass below the scaled threshold and to recheck the current board
+entropy before each line. The formerly
 hardcoded initial `1283850` is controlled by the tunable
-`INITIAL_CONSTR_GLOBAL_MIN_ENTROPY` parameter.
+`PRUNE_MIN_ENTROPY_INITIAL_CONSTR_PROP_GRID` parameter.
 The initial lookahead mode's existing zero global thresholds remain zero.
 All three size multipliers initialize to `1` and remain tunable; none is
 anchored. `GLOBAL_ENTROPY_UNSET_BIAS_*` and its accessor, metadata, and generated

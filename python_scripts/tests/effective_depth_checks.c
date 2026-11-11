@@ -39,6 +39,9 @@ static void check_model(void)
 	int size, depth, set;
 	double d, s, alpha;
 
+	g_effective_depth_c0 = .5;
+	g_depth_warp_0_s9 = .25;
+	g_num_set_warp_2_s9 = .75;
 	for (size = 4; size <= 9; size++)
 	{
 		for (depth = 0; depth <= size * size; depth++)
@@ -217,7 +220,10 @@ static void check_scaling(void)
 		e = compute_max_entropy(size);
 		assert(e == recompute_entropy(&empty, size));
 		assert(calc_effective_global_min_entropy(base, size) == e / 2);
-		setup_cfg_bounds(&cfg, &lim, size);
+		setup_scheduled_prune_cfg(&cfg, &lim, size, e / 2 - 1);
+		assert(!cfg.run_check_constr);
+		setup_scheduled_prune_cfg(&cfg, &lim, size, e / 2);
+		assert(cfg.run_check_constr);
 		assert(cfg.check_constr_global_min_entropy == e / 2);
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == e / 2);
 		init_prune_cfg(&cfg, 2, 0, size);
@@ -226,8 +232,11 @@ static void check_scaling(void)
 		assert(calc_effective_global_min_entropy(1200000, size) > e);
 	}
 	g_global_entropy_multiplier_s8 = 2;
-	setup_cfg_bounds(&cfg, &lim, 8);
 	e = compute_max_entropy(8);
+	setup_scheduled_prune_cfg(&cfg, &lim, 8, e - 1);
+	assert(!cfg.run_check_constr);
+	setup_scheduled_prune_cfg(&cfg, &lim, 8, e);
+	assert(cfg.run_check_constr);
 	assert(cfg.check_constr_global_min_entropy == e);
 	assert(cfg.lookahead.check_mode.constr.global_min_entropy == e);
 	init_prune_cfg(&cfg, 2, 0, 8);

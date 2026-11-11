@@ -17,7 +17,6 @@
 
 typedef struct s_prune_limits
 {
-	int		constr_min_entropy;
 	int		lh_continue_min_entropy;
 	double	lh_continue_slope;
 	int		constr_local_min_entropy;
@@ -28,9 +27,7 @@ typedef struct s_prune_limits
 	int		lh_constr_global_min_entropy;
 }	t_prune_limits;
 
-void	setup_cfg_thresholds(t_prune_routine_cfg *cfg,
-			const t_prune_limits *lim, int remaining_entropy);
-void	setup_cfg_bounds(t_prune_routine_cfg *cfg,
-			const t_prune_limits *lim, int size);
+void	setup_scheduled_prune_cfg(t_prune_routine_cfg *cfg,
+			const t_prune_limits *lim, int size, int remaining_entropy);
 
 #endif

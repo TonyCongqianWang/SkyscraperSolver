@@ -6,7 +6,7 @@ import json
 from contextlib import ExitStack
 
 from comparison_measurements import measure_batch
-from param_metadata import PARAM_METADATA
+from param_metadata import PARAMETER_ALIASES, PARAM_METADATA
 from spsa_metrics import get_sgm_shifts
 from comparison_statistics import (DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_PENALTY,
                                    DEFAULT_WIN_TOLERANCE, charged_seconds, summarize,
@@ -42,6 +42,8 @@ def default_environment():
     # A default comparison must not inherit stale tuning overrides.
     env = os.environ.copy()
     for name, *_ in PARAM_METADATA:
+        env.pop(name, None)
+    for name in PARAMETER_ALIASES:
         env.pop(name, None)
     return env
 
@@ -129,9 +131,12 @@ def load_tuned_env(winners_path):
             if line.startswith("#define"):
                 parts = line.split()
                 if len(parts) >= 3:
-                    name = parts[1]
+                    name = PARAMETER_ALIASES.get(parts[1], parts[1])
                     val = parts[2]
                     tuned_env[name] = val
+    for old, name in PARAMETER_ALIASES.items():
+        if name in tuned_env:
+            tuned_env[old] = tuned_env[name]
     return tuned_env
 
 def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,

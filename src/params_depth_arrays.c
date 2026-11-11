@@ -14,7 +14,6 @@
 #include "params_math.h"
 
 int		g_depth_min_entropy[DEPTH_ARRAY_SIZE];
-int		g_depth_constr_min_entropy[DEPTH_ARRAY_SIZE];
 int		g_depth_lookahead_continue_min_entropy[DEPTH_ARRAY_SIZE];
 int		g_depth_constr_global_min_entropy[DEPTH_ARRAY_SIZE];
 int		g_depth_lookahead_constr_global_min_entropy[DEPTH_ARRAY_SIZE];

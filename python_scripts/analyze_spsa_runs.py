@@ -16,7 +16,7 @@ ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 if SCRIPT_DIR not in sys.path:
     sys.path.append(SCRIPT_DIR)
 
-from param_metadata import PARAM_METADATA, get_active_param_names
+from param_metadata import PARAMETER_ALIASES, PARAM_METADATA, get_active_param_names
 from spsa_statistics import TUNING_SCREEN_P, binomial_sign_test, adjust_direction_tests
 
 DEFAULTS = {p[0]: p[3] for p in PARAM_METADATA}
@@ -135,6 +135,14 @@ def analyze_files(files, size_filter=None, alpha=0.05):
         if metadata.get('complete') is False:
             print(f'Warning: skipping incomplete run {filepath}', file=sys.stderr)
             continue
+        values = {PARAMETER_ALIASES.get(name, name): value for name, value in values.items()}
+        for field in ('defaults', 'initial_parameters'):
+            if metadata.get(field) is not None:
+                metadata[field] = {PARAMETER_ALIASES.get(name, name): value
+                                   for name, value in metadata[field].items()}
+        if metadata.get('active_parameters') is not None:
+            metadata['active_parameters'] = [PARAMETER_ALIASES.get(name, name)
+                                             for name in metadata['active_parameters']]
         key = cohort_key(size, mode, metadata, provenance)
         cohorts.setdefault(key, []).append((filepath, values, metadata, provenance))
     reports = []

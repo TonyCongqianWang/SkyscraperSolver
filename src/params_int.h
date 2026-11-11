@@ -14,7 +14,6 @@
 # define PARAMS_INT_H
 
 extern int	g_min_entropy_p00;
-extern int	g_constr_min_entropy_p00;
 extern int	g_lookahead_continue_min_entropy_p00;
 extern int	g_constr_global_min_entropy_p00;
 extern int	g_lookahead_constr_global_min_entropy_p00;
@@ -23,11 +22,6 @@ extern int	g_min_entropy_p1_64;
 extern int	g_min_entropy_p25;
 extern int	g_min_entropy_p50;
 extern int	g_min_entropy_p100;
-
-extern int	g_constr_min_entropy_p1_64;
-extern int	g_constr_min_entropy_p25;
-extern int	g_constr_min_entropy_p50;
-extern int	g_constr_min_entropy_p100;
 
 extern int	g_lookahead_continue_min_entropy_p1_64;
 extern int	g_lookahead_continue_min_entropy_p25;

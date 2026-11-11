@@ -8,7 +8,7 @@ SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 if SCRIPT_DIR not in sys.path:
     sys.path.append(SCRIPT_DIR)
 
-from param_metadata import PARAMETER_MAPPING
+from param_metadata import PARAMETER_ALIASES, PARAMETER_MAPPING
 
 def parse_winners(winners_path):
     parsed = {}
@@ -33,7 +33,7 @@ def parse_winners(winners_path):
                     name = parts[1].strip()
                     val = parts[2].strip()
                     parsed[name] = val
-    return parsed
+    return {PARAMETER_ALIASES.get(name, name): value for name, value in parsed.items()}
 
 def main():
     import argparse

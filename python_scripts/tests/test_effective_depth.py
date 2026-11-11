@@ -54,21 +54,23 @@ class EffectiveDepthTests(unittest.TestCase):
             active = get_active_param_names('all', size)
             expected = {n for n in model_names if n.endswith(suffix) or n.startswith('EFFECTIVE_DEPTH')}
             self.assertTrue(expected <= active)
-            self.assertIn('INITIAL_CONSTR_GLOBAL_MIN_ENTROPY', active)
+            self.assertIn('PRUNE_MIN_ENTROPY_INITIAL_CONSTR_PROP_GRID', active)
         self.assertFalse(any('WARP' in name for row in PARAM_CONSTRAINTS for name in row[:2]))
         self.assertFalse(any('UNSET_BIAS' in name for name in PARAMETER_MAPPING))
         self.assertFalse(any(name.startswith('ROOT_') for name in PARAMETER_MAPPING))
         schedule_names = {name for name in physical
                           if name.endswith(('_P00', '_P1_64', '_P25', '_P50', '_P100'))}
-        self.assertEqual(len(schedule_names), 14 * 5)
-        for name in model_names | schedule_names | {n for n in physical if 'GLOBAL_MIN_ENTROPY' in n}:
+        self.assertEqual(len(schedule_names), 13 * 5)
+        grid_thresholds = {name for name in physical
+                           if name.startswith('PRUNE_MIN_ENTROPY_') and '_GRID' in name}
+        for name in model_names | schedule_names | grid_thresholds:
             filepath, var, kind = PARAMETER_MAPPING[name]
             self.assertEqual(generated[name], (var, kind))
             match = re.search(rf'\b{var}\s*=\s*([^;]+)', (ROOT / filepath).read_text())
             self.assertAlmostEqual(float(match[1]), physical[name])
             self.assertAlmostEqual(float(env[name]), physical[name])
         for name, low, high, default, kind, scale in PARAM_METADATA:
-            if 'GLOBAL_MIN_ENTROPY' in name:
+            if name in grid_thresholds:
                 self.assertGreater(high, 1000000)  # No permanent reachability cap.
             if name.startswith(('DEPTH_WARP', 'NUM_SET_WARP')):
                 self.assertAlmostEqual(.03 * scale * (high - low), .0054)

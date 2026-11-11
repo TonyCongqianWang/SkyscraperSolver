@@ -29,12 +29,6 @@ static void	eval_ints_part2(int d, const double *w)
 {
 	double	val;
 
-	val = w[0] * g_constr_min_entropy_p00
-		+ w[1] * g_constr_min_entropy_p1_64 + w[2] * g_constr_min_entropy_p25
-		+ w[3] * g_constr_min_entropy_p50 + w[4] * g_constr_min_entropy_p100;
-	if (val < 0.0)
-		val = 0.0;
-	g_depth_constr_min_entropy[d] = schedule_int(val + 0.5);
 	val = w[0] * g_lookahead_continue_min_entropy_p00
 		+ w[1] * g_lookahead_continue_min_entropy_p1_64
 		+ w[2] * g_lookahead_continue_min_entropy_p25

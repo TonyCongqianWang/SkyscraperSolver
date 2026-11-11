@@ -2,6 +2,10 @@
 import os
 import sys
 import re
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from param_metadata import PARAMETER_ALIASES
 
 MATH_VARS = [
     ("g_num_set_warp_0_le7", "NUM_SET_WARP_0_LE7", "double"),
@@ -65,7 +69,6 @@ KNOT_NAMES = ["p00", "p1_64", "p25", "p50", "p100"]
 
 INT_BASE_VARS = [
     "min_entropy",
-    "constr_min_entropy",
     "lookahead_continue_min_entropy",
     "constr_global_min_entropy",
     "lookahead_constr_global_min_entropy",
@@ -104,6 +107,10 @@ FILES_CONFIGS = [
     ("src/params_int.c", INT_VARS, "init_params_int_env"),
     ("src/params_double.c", DOUBLE_VARS, "init_params_double_env"),
 ]
+LEGACY_ENV_NAMES = {name: old for old, name in PARAMETER_ALIASES.items()}
+for _, variables, _ in FILES_CONFIGS:
+    variables[:] = [(var, PARAMETER_ALIASES.get(name, name), kind)
+                    for var, name, kind in variables]
 
 def apply_overrides_to_file(filepath, var_list, func_name):
     if not os.path.exists(filepath):
@@ -131,7 +138,10 @@ def apply_overrides_to_file(filepath, var_list, func_name):
         tabs = "\t\t" if var_type == "int" else "\t"
         decl_lines.append(f"{var_type}{tabs}{var_name} = {val};")
         conv = "atoi" if var_type == "int" else "atof"
-        env_lines.append(f'\tval = getenv("{env_name}");\n\tif (val)\n\t\t{var_name} = {conv}(val);')
+        env_lines.append(f'\tval = getenv("{env_name}");')
+        if env_name in LEGACY_ENV_NAMES:
+            env_lines.append(f'\tif (!val)\n\t\tval = getenv("{LEGACY_ENV_NAMES[env_name]}");')
+        env_lines.append(f'\tif (val)\n\t\t{var_name} = {conv}(val);')
 
     env_body = "\n".join(env_lines)
     decl_body = "\n".join(decl_lines)
