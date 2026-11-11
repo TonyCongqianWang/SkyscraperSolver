@@ -29,8 +29,8 @@ void	init_lookahead_marks(t_lookahead_ctx *ctx, t_lookahead_ctx *parent)
 void	mark_lookahead_leaf(t_node_state *node)
 {
 	t_lookahead_ctx	*ctx;
-	int					i;
-	int					val;
+	int				i;
+	int				val;
 
 	ctx = node->lookahead_ctx;
 	if (!ctx || ctx->probe_pass != LOOKAHEAD_POS
