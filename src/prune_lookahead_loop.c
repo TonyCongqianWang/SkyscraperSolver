@@ -57,7 +57,7 @@ static void	execute_lookahead(t_solver_state *puzzle,
 	enter_lookahead(node, ctx, selectivity, &saved);
 	ctx->positive_probe_depth = config->depth.positive;
 	prepare_lookahead_cache(puzzle, selectivity);
-	init_lookahead_ctx(node, &ctx, puzzle->size);
+	init_lookahead_ctx(node, ctx, puzzle->size);
 	if (passes & LOOKAHEAD_POS)
 		run_tree_search(puzzle, config, LOOKAHEAD_POS);
 	if ((passes & LOOKAHEAD_NEG) && !solution_limit_reached(puzzle))
