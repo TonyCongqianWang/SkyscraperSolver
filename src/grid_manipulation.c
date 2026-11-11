@@ -18,8 +18,18 @@
 #include "check_node_validity.h"
 #include "push_dirty_constraints.h"
 #include "entropy.h"
+#include "lookahead_marks.h"
 
 static void	update_availability(t_node_state *state, int cell_idx, int val);
+
+static void	mark_grid_assignment(t_node_state *state, int cell_idx, int val)
+{
+	t_node_transition	next;
+
+	next.cell_idx = cell_idx;
+	next.cell_val = val;
+	mark_lookahead_assignment(state->lookahead_ctx, next);
+}
 
 void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
 			int check)
@@ -30,6 +40,7 @@ void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
 		return ;
 	}
 	state->domain.vals[cell_idx] = val;
+	mark_grid_assignment(state, cell_idx, val);
 	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
 	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
 	(void)check;

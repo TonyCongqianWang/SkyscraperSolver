@@ -9,6 +9,7 @@
 #include "node_selection_cache.h"
 #include "node_selection_transition.h"
 #include "tree_search.h"
+#include "grid_interface.h"
 
 static t_solver_state puzzle;
 
@@ -37,6 +38,7 @@ static void prepare(t_lookahead_ctx *ctx, t_search_scope *scope)
     rebuild_cache_if_stale(&puzzle, &config, 1);
     enter_lookahead(puzzle.cur_node, ctx, SELECTIVITY_NONE, scope);
     ctx->probe_pass = LOOKAHEAD_POS;
+    ctx->positive_probe_depth = 3;
     for (i = 0; i < puzzle.squared_size; ++i)
         ctx->cell_passes[i] = 1;
 }
@@ -67,7 +69,7 @@ static void test_path_marks_survive_restoration(void)
     assert(is_lookahead_assignment_marked(&ctx, next_value(0, 1)));
     assert(is_lookahead_assignment_marked(&ctx, next_value(1, 2)));
     assert(is_lookahead_assignment_marked(&ctx, next_value(2, 3)));
-    /* Forced assignments aren't explicit traversals and do not create marks. */
+    /* Unassigned values must not have marks. */
     assert(!is_lookahead_assignment_marked(&ctx, next_value(3, 4)));
     assert(!is_lookahead_assignment_marked(&ctx, next_value(1, 3)));
     init_node_transition(&next);
@@ -113,6 +115,7 @@ static void test_nested_marks_and_reset(void)
     prepare(&outer, &outer_scope);
     enter_lookahead(puzzle.cur_node, &inner, SELECTIVITY_NONE, &inner_scope);
     inner.probe_pass = LOOKAHEAD_POS;
+    inner.positive_probe_depth = 3;
     assert(inner.parent == &outer);
     mark_lookahead_assignment(&inner, next);
     assert(is_lookahead_assignment_marked(&inner, next));
@@ -129,6 +132,57 @@ static void test_nested_marks_and_reset(void)
     prepare(&fresh, &outer_scope);
     assert(fresh.parent == NULL);
     assert(!is_lookahead_assignment_marked(&fresh, next));
+    leave_lookahead(puzzle.cur_node, &outer_scope);
+    free_solution_storage(&puzzle);
+}
+
+
+static void test_forced_assignment_marks(void)
+{
+    t_lookahead_ctx *ctx;
+    t_search_scope scope;
+
+    reset(0);
+    ctx = &puzzle.lookahead_stack[0];
+    prepare(ctx, &scope);
+    assert(set_cell_invalid(&puzzle, 0, 1, g_check_none));
+    assert(set_cell_invalid(&puzzle, 0, 2, g_check_none));
+    assert(set_cell_invalid(&puzzle, 0, 3, g_check_none));
+    assert(puzzle.cur_node->domain.vals[0] == 4);
+    assert(is_lookahead_assignment_marked(ctx, next_value(0, 4)));
+    assert(!is_lookahead_assignment_marked(ctx, next_value(0, 1)));
+    leave_lookahead(puzzle.cur_node, &scope);
+    free_solution_storage(&puzzle);
+}
+
+static void test_depth_one_preserves_probe_eligibility(void)
+{
+    t_lookahead_ctx *outer;
+    t_lookahead_ctx *inner;
+    t_search_scope outer_scope, inner_scope;
+    t_node_transition next;
+    int count;
+
+    reset(0);
+    outer = &puzzle.lookahead_stack[0];
+    inner = &puzzle.lookahead_stack[1];
+    prepare(outer, &outer_scope);
+    enter_lookahead(puzzle.cur_node, inner, SELECTIVITY_NONE, &inner_scope);
+    inner->positive_probe_depth = 1;
+    inner->probe_pass = LOOKAHEAD_POS;
+    for (count = 0; count < puzzle.squared_size; ++count)
+        inner->cell_passes[count] = 1;
+    mark_lookahead_assignment(inner, next_value(0, 1));
+    assert(inner->parent == outer);
+    assert(!is_lookahead_assignment_marked(inner, next_value(0, 1)));
+    assert(is_lookahead_assignment_marked(outer, next_value(0, 1)));
+    init_node_transition(&next);
+    count = 0;
+    while (get_next_lookahead(&puzzle, &next))
+        ++count;
+    assert(count == 64);
+    leave_lookahead(puzzle.cur_node, &inner_scope);
+    assert(puzzle.cur_node->lookahead_ctx == outer);
     leave_lookahead(puzzle.cur_node, &outer_scope);
     free_solution_storage(&puzzle);
 }
@@ -163,6 +217,8 @@ static void test_solution_counts_and_unique_storage(int limit)
 int main(void)
 {
     test_path_marks_survive_restoration();
+    test_forced_assignment_marks();
+    test_depth_one_preserves_probe_eligibility();
     test_nested_marks_and_reset();
     test_solution_counts_and_unique_storage(1);
     test_solution_counts_and_unique_storage(2);
