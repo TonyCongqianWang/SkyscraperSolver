@@ -14,6 +14,20 @@
 #include "tree_search.h"
 #include "solution_storage.h"
 
+static void	save_probe_base_vals(t_node_state *node)
+{
+	t_lookahead_ctx	*ctx;
+	int				i;
+
+	ctx = node->lookahead_ctx;
+	if (!ctx || ctx->probe_pass != LOOKAHEAD_POS)
+		return ;
+	i = -1;
+	while (++i < MAX_CELL_COUNT)
+		ctx->probe_base_vals[i] = node->domain.vals[i];
+	ctx->probe_nesting_depth = node->tree.lookahead_depth + 1;
+}
+
 static void	prepare_probe(t_solver_state *puzzle, int depth)
 {
 	t_node_state	*node;
@@ -42,6 +56,8 @@ int	enter_probe(t_solver_state *puzzle, const t_probe_request *request,
 {
 	rollback_provisional_solution(puzzle);
 	*saved = *puzzle->cur_node;
+	if (request->depth > 1)
+		save_probe_base_vals(saved);
 	prepare_probe(puzzle, request->depth);
 	puzzle->cur_node->search_policy.leaf_check_mode = request->check_mode;
 	if (has_reached_terminal_state(puzzle->cur_node))

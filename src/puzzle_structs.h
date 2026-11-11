@@ -116,6 +116,9 @@ typedef struct s_lookahead_ctx
 {
 	struct s_lookahead_ctx	*parent;
 	t_lookahead_pass		probe_pass;
+	int						positive_probe_depth;
+	int						probe_nesting_depth;
+	char					probe_base_vals[MAX_CELL_COUNT];
 	t_u16					explored_assignments[MAX_CELL_COUNT];
 	t_selectivity_level		selectivity;
 	int						curr_pass;
@@ -246,6 +249,7 @@ typedef struct s_solver_state
 	t_node_state			*solutions;
 	t_constraint_bounds		constr_bounds;
 	t_node_orders_stack		order_stack;
+	t_lookahead_ctx			lookahead_stack[MAX_LOOKAHEAD_DEPTH];
 	t_line_orders_stack		line_order_stack;
 	t_node_state			node_stack[MAX_STACK_DEPTH];
 	int						node_stack_top;

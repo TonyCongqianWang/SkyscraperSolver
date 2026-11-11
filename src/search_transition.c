@@ -11,7 +11,6 @@
 /* ************************************************************************** */
 
 #include "search_context.h"
-#include "lookahead_marks.h"
 #include "solution_storage.h"
 #include "grid_interface.h"
 #include "node_selection_transition.h"
@@ -26,10 +25,7 @@ void	apply_search_transition(t_solver_state *puzzle, t_node_transition next,
 	if (is_neg)
 		set_cell_invalid(puzzle, next.cell_idx, next.cell_val, mode);
 	else
-	{
-		mark_lookahead_assignment(puzzle->cur_node->lookahead_ctx, next);
 		set_cell_val(puzzle, next.cell_idx, next.cell_val, mode);
-	}
 }
 
 void	enter_search_child(t_solver_state *puzzle, t_node_transition next,
