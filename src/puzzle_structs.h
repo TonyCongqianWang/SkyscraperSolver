@@ -117,6 +117,8 @@ typedef struct s_lookahead_ctx
 	struct s_lookahead_ctx	*parent;
 	t_lookahead_pass		probe_pass;
 	int						positive_probe_depth;
+	int						probe_nesting_depth;
+	char					probe_base_vals[MAX_CELL_COUNT];
 	t_u16					explored_assignments[MAX_CELL_COUNT];
 	t_selectivity_level		selectivity;
 	int						curr_pass;

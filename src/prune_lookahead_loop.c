@@ -48,14 +48,12 @@ static void	execute_lookahead(t_solver_state *puzzle,
 				const t_lookahead_config *config, t_lookahead_pass passes,
 				t_selectivity_level selectivity)
 {
-	t_lookahead_ctx			*ctx;
+	t_lookahead_ctx			ctx;
 	t_search_scope			saved;
 	t_node_state			*node;
 
 	node = puzzle->cur_node;
-	ctx = &puzzle->lookahead_stack[node->tree.lookahead_depth];
-	enter_lookahead(node, ctx, selectivity, &saved);
-	ctx->positive_probe_depth = config->depth.positive;
+	enter_lookahead(node, &ctx, selectivity, &saved);
 	prepare_lookahead_cache(puzzle, selectivity);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	if (passes & LOOKAHEAD_POS)
