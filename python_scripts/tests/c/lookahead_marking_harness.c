@@ -190,8 +190,10 @@ static void test_solution_counts_and_unique_storage(int limit)
 
 int main(void)
 {
-    test_path_marks_survive_restoration();
-    test_nested_marks_and_reset();
+    test_marks_only_successful_probe_leaves();
+    test_failed_probe_does_not_mark();
+    test_depth_one_preserves_probe_eligibility();
+    test_context_stack_and_reuse();
     test_solution_counts_and_unique_storage(1);
     test_solution_counts_and_unique_storage(2);
     test_solution_counts_and_unique_storage(600);
