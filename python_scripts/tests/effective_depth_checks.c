@@ -40,6 +40,7 @@ static void check_model(void)
 	double d, s, alpha;
 
 	g_effective_depth_c0 = .5;
+	g_effective_depth_cd = .1;
 	g_depth_warp_0_s9 = .25;
 	g_num_set_warp_2_s9 = .75;
 	for (size = 4; size <= 9; size++)
@@ -93,7 +94,7 @@ static void check_spline_knots(void)
 	const double values[] = {3, 9, -2, 4, 7};
 	double w[SCHEDULE_KNOT_COUNT], left, right, eps = 1e-7;
 
-	assert(g_min_entropy_p00 == 166925);
+	assert(g_min_entropy_p00 == 166538);
 	assert(g_min_entropy_p1_64 == 185068);
 	init_depth_arrays(8, 64);
 	assert(g_depth_min_entropy[0] == g_min_entropy_p00);
@@ -251,7 +252,7 @@ static void check_reseed(void)
 	double w[SCHEDULE_KNOT_COUNT], cutoff;
 
 	assert(g_constr_global_min_entropy_p00 == 980000);
-	assert(g_constr_global_min_entropy_p1_64 == 823477);
+	assert(g_constr_global_min_entropy_p1_64 == 823677);
 	assert(g_constr_global_min_entropy_p25 == 756502);
 	assert(g_constr_global_min_entropy_p50 == 755780);
 	assert(g_constr_global_min_entropy_p100 == 781245);

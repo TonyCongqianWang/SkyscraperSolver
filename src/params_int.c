@@ -13,10 +13,10 @@
 #include "params_int.h"
 
 int		g_initial_constr_global_min_entropy = 980000;
-int		g_min_entropy_p00 = 166925;
+int		g_min_entropy_p00 = 166538;
 int		g_min_entropy_p1_64 = 185068;
 int		g_min_entropy_p25 = 196278;
-int		g_min_entropy_p50 = 213228;
+int		g_min_entropy_p50 = 217909;
 int		g_min_entropy_p100 = 515000;
 int		g_lookahead_continue_min_entropy_p00 = 261200;
 int		g_lookahead_continue_min_entropy_p1_64 = 289133;
@@ -24,7 +24,7 @@ int		g_lookahead_continue_min_entropy_p25 = 401448;
 int		g_lookahead_continue_min_entropy_p50 = 400803;
 int		g_lookahead_continue_min_entropy_p100 = 787735;
 int		g_constr_global_min_entropy_p00 = 980000;
-int		g_constr_global_min_entropy_p1_64 = 823477;
+int		g_constr_global_min_entropy_p1_64 = 823677;
 int		g_constr_global_min_entropy_p25 = 756502;
 int		g_constr_global_min_entropy_p50 = 755780;
 int		g_constr_global_min_entropy_p100 = 781245;
