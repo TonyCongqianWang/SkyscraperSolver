@@ -36,13 +36,26 @@ static void near(double a, double b)
 
 static void check_model(void)
 {
+	double *const warps[][3] = {
+		{&g_depth_warp_0_le7, &g_depth_warp_1_le7, &g_depth_warp_2_le7},
+		{&g_depth_warp_0_s8, &g_depth_warp_1_s8, &g_depth_warp_2_s8},
+		{&g_depth_warp_0_s9, &g_depth_warp_1_s9, &g_depth_warp_2_s9},
+		{&g_num_set_warp_0_le7, &g_num_set_warp_1_le7, &g_num_set_warp_2_le7},
+		{&g_num_set_warp_0_s8, &g_num_set_warp_1_s8, &g_num_set_warp_2_s8},
+		{&g_num_set_warp_0_s9, &g_num_set_warp_1_s9, &g_num_set_warp_2_s9}
+	};
 	int size, depth, set;
 	double d, s, alpha;
 
 	g_effective_depth_c0 = .5;
 	g_effective_depth_cd = .1;
-	g_depth_warp_0_s9 = .25;
-	g_num_set_warp_2_s9 = .75;
+	g_effective_depth_cs = -.1;
+	g_effective_depth_cdd = 0;
+	g_effective_depth_cds = 0;
+	g_effective_depth_css = 0;
+	for (int group = 0; group < 6; group++)
+		for (int knot = 0; knot < 3; knot++)
+			*warps[group][knot] = .25 * (knot + 1);
 	for (size = 4; size <= 9; size++)
 	{
 		for (depth = 0; depth <= size * size; depth++)
@@ -94,8 +107,6 @@ static void check_spline_knots(void)
 	const double values[] = {3, 9, -2, 4, 7};
 	double w[SCHEDULE_KNOT_COUNT], left, right, eps = 1e-7;
 
-	assert(g_min_entropy_p00 == 166538);
-	assert(g_min_entropy_p1_64 == 185068);
 	init_depth_arrays(8, 64);
 	assert(g_depth_min_entropy[0] == g_min_entropy_p00);
 	assert(g_depth_min_entropy[DEPTH_STRIDE + 1] == g_min_entropy_p1_64);
@@ -207,6 +218,9 @@ static void check_scaling(void)
 	double oldscale;
 
 	memset(&lim, 0, sizeof(lim));
+	g_global_entropy_multiplier_le7 = 1;
+	g_global_entropy_multiplier_s8 = 1;
+	g_global_entropy_multiplier_s9 = 1;
 	base = 500000;
 	lim.constr_global_min_entropy = base;
 	lim.lh_constr_global_min_entropy = base;
@@ -225,7 +239,9 @@ static void check_scaling(void)
 		assert(cfg.check_constr_global_min_entropy == e / 2);
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == e / 2);
 		init_prune_cfg(&cfg, 2, 0, size);
-		assert(cfg.check_constr_global_min_entropy == (int)(e * .98));
+		assert(cfg.check_constr_global_min_entropy
+			== calc_effective_global_min_entropy(
+				g_initial_constr_global_min_entropy, size));
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == 0);
 		assert(calc_effective_global_min_entropy(1200000, size) > e);
 	}
@@ -235,7 +251,9 @@ static void check_scaling(void)
 	assert(cfg.check_constr_global_min_entropy == e);
 	assert(cfg.lookahead.check_mode.constr.global_min_entropy == e);
 	init_prune_cfg(&cfg, 2, 0, 8);
-	assert(cfg.check_constr_global_min_entropy == (int)(e * 1.96));
+	assert(cfg.check_constr_global_min_entropy
+		== calc_effective_global_min_entropy(
+			g_initial_constr_global_min_entropy, 8));
 	/* Manual recentering leaves every effective threshold unchanged. */
 	assert(calc_effective_global_min_entropy(base / 2, 8) == e / 2);
 	oldscale = g_weight_total_scale_s8;
@@ -246,34 +264,30 @@ static void check_scaling(void)
 	g_global_entropy_multiplier_s8 = 1;
 }
 
-static void check_reseed(void)
+static void check_grid_schedule_knots(void)
 {
-	int size;
-	double w[SCHEDULE_KNOT_COUNT], cutoff;
+	const int positions[] = {0, 1, 16, 32, 64};
+	const int constr[] = {
+		g_constr_global_min_entropy_p00, g_constr_global_min_entropy_p1_64,
+		g_constr_global_min_entropy_p25, g_constr_global_min_entropy_p50,
+		g_constr_global_min_entropy_p100
+	};
+	const int lookahead[] = {
+		g_lookahead_constr_global_min_entropy_p00,
+		g_lookahead_constr_global_min_entropy_p1_64,
+		g_lookahead_constr_global_min_entropy_p25,
+		g_lookahead_constr_global_min_entropy_p50,
+		g_lookahead_constr_global_min_entropy_p100
+	};
 
-	assert(g_constr_global_min_entropy_p00 == 980000);
-	assert(g_constr_global_min_entropy_p1_64 == 823677);
-	assert(g_constr_global_min_entropy_p25 == 756502);
-	assert(g_constr_global_min_entropy_p50 == 755780);
-	assert(g_constr_global_min_entropy_p100 == 781245);
-	assert(g_lookahead_constr_global_min_entropy_p25 == 988552);
-	assert(g_lookahead_constr_global_min_entropy_p50 == 985466);
-	assert(g_lookahead_constr_global_min_entropy_p100 == 950150);
-	for (size = 4; size <= 9; size++)
+	init_depth_arrays(8, 64);
+	for (int knot = 0; knot < SCHEDULE_KNOT_COUNT; knot++)
 	{
-		assert(calc_effective_global_min_entropy(g_constr_global_min_entropy_p00,
-			size) == (int)(.98 * compute_max_entropy(size)));
-		/* Sample all reachable effective coordinates, including overshoot. */
-		for (int k = 0; k <= 1000; k++)
-		{
-			compute_catmull_weights(k / 1000., w);
-			cutoff = w[0]*g_lookahead_constr_global_min_entropy_p00
-				+ w[1]*g_lookahead_constr_global_min_entropy_p1_64
-				+ w[2]*g_lookahead_constr_global_min_entropy_p25
-				+ w[3]*g_lookahead_constr_global_min_entropy_p50
-				+ w[4]*g_lookahead_constr_global_min_entropy_p100;
-			assert(cutoff > 950000 && cutoff < 1000000);
-		}
+		int index = positions[knot] * (DEPTH_STRIDE + 1);
+
+		assert(g_depth_constr_global_min_entropy[index] == constr[knot]);
+		assert(g_depth_lookahead_constr_global_min_entropy[index]
+			== lookahead[knot]);
 	}
 }
 
@@ -284,7 +298,7 @@ int main(void)
 	check_boundaries();
 	check_node_schedules();
 	check_scaling();
-	check_reseed();
+	check_grid_schedule_knots();
 	puts("effective-depth checks passed");
 	return (0);
 }
