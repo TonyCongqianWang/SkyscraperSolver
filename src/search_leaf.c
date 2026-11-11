@@ -37,11 +37,7 @@ t_sol_info	handle_leaf_node(t_solver_state *puzzle)
 	cur_node = puzzle->cur_node;
 	init_sol_info(&node_sols, cur_node->domain.is_invalid, 0);
 	if (!cur_node->domain.is_invalid
-		&& (cur_node->domain.is_complete
-			|| cur_node->tree.depth >= cur_node->search_policy.limits.max_depth
-			|| (cur_node->search_policy.limits.target_nunset > 0
-				&& cur_node->domain.num_unset
-				<= cur_node->search_policy.limits.target_nunset)))
+		&& classify_search_leaf(cur_node) != LEAF_NONE)
 		mark_lookahead_leaf(cur_node);
 	node_sols.min_valid_depth = get_valid_depth(cur_node);
 	if (!cur_node->domain.is_invalid && cur_node->domain.is_complete)
