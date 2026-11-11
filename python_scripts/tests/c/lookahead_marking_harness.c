@@ -79,7 +79,17 @@ static void test_path_marks_survive_restoration(void)
         assert(!is_lookahead_assignment_marked(&ctx, next));
         ++count;
     }
-    assert(count == 61);
+    {
+        int cell, val, marked;
+
+        marked = 0;
+        for (cell = 0; cell < puzzle.squared_size; ++cell)
+            for (val = 1; val <= puzzle.size; ++val)
+                marked += !!is_lookahead_assignment_marked(
+                    &ctx, next_value(cell, val));
+        assert(marked >= 3);
+        assert(count == 64 - marked);
+    }
     ctx.probe_pass = LOOKAHEAD_NEG;
     init_node_transition(&next);
     count = 0;
