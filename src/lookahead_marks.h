@@ -15,7 +15,7 @@
 # include "puzzle_structs.h"
 
 void	init_lookahead_marks(t_lookahead_ctx *ctx, t_lookahead_ctx *parent);
-void	mark_lookahead_assignment(t_lookahead_ctx *ctx, t_node_transition next);
+void	mark_lookahead_leaf(t_node_state *node);
 int		is_lookahead_assignment_marked(const t_lookahead_ctx *ctx,
 			t_node_transition next);
 

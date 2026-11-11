@@ -13,6 +13,7 @@
 #include "tree_search.h"
 #include "solution_info.h"
 #include "solution_storage.h"
+#include "lookahead_marks.h"
 
 t_leaf_state	classify_search_leaf(const t_node_state *node)
 {
@@ -35,6 +36,9 @@ t_sol_info	handle_leaf_node(t_solver_state *puzzle)
 
 	cur_node = puzzle->cur_node;
 	init_sol_info(&node_sols, cur_node->domain.is_invalid, 0);
+	if (!cur_node->domain.is_invalid
+		&& classify_search_leaf(cur_node) != LEAF_NONE)
+		mark_lookahead_leaf(cur_node);
 	node_sols.min_valid_depth = get_valid_depth(cur_node);
 	if (!cur_node->domain.is_invalid && cur_node->domain.is_complete)
 	{
