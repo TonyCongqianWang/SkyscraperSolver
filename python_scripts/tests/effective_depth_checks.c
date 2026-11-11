@@ -220,10 +220,7 @@ static void check_scaling(void)
 		e = compute_max_entropy(size);
 		assert(e == recompute_entropy(&empty, size));
 		assert(calc_effective_global_min_entropy(base, size) == e / 2);
-		setup_scheduled_prune_cfg(&cfg, &lim, size, e / 2 - 1);
-		assert(!cfg.run_check_constr);
-		setup_scheduled_prune_cfg(&cfg, &lim, size, e / 2);
-		assert(cfg.run_check_constr);
+		setup_scheduled_prune_cfg(&cfg, &lim, size);
 		assert(cfg.check_constr_global_min_entropy == e / 2);
 		assert(cfg.lookahead.check_mode.constr.global_min_entropy == e / 2);
 		init_prune_cfg(&cfg, 2, 0, size);
@@ -233,10 +230,7 @@ static void check_scaling(void)
 	}
 	g_global_entropy_multiplier_s8 = 2;
 	e = compute_max_entropy(8);
-	setup_scheduled_prune_cfg(&cfg, &lim, 8, e - 1);
-	assert(!cfg.run_check_constr);
-	setup_scheduled_prune_cfg(&cfg, &lim, 8, e);
-	assert(cfg.run_check_constr);
+	setup_scheduled_prune_cfg(&cfg, &lim, 8);
 	assert(cfg.check_constr_global_min_entropy == e);
 	assert(cfg.lookahead.check_mode.constr.global_min_entropy == e);
 	init_prune_cfg(&cfg, 2, 0, 8);

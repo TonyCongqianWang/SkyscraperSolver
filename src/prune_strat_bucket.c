@@ -33,8 +33,7 @@ static void	populate_limits(t_prune_limits *lim, int b)
 		= g_depth_lookahead_constr_global_min_entropy[b];
 }
 
-static int	run_tier(t_solver_state *puzzle, int tier, int remaining_entropy,
-				int b)
+static int	run_tier(t_solver_state *puzzle, int tier, int b)
 {
 	t_prune_routine_cfg	cfg;
 	t_prune_limits		lim;
@@ -42,7 +41,7 @@ static int	run_tier(t_solver_state *puzzle, int tier, int remaining_entropy,
 	init_prune_cfg(&cfg, tier, puzzle->cur_node->tree.lookahead_depth,
 		puzzle->size);
 	populate_limits(&lim, b);
-	setup_scheduled_prune_cfg(&cfg, &lim, puzzle->size, remaining_entropy);
+	setup_scheduled_prune_cfg(&cfg, &lim, puzzle->size);
 	return (run_pruning_routine(puzzle, &cfg, tier));
 }
 
@@ -77,5 +76,5 @@ int	prune_strat_depth_bucket(t_solver_state *puzzle, int b)
 			g_depth_period_tier_heavy_mult[b]);
 	if (tier < 0)
 		return (0);
-	return (run_tier(puzzle, tier, node->domain.remaining_entropy, b));
+	return (run_tier(puzzle, tier, b));
 }

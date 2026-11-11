@@ -28,6 +28,6 @@ typedef struct s_prune_limits
 }	t_prune_limits;
 
 void	setup_scheduled_prune_cfg(t_prune_routine_cfg *cfg,
-			const t_prune_limits *lim, int size, int remaining_entropy);
+			const t_prune_limits *lim, int size);
 
 #endif

@@ -17,7 +17,6 @@ static void reset(t_lookahead_config *config)
     memset(config, 0, sizeof(*config));
     config->depth.positive = 1;
     config->depth.negative = 1;
-    config->selectivity = SELECTIVITY_NONE;
     config->passes = LOOKAHEAD_BOTH;
     config->check_mode = g_check_constr;
 }

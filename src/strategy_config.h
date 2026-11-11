@@ -55,7 +55,6 @@ typedef struct s_probe_depth
 
 typedef struct s_lookahead_config
 {
-	t_selectivity_level	selectivity;
 	t_probe_depth		depth;
 	t_lookahead_pass	passes;
 	t_check_mode		check_mode;

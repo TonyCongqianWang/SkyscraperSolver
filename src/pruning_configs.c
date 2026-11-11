@@ -30,17 +30,13 @@ t_probe_depth	get_probe_depth(int tier, int nesting)
 void	init_prune_cfg(t_prune_routine_cfg *cfg, int tier, int nesting,
 		int size)
 {
-	cfg->run_check_constr = 0;
-	cfg->check_constr_selectivity = get_prune_tier_selectivity(tier);
+	cfg->selectivity = get_prune_tier_selectivity(tier);
 	cfg->check_constr_min_entropy = 0.35;
 	cfg->check_constr_max_entropy = 0.70;
 	cfg->check_constr_global_min_entropy
 		= calc_effective_global_min_entropy(g_initial_constr_global_min_entropy,
 			size);
-	cfg->lookahead.selectivity = cfg->check_constr_selectivity;
 	cfg->lookahead.depth = get_probe_depth(tier, nesting);
-	cfg->run_lookahead = (cfg->lookahead.depth.positive > 0
-			|| cfg->lookahead.depth.negative > 0);
 	cfg->lookahead.passes = LOOKAHEAD_BOTH;
 	cfg->lookahead.check_mode = g_check_constr;
 }

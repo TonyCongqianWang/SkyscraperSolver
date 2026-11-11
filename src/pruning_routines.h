@@ -18,12 +18,10 @@
 
 typedef struct s_prune_routine_config
 {
-	int					run_check_constr;
-	t_selectivity_level	check_constr_selectivity;
+	t_selectivity_level	selectivity;
 	double				check_constr_min_entropy;
 	double				check_constr_max_entropy;
 	int					check_constr_global_min_entropy;
-	int					run_lookahead;
 	t_lookahead_config	lookahead;
 }	t_prune_routine_cfg;
 

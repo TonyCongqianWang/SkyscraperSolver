@@ -49,7 +49,6 @@ static void test_nested_dispatch_and_context_restore(void)
     reset_puzzle();
     memset(&cfg, 0, sizeof(cfg));
     memset(&outer, 0, sizeof(outer));
-    cfg.selectivity = SELECTIVITY_NONE;
     cfg.depth.positive = 1;
     cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_BOTH;
@@ -59,7 +58,7 @@ static void test_nested_dispatch_and_context_restore(void)
     outer.selectivity = SELECTIVITY_ANY_CHANGE;
     puzzle.cur_node->search_policy.mode = SEARCH_LOOKAHEAD;
     puzzle.cur_node->lookahead_ctx = &outer;
-    run_lookahead(&puzzle, puzzle.cur_node, &cfg);
+    run_lookahead(&puzzle, &cfg, SELECTIVITY_NONE);
     assert(puzzle.cur_node->tree.neg_lookahead_depth == 1);
     assert(puzzle.cur_node->search_policy.branch.eligibility == CANDIDATES_LOOKAHEAD);
     assert(outer.selectivity == SELECTIVITY_ANY_CHANGE);
@@ -85,7 +84,6 @@ static void test_nested_negative_side_skips_all_passes(void)
 
     reset_puzzle();
     memset(&cfg, 0, sizeof(cfg));
-    cfg.selectivity = SELECTIVITY_NONE;
     cfg.depth.positive = 1;
     cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_NEG;
@@ -93,7 +91,7 @@ static void test_nested_negative_side_skips_all_passes(void)
     puzzle.cur_node->tree.neg_lookahead_depth = 1;
     cache = puzzle.cur_node->order_cache;
     visited = puzzle.nodes_visited;
-    run_lookahead(&puzzle, puzzle.cur_node, &cfg);
+    run_lookahead(&puzzle, &cfg, SELECTIVITY_NONE);
     assert(cfg.passes == LOOKAHEAD_NEG);
     assert(puzzle.nodes_visited == visited);
     assert(cache == puzzle.cur_node->order_cache);
@@ -111,13 +109,12 @@ static void test_subnode_both_sides_does_not_mark_cache(void)
 
     reset_puzzle();
     memset(&cfg, 0, sizeof(cfg));
-    cfg.selectivity = SELECTIVITY_NONE;
     cfg.depth.positive = 1;
     cfg.depth.negative = 1;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.check_mode = g_check_constr;
     puzzle.cur_node->tree.lookahead_depth = 1;
-    run_lookahead(&puzzle, puzzle.cur_node, &cfg);
+    run_lookahead(&puzzle, &cfg, SELECTIVITY_NONE);
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
     assert(cache->lookahead_build_entropy == -1);
@@ -273,12 +270,11 @@ static void test_nesting_limits(void)
     assert(memcmp(&before, puzzle.cur_node, sizeof(before)) == 0);
     assert(puzzle.nodes_visited == visited);
     memset(&cfg, 0, sizeof(cfg));
-    cfg.selectivity = SELECTIVITY_NONE;
     cfg.passes = LOOKAHEAD_BOTH;
     cfg.depth.positive = 1;
     cfg.depth.negative = 1;
     cfg.check_mode = g_check_constr;
-    run_lookahead(&puzzle, puzzle.cur_node, &cfg);
+    run_lookahead(&puzzle, &cfg, SELECTIVITY_NONE);
     assert(puzzle.nodes_visited == visited);
     puzzle.cur_node->tree.lookahead_depth = MAX_LOOKAHEAD_DEPTH - 1;
     puzzle.cur_node->tree.neg_lookahead_depth = MAX_NEG_LOOKAHEAD_DEPTH;

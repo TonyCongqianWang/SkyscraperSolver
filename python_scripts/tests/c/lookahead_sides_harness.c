@@ -16,12 +16,11 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
     memset(&puzzle, 0, sizeof(puzzle));
     init_puzzle(&puzzle, 4, 1);
     memset(&config, 0, sizeof(config));
-    config.selectivity = selectivity;
     config.depth.positive = 1;
     config.depth.negative = 1;
     config.passes = side;
     config.check_mode = g_check_constr;
-    run_lookahead(&puzzle, puzzle.cur_node, &config);
+    run_lookahead(&puzzle, &config, selectivity);
     assert(!puzzle.cur_node->domain.is_invalid);
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
@@ -54,7 +53,7 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
         cache->meta[i].entropy_pos = -1;
         cache->meta[i].entropy_neg = -1;
     }
-    run_lookahead(&puzzle, puzzle.cur_node, &config);
+    run_lookahead(&puzzle, &config, selectivity);
     cache = puzzle.cur_node->order_cache;
     for (i = 0; i < cache->count; i++)
     {

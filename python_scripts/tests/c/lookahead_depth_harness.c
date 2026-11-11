@@ -1,3 +1,4 @@
+#include <limits.h>
 #include <assert.h>
 #include <string.h>
 #include "puzzle_init.h"
@@ -18,7 +19,7 @@ static void assert_skipped(t_lookahead_config *config)
     t_node_order cache = *puzzle.cur_node->order_cache;
     t_node_count visited = puzzle.nodes_visited;
 
-    run_lookahead(&puzzle, puzzle.cur_node, config);
+    run_lookahead(&puzzle, config, SELECTIVITY_NONE);
     assert(puzzle.nodes_visited == visited);
     assert(memcmp(&before, puzzle.cur_node, sizeof(before)) == 0);
     assert(memcmp(&cache, puzzle.cur_node->order_cache, sizeof(cache)) == 0);
@@ -66,8 +67,8 @@ int __wrap_run_pruning_routine(t_solver_state *solver,
         return __real_run_pruning_routine(solver, config, tier);
     assert(tier == scheduled_tier++);
     noop = *config;
-    noop.run_check_constr = 0;
-    noop.run_lookahead = 0;
+    noop.check_constr_global_min_entropy = INT_MAX;
+    noop.lookahead.passes = LOOKAHEAD_NONE;
     return __real_run_pruning_routine(solver, &noop, tier);
 }
 
@@ -114,7 +115,7 @@ static void check_pruning_before_branch(int depth, int dirty)
     }
     assert(check_search_frame(&puzzle, &d, 0, &frame) == SEARCH_PROCEED_TO_BRANCH);
     assert(scheduled_tier == tiers);
-    assert(puzzle.prune_runs_count == 1 + dirty * tiers);
+    assert(puzzle.prune_runs_count == 1 + (dirty ? tiers : tiers - PRUNE_HEAVY));
     checking_schedule = 0;
     g_depth_min_entropy[b] = saved_depth_min;
     g_depth_period_coef_scale[b] = saved_depth_scale;
@@ -130,7 +131,6 @@ static void check_sides(int positive, int negative)
     /* Keep nested pruning from starting more probes during this trace. */
     puzzle.cur_node->tree.lookahead_depth = MAX_LOOKAHEAD_DEPTH - 1;
     memset(&config, 0, sizeof(config));
-    config.selectivity = SELECTIVITY_NONE;
     config.passes = LOOKAHEAD_BOTH;
     config.check_mode = g_check_constr;
     config.depth.positive = positive;
@@ -138,7 +138,7 @@ static void check_sides(int positive, int negative)
     wanted = config.depth;
     positive_calls = 0;
     negative_calls = 0;
-    run_lookahead(&puzzle, puzzle.cur_node, &config);
+    run_lookahead(&puzzle, &config, SELECTIVITY_NONE);
     assert((positive_calls > 0) == (positive > 0));
     assert((negative_calls > 0) == (negative > 0));
     assert(!puzzle.cur_node->domain.is_invalid);
@@ -180,7 +180,8 @@ static void check_tier_schedule(void)
     assert(select_prune_tier(node, period, 2.0, 3.0) == PRUNE_HEAVY);
     /* Heavy resets lower clocks while preserving extra's accumulated delta. */
     init_prune_cfg(&config, PRUNE_HEAVY, 0, puzzle.size);
-    config.run_lookahead = 0;
+    config.check_constr_global_min_entropy = INT_MAX;
+    config.lookahead.passes = LOOKAHEAD_NONE;
     run_pruning_routine(&puzzle, &config, PRUNE_HEAVY);
     assert(node->last_entropy[PRUNE_EXTRA] == base_entropy + 151);
     assert(select_prune_tier(node, period, 2.0, 3.0) == extra);
@@ -188,7 +189,8 @@ static void check_tier_schedule(void)
     assert(select_prune_tier(node, period, 2.0, 3.0) == -1);
     node->tree.lookahead_depth = 0;
     init_prune_cfg(&config, PRUNE_EXTRA, 0, puzzle.size);
-    config.run_lookahead = 0;
+    config.check_constr_global_min_entropy = INT_MAX;
+    config.lookahead.passes = LOOKAHEAD_NONE;
     run_pruning_routine(&puzzle, &config, PRUNE_EXTRA);
     for (i = 0; i < PRUNE_TIER_COUNT; ++i)
         assert(node->last_entropy[i] == base_entropy);
@@ -266,7 +268,7 @@ int main(void)
             negative = nesting < MAX_LOOKAHEAD_DEPTH ? expected[nesting][tier].negative : 0;
             assert(config.lookahead.depth.positive == positive);
             assert(config.lookahead.depth.negative == negative);
-            assert(config.run_lookahead == (positive > 0 || negative > 0));
+            assert(config.selectivity == get_prune_tier_selectivity(tier));
             if (positive == 0 && negative == 0)
                 assert_skipped(&config.lookahead);
             config.lookahead.depth.positive = 0;

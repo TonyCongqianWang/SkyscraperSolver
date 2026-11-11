@@ -35,24 +35,26 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 }
 
 static void	prepare_lookahead_cache(t_solver_state *puzzle,
-				const t_lookahead_config *config)
+				t_selectivity_level selectivity)
 {
 	t_node_select_config	ns_cfg;
 
 	select_node_select_config(puzzle, &ns_cfg);
-	ns_cfg.selectivity = config->selectivity;
+	ns_cfg.selectivity = selectivity;
 	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
 }
 
 static void	execute_lookahead(t_solver_state *puzzle,
-				t_node_state *node, const t_lookahead_config *config,
-				t_lookahead_pass passes)
+				const t_lookahead_config *config, t_lookahead_pass passes,
+				t_selectivity_level selectivity)
 {
 	t_lookahead_ctx			ctx;
 	t_search_scope			saved;
+	t_node_state			*node;
 
-	enter_lookahead(node, &ctx, config->selectivity, &saved);
-	prepare_lookahead_cache(puzzle, config);
+	node = puzzle->cur_node;
+	enter_lookahead(node, &ctx, selectivity, &saved);
+	prepare_lookahead_cache(puzzle, selectivity);
 	init_lookahead_ctx(node, &ctx, puzzle->size);
 	if (passes & LOOKAHEAD_POS)
 		run_tree_search(puzzle, config, LOOKAHEAD_POS);
@@ -75,18 +77,20 @@ static t_lookahead_pass	get_enabled_passes(const t_node_state *node,
 	return (passes);
 }
 
-void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
-			const t_lookahead_config *config)
+void	run_lookahead(t_solver_state *puzzle, const t_lookahead_config *config,
+			t_selectivity_level selectivity)
 {
 	t_lookahead_pass	passes;
+	t_node_state		*node;
 
+	node = puzzle->cur_node;
 	if (solution_limit_reached(puzzle)
 		|| node->tree.lookahead_depth >= MAX_LOOKAHEAD_DEPTH
-		|| should_exit_selectivity(node, config->selectivity))
+		|| should_exit_selectivity(node, selectivity))
 		return ;
 	passes = get_enabled_passes(node, config);
 	if (passes == LOOKAHEAD_NONE)
 		return ;
-	execute_lookahead(puzzle, node, config, passes);
+	execute_lookahead(puzzle, config, passes, selectivity);
 	node_order_finish_lookahead(node, passes);
 }

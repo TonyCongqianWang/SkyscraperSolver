@@ -16,8 +16,7 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
-void	prune_lookahead(t_solver_state *puzzle, t_lookahead_config *config);
-void	run_lookahead(t_solver_state *puzzle, t_node_state *node,
-			const t_lookahead_config *config);
+void	run_lookahead(t_solver_state *puzzle, const t_lookahead_config *config,
+			t_selectivity_level selectivity);
 
 #endif
