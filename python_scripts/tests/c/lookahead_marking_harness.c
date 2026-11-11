@@ -37,6 +37,7 @@ static void prepare(t_lookahead_ctx *ctx, t_search_scope *scope)
     rebuild_cache_if_stale(&puzzle, &config, 1);
     enter_lookahead(puzzle.cur_node, ctx, SELECTIVITY_NONE, scope);
     ctx->probe_pass = LOOKAHEAD_POS;
+    ctx->positive_probe_depth = 3;
     for (i = 0; i < puzzle.squared_size; ++i)
         ctx->cell_passes[i] = 1;
 }
