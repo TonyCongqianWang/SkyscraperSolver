@@ -80,8 +80,8 @@ class WorkflowTests(unittest.TestCase):
                                math.log(reference + shift))
 
     def test_training_evaluator_uses_mean_log_for_time_and_nodes(self):
-        with patch.object(tuning, 'get_env_for_theta', return_value={}), \\
-             patch.object(tuning, 'get_random_symmetry', side_effect=lambda clue: clue), \\
+        with patch.object(tuning, 'get_env_for_theta', return_value={}), \
+             patch.object(tuning, 'get_random_symmetry', side_effect=lambda clue: clue), \
              patch.object(tuning, 'evaluate_subset', return_value=([0.1, 0.5], [100, 900])):
             evaluator = tuning.make_loss_evaluator_s9({'s9_train': ['a', 'b']}, 2, 1, True, False)
             loss_time, loss_nodes, stats = evaluator([])
@@ -97,7 +97,7 @@ class WorkflowTests(unittest.TestCase):
             proc.communicate.side_effect = [subprocess.TimeoutExpired('solver', 10), ('', '')]
             elapsed, nodes = tuning.run_solver_instance({}, '-s 1', 'clue')
             self.assertEqual((elapsed, nodes), (40.0, 100000))
-        with patch.object(tuning, 'read_with_timeout', return_value=None), \\
+        with patch.object(tuning, 'read_with_timeout', return_value=None), \
              patch.object(tuning.subprocess, 'Popen') as popen:
             proc = popen.return_value
             proc.stdin = MagicMock()
