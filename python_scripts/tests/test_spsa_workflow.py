@@ -22,7 +22,7 @@ sys.path.insert(0, str(SCRIPTS))
 import analyze_spsa_runs as analysis
 import compare_performance as comparison
 from comparison_measurements import measure_batch
-from spsa_metrics import get_sgm_shifts, shifted_geo_mean
+from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
 from spsa_run_metadata import build_run_metadata, clue_identity, save_run_metadata
 import spsa_tune as tuning
 
@@ -66,6 +66,43 @@ class WorkflowTests(unittest.TestCase):
                     summary = comparison.summarize(rows, single)
                     self.assertAlmostEqual(summary['sgm_time'], expected[0])
                     self.assertAlmostEqual(summary['sgm_nodes'], expected[1])
+
+    def test_mean_log_loss_additive_and_reference_centered(self):
+        import math
+        values = [0.1, 0.5, 2.0, 3.0]
+        shift, reference = 0.2, 1.0
+        full = mean_log_shifted(values, shift, reference)
+        halves = (mean_log_shifted(values[:2], shift, reference) +
+                  mean_log_shifted(values[2:], shift, reference)) / 2
+        self.assertAlmostEqual(full, halves)
+        self.assertAlmostEqual(mean_log_shifted([reference], shift, reference), 0.0)
+        self.assertAlmostEqual(full, math.log(shifted_geo_mean(values, shift) + shift) -
+                               math.log(reference + shift))
+
+    def test_training_evaluator_uses_mean_log_for_time_and_nodes(self):
+        with patch.object(tuning, 'get_env_for_theta', return_value={}), \\
+             patch.object(tuning, 'get_random_symmetry', side_effect=lambda clue: clue), \\
+             patch.object(tuning, 'evaluate_subset', return_value=([0.1, 0.5], [100, 900])):
+            evaluator = tuning.make_loss_evaluator_s9({'s9_train': ['a', 'b']}, 2, 1, True, False)
+            loss_time, loss_nodes, stats = evaluator([])
+        self.assertAlmostEqual(loss_time, mean_log_shifted([0.1, 0.5], 1.0, 0.1))
+        self.assertAlmostEqual(loss_nodes, mean_log_shifted([100, 900], 120000, 20000))
+        self.assertAlmostEqual(stats[0], shifted_geo_mean([0.1, 0.5], 1.0))
+
+    def test_training_timeout_charges_par4_in_standalone_and_stdin_modes(self):
+        from unittest.mock import MagicMock
+        import subprocess
+        with patch.object(tuning.subprocess, 'Popen') as popen:
+            proc = popen.return_value
+            proc.communicate.side_effect = [subprocess.TimeoutExpired('solver', 10), ('', '')]
+            elapsed, nodes = tuning.run_solver_instance({}, '-s 1', 'clue')
+            self.assertEqual((elapsed, nodes), (40.0, 100000))
+        with patch.object(tuning, 'read_with_timeout', return_value=None), \\
+             patch.object(tuning.subprocess, 'Popen') as popen:
+            proc = popen.return_value
+            proc.stdin = MagicMock()
+            results = tuning._run_opt_group_stdin({}, '-s 1', [(0, 'clue')])
+            self.assertEqual(results, [(0, 40.0, 100000)])
 
     def test_signal_thresholds_ignore_percent_shift_and_small_absolute_spread(self):
         strong = analysis.parameter_statistics([0.0494, 0.0495, 0.0496], 0.05)
