@@ -30,6 +30,8 @@ The final console/log table shows each tuned parameter's projected starting valu
 final SWA value and absolute change in physical units (rounded for integer settings).
 The sensitivity table also reports that absolute change and includes only tuned
 parameters.
+Training uses mean log((value + shift) / (reference + shift)) for each time/node term, preserving the existing mode weights and separate time/node gradient normalization, clipping and momentum. The shifted geometric means remain the monitoring and comparison metrics. Final SPSA winners use SWA over at most the last 10 iterations. Training uses PAR-4 time charging (40 scored seconds for a 10-second timeout or subprocess failure) in both stdin and standalone modes, matching the default post-tuning comparison timeout policy; the legacy 100,000-node fallback remains for training failures.
+
 The tuner defaults to four perturbation pairs per iteration; `--directions N`
 controls this, and `--directions 1` retains the original single-pair sampling
 and optimizer behavior. Each direction uses a portion of the configured batch,
@@ -51,7 +53,7 @@ work compared with the old single round. Adjust with `--comparison-repeats`
 (a positive even number) and `--comparison-warmup`. The per-instance comparison
 limit defaults to **10 seconds**, configurable with `--comparison-timeout`.
 `--comparison-timeout-penalty` defaults to 4 and
-`--comparison-win-tolerance` to 0.10. Training iteration timeouts are unchanged.
+`--comparison-win-tolerance` to 0.10. Training still applies a 10-second per-instance runtime limit, but now scores timeouts at 40 seconds by default (PAR-4).
 
 For a standalone comparison:
 
