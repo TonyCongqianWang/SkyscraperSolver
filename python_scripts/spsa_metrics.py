@@ -21,3 +21,17 @@ def shifted_geo_mean(values, shift):
         return 0.0
     return math.exp(sum(math.log(max(0.0, float(x)) + shift)
                         for x in values) / len(values)) - shift
+
+
+def mean_log_shifted(values, shift, reference):
+    """Additive SPSA loss: mean log((value + shift) / (reference + shift)).
+
+    The reference centers the objective without changing its derivative.
+    """
+    if not values:
+        return 0.0
+    if shift <= 0 or reference + shift <= 0:
+        raise ValueError("shift and reference + shift must be positive")
+    log_reference = math.log(reference + shift)
+    return sum(math.log(max(0.0, float(x)) + shift) - log_reference
+               for x in values) / len(values)
