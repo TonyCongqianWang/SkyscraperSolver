@@ -19,8 +19,13 @@ if SCRIPT_DIR not in sys.path:
 
 from symmetry import get_random_symmetry, canonize_clue_str as canonize
 from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
-from spsa_metrics import get_sgm_shifts, shifted_geo_mean
+from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
 from spsa_run_metadata import build_run_metadata, save_run_metadata
+
+# Training timeout scoring matches the default post-tuning PAR-4 policy.
+TRAINING_TIMEOUT = 10.0
+TRAINING_TIMEOUT_PENALTY = 4.0
+TRAINING_TIMEOUT_SECONDS = TRAINING_TIMEOUT * TRAINING_TIMEOUT_PENALTY
 
 # Globals
 LOG_FILE_HANDLE = None
@@ -122,7 +127,7 @@ def read_clues(file_path):
         return [line.strip().strip('"') for line in f if line.strip()]
 
 
-def run_solver_instance(env, opt, clue, timeout=10.0):
+def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
     t_start = time.perf_counter()
     try:
         proc = subprocess.Popen(
@@ -140,11 +145,11 @@ def run_solver_instance(env, opt, clue, timeout=10.0):
                 stdout, stderr = proc.communicate(timeout=0.5)
             except Exception:
                 stdout = ""
-            return float(timeout), 100000
+            return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
         elapsed = time.perf_counter() - t_start
         if proc.returncode != 0:
-            return float(timeout), 100000
+            return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
         nodes = 100000
         for line in stdout.splitlines():
@@ -153,10 +158,10 @@ def run_solver_instance(env, opt, clue, timeout=10.0):
                 break
         return elapsed, nodes
     except Exception:
-        return float(timeout), 100000
+        return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
 
-def read_with_timeout(proc, timeout=10.0):
+def read_with_timeout(proc, timeout=TRAINING_TIMEOUT):
     lines = []
     t_start = time.perf_counter()
     while True:
@@ -208,7 +213,7 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
             proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
             proc.stdin.flush()
 
-            lines = read_with_timeout(proc, timeout=10.0)
+            lines = read_with_timeout(proc, timeout=TRAINING_TIMEOUT)
             elapsed = time.perf_counter() - t0
 
             if lines is None:
@@ -224,7 +229,7 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
                     bufsize=0,
                     env=env
                 )
-                group_results.append((idx, 10.0, 100000))
+                group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
                 continue
 
             node_count = 100000
@@ -366,8 +371,8 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
             sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
             sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-            loss_time = 1.0 * (sgm_t_e / ref_scale_s7_enum_time)
-            loss_nodes = 1.0 * (sgm_n_e / ref_scale_s7_enum_nodes)
+            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
+            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
 
             return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
         return get_loss
@@ -388,8 +393,8 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
         sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-        loss_time = 1.0 * (sgm_t_s / ref_scale_s7_single_time) + 1.5 * (sgm_t_e / ref_scale_s7_enum_time)
-        loss_nodes = 1.0 * (sgm_n_s / ref_scale_s7_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s7_enum_nodes)
+        loss_time = 1.0 * mean_log_shifted(t_single, single_time_shift, ref_scale_s7_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
+        loss_nodes = 1.0 * mean_log_shifted(n_single, single_node_shift, ref_scale_s7_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
 
         return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
     return get_loss
@@ -417,8 +422,8 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
             sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
             sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-            loss_time = 1.0 * (sgm_t_e / ref_scale_s8_enum_time)
-            loss_nodes = 1.0 * (sgm_n_e / ref_scale_s8_enum_nodes)
+            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
+            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
 
             return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
         return get_loss
@@ -440,8 +445,8 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
         sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-        loss_time = 0.5 * (sgm_t_s / ref_scale_s8_single_time) + 1.5 * (sgm_t_e / ref_scale_s8_enum_time)
-        loss_nodes = 0.5 * (sgm_n_s / ref_scale_s8_single_nodes) + 1.5 * (sgm_n_e / ref_scale_s8_enum_nodes)
+        loss_time = 0.5 * mean_log_shifted(t_single, single_time_shift, ref_scale_s8_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
+        loss_nodes = 0.5 * mean_log_shifted(n_single, single_node_shift, ref_scale_s8_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
 
         return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
     return get_loss
@@ -466,8 +471,8 @@ def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t = shifted_geo_mean(t_list, single_time_shift)
         sgm_n = shifted_geo_mean(n_list, single_node_shift)
 
-        loss_time = 1.0 * (sgm_t / ref_scale_s9_time)
-        loss_nodes = 1.0 * (sgm_n / ref_scale_s9_nodes)
+        loss_time = 1.0 * mean_log_shifted(t_list, single_time_shift, ref_scale_s9_time)
+        loss_nodes = 1.0 * mean_log_shifted(n_list, single_node_shift, ref_scale_s9_nodes)
 
         return loss_time, loss_nodes, (sgm_t, sgm_n, sgm_t, sgm_n)
     return get_loss
@@ -699,7 +704,7 @@ def run_spsa(args, datasets, max_workers):
     grad_time_sum = [0.0] * len(theta)
     grad_nodes_sum = [0.0] * len(theta)
 
-    swa_start = max(1, iterations - 80)
+    swa_start = max(1, iterations - 9)
 
     winners_filename = resolve_winners_filename(args.size)
     log_print(f"SPSA winners file resolved to: {winners_filename}")
