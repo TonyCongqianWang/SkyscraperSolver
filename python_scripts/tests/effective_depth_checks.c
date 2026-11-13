@@ -209,6 +209,12 @@ static int recompute_entropy(const t_node_state *node, int size)
 	return (total);
 }
 
+/* Floating-point scaling can land just below an exact integer. */
+static void check_scaled_cutoff(int actual, int expected)
+{
+	assert(actual == expected || actual == expected - 1);
+}
+
 static void check_scaling(void)
 {
 	t_prune_routine_cfg cfg;
@@ -234,10 +240,10 @@ static void check_scaling(void)
 				empty.domain.constrs.num_val_positions[i][v] = size;
 		e = compute_max_entropy(size);
 		assert(e == recompute_entropy(&empty, size));
-		assert(calc_effective_global_min_entropy(base, size) == e / 2);
+		check_scaled_cutoff(calc_effective_global_min_entropy(base, size), e / 2);
 		setup_scheduled_prune_cfg(&cfg, &lim, size);
-		assert(cfg.check_constr_global_min_entropy == e / 2);
-		assert(cfg.lookahead.check_mode.constr.global_min_entropy == e / 2);
+		check_scaled_cutoff(cfg.check_constr_global_min_entropy, e / 2);
+		check_scaled_cutoff(cfg.lookahead.check_mode.constr.global_min_entropy, e / 2);
 		init_prune_cfg(&cfg, 2, 0, size);
 		assert(cfg.check_constr_global_min_entropy
 			== calc_effective_global_min_entropy(
@@ -248,18 +254,18 @@ static void check_scaling(void)
 	g_global_entropy_multiplier_s8 = 2;
 	e = compute_max_entropy(8);
 	setup_scheduled_prune_cfg(&cfg, &lim, 8);
-	assert(cfg.check_constr_global_min_entropy == e);
-	assert(cfg.lookahead.check_mode.constr.global_min_entropy == e);
+	check_scaled_cutoff(cfg.check_constr_global_min_entropy, e);
+	check_scaled_cutoff(cfg.lookahead.check_mode.constr.global_min_entropy, e);
 	init_prune_cfg(&cfg, 2, 0, 8);
 	assert(cfg.check_constr_global_min_entropy
 		== calc_effective_global_min_entropy(
 			g_initial_constr_global_min_entropy, 8));
 	/* Manual recentering leaves every effective threshold unchanged. */
-	assert(calc_effective_global_min_entropy(base / 2, 8) == e / 2);
+	check_scaled_cutoff(calc_effective_global_min_entropy(base / 2, 8), e / 2);
 	oldscale = g_weight_total_scale_s8;
 	g_weight_total_scale_s8 *= 1.5;
 	e = compute_max_entropy(8);
-	assert(calc_effective_global_min_entropy(base, 8) == e);
+	check_scaled_cutoff(calc_effective_global_min_entropy(base, 8), e);
 	g_weight_total_scale_s8 = oldscale;
 	g_global_entropy_multiplier_s8 = 1;
 }
