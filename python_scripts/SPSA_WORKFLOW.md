@@ -30,7 +30,7 @@ The final console/log table shows each tuned parameter's projected starting valu
 final SWA value and absolute change in physical units (rounded for integer settings).
 The sensitivity table also reports that absolute change and includes only tuned
 parameters.
-Training uses mean log((value + shift) / (reference + shift)) for each time/node term, preserving the existing mode weights and separate time/node gradient normalization, clipping and momentum. The shifted geometric means remain the monitoring and comparison metrics. Final SPSA winners use SWA over at most the last 10 iterations. Training uses PAR-4 time charging (40 scored seconds for a 10-second timeout or subprocess failure) in both stdin and standalone modes, matching the default post-tuning comparison timeout policy; the legacy 100,000-node fallback remains for training failures.
+Training uses mean log((value + shift) / (reference + shift)) for each time/node term, preserving the existing mode weights and separate time/node gradient normalization, clipping and momentum. The shifted geometric means remain the comparison metrics. Final SPSA winners use SWA over at most the last 10 iterations. Training uses PAR-4 time charging (40 scored seconds for a 10-second timeout or subprocess failure) in both stdin and standalone modes, matching the default post-tuning comparison timeout policy; the legacy 100,000-node fallback remains for training failures.
 
 The tuner defaults to four perturbation pairs per iteration; `--directions N`
 controls this, and `--directions 1` retains the original single-pair sampling
@@ -39,7 +39,7 @@ with the same instances evaluated at its plus/minus perturbations. For a
 power-of-two number of active parameters, Hadamard directions are exactly
 orthogonal when the requested count does not exceed that number. Otherwise
 independent randomized sign vectors are used. The requested direction count
-must not exceed the batch size. Full-batch monitoring remains unchanged.
+must not exceed the batch size. Each iteration evaluates only the paired perturbations. The progress log reports gradient norms from those probes.
 
 For two or more directions, sensitivity reports the average across iterations
 of the absolute *combined* raw gradient (after directional averaging, before

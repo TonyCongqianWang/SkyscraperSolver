@@ -48,7 +48,10 @@ class ReportingTests(unittest.TestCase):
         metadata = dict(tune_mode='math')
         output = io.StringIO()
         path = self.folder / 'winner.txt'
-        loss = lambda theta: (theta[0], theta[0], (.1, 100, .2, 200))
+        evaluations = []
+        def loss(theta):
+            evaluations.append(theta)
+            return theta[0], theta[0], (.1, 100, .2, 200)
         with patch.object(tuning, 'PARAM_METADATA', parameters), \
              patch.object(tuning, 'project_constraints', side_effect=list), \
              patch.object(tuning, 'get_active_param_names', return_value={'ACTIVE_FLOAT', 'ACTIVE_INT', 'FROZEN'}), \
@@ -58,6 +61,7 @@ class ReportingTests(unittest.TestCase):
              patch.object(tuning, 'build_loss_evaluator', return_value=loss), redirect_stdout(output):
             final = tuning.run_spsa(args, {'s8_train': ['clue'], 's8_val': ['other']}, 1)
             physical = tuning.get_physical_params(final)
+        self.assertEqual(len(evaluations), 2 * args.iterations)
         self.assertEqual(build.call_args.args[3], {'ACTIVE_FLOAT', 'ACTIVE_INT'})
         definitions = {line.split()[1] for line in path.read_text().splitlines() if line.startswith('#define')}
         self.assertEqual(definitions, {'ACTIVE_FLOAT', 'ACTIVE_INT'})

@@ -525,23 +525,13 @@ def report_parameter_values(initial_values, final_values, active_names):
         log_print(f"{name:<{width}} | {start:>14.10g} | {end:>14.10g} | {abs(end - start):>14.10g}")
 
 
-def log_iteration_status(size, k, loss_time, loss_nodes, grad_time_norm, grad_nodes_norm,
-                         stats, ema_time_norm, ema_nodes_norm):
+def log_iteration_status(k, grad_time_norm, grad_nodes_norm, ema_time_norm, ema_nodes_norm):
     normalized_time = grad_time_norm / max(1e-5, ema_time_norm)
     normalized_nodes = grad_nodes_norm / max(1e-5, ema_nodes_norm)
-    prefix = (f"Iter {k:3d} | Loss(T/N): {loss_time:.3f}/{loss_nodes:.3f} | "
+    log_print(f"Iter {k:3d} | "
               f"GradNormClipped(T/N): {grad_time_norm:.4f}/{grad_nodes_norm:.4f} | "
               f"GradEMA(T/N): {ema_time_norm:.4f}/{ema_nodes_norm:.4f} | "
-              f"GradNormalized(T/N): {normalized_time:.4f}/{normalized_nodes:.4f} |")
-    if size == 7:
-        log_print(f"{prefix} S7 Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S7 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
-    elif size == 8:
-        if len(stats) >= 4 and stats[0] != stats[2]:
-            log_print(f"{prefix} S8 Single t: {stats[0]:.4f}s n: {stats[1]:.0f} | S8 Enum t: {stats[2]:.4f}s n: {stats[3]:.0f}")
-        else:
-            log_print(f"{prefix} S8 Enum t: {stats[0]:.4f}s n: {stats[1]:.0f}")
-    elif size == 9:
-        log_print(f"{prefix} S9 t: {stats[0]:.4f}s n: {stats[1]:.0f}")
+              f"GradNormalized(T/N): {normalized_time:.4f}/{normalized_nodes:.4f}")
 
 
 def make_perturbation_directions(active_indices, dimensions, count):
@@ -729,9 +719,6 @@ def run_spsa(args, datasets, max_workers):
     ema_nodes_norm = 1.0
     ema_beta = 0.90
 
-    best_loss = float('inf')
-    best_theta = list(theta)
-
     for k in range(1, iterations + 1):
         ak = a / ((k + A) ** alpha)
         ck = c / (k ** gamma)
@@ -746,10 +733,6 @@ def run_spsa(args, datasets, max_workers):
                 enumeration_only=args.enumeration_only)
             for part in sizes
         ]
-        get_loss = (evaluators[0] if directions == 1 else build_loss_evaluator(
-            size=args.size, datasets=datasets, batch_size=batch_size,
-            max_workers=max_workers, use_stdin=args.stdin,
-            enumeration_only=args.enumeration_only))
         active_index_set = set(active_indices)
         perturbations = make_perturbation_directions(active_indices, len(theta), directions)
 
@@ -837,14 +820,7 @@ def run_spsa(args, datasets, max_workers):
             for i in range(len(theta)):
                 swa_theta[i] += theta[i]
 
-        loss_time_curr, loss_nodes_curr, stats = get_loss(theta)
-        loss_monitor = loss_time_curr + loss_nodes_curr
-        if loss_monitor < best_loss:
-            best_loss = loss_monitor
-            best_theta = list(theta)
-
-        log_iteration_status(args.size, k, loss_time_curr, loss_nodes_curr,
-                             grad_time_norm, grad_nodes_norm, stats, ema_time_norm, ema_nodes_norm)
+        log_iteration_status(k, grad_time_norm, grad_nodes_norm, ema_time_norm, ema_nodes_norm)
 
         if k % 100 == 0:
             if swa_count > 0:
