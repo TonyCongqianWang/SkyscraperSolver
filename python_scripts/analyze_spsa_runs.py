@@ -29,7 +29,7 @@ def parse_run_file(filepath):
             header = re.search(r'SIZE\s+(\d+)', line, re.I)
             if header and size is None:
                 size = int(header[1])
-            declared_mode = re.search(r'\bmode=(all|strategy|math)\b', line)
+            declared_mode = re.search(r'\bmode=(all|strategy|math|effective-depth)\b', line)
             if declared_mode:
                 mode = declared_mode[1]
             elif 'strategy' in line.lower():
@@ -67,7 +67,7 @@ def load_run_metadata(filepath):
                 if os.path.exists(manifest):
                     with open(manifest) as source:
                         command = json.load(source).get('command', '')
-                    mode = re.search(r'--tune-mode\s+(all|strategy|math)\b', command)
+                    mode = re.search(r'--tune-mode\s+(all|strategy|math|effective-depth)\b', command)
                     if mode:
                         metadata['tune_mode'] = mode[1]
                 return metadata, 'historical defaults snapshot'
@@ -152,7 +152,7 @@ def analyze_files(files, size_filter=None, alpha=0.05):
                 if not (size != 7 and key.endswith('_LE7'))
                 and not any(key.endswith(f'_S{other}') for other in (7, 8, 9) if other != size)]
         active = runs[0][2].get('active_parameters')
-        if active is None and mode in ('math', 'strategy', 'all'):
+        if active is None and mode in ('math', 'strategy', 'all', 'effective-depth'):
             active = get_active_param_names(mode, size)
         if active is not None:
             keys = [key for key in keys if key in active]

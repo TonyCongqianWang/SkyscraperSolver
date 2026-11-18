@@ -2,6 +2,36 @@
 # Exit on any error
 set -e
 
+tuner=python_scripts/spsa_tune.py
+if [ "${1:-}" = "--sweep" ]; then
+    tuner=python_scripts/sweep_tune.py
+    shift
+    if [ "$#" -eq 0 ]; then
+        python3 "$tuner" --help
+        exit 2
+    fi
+fi
+# Show help and reject malformed options before doing any compilation.
+if [ "$#" -gt 0 ]; then
+    for argument in "$@"; do
+        if [ "$argument" = "--help" ] || [ "$argument" = "-h" ]; then
+            python3 "$tuner" "$@"
+            exit 0
+        fi
+    done
+    python3 - "$tuner" "$@" <<'PY'
+import importlib.util
+import sys
+
+sys.argv[0] = sys.argv.pop(1)
+spec = importlib.util.spec_from_file_location("tuner", sys.argv[0])
+sys.path.insert(0, "python_scripts")
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+module.parse_args()
+PY
+fi
+
 echo "=== Step 1: Compiling clean baseline solver ==="
 make fclean
 make
@@ -29,8 +59,8 @@ echo "  python3 python_scripts/spsa_tune.py --size 8 --iterations 100 --log scra
 echo "  python3 python_scripts/spsa_tune.py --size 9 --iterations 100 --log scratch/s9_tune.log"
 echo "=========================================================="
 
-# If arguments were passed to this script, execute spsa_tune.py with them
+# --sweep is recognized only in the first argument position.
 if [ "$#" -gt 0 ]; then
-    echo "Running SPSA tune with provided arguments..."
-    python3 -u python_scripts/spsa_tune.py "$@"
+    echo "Running $tuner with provided arguments..."
+    python3 -u "$tuner" "$@"
 fi

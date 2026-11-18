@@ -157,3 +157,60 @@ signal-to-spread labels remain descriptive heuristics, not significance decision
 
 Method references: [exact binomial test](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/binom.test.html)
 and [Holm adjustment](https://stat.ethz.ch/R-manual/R-devel/library/stats/html/p.adjust.html).
+
+## Single-parameter sweeps
+
+Use `--sweep` as the **first** wrapper argument to select the coordinate-sweep
+script instead of SPSA:
+
+```bash
+./setup_and_tune.sh --sweep --mode math8 --seed 42 --no-compare
+./setup_and_tune.sh --sweep --mode math9 --seed 42 --no-compare
+./setup_and_tune.sh --sweep --mode strategy --seed 42
+./setup_and_tune.sh --sweep --mode effective-depth --seed 42
+```
+
+`math8` and `math9` each tune only the 16 size-specific math parameters.
+`strategy` tunes all 74 shared parameters, including the six effective-depth
+coefficients. `effective-depth` tunes just those six shared coefficients.
+The SPSA `--tune-mode strategy` also includes effective depth;
+`--tune-mode effective-depth` selects it alone, and `--tune-mode math` selects
+only size-specific math parameters.
+
+Each invocation performs one pass in a seeded random parameter order, accepting
+the best value before moving to the next parameter. The candidate grid is the
+current value plus `0, ±1, ±2, ±4, ±8` normal SPSA perturbation widths, where a
+width is `--perturb × perturb_scale × (max − min)` and `--perturb` defaults to
+0.03. Candidate order is randomized. Bounds, integer rounding and pair constraints
+can merge candidates; the script evaluates each distinct value once. Pair
+constraints limit the selected coordinate's interval without moving another
+parameter. Ties retain the current value.
+
+The fixed, randomly subsampled training panels contain 1,024 size-8
+single-solution instances, 64 size-8 enumeration instances, and 2,084 size-9
+single-solution instances. A math sweep loads only its own size. Each clue's
+sampled symmetry is held fixed throughout the pass, and the sampled source
+indices and transformed clues are recorded. `--s8-single`, `--s8-enumeration`
+and `--s9-single` can override these counts; undersized banks fail explicitly.
+
+The evaluator reuses SPSA's shifted-log losses and training timeout scoring.
+Size 8 retains `0.5 × single mean + 1.5 × enumeration mean` for each loss,
+then combines `0.64 × time loss + 0.36 × node loss`. Size 9 combines
+`0.66 × time loss + 0.34 × node loss`. Shared-parameter sweeps give the two
+resulting size objectives equal weight. These fixed time/node weights approximate
+recent SPSA gradient normalization. Cached current scores supply the no-move
+candidate; only affected sizes are re-evaluated.
+
+Unique sparse winners, progress logs and JSON provenance/checkpoints are written
+under `scratch/sweep_winners_<mode>_<index>.*` by default. `--log` selects a progress
+log path. The JSON includes the seed, parameter order, fixed panels, candidate
+scores, selected values, source/binary hashes, and completion/comparison status.
+Winners can be applied with `python_scripts/apply_winners.py`; sweeps do not
+change defaults automatically.
+
+Without `--no-compare`, the script invokes the same training-first-10% and full
+validation comparisons as SPSA, for each applicable size. Size 8 compares both
+solution modes; size 9 compares single-solution mode. Shared sweeps use separate
+`_s8` and `_s9` comparison filenames. Comparison repeats, warmup, timeout and
+penalty flags match SPSA. The final winner is saved before comparison, so a
+comparison failure does not discard completed tuning.

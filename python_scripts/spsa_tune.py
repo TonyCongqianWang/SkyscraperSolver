@@ -871,7 +871,7 @@ def parse_args():
     parser.add_argument("--no-stdin", dest="stdin", action="store_false", help="Deactivate using stdin batching to solve puzzles in persistent subprocesses")
     parser.set_defaults(stdin=True)
     parser.add_argument("--max-workers", type=int, default=4, help="Maximum workers to use.")
-    parser.add_argument("--tune-mode", choices=["all", "strategy", "math"], default="all", help="Tuning mode: 'all' (all unfrozen parameters), 'strategy' (tune strategy params only, freeze math constants), 'math' (tune math/scale constants only, freeze strategy params)")
+    parser.add_argument("--tune-mode", choices=["all", "strategy", "math", "effective-depth"], default="all", help="Tune all parameters, shared strategy parameters (including effective depth), size-specific math constants, or only effective-depth coefficients")
     parser.add_argument("--enumeration-only", action="store_true", help="Focus solely on full enumeration benchmarks (-s 0) during tuning")
     parser.add_argument('--seed', type=int, default=None, help='RNG seed; generated and recorded if omitted')
     parser.add_argument('--comparison-repeats', type=int, default=2, help='Even number of AB/BA comparison rounds')

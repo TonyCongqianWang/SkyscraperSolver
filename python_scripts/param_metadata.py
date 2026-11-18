@@ -286,6 +286,7 @@ PARAMETER_ALIASES['INITIAL_CONSTR_GLOBAL_MIN_ENTROPY'] = 'PRUNE_MIN_ENTROPY_INIT
 
 
 STRATEGY_PARAM_NAMES = set()
+EFFECTIVE_DEPTH_PARAM_NAMES = set()
 MATH_PARAM_GROUPS = {
     "all": set(),
     "7": set(),
@@ -295,7 +296,10 @@ MATH_PARAM_GROUPS = {
 
 for name, *etc in PARAM_METADATA:
     filepath, _, _ = PARAMETER_MAPPING.get(name, ("", "", ""))
-    if filepath == "src/params_math.c":
+    if name.startswith("EFFECTIVE_DEPTH_"):
+        EFFECTIVE_DEPTH_PARAM_NAMES.add(name)
+        STRATEGY_PARAM_NAMES.add(name)
+    elif filepath == "src/params_math.c":
         if name.endswith("_LE7"):
             MATH_PARAM_GROUPS["7"].add(name)
         elif name.endswith("_S8"):
@@ -312,7 +316,9 @@ def get_active_param_names(tune_mode, size):
     if str(size) in MATH_PARAM_GROUPS:
         active_math.update(MATH_PARAM_GROUPS[str(size)])
 
-    if tune_mode == "math":
+    if tune_mode == "effective-depth":
+        return set(EFFECTIVE_DEPTH_PARAM_NAMES)
+    elif tune_mode == "math":
         return active_math
     elif tune_mode == "strategy":
         return STRATEGY_PARAM_NAMES
