@@ -85,6 +85,25 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(len(grid), 1)
         self.assertEqual(len(next(iter(grid.values()))), 9)
 
+    def test_finer_grid_covers_half_width_probes_and_total_scales_allow_1500(self):
+        values = sweep.default_values()
+        name = 'GLOBAL_ENTROPY_MULTIPLIER_S8'
+        _, low, high, _, _, scale = sweep.PARAMETERS[name]
+        values[name] = (low + high) / 2
+        width = (high - low) * scale * .03
+        offsets = sorted((v - values[name]) / width
+                         for v in sweep.candidate_values(name, values, .03))
+        expected = [-4, -2, -1, -.5, 0, .5, 1, 2, 4]
+        self.assertEqual(len(offsets), len(expected))
+        for actual, target in zip(offsets, expected):
+            self.assertAlmostEqual(actual, target)
+        for suffix in ('LE7', 'S8', 'S9'):
+            name = f'WEIGHT_TOTAL_SCALE_{suffix}'
+            self.assertEqual(sweep.PARAMETERS[name][1], 1500)
+            values[name] = 1600
+            grid = sweep.candidate_values(name, values, .03)
+            self.assertEqual(min(grid), 1500)
+
     def test_le7_panels_preserve_mixed_sizes_and_spsa_objective(self):
         clues = [' '.join(['1'] * (4 * size)) for size in (5, 6, 7)]
         panels = sweep.sample_panels({'s7_train': clues}, [7],

@@ -183,7 +183,7 @@ only size-specific math parameters.
 
 Each invocation performs one pass in a seeded random parameter order, accepting
 the best value before moving to the next parameter. The candidate grid is the
-current value plus `0, ±1, ±2, ±4, ±8` normal SPSA perturbation widths, where a
+current value plus `0, ±0.5, ±1, ±2, ±4` normal SPSA perturbation widths, where a
 width is `--perturb × perturb_scale × (max − min)` and `--perturb` defaults to
 0.03. Candidate order is randomized. Bounds, integer rounding and pair constraints
 can merge candidates; the script evaluates each distinct value once. Pair

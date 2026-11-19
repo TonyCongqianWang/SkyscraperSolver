@@ -20,7 +20,7 @@ from symmetry import get_symmetries_from_clue_str
 
 ROOT = Path(__file__).resolve().parent.parent
 PARAMETERS = {row[0]: row for row in PARAM_METADATA}
-MULTIPLIERS = (-8, -4, -2, -1, 0, 1, 2, 4, 8)
+MULTIPLIERS = (-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4)
 TIME_WEIGHTS = {7: 0.5, 8: 0.64, 9: 0.66}
 # Mode means retain SPSA weights regardless of sampled panel sizes.
 MODE_WEIGHTS = {7: (1.0, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
@@ -202,7 +202,7 @@ def parse_args(argv=None):
     parser.add_argument('--max-workers', type=int, default=4)
     parser.add_argument('--no-stdin', dest='stdin', action='store_false', default=True)
     parser.add_argument('--perturb', type=float, default=0.03,
-                        help='Normal perturbation fraction; grid uses 0, ±1, ±2, ±4, ±8 widths')
+                        help='Normal perturbation fraction; grid uses 0, ±0.5, ±1, ±2, ±4 widths')
     parser.add_argument('--s7-single', type=int, default=2048, help='le7 single-solution panel size (math7 only)')
     parser.add_argument('--s7-enumeration', type=int, default=512, help='le7 enumeration panel size (math7 only)')
     parser.add_argument('--s8-single', type=int, default=1024)
