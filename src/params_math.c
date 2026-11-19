@@ -12,10 +12,10 @@
 
 #include "params_math.h"
 
-double	g_num_set_warp_0_le7 = 0.25;
+double	g_num_set_warp_0_le7 = 0.2527;
 double	g_num_set_warp_1_le7 = 0.5;
 double	g_num_set_warp_2_le7 = 0.75;
-double	g_global_entropy_multiplier_le7 = 1.0;
+double	g_global_entropy_multiplier_le7 = 0.9913;
 double	g_num_set_warp_0_s8 = 0.271331232298949;
 double	g_num_set_warp_1_s8 = 0.500040585661338;
 double	g_num_set_warp_2_s8 = 0.750172633580024;
@@ -36,7 +36,7 @@ double	g_weight_cell_constr_ratio_s9 = 0.665196589615484;
 double	g_sel_weight_cell_constr_ratio_le7 = 0.027865602;
 double	g_sel_weight_cell_constr_ratio_s8 = 0;
 double	g_sel_weight_cell_constr_ratio_s9 = 0;
-double	g_weight_total_scale_le7 = 3486.8044330422;
+double	g_weight_total_scale_le7 = 2959.5544330422;
 double	g_weight_total_scale_s8 = 3172.70203149288;
 double	g_weight_total_scale_s9 = 2500;
 double	g_sel_power_cell_le7 = -0.52;
@@ -48,7 +48,7 @@ double	g_sel_power_constr_s9 = -0.5203427835633;
 double	g_lookahead_score_weight_split0_le7 = 0.46758;
 double	g_lookahead_score_weight_split0_s8 = 0.46719885;
 double	g_lookahead_score_weight_split0_s9 = 0.45922219;
-double	g_lookahead_score_weight_split1_le7 = 0.75126;
+double	g_lookahead_score_weight_split1_le7 = 0.74526;
 double	g_lookahead_score_weight_split1_s8 = 0.75154781;
 double	g_lookahead_score_weight_split1_s9 = 0.74987568;
 double	g_lookahead_entropy_weight_le7 = 0.049873382;
@@ -57,10 +57,10 @@ double	g_lookahead_entropy_weight_s9 = 0.0490652536047558;
 double	g_depth_warp_0_le7 = 0.25;
 double	g_depth_warp_0_s8 = 0.249985081355408;
 double	g_depth_warp_0_s9 = 0.256035799182131;
-double	g_depth_warp_1_le7 = 0.50;
+double	g_depth_warp_1_le7 = 0.5;
 double	g_depth_warp_1_s8 = 0.505576821176917;
 double	g_depth_warp_1_s9 = 0.499929158365865;
-double	g_depth_warp_2_le7 = 0.75;
+double	g_depth_warp_2_le7 = 0.7716;
 double	g_depth_warp_2_s8 = 0.74984734606579;
 double	g_depth_warp_2_s9 = 0.749774690864289;
 double	g_lookahead_score_age_limit_ratio_le7 = 0.088507087;
