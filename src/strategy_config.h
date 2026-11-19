@@ -66,10 +66,20 @@ typedef enum e_selection_criterion
 	SELECT_MIN
 }	t_selection_criterion;
 
+typedef enum e_order_refresh
+{
+	ORDER_COMPACT,
+	ORDER_RESCORE,
+	ORDER_BLEND,
+	ORDER_SORT,
+	ORDER_LINES,
+	ORDER_REFRESH_COUNT
+}	t_order_refresh;
+
 typedef struct s_node_select_config
 {
 	t_selection_criterion	criterion;
-	int						rebuild_period;
+	int						refresh_period[ORDER_REFRESH_COUNT];
 	t_selectivity_level		selectivity;
 }	t_node_select_config;
 

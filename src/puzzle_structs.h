@@ -56,9 +56,9 @@ typedef struct s_node_order
 	t_node_transition	entries[MAX_TRANSITIONS];
 	t_transition_meta	meta[MAX_TRANSITIONS];
 	int					count;
-	int					last_build_entropy;
+	int					refresh_entropy[ORDER_REFRESH_COUNT];
 	int					lookahead_build_entropy;
-	int					needs_rebuild;
+	int					scores_dirty;
 	int					build_depth;
 }						t_node_order;
 

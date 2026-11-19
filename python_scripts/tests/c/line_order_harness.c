@@ -104,7 +104,9 @@ static void test_lazy_build_rebuild_and_compaction(void)
     assert(get_line_order(puzzle.cur_node)->entries[0].constr_idx == 2);
     set_line_count(puzzle.cur_node, 7, 1);
     set_line_count(puzzle.cur_node, 2, 4);
-    compact_and_sort_cache(puzzle.cur_node, puzzle.cur_node->order_cache, SELECT_MAX);
+    compact_cache_entries(puzzle.cur_node, puzzle.cur_node->order_cache);
+    sort_cached_orders(puzzle.cur_node, puzzle.cur_node->order_cache, SELECT_MAX);
+    sort_line_order(puzzle.cur_node);
     check_order(puzzle.cur_node);
     assert(get_line_order(puzzle.cur_node)->entries[0].constr_idx == 7);
     free_solution_storage(&puzzle);

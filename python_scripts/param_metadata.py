@@ -1,5 +1,23 @@
 # PARAM_METADATA maps each SPSA parameter to (name, min_val, max_val, default_val, type, perturb_scale)
 PARAM_METADATA = [
+    ('SEL_PERIOD_SCALE_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_PERIOD_SCALE_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_PERIOD_SCALE_S9', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_COMPACT_PERIOD_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_COMPACT_PERIOD_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_COMPACT_PERIOD_S9', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_RESCORE_PERIOD_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_RESCORE_PERIOD_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_RESCORE_PERIOD_S9', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_BLEND_PERIOD_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_BLEND_PERIOD_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_BLEND_PERIOD_S9', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_SORT_PERIOD_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_SORT_PERIOD_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_SORT_PERIOD_S9', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_LINE_SORT_PERIOD_LE7', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_LINE_SORT_PERIOD_S8', 0.0, 16.0, 1.0, float, 1.0),
+    ('SEL_CACHE_LINE_SORT_PERIOD_S9', 0.0, 16.0, 1.0, float, 1.0),
     ('NUM_SET_WARP_0_LE7', 0.05, 0.95, 0.2527, float, 0.2),
     ('NUM_SET_WARP_1_LE7', 0.05, 0.95, 0.5, float, 0.2),
     ('NUM_SET_WARP_2_LE7', 0.05, 0.95, 0.75, float, 0.2),
@@ -125,6 +143,24 @@ PARAM_METADATA = [
 ]
 
 PARAMETER_MAPPING = {
+    'SEL_PERIOD_SCALE_LE7': ('src/params_cache_period.c', 'g_sel_period_scale_le7', 'double'),
+    'SEL_PERIOD_SCALE_S8': ('src/params_cache_period.c', 'g_sel_period_scale_s8', 'double'),
+    'SEL_PERIOD_SCALE_S9': ('src/params_cache_period.c', 'g_sel_period_scale_s9', 'double'),
+    'SEL_CACHE_COMPACT_PERIOD_LE7': ('src/params_cache_period.c', 'g_sel_compact_period_le7', 'double'),
+    'SEL_CACHE_COMPACT_PERIOD_S8': ('src/params_cache_period.c', 'g_sel_compact_period_s8', 'double'),
+    'SEL_CACHE_COMPACT_PERIOD_S9': ('src/params_cache_period.c', 'g_sel_compact_period_s9', 'double'),
+    'SEL_CACHE_RESCORE_PERIOD_LE7': ('src/params_cache_period.c', 'g_sel_rescore_period_le7', 'double'),
+    'SEL_CACHE_RESCORE_PERIOD_S8': ('src/params_cache_period.c', 'g_sel_rescore_period_s8', 'double'),
+    'SEL_CACHE_RESCORE_PERIOD_S9': ('src/params_cache_period.c', 'g_sel_rescore_period_s9', 'double'),
+    'SEL_CACHE_BLEND_PERIOD_LE7': ('src/params_cache_period.c', 'g_sel_blend_period_le7', 'double'),
+    'SEL_CACHE_BLEND_PERIOD_S8': ('src/params_cache_period.c', 'g_sel_blend_period_s8', 'double'),
+    'SEL_CACHE_BLEND_PERIOD_S9': ('src/params_cache_period.c', 'g_sel_blend_period_s9', 'double'),
+    'SEL_CACHE_SORT_PERIOD_LE7': ('src/params_cache_period.c', 'g_sel_sort_period_le7', 'double'),
+    'SEL_CACHE_SORT_PERIOD_S8': ('src/params_cache_period.c', 'g_sel_sort_period_s8', 'double'),
+    'SEL_CACHE_SORT_PERIOD_S9': ('src/params_cache_period.c', 'g_sel_sort_period_s9', 'double'),
+    'SEL_CACHE_LINE_SORT_PERIOD_LE7': ('src/params_cache_period.c', 'g_sel_line_sort_period_le7', 'double'),
+    'SEL_CACHE_LINE_SORT_PERIOD_S8': ('src/params_cache_period.c', 'g_sel_line_sort_period_s8', 'double'),
+    'SEL_CACHE_LINE_SORT_PERIOD_S9': ('src/params_cache_period.c', 'g_sel_line_sort_period_s9', 'double'),
     'NUM_SET_WARP_0_LE7': ('src/params_math.c', 'g_num_set_warp_0_le7', 'double'),
     'NUM_SET_WARP_1_LE7': ('src/params_math.c', 'g_num_set_warp_1_le7', 'double'),
     'NUM_SET_WARP_2_LE7': ('src/params_math.c', 'g_num_set_warp_2_le7', 'double'),
@@ -299,7 +335,7 @@ for name, *etc in PARAM_METADATA:
     if name.startswith("EFFECTIVE_DEPTH_"):
         EFFECTIVE_DEPTH_PARAM_NAMES.add(name)
         STRATEGY_PARAM_NAMES.add(name)
-    elif filepath == "src/params_math.c":
+    elif filepath in ("src/params_math.c", "src/params_cache_period.c"):
         if name.endswith("_LE7"):
             MATH_PARAM_GROUPS["7"].add(name)
         elif name.endswith("_S8"):

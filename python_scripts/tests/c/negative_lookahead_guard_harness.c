@@ -67,7 +67,7 @@ static void test_nested_dispatch_and_context_restore(void)
     assert(cfg.passes == LOOKAHEAD_BOTH);
     cache = puzzle.cur_node->order_cache;
     assert(cache->lookahead_build_entropy == -1);
-    assert(cache->needs_rebuild == 0);
+    assert(cache->scores_dirty == 0);
     for (i = 0; i < cache->count; ++i)
     {
         assert(cache->meta[i].entropy_pos >= 0);
@@ -97,7 +97,7 @@ static void test_nested_negative_side_skips_all_passes(void)
     assert(cache == puzzle.cur_node->order_cache);
     assert(cache->count == 0);
     assert(cache->lookahead_build_entropy == -1);
-    assert(cache->needs_rebuild == 0);
+    assert(cache->scores_dirty == 0);
     free_solution_storage(&puzzle);
 }
 
@@ -118,7 +118,7 @@ static void test_subnode_both_sides_does_not_mark_cache(void)
     cache = puzzle.cur_node->order_cache;
     assert(cache->count == 64);
     assert(cache->lookahead_build_entropy == -1);
-    assert(cache->needs_rebuild == 0);
+    assert(cache->scores_dirty == 0);
     for (i = 0; i < cache->count; ++i)
     {
         assert(cache->meta[i].entropy_pos >= 0);
@@ -221,7 +221,7 @@ static void test_eligibility_independent_of_cache_refresh(void)
     cache->count = 2;
     cache->build_depth = 0;
     stale_entropy = puzzle.cur_node->domain.remaining_entropy + 1000000;
-    cache->last_build_entropy = stale_entropy;
+    cache->refresh_entropy[ORDER_COMPACT] = stale_entropy;
     cache->entries[0].cell_idx = 0;
     cache->entries[0].cell_val = 1;
     cache->entries[0].score = 100;
@@ -235,17 +235,17 @@ static void test_eligibility_independent_of_cache_refresh(void)
     assert(try_select_transition(&puzzle, &next));
     assert(next.cell_idx == 0);
     assert(ctx.curr_index == 0 && ctx.curr_pass == 0);
-    assert(cache->last_build_entropy == stale_entropy);
+    assert(cache->refresh_entropy[ORDER_COMPACT] == stale_entropy);
     puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_LOOKAHEAD;
     init_node_transition(&next);
     assert(try_select_transition(&puzzle, &next));
     assert(next.cell_idx == 1);
     assert(!try_select_transition(&puzzle, &next));
-    assert(cache->last_build_entropy == stale_entropy);
+    assert(cache->refresh_entropy[ORDER_COMPACT] == stale_entropy);
     puzzle.cur_node->search_policy.branch.eligibility = CANDIDATES_VALID;
     puzzle.cur_node->search_policy.branch.cache_refresh = CACHE_REFRESH_STALE;
     assert(try_select_transition(&puzzle, &next));
-    assert(cache->last_build_entropy == puzzle.cur_node->domain.remaining_entropy);
+    assert(cache->refresh_entropy[ORDER_COMPACT] == puzzle.cur_node->domain.remaining_entropy);
     assert(ctx.curr_pass == 2);
     leave_lookahead(puzzle.cur_node, &saved);
     free_solution_storage(&puzzle);

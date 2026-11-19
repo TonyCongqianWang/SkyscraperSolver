@@ -42,6 +42,7 @@ static void	prepare_lookahead_cache(t_solver_state *puzzle,
 	select_node_select_config(puzzle, &ns_cfg);
 	ns_cfg.selectivity = selectivity;
 	rebuild_cache_if_stale(puzzle, &ns_cfg, 1);
+	isolate_node_order(puzzle);
 }
 
 static void	execute_lookahead(t_solver_state *puzzle,

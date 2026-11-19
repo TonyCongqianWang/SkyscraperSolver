@@ -20,8 +20,6 @@ int		set_next_valid_val(t_solver_state *puzzle, t_node_transition *next);
 void	sort_node_order_meta(t_node_transition *entries,
 			t_transition_meta *meta, int count,
 			t_selection_criterion criterion);
-void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
-			t_selection_criterion criterion);
 
 void	sort_cached_orders(t_node_state *node, t_node_order *cache,
 			t_selection_criterion criterion);

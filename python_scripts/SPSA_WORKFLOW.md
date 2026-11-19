@@ -171,7 +171,8 @@ script instead of SPSA:
 ./setup_and_tune.sh --sweep --mode effective-depth --seed 42
 ```
 
-`math7`, `math8` and `math9` each tune only the 16 size-specific math parameters.
+`math7`, `math8` and `math9` each tune only the 22 size-specific math parameters (16 existing math parameters
+plus six cache-period controls).
 `math7` uses the mixed sizes-5–7 le7 dataset and tunes only `_LE7` parameters.
 The le7 dataset is loaded only for `math7`; shared strategy and effective-depth
 sweeps continue to evaluate sizes 8 and 9 exclusively.
@@ -224,3 +225,36 @@ solution modes; size 9 compares single-solution mode. Shared sweeps use separate
 `_s8` and `_s9` comparison filenames. Comparison repeats, warmup, timeout and
 penalty flags match SPSA. The final winner is saved before comparison, so a
 comparison failure does not discard completed tuning.
+
+
+## Independent selection-cache periods
+
+Each size group (`LE7`, `S8`, `S9`) has an overall `SEL_PERIOD_SCALE_*` and
+five operation-specific factors:
+
+- `SEL_CACHE_COMPACT_PERIOD_*`: remove filled/invalid cached transitions.
+- `SEL_CACHE_RESCORE_PERIOD_*`: refresh the base branch-selection scores.
+- `SEL_CACHE_BLEND_PERIOD_*`: age the blended lookahead scores.
+- `SEL_CACHE_SORT_PERIOD_*`: reorder cached transitions by their stored scores.
+- `SEL_CACHE_LINE_SORT_PERIOD_*`: refresh the constraint-line order.
+
+These factors default to 1, have bounds 0–16, and belong to the corresponding
+math tuning group, including math7. A larger factor allows more reuse. The
+existing shared `SEL_PERIOD_COEF_SQRT` and `SEL_PERIOD_COEF_INV` determine the
+progress-dependent base period. Each operation uses that period multiplied by
+its size's overall scale and its own factor (integer entropy units). Each has
+its own last-refresh entropy stamp. Zero is eager maintenance on each eligible
+cache access. Initial cache construction still populates all scores/orders.
+
+Completing a main-level two-sided lookahead pass marks blended scores dirty.
+The next cache access consumes those scores even if periodic maintenance is
+suppressed; it does not force compaction, base rescoring, transition sorting, or
+line sorting. Base-score refresh likewise dirties the blend. The blend period
+controls subsequent score aging, not whether newly recorded results are consumed.
+Sorting retains an independent schedule even after score updates.
+
+Within a branch domains shrink, so initial candidate collection is sufficient:
+subsequent compaction removes candidates without scanning for new ones or
+reconciling old metadata. Cache mutations use copy-on-write with matching
+line-order frames, preserving parent cache state across children and probes.
+A reused order still checks each candidate's current validity before selecting it.

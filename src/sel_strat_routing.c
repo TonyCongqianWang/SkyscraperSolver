@@ -11,27 +11,45 @@
 /* ************************************************************************** */
 
 #include "strategy_routing.h"
-#include "entropy.h"
 #include "math_utils.h"
 #include "params_double.h"
+#include "params_cache_period.h"
+#include <limits.h>
+
+static double	selection_period(t_solver_state *puzzle)
+{
+	double	raw;
+	int		rem;
+
+	rem = puzzle->cur_node->domain.remaining_entropy;
+	if (rem < 1)
+		rem = 1;
+	raw = (double)(puzzle->max_entropy - rem) / rem;
+	return ((g_sel_period_coef_sqrt * dsqrt_approx(raw)
+			+ g_sel_period_coef_inv * raw)
+		* get_sel_period_scale(puzzle->size));
+}
+
+static int	bound_period(double period)
+{
+	if (period <= 0.0)
+		return (0);
+	if (period >= INT_MAX)
+		return (INT_MAX);
+	return ((int)period);
+}
 
 void	select_node_select_config(t_solver_state *puzzle,
 			t_node_select_config *config)
 {
-	t_node_state	*node;
-	double			raw;
-	double			term1;
-	double			term2;
-	int				rem;
+	double	period;
+	int		i;
 
-	node = puzzle->cur_node;
 	config->criterion = SELECT_MAX;
-	rem = node->domain.remaining_entropy;
-	if (rem < 1)
-		rem = 1;
-	raw = (double)(puzzle->max_entropy - rem) / rem;
-	term1 = g_sel_period_coef_sqrt * dsqrt_approx(raw);
-	term2 = g_sel_period_coef_inv * raw;
-	config->rebuild_period = (int)(term1 + term2);
+	period = selection_period(puzzle);
+	i = -1;
+	while (++i < ORDER_REFRESH_COUNT)
+		config->refresh_period[i] = bound_period(period
+				* get_cache_period_scale(puzzle->size, i));
 	config->selectivity = SELECTIVITY_NONE;
 }

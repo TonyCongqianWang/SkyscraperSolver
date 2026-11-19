@@ -44,8 +44,7 @@ void	sort_node_order_meta(t_node_transition *entries,
 	}
 }
 
-void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
-			t_selection_criterion criterion)
+void	compact_cache_entries(t_node_state *node, t_node_order *cache)
 {
 	int	read_idx;
 	int	write_idx;
@@ -68,6 +67,4 @@ void	compact_and_sort_cache(t_node_state *node, t_node_order *cache,
 		read_idx++;
 	}
 	cache->count = write_idx;
-	recalculate_cache_scores(node, cache);
-	sort_cached_orders(node, cache, criterion);
 }

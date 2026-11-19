@@ -21,7 +21,7 @@ class SweepTests(unittest.TestCase):
     def test_group_membership_and_default_panel_sizes(self):
         for size in (7, 8, 9):
             names = set(sweep.active_parameters(f'math{size}'))
-            self.assertEqual(len(names), 16)
+            self.assertEqual(len(names), 22)
             suffix = '_LE7' if size == 7 else f'_S{size}'
             self.assertTrue(all(n.endswith(suffix) for n in names))
             self.assertEqual(names, get_active_param_names('math', size))

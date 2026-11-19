@@ -26,8 +26,8 @@ static void prepare(t_lookahead_ctx *ctx, t_search_scope *scope)
     t_node_select_config order;
     int i;
 
+    memset(&order, 0, sizeof(order));
     order.criterion = SELECT_MAX;
-    order.rebuild_period = 0;
     order.selectivity = SELECTIVITY_NONE;
     rebuild_cache_if_stale(&puzzle, &order, 1);
     memset(ctx, 0, sizeof(*ctx));
@@ -88,7 +88,7 @@ static void test_complete_passes(void)
     prepare(&ctx, &scope);
     before = *puzzle.cur_node;
     cache = puzzle.cur_node->order_cache;
-    cache->last_build_entropy = puzzle.cur_node->domain.remaining_entropy + 1000000;
+    cache->refresh_entropy[ORDER_COMPACT] = puzzle.cur_node->domain.remaining_entropy + 1000000;
     result = run_tree_search(&puzzle, &config, LOOKAHEAD_POS);
     assert(!result.exhausted && result.solutions_registered == 0);
     assert(puzzle.nodes_visited == (t_node_count)cache->count);
@@ -96,7 +96,7 @@ static void test_complete_passes(void)
     assert(!result.exhausted && result.solutions_registered == 0);
     assert(puzzle.nodes_visited == (t_node_count)(2 * cache->count));
     assert(puzzle.main_nodes_visited == 0 && puzzle.solutions_found == 0);
-    assert(cache->last_build_entropy == before.domain.remaining_entropy + 1000000);
+    assert(cache->refresh_entropy[ORDER_COMPACT] == before.domain.remaining_entropy + 1000000);
     for (i = 0; i < cache->count; ++i)
     {
         assert(cache->meta[i].entropy_pos >= 0);

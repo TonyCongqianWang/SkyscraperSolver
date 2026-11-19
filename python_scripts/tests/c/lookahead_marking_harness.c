@@ -31,8 +31,8 @@ static void prepare(t_lookahead_ctx *ctx, t_search_scope *scope)
 {
     t_node_select_config config;
     int i;
+    memset(&config, 0, sizeof(config));
     config.criterion = SELECT_MAX;
-    config.rebuild_period = 0;
     config.selectivity = SELECTIVITY_NONE;
     rebuild_cache_if_stale(&puzzle, &config, 1);
     enter_lookahead(puzzle.cur_node, ctx, SELECTIVITY_NONE, scope);

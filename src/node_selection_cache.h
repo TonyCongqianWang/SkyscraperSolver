@@ -16,6 +16,13 @@
 # include "puzzle_structs.h"
 # include "strategy_config.h"
 
+/* Independent maintenance, with branch-local copy-on-write. */
+void	isolate_node_order(t_solver_state *puzzle);
+void	refresh_node_order(t_solver_state *puzzle,
+			t_node_select_config *config, int allow_stale);
+void	compact_cache_entries(t_node_state *node, t_node_order *cache);
+void	rescore_cache_entries(t_node_state *node, t_node_order *cache);
+
 /* node_selection_cache.c */
 void	build_node_order(t_solver_state *puzzle, t_node_select_config *config);
 

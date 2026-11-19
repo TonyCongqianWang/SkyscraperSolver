@@ -7,6 +7,27 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from param_metadata import PARAMETER_ALIASES
 
+CACHE_PERIOD_VARS = [
+    ('g_sel_period_scale_le7', 'SEL_PERIOD_SCALE_LE7', 'double'),
+    ('g_sel_period_scale_s8', 'SEL_PERIOD_SCALE_S8', 'double'),
+    ('g_sel_period_scale_s9', 'SEL_PERIOD_SCALE_S9', 'double'),
+    ('g_sel_compact_period_le7', 'SEL_CACHE_COMPACT_PERIOD_LE7', 'double'),
+    ('g_sel_compact_period_s8', 'SEL_CACHE_COMPACT_PERIOD_S8', 'double'),
+    ('g_sel_compact_period_s9', 'SEL_CACHE_COMPACT_PERIOD_S9', 'double'),
+    ('g_sel_rescore_period_le7', 'SEL_CACHE_RESCORE_PERIOD_LE7', 'double'),
+    ('g_sel_rescore_period_s8', 'SEL_CACHE_RESCORE_PERIOD_S8', 'double'),
+    ('g_sel_rescore_period_s9', 'SEL_CACHE_RESCORE_PERIOD_S9', 'double'),
+    ('g_sel_blend_period_le7', 'SEL_CACHE_BLEND_PERIOD_LE7', 'double'),
+    ('g_sel_blend_period_s8', 'SEL_CACHE_BLEND_PERIOD_S8', 'double'),
+    ('g_sel_blend_period_s9', 'SEL_CACHE_BLEND_PERIOD_S9', 'double'),
+    ('g_sel_sort_period_le7', 'SEL_CACHE_SORT_PERIOD_LE7', 'double'),
+    ('g_sel_sort_period_s8', 'SEL_CACHE_SORT_PERIOD_S8', 'double'),
+    ('g_sel_sort_period_s9', 'SEL_CACHE_SORT_PERIOD_S9', 'double'),
+    ('g_sel_line_sort_period_le7', 'SEL_CACHE_LINE_SORT_PERIOD_LE7', 'double'),
+    ('g_sel_line_sort_period_s8', 'SEL_CACHE_LINE_SORT_PERIOD_S8', 'double'),
+    ('g_sel_line_sort_period_s9', 'SEL_CACHE_LINE_SORT_PERIOD_S9', 'double'),
+]
+
 MATH_VARS = [
     ("g_num_set_warp_0_le7", "NUM_SET_WARP_0_LE7", "double"),
     ("g_num_set_warp_1_le7", "NUM_SET_WARP_1_LE7", "double"),
@@ -103,6 +124,7 @@ for base in DOUBLE_BASE_VARS:
         DOUBLE_VARS.append((f"g_{base}_{k}", f"{env_base}_{k.upper()}", "double"))
 
 FILES_CONFIGS = [
+    ("src/params_cache_period.c", CACHE_PERIOD_VARS, "init_cache_period_env"),
     ("src/params_math.c", MATH_VARS, "init_params_math_env"),
     ("src/params_int.c", INT_VARS, "init_params_int_env"),
     ("src/params_double.c", DOUBLE_VARS, "init_params_double_env"),

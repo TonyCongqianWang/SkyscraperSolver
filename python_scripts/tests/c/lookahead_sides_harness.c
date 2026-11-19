@@ -29,12 +29,12 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
     {
         assert(cache->lookahead_build_entropy
             == puzzle.cur_node->domain.remaining_entropy);
-        assert(cache->needs_rebuild == 1);
+        assert(cache->scores_dirty == 1);
     }
     else
     {
         assert(cache->lookahead_build_entropy == -1);
-        assert(cache->needs_rebuild == 0);
+        assert(cache->scores_dirty == 0);
     }
     for (i = 0; i < cache->count; i++)
     {

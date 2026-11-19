@@ -15,49 +15,7 @@
 #include "node_selection_score.h"
 #include "node_selection_transition.h"
 
-static int	find_transition_in_cache(t_node_order *cache, int cell, int val)
-{
-	int	i;
-
-	if (!cache)
-		return (-1);
-	i = 0;
-	while (i < cache->count)
-	{
-		if (cache->entries[i].cell_idx == cell
-			&& cache->entries[i].cell_val == val)
-			return (i);
-		i++;
-	}
-	return (-1);
-}
-
-static void	copy_parent_entropy(t_solver_state *puzzle, t_node_order *cache,
-				int c, int v)
-{
-	int	parent_top;
-	int	old_idx;
-	int	write_idx;
-
-	parent_top = puzzle->order_stack.top_idx - 1;
-	old_idx = -1;
-	if (parent_top >= 0)
-		old_idx = find_transition_in_cache(
-				&puzzle->order_stack.orders[parent_top], c, v);
-	write_idx = cache->count;
-	cache->meta[write_idx].entropy_pos = -1;
-	cache->meta[write_idx].entropy_neg = -1;
-	if (old_idx >= 0)
-	{
-		cache->meta[write_idx].entropy_pos = puzzle->order_stack
-			.orders[parent_top].meta[old_idx].entropy_pos;
-		cache->meta[write_idx].entropy_neg = puzzle->order_stack
-			.orders[parent_top].meta[old_idx].entropy_neg;
-	}
-}
-
-static void	add_transition(t_solver_state *puzzle, t_node_order *cache,
-				int cv)
+static void	add_transition(t_node_order *cache, int cv)
 {
 	t_node_transition	tr;
 	int					c;
@@ -68,10 +26,10 @@ static void	add_transition(t_solver_state *puzzle, t_node_order *cache,
 	v = cv & 0xFF;
 	tr.cell_idx = c;
 	tr.cell_val = v;
-	score_transition_strat(puzzle->cur_node, &tr);
 	cache->entries[cache->count] = tr;
 	cache->meta[cache->count].cached_br_score = tr.score;
-	copy_parent_entropy(puzzle, cache, c, v);
+	cache->meta[cache->count].entropy_pos = -1;
+	cache->meta[cache->count].entropy_neg = -1;
 	cache->count++;
 }
 
@@ -96,7 +54,7 @@ void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 			while (v >= 1)
 			{
 				if (is_valid_value(state, c, v))
-					add_transition(puzzle, cache, (c << 8) | v);
+					add_transition(cache, (c << 8) | v);
 				v--;
 			}
 		}
