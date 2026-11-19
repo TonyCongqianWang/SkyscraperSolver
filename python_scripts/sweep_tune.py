@@ -21,11 +21,16 @@ from symmetry import get_symmetries_from_clue_str
 ROOT = Path(__file__).resolve().parent.parent
 PARAMETERS = {row[0]: row for row in PARAM_METADATA}
 MULTIPLIERS = (-8, -4, -2, -1, 0, 1, 2, 4, 8)
-TIME_WEIGHTS = {8: 0.64, 9: 0.66}
+TIME_WEIGHTS = {7: 0.5, 8: 0.64, 9: 0.66}
+# Mode means retain SPSA weights regardless of sampled panel sizes.
+MODE_WEIGHTS = {7: (1.0, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
+REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
+              8: ((0.1, 5000.0), (1.0, 50000.0)),
+              9: ((0.1, 20000.0), (0.1, 20000.0))}
 
 
 def active_parameters(mode):
-    if mode in ('math8', 'math9'):
+    if mode in ('math7', 'math8', 'math9'):
         names = MATH_PARAM_GROUPS[mode[-1]]
     elif mode == 'effective-depth':
         names = EFFECTIVE_DEPTH_PARAM_NAMES
@@ -39,8 +44,10 @@ def mode_sizes(mode):
 
 
 def affected_sizes(name, sizes):
-    return [s for s in sizes if not name.endswith(('_S8', '_S9'))
-            or name.endswith(f'_S{s}')]
+    for suffix, size in (('_LE7', 7), ('_S8', 8), ('_S9', 9)):
+        if name.endswith(suffix):
+            return [s for s in sizes if s == size]
+    return list(sizes)
 
 
 def default_values():
@@ -74,7 +81,7 @@ def candidate_values(name, values, perturb):
 def sample_panels(datasets, sizes, counts, rng):
     panels = {}
     for size in sizes:
-        for enum in ([False, True] if size == 8 else [False]):
+        for enum in ([False, True] if size in (7, 8) else [False]):
             count = counts[(size, enum)]
             bank = datasets[f's{size}_train']
             if len(bank) < count:
@@ -113,8 +120,8 @@ class PanelObjective:
             if len(times) != len(tasks) or len(nodes) != len(tasks):
                 raise RuntimeError('Incomplete training evaluation')
             time_shift, node_shift = get_sgm_shifts(size, enum)
-            weight = (1.5 if enum else 0.5) if size == 8 else 1.0
-            time_ref, node_ref = ((1.0, 50000.0) if enum else (0.1, 5000.0)) if size == 8 else (0.1, 20000.0)
+            weight = MODE_WEIGHTS[size][enum]
+            time_ref, node_ref = REFERENCES[size][enum]
             results[size]['time'] += weight * mean_log_shifted(times, time_shift, time_ref)
             results[size]['nodes'] += weight * mean_log_shifted(nodes, node_shift, node_ref)
         for size, result in results.items():
@@ -188,7 +195,7 @@ def save_checkpoint(path, values, names, metadata, label):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('math8', 'math9', 'strategy', 'effective-depth'), required=True)
+    parser.add_argument('--mode', choices=('math7', 'math8', 'math9', 'strategy', 'effective-depth'), required=True)
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')
@@ -196,6 +203,8 @@ def parse_args(argv=None):
     parser.add_argument('--no-stdin', dest='stdin', action='store_false', default=True)
     parser.add_argument('--perturb', type=float, default=0.03,
                         help='Normal perturbation fraction; grid uses 0, ±1, ±2, ±4, ±8 widths')
+    parser.add_argument('--s7-single', type=int, default=2048, help='le7 single-solution panel size (math7 only)')
+    parser.add_argument('--s7-enumeration', type=int, default=512, help='le7 enumeration panel size (math7 only)')
     parser.add_argument('--s8-single', type=int, default=1024)
     parser.add_argument('--s8-enumeration', type=int, default=64)
     parser.add_argument('--s9-single', type=int, default=2084)
@@ -205,7 +214,8 @@ def parse_args(argv=None):
     parser.add_argument('--comparison-timeout-penalty', type=float, default=4.0)
     parser.add_argument('--comparison-win-tolerance', type=float, default=0.10)
     args = parser.parse_args(argv)
-    if min(args.max_workers, args.s8_single, args.s8_enumeration, args.s9_single) < 1:
+    if min(args.max_workers, args.s7_single, args.s7_enumeration,
+           args.s8_single, args.s8_enumeration, args.s9_single) < 1:
         parser.error('Workers and panel sizes must be positive')
     if not math.isfinite(args.perturb) or args.perturb <= 0:
         parser.error('Perturbation fraction must be finite and positive')
@@ -233,7 +243,8 @@ def main(argv=None):
         datasets.update(spsa.load_datasets(size))
         if not datasets[f's{size}_val'] and not args.no_compare:
             raise ValueError(f'Missing size {size} validation dataset')
-    counts = {(8, False): args.s8_single, (8, True): args.s8_enumeration,
+    counts = {(7, False): args.s7_single, (7, True): args.s7_enumeration,
+              (8, False): args.s8_single, (8, True): args.s8_enumeration,
               (9, False): args.s9_single}
     panels = sample_panels(datasets, sizes, counts, rng)
     path = output_path(args.mode)
@@ -247,7 +258,9 @@ def main(argv=None):
                     size=sizes[0] if len(sizes) == 1 else None, sizes=sizes,
                     batch_size=None, panels=panels, multipliers=MULTIPLIERS,
                     objective=dict(time_weights=TIME_WEIGHTS, size_weights={s: 1/len(sizes) for s in sizes},
-                                   s8_mode_weights=dict(single=0.5, enumeration=1.5)),
+                                   s8_mode_weights=dict(single=0.5, enumeration=1.5),
+                                   mode_weights={s: dict(single=MODE_WEIGHTS[s][0],
+                                                        enumeration=MODE_WEIGHTS[s][1]) for s in sizes}),
                     comparison_status='skipped' if args.no_compare else 'pending')
     objective = PanelObjective(panels, workers, args.stdin)
     with log_path.open('w') as handle:

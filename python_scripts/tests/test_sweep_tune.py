@@ -19,10 +19,11 @@ from spsa_metrics import get_sgm_shifts, mean_log_shifted
 
 class SweepTests(unittest.TestCase):
     def test_group_membership_and_default_panel_sizes(self):
-        for size in (8, 9):
+        for size in (7, 8, 9):
             names = set(sweep.active_parameters(f'math{size}'))
             self.assertEqual(len(names), 16)
-            self.assertTrue(all(n.endswith(f'_S{size}') for n in names))
+            suffix = '_LE7' if size == 7 else f'_S{size}'
+            self.assertTrue(all(n.endswith(suffix) for n in names))
             self.assertEqual(names, get_active_param_names('math', size))
             self.assertTrue(EFFECTIVE_DEPTH_PARAM_NAMES <= get_active_param_names('strategy', size))
             self.assertEqual(get_active_param_names('all', size),
@@ -30,7 +31,13 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(set(sweep.active_parameters('effective-depth')), EFFECTIVE_DEPTH_PARAM_NAMES)
         self.assertTrue(EFFECTIVE_DEPTH_PARAM_NAMES <= set(sweep.active_parameters('strategy')))
         args = sweep.parse_args(['--mode', 'math9'])
+        self.assertEqual((args.s7_single, args.s7_enumeration), (2048, 512))
         self.assertEqual((args.s8_single, args.s8_enumeration, args.s9_single), (1024, 64, 2084))
+        self.assertEqual(sweep.mode_sizes('math7'), [7])
+        for mode in ('strategy', 'effective-depth'):
+            self.assertEqual(sweep.mode_sizes(mode), [8, 9])
+            self.assertFalse(any(n.endswith('_LE7') for n in sweep.active_parameters(mode)))
+        self.assertEqual(sweep.affected_sizes('NUM_SET_WARP_0_LE7', [7, 8, 9]), [7])
 
     def test_fixed_panels_are_seeded_and_sample_without_replacement(self):
         clues = [' '.join([str(i)] * 32) for i in range(6)]
@@ -49,7 +56,7 @@ class SweepTests(unittest.TestCase):
         panels = dict(single=dict(size=8, enumeration=False, clues=['a'] * 4),
                       enum=dict(size=8, enumeration=True, clues=['b']),
                       nine=dict(size=9, enumeration=False, clues=['c'] * 2))
-        def evaluate(env, tasks, workers, use_stdin):
+        def evaluate(env, tasks, max_workers, use_stdin):
             if tasks[0][0] == '-s 0':
                 return [3.] * len(tasks), [300000] * len(tasks)
             return [0.3] * len(tasks), [30000] * len(tasks)
@@ -78,12 +85,58 @@ class SweepTests(unittest.TestCase):
         self.assertEqual(len(grid), 1)
         self.assertEqual(len(next(iter(grid.values()))), 9)
 
+    def test_le7_panels_preserve_mixed_sizes_and_spsa_objective(self):
+        clues = [' '.join(['1'] * (4 * size)) for size in (5, 6, 7)]
+        panels = sweep.sample_panels({'s7_train': clues}, [7],
+                    {(7, False): 3, (7, True): 2}, random.Random(42))
+        self.assertEqual(set(panels), {'s7_single', 's7_enumeration'})
+        self.assertEqual(sorted(len(c.split()) for c in panels['s7_single']['clues']), [20, 24, 28])
+        def evaluate(env, tasks, max_workers, use_stdin):
+            t, n = (.04, 6000) if tasks[0][0] == '-s 0' else (.01, 500)
+            return [t] * len(tasks), [n] * len(tasks)
+        with patch.object(sweep.spsa, 'evaluate_subset', side_effect=evaluate):
+            result = sweep.PanelObjective(panels, 1, True)(sweep.default_values(), [7])[7]
+            with patch.object(sweep.spsa, 'get_random_symmetry', side_effect=lambda c: c):
+                evaluator = sweep.spsa.make_loss_evaluator_s7({'s7_train': clues}, 2, 1, True, False)
+                time_loss, node_loss, _ = evaluator(sweep.spsa.get_default_theta())
+        self.assertAlmostEqual(result['time'], time_loss)
+        self.assertAlmostEqual(result['nodes'], node_loss)
+        self.assertAlmostEqual(result['score'], .5 * (time_loss + node_loss))
+
+    def test_math7_main_loads_only_le7_and_dispatches_its_comparison(self):
+        (ROOT / 'scratch').mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=ROOT / 'scratch') as folder:
+            path = Path(folder) / 'le7_winner.txt'
+            clues = [' '.join(['1'] * 20), ' '.join(['1'] * 28)]
+            data = dict(s7_train=clues, s7_val=clues)
+            for skip in (True, False):
+                argv = ['--mode', 'math7', '--seed', '42', '--s7-single', '2', '--s7-enumeration', '1']
+                if skip:
+                    argv.append('--no-compare')
+                with patch.object(sweep, 'output_path', return_value=path), \
+                     patch.object(sweep, 'active_parameters', return_value=['GLOBAL_ENTROPY_MULTIPLIER_LE7']), \
+                     patch.object(sweep.spsa, 'load_datasets', return_value=data) as load, \
+                     patch.object(sweep.spsa, 'evaluate_subset', side_effect=lambda env, tasks, *a: ([.01] * len(tasks), [500] * len(tasks))), \
+                     patch.object(sweep.spsa, 'run_post_tuning_comparison') as compare, redirect_stdout(io.StringIO()):
+                    sweep.main(argv)
+                load.assert_called_once_with(7)
+                metadata = json.loads(path.with_suffix('.json').read_text())
+                self.assertTrue(metadata['complete'])
+                self.assertEqual(metadata['sizes'], [7])
+                self.assertEqual(set(metadata['panels']), {'s7_single', 's7_enumeration'})
+                self.assertEqual(set(metadata['datasets']), {'s7_train', 's7_val'})
+                self.assertEqual(compare.call_count, 0 if skip else 1)
+                if not skip:
+                    self.assertEqual(compare.call_args.args[0].size, 7)
+
     def test_sequential_updates_cache_no_move_and_preserve_frozen_parameters(self):
         values = sweep.default_values()
         names = ['GLOBAL_ENTROPY_MULTIPLIER_S9', 'WEIGHT_TOTAL_SCALE_S9']
         targets = {}
         for name in names:
             _, low, high, _, _, scale = sweep.PARAMETERS[name]
+            # Exercise all eight probes independently of tuned defaults near bounds.
+            values[name] = (low + high) / 2
             targets[name] = values[name] + 2 * .03 * scale * (high - low)
         calls = []
         def objective(candidate, sizes):
