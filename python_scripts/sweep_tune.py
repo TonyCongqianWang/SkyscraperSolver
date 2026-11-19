@@ -21,9 +21,9 @@ from symmetry import get_symmetries_from_clue_str
 ROOT = Path(__file__).resolve().parent.parent
 PARAMETERS = {row[0]: row for row in PARAM_METADATA}
 MULTIPLIERS = (-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4)
-TIME_WEIGHTS = {7: 0.5, 8: 0.64, 9: 0.66}
-# Mode means retain SPSA weights regardless of sampled panel sizes.
-MODE_WEIGHTS = {7: (1.0, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
+TIME_WEIGHTS = {7: 0.7, 8: 0.64, 9: 0.66}
+# Mode means use explicit weights regardless of sampled panel sizes.
+MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
 REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
               8: ((0.1, 5000.0), (1.0, 50000.0)),
               9: ((0.1, 20000.0), (0.1, 20000.0))}

@@ -200,8 +200,9 @@ indices and transformed clues are recorded. `--s7-single`, `--s7-enumeration`,
 and `--s9-single` can override these counts; undersized banks fail explicitly.
 
 The evaluator reuses SPSA's shifted-log losses and training timeout scoring.
-The le7 objective retains SPSA's `1.0 × single mean + 1.5 × enumeration mean`
-for each loss, with an equal time/node blend as an uncalibrated starting point.
+The le7 objective uses `0.5 × single mean + 1.5 × enumeration mean` for each
+loss (25% single / 75% enumeration, matching size 8), with a 70% time / 30% node
+blend. Its shifts and reference scales remain the same as SPSA's le7 objective.
 Size 8 retains `0.5 × single mean + 1.5 × enumeration mean` for each loss,
 then combines `0.64 × time loss + 0.36 × node loss`. Size 9 combines
 `0.66 × time loss + 0.34 × node loss`. Shared-parameter sweeps give the two

@@ -104,7 +104,7 @@ class SweepTests(unittest.TestCase):
             grid = sweep.candidate_values(name, values, .03)
             self.assertEqual(min(grid), 1500)
 
-    def test_le7_panels_preserve_mixed_sizes_and_spsa_objective(self):
+    def test_le7_panels_preserve_mixed_sizes_and_match_size8_mode_weights(self):
         clues = [' '.join(['1'] * (4 * size)) for size in (5, 6, 7)]
         panels = sweep.sample_panels({'s7_train': clues}, [7],
                     {(7, False): 3, (7, True): 2}, random.Random(42))
@@ -115,12 +115,14 @@ class SweepTests(unittest.TestCase):
             return [t] * len(tasks), [n] * len(tasks)
         with patch.object(sweep.spsa, 'evaluate_subset', side_effect=evaluate):
             result = sweep.PanelObjective(panels, 1, True)(sweep.default_values(), [7])[7]
-            with patch.object(sweep.spsa, 'get_random_symmetry', side_effect=lambda c: c):
-                evaluator = sweep.spsa.make_loss_evaluator_s7({'s7_train': clues}, 2, 1, True, False)
-                time_loss, node_loss, _ = evaluator(sweep.spsa.get_default_theta())
+        self.assertEqual(sweep.MODE_WEIGHTS[7], sweep.MODE_WEIGHTS[8])
+        time_loss = (.5 * mean_log_shifted([.01], .002, .005)
+                     + 1.5 * mean_log_shifted([.04], .005, .01))
+        node_loss = (.5 * mean_log_shifted([500], 100, 350)
+                     + 1.5 * mean_log_shifted([6000], 1000, 2000))
         self.assertAlmostEqual(result['time'], time_loss)
         self.assertAlmostEqual(result['nodes'], node_loss)
-        self.assertAlmostEqual(result['score'], .5 * (time_loss + node_loss))
+        self.assertAlmostEqual(result['score'], .7 * time_loss + .3 * node_loss)
 
     def test_math7_main_loads_only_le7_and_dispatches_its_comparison(self):
         (ROOT / 'scratch').mkdir(exist_ok=True)
