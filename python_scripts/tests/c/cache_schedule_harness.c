@@ -143,6 +143,20 @@ static void test_line_order_has_its_own_period(void)
 static void test_period_scales_are_size_specific(void)
 {
     t_node_select_config other;
+    double *controls[] = {&g_sel_period_scale_le7, &g_sel_compact_period_le7,
+        &g_sel_rescore_period_le7, &g_sel_blend_period_le7, &g_sel_sort_period_le7,
+        &g_sel_line_sort_period_le7, &g_sel_period_scale_s8, &g_sel_sort_period_s9};
+    double saved[8];
+    int i;
+
+    /* Routing checks use fixtures rather than optimizer-controlled defaults. */
+    for (i = 0; i < 8; i++)
+    {
+        saved[i] = *controls[i];
+        *controls[i] = 1;
+    }
+    g_sel_period_scale_s8 = 2.5;
+    g_sel_sort_period_s9 = 4.5;
     reset();
     puzzle.cur_node->domain.remaining_entropy = puzzle.max_entropy / 2;
     select_node_select_config(&puzzle, &config);
@@ -153,16 +167,16 @@ static void test_period_scales_are_size_specific(void)
     assert(other.refresh_period[ORDER_SORT] >= 3 * other.refresh_period[ORDER_COMPACT]);
     assert(other.refresh_period[ORDER_SORT] < 3 * other.refresh_period[ORDER_COMPACT] + 3);
     assert(other.refresh_period[ORDER_BLEND] == other.refresh_period[ORDER_COMPACT]);
-    assert(get_sel_period_scale(8) == 1);
-    assert(get_cache_period_scale(9, ORDER_SORT) == 1);
+    assert(get_sel_period_scale(8) == 2.5);
+    assert(get_cache_period_scale(9, ORDER_SORT) == 4.5);
     puzzle.cur_node->domain.remaining_entropy = 1;
     g_sel_period_scale_le7 = 16;
     g_sel_sort_period_le7 = 16;
     select_node_select_config(&puzzle, &other);
     assert(other.refresh_period[ORDER_COMPACT] == INT_MAX);
     assert(other.refresh_period[ORDER_SORT] == INT_MAX);
-    g_sel_period_scale_le7 = 1;
-    g_sel_sort_period_le7 = 1;
+    for (i = 0; i < 8; i++)
+        *controls[i] = saved[i];
     free_solution_storage(&puzzle);
 }
 
