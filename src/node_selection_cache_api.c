@@ -23,13 +23,15 @@ int	get_best_from_cache(t_solver_state *puzzle, t_node_transition *next,
 
 	node = puzzle->cur_node;
 	i = 0;
-	while (i < node->order_cache->count)
+	while (i < node->order_cache->items.count)
 	{
-		if (is_cell_empty(node, node->order_cache->entries[i].cell_idx)
-			&& is_valid_value(node, node->order_cache->entries[i].cell_idx,
-				node->order_cache->entries[i].cell_val))
+		if (is_cell_empty(node,
+				node->order_cache->items.entries[i].cell_idx)
+			&& is_valid_value(node,
+				node->order_cache->items.entries[i].cell_idx,
+				node->order_cache->items.entries[i].cell_val))
 		{
-			*next = node->order_cache->entries[i];
+			*next = node->order_cache->items.entries[i];
 			return (1);
 		}
 		i++;

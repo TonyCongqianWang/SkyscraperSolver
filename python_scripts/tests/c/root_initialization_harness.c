@@ -25,7 +25,7 @@ static void	check_initialized(t_solver_state *puzzle, int size)
 	assert(puzzle->cur_node->search_policy.branch.cache_refresh == CACHE_REFRESH_STALE);
 	assert(puzzle->cur_node->search_policy.branch.eligibility == CANDIDATES_VALID);
 	assert(puzzle->order_stack.top_idx == 0);
-	assert(puzzle->order_stack.orders[0].count == 0);
+	assert(puzzle->order_stack.orders[0].items.count == 0);
 		idx = 0;
 	while (idx < 2 * size)
 	{

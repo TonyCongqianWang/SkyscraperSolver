@@ -42,10 +42,10 @@ static void test_one_cell_scores(void)
     score_transition_strat(g_puzzle.cur_node, &tr);
     assert(isfinite(tr.score));
     cache = g_puzzle.cur_node->order_cache;
-    cache->meta[0].entropy_pos = -1;
-    cache->meta[0].entropy_neg = -1;
-    cache->meta[0].cached_br_score = tr.score;
-    cache->lookahead_build_entropy = 0;
+    cache->items.meta[0].entropy_pos = -1;
+    cache->items.meta[0].entropy_neg = -1;
+    cache->items.meta[0].cached_br_score = tr.score;
+    cache->state.lookahead_build_entropy = 0;
     assert(isfinite(calculate_blended_score(g_puzzle.cur_node, cache, 0)));
     free_solution_storage(&g_puzzle);
 }

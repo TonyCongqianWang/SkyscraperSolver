@@ -51,20 +51,21 @@ void	compact_cache_entries(t_node_state *node, t_node_order *cache)
 
 	write_idx = 0;
 	read_idx = 0;
-	while (read_idx < cache->count)
+	while (read_idx < cache->items.count)
 	{
-		if (is_cell_empty(node, cache->entries[read_idx].cell_idx)
-			&& is_valid_value(node, cache->entries[read_idx].cell_idx,
-				cache->entries[read_idx].cell_val))
+		if (is_cell_empty(node, cache->items.entries[read_idx].cell_idx)
+			&& is_valid_value(node, cache->items.entries[read_idx].cell_idx,
+				cache->items.entries[read_idx].cell_val))
 		{
 			if (write_idx != read_idx)
 			{
-				cache->entries[write_idx] = cache->entries[read_idx];
-				cache->meta[write_idx] = cache->meta[read_idx];
+				cache->items.entries[write_idx]
+					= cache->items.entries[read_idx];
+				cache->items.meta[write_idx] = cache->items.meta[read_idx];
 			}
 			write_idx++;
 		}
 		read_idx++;
 	}
-	cache->count = write_idx;
+	cache->items.count = write_idx;
 }

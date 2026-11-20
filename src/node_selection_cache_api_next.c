@@ -48,15 +48,16 @@ static int	get_next_in_pass(t_solver_state *puzzle, t_node_transition *next,
 
 	node = puzzle->cur_node;
 	cache = node->order_cache;
-	while (*i < cache->count)
+	while (*i < cache->items.count)
 	{
-		cell_idx = cache->entries[*i].cell_idx;
+		cell_idx = cache->items.entries[*i].cell_idx;
 		if (is_cell_empty(node, cell_idx)
 			&& get_cell_priority_pass(node, cell_idx, puzzle->size) == pass)
 		{
-			if (is_valid_value(node, cell_idx, cache->entries[*i].cell_val))
+			if (is_valid_value(node, cell_idx,
+					cache->items.entries[*i].cell_val))
 			{
-				*next = cache->entries[*i];
+				*next = cache->items.entries[*i];
 				return (1);
 			}
 		}
@@ -76,8 +77,9 @@ static void	get_resume_pos(t_node_state *node, t_node_transition *next,
 	{
 		*pass_out = get_cell_priority_pass(node, next->cell_idx, node->size);
 		i = 0;
-		while (i < cache->count && (cache->entries[i].cell_idx != next->cell_idx
-				|| cache->entries[i].cell_val != next->cell_val))
+		while (i < cache->items.count
+			&& (cache->items.entries[i].cell_idx != next->cell_idx
+				|| cache->items.entries[i].cell_val != next->cell_val))
 			i++;
 		*i_out = i + 1;
 	}

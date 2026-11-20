@@ -26,11 +26,11 @@ static void	init_lookahead_ctx(t_node_state *node, t_lookahead_ctx *ctx,
 	ctx->curr_pass = 1;
 	ctx->curr_index = 0;
 	i = -1;
-	while (++i < node->order_cache->count)
+	while (++i < node->order_cache->items.count)
 	{
-		ctx->cell_passes[node->order_cache->entries[i].cell_idx]
+		ctx->cell_passes[node->order_cache->items.entries[i].cell_idx]
 			= get_cell_priority_pass(
-				node, node->order_cache->entries[i].cell_idx, size);
+				node, node->order_cache->items.entries[i].cell_idx, size);
 	}
 }
 

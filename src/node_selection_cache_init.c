@@ -23,13 +23,15 @@ void	init_order_stacks(t_solver_state *puzzle)
 	while (++stack_idx < MAX_STACK_DEPTH)
 	{
 		order = &puzzle->order_stack.orders[stack_idx];
-		order->count = 0;
-		order->lookahead_build_entropy = -1;
-		order->scores_dirty = 0;
-		order->build_depth = -1;
+		order->items.count = 0;
+		order->state.lookahead_build_entropy = -1;
+		order->state.scores_dirty = 0;
+		order->state.order_dirty = 0;
+		order->state.order_criterion = SELECT_MAX;
+		order->state.build_depth = -1;
 		i = -1;
 		while (++i < ORDER_REFRESH_COUNT)
-			order->refresh_entropy[i] = -1;
+			order->state.refresh_entropy[i] = -1;
 	}
 }
 
@@ -39,7 +41,7 @@ void	rebuild_cache_if_stale(t_solver_state *puzzle,
 	t_node_order	*cache;
 
 	cache = puzzle->cur_node->order_cache;
-	if (cache->refresh_entropy[ORDER_COMPACT] < 0)
+	if (cache->state.refresh_entropy[ORDER_COMPACT] < 0)
 		build_node_order(puzzle, config);
 	else
 		refresh_node_order(puzzle, config, allow_stale_rebuild);

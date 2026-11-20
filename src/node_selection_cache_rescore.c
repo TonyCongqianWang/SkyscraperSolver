@@ -21,17 +21,17 @@ void	rescore_cache_entries(t_node_state *node, t_node_order *cache)
 	int					i;
 
 	i = -1;
-	while (++i < cache->count)
+	while (++i < cache->items.count)
 	{
-		entry = cache->entries[i];
+		entry = cache->items.entries[i];
 		if (is_cell_empty(node, entry.cell_idx)
 			&& is_valid_value(node, entry.cell_idx, entry.cell_val))
 		{
 			score_transition_strat(node, &entry);
-			cache->meta[i].cached_br_score = entry.score;
-			entry.score = cache->entries[i].score;
-			cache->entries[i] = entry;
+			cache->items.meta[i].cached_br_score = entry.score;
+			entry.score = cache->items.entries[i].score;
+			cache->items.entries[i] = entry;
 		}
 	}
-	cache->scores_dirty = 1;
+	cache->state.scores_dirty = 1;
 }

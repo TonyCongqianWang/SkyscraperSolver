@@ -88,19 +88,19 @@ static void test_complete_passes(void)
     prepare(&ctx, &scope);
     before = *puzzle.cur_node;
     cache = puzzle.cur_node->order_cache;
-    cache->refresh_entropy[ORDER_COMPACT] = puzzle.cur_node->domain.remaining_entropy + 1000000;
+    cache->state.refresh_entropy[ORDER_COMPACT] = puzzle.cur_node->domain.remaining_entropy + 1000000;
     result = run_tree_search(&puzzle, &config, LOOKAHEAD_POS);
     assert(!result.exhausted && result.solutions_registered == 0);
-    assert(puzzle.nodes_visited == (t_node_count)cache->count);
+    assert(puzzle.nodes_visited == (t_node_count)cache->items.count);
     result = run_tree_search(&puzzle, &config, LOOKAHEAD_NEG);
     assert(!result.exhausted && result.solutions_registered == 0);
-    assert(puzzle.nodes_visited == (t_node_count)(2 * cache->count));
+    assert(puzzle.nodes_visited == (t_node_count)(2 * cache->items.count));
     assert(puzzle.main_nodes_visited == 0 && puzzle.solutions_found == 0);
-    assert(cache->refresh_entropy[ORDER_COMPACT] == before.domain.remaining_entropy + 1000000);
-    for (i = 0; i < cache->count; ++i)
+    assert(cache->state.refresh_entropy[ORDER_COMPACT] == before.domain.remaining_entropy + 1000000);
+    for (i = 0; i < cache->items.count; ++i)
     {
-        assert(cache->meta[i].entropy_pos >= 0);
-        assert(cache->meta[i].entropy_neg >= 0);
+        assert(cache->items.meta[i].entropy_pos >= 0);
+        assert(cache->items.meta[i].entropy_neg >= 0);
     }
     assert(memcmp(&before.domain, &puzzle.cur_node->domain, sizeof(before.domain)) == 0);
     ctx.selectivity = SELECTIVITY_VALUE_SET;
@@ -108,7 +108,7 @@ static void test_complete_passes(void)
         ctx.cell_passes[i] = 3;
     result = run_tree_search(&puzzle, &config, LOOKAHEAD_POS);
     assert(!result.exhausted && result.solutions_registered == 0);
-    assert(puzzle.nodes_visited == (t_node_count)(2 * cache->count));
+    assert(puzzle.nodes_visited == (t_node_count)(2 * cache->items.count));
     leave_lookahead(puzzle.cur_node, &scope);
     assert(puzzle.cur_node->search_policy.mode == SEARCH_DFS);
     assert(puzzle.cur_node->lookahead_ctx == NULL);

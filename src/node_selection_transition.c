@@ -33,6 +33,6 @@ void	sync_cache_stacks(t_solver_state *puzzle)
 		idx = puzzle->cur_node->order_cache - stack;
 		puzzle->order_stack.top_idx = idx;
 		while (++idx < MAX_STACK_DEPTH)
-			puzzle->order_stack.orders[idx].build_depth = -1;
+			puzzle->order_stack.orders[idx].state.build_depth = -1;
 	}
 }

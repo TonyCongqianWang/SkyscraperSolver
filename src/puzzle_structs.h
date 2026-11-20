@@ -51,16 +51,28 @@ typedef struct s_transition_meta
 
 # define MAX_TRANSITIONS 729
 
-typedef struct s_node_order
+typedef struct s_order_items
 {
 	t_node_transition	entries[MAX_TRANSITIONS];
 	t_transition_meta	meta[MAX_TRANSITIONS];
 	int					count;
-	int					refresh_entropy[ORDER_REFRESH_COUNT];
-	int					lookahead_build_entropy;
-	int					scores_dirty;
-	int					build_depth;
-}						t_node_order;
+}						t_order_items;
+
+typedef struct s_order_state
+{
+	int						refresh_entropy[ORDER_REFRESH_COUNT];
+	int						lookahead_build_entropy;
+	int						scores_dirty;
+	int						order_dirty;
+	t_selection_criterion	order_criterion;
+	int						build_depth;
+}							t_order_state;
+
+typedef struct s_node_order
+{
+	t_order_items	items;
+	t_order_state	state;
+}					t_node_order;
 
 # define MAX_STACK_DEPTH 128
 

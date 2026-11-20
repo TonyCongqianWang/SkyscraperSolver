@@ -55,30 +55,34 @@ double	calculate_blended_score(t_node_state *node,
 	double	e_neg;
 	double	age_lim;
 
-	if (cache->lookahead_build_entropy < 0)
-		return (cache->meta[idx].cached_br_score);
+	if (cache->state.lookahead_build_entropy < 0)
+		return (cache->items.meta[idx].cached_br_score);
 	get_clamped_splits(node, &s0, &s1);
-	get_normalized_entropies(node, &cache->meta[idx], &e_pos, &e_neg);
+	get_normalized_entropies(node, &cache->items.meta[idx], &e_pos, &e_neg);
 	age_lim = get_lookahead_score_age_limit_ratio(node->solver->size)
 		* node->solver->max_entropy;
-	if (cache->lookahead_build_entropy - node->domain.remaining_entropy
+	if (cache->state.lookahead_build_entropy - node->domain.remaining_entropy
 		>= age_lim || age_lim <= 0.0)
-		return (cache->meta[idx].cached_br_score);
-	age_lim = (age_lim - (cache->lookahead_build_entropy
+		return (cache->items.meta[idx].cached_br_score);
+	age_lim = (age_lim - (cache->state.lookahead_build_entropy
 				- node->domain.remaining_entropy)) / age_lim;
 	return (age_lim * get_lookahead_entropy_weight(node->solver->size)
 		* (1.0 - (s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos
-				* e_neg)) + cache->meta[idx].cached_br_score);
+				* e_neg)) + cache->items.meta[idx].cached_br_score);
 }
 
 void	recalculate_cache_scores(t_node_state *node, t_node_order *cache)
 {
-	int	i;
+	int		i;
+	double	score;
 
 	i = 0;
-	while (i < cache->count)
+	while (i < cache->items.count)
 	{
-		cache->entries[i].score = calculate_blended_score(node, cache, i);
+		score = calculate_blended_score(node, cache, i);
+		if (score != cache->items.entries[i].score)
+			cache->state.order_dirty = 1;
+		cache->items.entries[i].score = score;
 		i++;
 	}
 }

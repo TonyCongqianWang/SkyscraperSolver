@@ -18,12 +18,12 @@
 static int	refresh_due(t_node_state *node, t_node_select_config *config,
 				t_order_refresh operation, int allow_stale)
 {
-	if (operation == ORDER_BLEND && node->order_cache->scores_dirty)
+	if (operation == ORDER_BLEND && node->order_cache->state.scores_dirty)
 		return (1);
 	if (!allow_stale)
 		return (0);
 	return (config->refresh_period[operation] <= 0
-		|| node->order_cache->refresh_entropy[operation]
+		|| node->order_cache->state.refresh_entropy[operation]
 		- node->domain.remaining_entropy > config->refresh_period[operation]);
 }
 
@@ -40,14 +40,13 @@ static void	refresh_part(t_node_state *node, t_order_refresh operation,
 	else if (operation == ORDER_BLEND)
 	{
 		recalculate_cache_scores(node, cache);
-		cache->scores_dirty = 0;
+		cache->state.scores_dirty = 0;
 	}
 	else if (operation == ORDER_SORT)
-		sort_node_order_meta(cache->entries, cache->meta, cache->count,
-			criterion);
+		sort_cached_orders(node, cache, criterion);
 	else if (operation == ORDER_LINES)
 		sort_line_order(node);
-	cache->refresh_entropy[operation] = node->domain.remaining_entropy;
+	cache->state.refresh_entropy[operation] = node->domain.remaining_entropy;
 }
 
 void	refresh_node_order(t_solver_state *puzzle,

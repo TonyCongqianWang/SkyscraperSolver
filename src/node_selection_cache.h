@@ -17,6 +17,9 @@
 # include "strategy_config.h"
 
 /* Independent maintenance, with branch-local copy-on-write. */
+/* Only the retained prefix [0, count) is copied; validity is checked later. */
+void	copy_order_items(t_order_items *target, const t_order_items *source);
+void	copy_node_order(t_node_order *target, const t_node_order *source);
 void	isolate_node_order(t_solver_state *puzzle);
 void	refresh_node_order(t_solver_state *puzzle,
 			t_node_select_config *config, int allow_stale);

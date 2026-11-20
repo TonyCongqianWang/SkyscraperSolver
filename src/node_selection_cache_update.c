@@ -26,11 +26,11 @@ static void	add_transition(t_node_order *cache, int cv)
 	v = cv & 0xFF;
 	tr.cell_idx = c;
 	tr.cell_val = v;
-	cache->entries[cache->count] = tr;
-	cache->meta[cache->count].cached_br_score = tr.score;
-	cache->meta[cache->count].entropy_pos = -1;
-	cache->meta[cache->count].entropy_neg = -1;
-	cache->count++;
+	cache->items.entries[cache->items.count] = tr;
+	cache->items.meta[cache->items.count].cached_br_score = tr.score;
+	cache->items.meta[cache->items.count].entropy_pos = -1;
+	cache->items.meta[cache->items.count].entropy_neg = -1;
+	cache->items.count++;
 }
 
 void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
@@ -43,7 +43,7 @@ void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 
 	(void)config;
 	state = puzzle->cur_node;
-	cache->count = 0;
+	cache->items.count = 0;
 	i = 0;
 	while (i < puzzle->squared_size)
 	{

@@ -24,15 +24,15 @@ void	isolate_node_order(t_solver_state *puzzle)
 
 	n = puzzle->cur_node;
 	parent = n->order_cache;
-	if (parent->build_depth == n->tree.depth)
+	if (parent->state.build_depth == n->tree.depth)
 		return ;
 	idx = parent - puzzle->order_stack.orders;
 	if (++puzzle->order_stack.top_idx >= MAX_STACK_DEPTH)
 		exit(1);
 	n->order_cache = &puzzle->order_stack
 		.orders[puzzle->order_stack.top_idx];
-	*n->order_cache = *parent;
-	n->order_cache->build_depth = n->tree.depth;
+	copy_node_order(n->order_cache, parent);
+	n->order_cache->state.build_depth = n->tree.depth;
 	copy_line_order(puzzle, idx);
 }
 
@@ -45,7 +45,7 @@ void	build_node_order(t_solver_state *puzzle, t_node_select_config *config)
 	isolate_node_order(puzzle);
 	node = puzzle->cur_node;
 	cache = node->order_cache;
-	if (cache->refresh_entropy[ORDER_COMPACT] < 0)
+	if (cache->state.refresh_entropy[ORDER_COMPACT] < 0)
 		collect_cache_entries(puzzle, cache, config);
 	else
 		compact_cache_entries(node, cache);
@@ -53,8 +53,8 @@ void	build_node_order(t_solver_state *puzzle, t_node_select_config *config)
 	recalculate_cache_scores(node, cache);
 	sort_cached_orders(node, cache, config->criterion);
 	sort_line_order(node);
-	cache->scores_dirty = 0;
+	cache->state.scores_dirty = 0;
 	i = -1;
 	while (++i < ORDER_REFRESH_COUNT)
-		cache->refresh_entropy[i] = node->domain.remaining_entropy;
+		cache->state.refresh_entropy[i] = node->domain.remaining_entropy;
 }

@@ -252,9 +252,14 @@ suppressed; it does not force compaction, base rescoring, transition sorting, or
 line sorting. Base-score refresh likewise dirties the blend. The blend period
 controls subsequent score aging, not whether newly recorded results are consumed.
 Sorting retains an independent schedule even after score updates.
+At a scheduled sort, unchanged scores and the same selection criterion reuse
+the current order. The refresh stamp still advances, preserving the schedule.
 
 Within a branch domains shrink, so initial candidate collection is sufficient:
 subsequent compaction removes candidates without scanning for new ones or
 reconciling old metadata. Cache mutations use copy-on-write with matching
 line-order frames, preserving parent cache state across children and probes.
+Cache state is bundled separately from candidate storage: cloning assigns the
+state struct and copies only the retained candidate/metadata prefix. Cloning
+does not compact that prefix; inactive array capacity is left untouched.
 A reused order still checks each candidate's current validity before selecting it.

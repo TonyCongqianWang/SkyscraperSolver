@@ -23,9 +23,10 @@ static int	scan_lookahead_pass(t_solver_state *puzzle, t_node_transition *next,
 	t_node_transition	entry;
 
 	node = puzzle->cur_node;
-	while (node->lookahead_ctx->curr_index < node->order_cache->count)
+	while (node->lookahead_ctx->curr_index < node->order_cache->items.count)
 	{
-		entry = node->order_cache->entries[node->lookahead_ctx->curr_index];
+		entry = node->order_cache->items.entries[
+			node->lookahead_ctx->curr_index];
 		cell_idx = entry.cell_idx;
 		if (is_cell_empty(node, cell_idx)
 			&& node->lookahead_ctx->cell_passes[cell_idx] == pass)
@@ -47,10 +48,10 @@ static int	find_resume_index(t_node_order *cache, t_node_transition *next)
 	int	i;
 
 	i = 0;
-	while (i < cache->count)
+	while (i < cache->items.count)
 	{
-		if (cache->entries[i].cell_idx == next->cell_idx
-			&& cache->entries[i].cell_val == next->cell_val)
+		if (cache->items.entries[i].cell_idx == next->cell_idx
+			&& cache->items.entries[i].cell_val == next->cell_val)
 			return (i);
 		i++;
 	}
@@ -62,9 +63,9 @@ static void	update_resume_index(t_node_state *node, t_node_transition *next)
 	int	i;
 
 	i = node->lookahead_ctx->curr_index;
-	if (i >= 0 && i < node->order_cache->count
-		&& node->order_cache->entries[i].cell_idx == next->cell_idx
-		&& node->order_cache->entries[i].cell_val == next->cell_val)
+	if (i >= 0 && i < node->order_cache->items.count
+		&& node->order_cache->items.entries[i].cell_idx == next->cell_idx
+		&& node->order_cache->items.entries[i].cell_val == next->cell_val)
 		node->lookahead_ctx->curr_index = i + 1;
 	else
 		node->lookahead_ctx->curr_index

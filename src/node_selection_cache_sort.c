@@ -15,6 +15,14 @@
 void	sort_cached_orders(t_node_state *node, t_node_order *cache,
 			t_selection_criterion criterion)
 {
-	sort_node_order_meta(cache->entries, cache->meta, cache->count, criterion);
+	if (cache->state.order_dirty || cache->state.order_criterion != criterion)
+	{
+		if (cache->items.count > 1)
+			sort_node_order_meta(cache->items.entries, cache->items.meta,
+				cache->items.count,
+				criterion);
+		cache->state.order_dirty = 0;
+		cache->state.order_criterion = criterion;
+	}
 	(void)node;
 }

@@ -24,43 +24,43 @@ static void check_side(t_lookahead_pass side, t_selectivity_level selectivity)
     assert(!puzzle.cur_node->domain.is_invalid);
     assert(puzzle.cur_node->lookahead_ctx == NULL);
     cache = puzzle.cur_node->order_cache;
-    assert(cache->count == 64);
+    assert(cache->items.count == 64);
     if (side == LOOKAHEAD_BOTH)
     {
-        assert(cache->lookahead_build_entropy
+        assert(cache->state.lookahead_build_entropy
             == puzzle.cur_node->domain.remaining_entropy);
-        assert(cache->scores_dirty == 1);
+        assert(cache->state.scores_dirty == 1);
     }
     else
     {
-        assert(cache->lookahead_build_entropy == -1);
-        assert(cache->scores_dirty == 0);
+        assert(cache->state.lookahead_build_entropy == -1);
+        assert(cache->state.scores_dirty == 0);
     }
-    for (i = 0; i < cache->count; i++)
+    for (i = 0; i < cache->items.count; i++)
     {
         if (side != LOOKAHEAD_NEG)
-            assert(cache->meta[i].entropy_pos >= 0);
+            assert(cache->items.meta[i].entropy_pos >= 0);
         else
-            assert(cache->meta[i].entropy_pos == -1);
+            assert(cache->items.meta[i].entropy_pos == -1);
         if (side != LOOKAHEAD_POS)
-            assert(cache->meta[i].entropy_neg >= 0);
+            assert(cache->items.meta[i].entropy_neg >= 0);
         else
-            assert(cache->meta[i].entropy_neg == -1);
+            assert(cache->items.meta[i].entropy_neg == -1);
     }
     /* Each separate invocation must also start a fresh traversal. */
-    for (i = 0; i < cache->count; i++)
+    for (i = 0; i < cache->items.count; i++)
     {
-        cache->meta[i].entropy_pos = -1;
-        cache->meta[i].entropy_neg = -1;
+        cache->items.meta[i].entropy_pos = -1;
+        cache->items.meta[i].entropy_neg = -1;
     }
     run_lookahead(&puzzle, &config, selectivity);
     cache = puzzle.cur_node->order_cache;
-    for (i = 0; i < cache->count; i++)
+    for (i = 0; i < cache->items.count; i++)
     {
         if (side != LOOKAHEAD_NEG)
-            assert(cache->meta[i].entropy_pos >= 0);
+            assert(cache->items.meta[i].entropy_pos >= 0);
         if (side != LOOKAHEAD_POS)
-            assert(cache->meta[i].entropy_neg >= 0);
+            assert(cache->items.meta[i].entropy_neg >= 0);
     }
     free_solution_storage(&puzzle);
 }
