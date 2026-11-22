@@ -191,7 +191,8 @@ select a disjoint strategy subsection with `--mode`:
 | `period-tiers` | 10 | Medium and heavy period multipliers |
 | `effective-depth` | 6 | Effective-depth coefficients (existing subsection) |
 
-The seven subsections cover every strategy parameter exactly once. A subsection
+The seven subsections are derived in `param_metadata.py`, alongside the existing
+`effective-depth` group, and cover every strategy parameter exactly once. A subsection
 sweep holds all other parameters at their current defaults; it does not
 automatically inherit winners from another sweep. Apply desired winners before
 starting a later session. Each mode writes its own uniquely named winner files.
