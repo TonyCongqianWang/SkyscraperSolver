@@ -45,6 +45,20 @@ clear-pair held-out ranking was 60.0%; don't deploy as a new permanent
 SPSA objective without confirming actual native batch rankings, especially
 on these solve modes.
 
+## Additional v3 counters and model compatibility
+
+Four previously unrepresented operations are now counted in the solver:
+`rescore_scan` counts every cached score rescan,
+`resume_scan` counts resume-index linear-search comparisons,
+`rel_entropy_value` counts the active values evaluated by relative
+constraint-entropy calculations, and `domain_scan` counts candidate
+values checked while constructing a constraint domain. The instrumentation
+record is now `WORK_COUNTERS v3`. This improves physical coverage but
+**does not establish the reason for size-8 ranking errors** without rerunning
+and inspecting the new fit. The previously committed pooled `v2` model
+is temporarily projected onto the original counters for tuning, explicitly
+ignoring the new four work features; a new `v3` calibration should replace it.
+
 ## Section timing plausibility during calibration
 
 Normal calibration now builds a **third, separately timed instrumented**
@@ -74,6 +88,37 @@ The report also records the fraction of the fitted (non-intercept)
 counter cost represented by the six timed call/volume features; a high
 correlation on a small fraction does **not** validate the whole model.
 
+**Automatic independent check:** once the four fitted models and the compact
+pooled export have been written, calibration automatically invokes the
+standalone micro-timing verification on up to **32 symmetry-distinct puzzles
+per size from the SPSA `*_val.txt` datasets** (not the calibration training
+or held-out observations). It builds a fresh timed baseline executable and
+saves `scratch/work_calibration.micro.json`. This contains the new pooled
+fit's timing plausibility overall and separately by size, plus a
+`split_verification` comparison of timing-derived call/volume cost ratios
+to the pooled coefficients, identifying consistent, disagreeing and
+unresolved splits. The default 2× ratio tolerance is a heuristic, not a
+statistical test. The independent validation data never influence the fit.
+Disable the extra check with `--no-micro-verify` or reduce its size with
+`--micro-puzzles-per-size N`.
+
+To rerun the verification for an existing v3 fit without recalibration:
+
+```sh
+python3 python_scripts/work_micro_probe.py \
+  --model scratch/work_calibration.model.json \
+  --collinearity scratch/work_calibration.collinearity.json \
+  --puzzles-per-size 32 \
+  --output scratch/work_calibration.micro.json
+```
+
+This is an independent **held-out solver-section timing experiment**, not
+an isolated synthetic-loop microbenchmark. It checks whether the candidate
+cost split transfers to unseen puzzles, but does not isolate the runtime
+of every operation independently. It can report `unresolved` where
+timed call and volume counts remain collinear, fitted costs are zero, or
+samples are too short to estimate a ratio.
+
 Each timed section additionally reports a **standalone nonnegative affine
 call/volume fit**, based solely on the CPU samples (not on solver wall
 times). If call counts and sampled work volumes are distinguishable, it
@@ -97,17 +142,10 @@ a sampled invocation (every 64th call) and does not influence model fitting,
 merging or hyperparameter selection. The full calibration report retains
 the timing records alongside the raw work observations.
 
-A standalone diagnostic can still be run:
-
-```sh
-python3 python_scripts/work_micro_probe.py --puzzles-per-size 16
-```
-
-This builds `make INSTRUMENT=1 MICRO_TIMING=1` into a **separate**
-`skyscraper_solver_work_micro` (never the tuning binary). Internal
-begin/end probes sample every 64th cache-entry copy, line entropy scoring
-and constraint-index copy. Output `scratch/work_micro_probe.json`
-uses the same per-section comparison to the pooled regression. The regular instrumented and native builds
+The standalone script invokes the same separately compiled
+`WORK_MICRO_TIMING` instrumentation, with sampled sections every 64th
+cache-entry copy, line entropy score, and constraint-index copy. It uses
+the provided v3 compact model, never the bundled v2 tuning model. The regular instrumented and native builds
 do not measure time per work package; macros remain only in instrumentation
 implementation files and normal LTO can remove empty probe functions.
 
