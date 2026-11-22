@@ -15,6 +15,18 @@
 #include "grid_availability.h"
 #include "node_selection_score.h"
 
+static int	transition_needs_shift(t_node_transition *entry,
+			t_node_transition *key, t_selection_criterion criterion)
+{
+	int	result;
+
+	work_micro_begin(WORK_TRANSITION_COMPARE);
+	result = (criterion == SELECT_MAX && entry->score < key->score)
+		|| (criterion == SELECT_MIN && entry->score > key->score);
+	work_micro_end(WORK_TRANSITION_COMPARE);
+	return (result);
+}
+
 void	sort_node_order_meta(t_node_transition *entries,
 			t_transition_meta *meta, int count,
 			t_selection_criterion criterion)
@@ -30,14 +42,14 @@ void	sort_node_order_meta(t_node_transition *entries,
 		key_entry = entries[i];
 		key_meta = meta[i];
 		j = i - 1;
-		while (j >= 0 && ((criterion == SELECT_MAX
-					&& entries[j].score < key_entry.score)
-				|| (criterion == SELECT_MIN
-					&& entries[j].score > key_entry.score)))
+		while (j >= 0
+			&& transition_needs_shift(&entries[j], &key_entry, criterion))
 		{
 			work_sort_shift(WORK_TRANSITION_COMPARE, WORK_TRANSITION_SHIFT);
+			work_micro_begin(WORK_TRANSITION_SHIFT);
 			entries[j + 1] = entries[j];
 			meta[j + 1] = meta[j];
+			work_micro_end(WORK_TRANSITION_SHIFT);
 			j--;
 		}
 		work_add(WORK_TRANSITION_COMPARE, j >= 0);
