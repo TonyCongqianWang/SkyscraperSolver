@@ -186,48 +186,84 @@ def execute(binary, puzzle, max_solutions, timeout):
     return elapsed, solutions, nodes, counters
 
 
-def fit_nonnegative(samples, names, max_iterations=12000):
-    """Scaled cyclic coordinate descent for least-squares NNLS with intercept."""
-    features = [[float(s["counters"][n]) for n in names] for s in samples]
+def fit_nonnegative(samples, names, max_iterations=4000):
+    """Scaled NNLS with nonnegative intercept, using a cached Gram matrix."""
+    if not samples:
+        raise ValueError("Cannot fit empty training rows")
+    names = list(names)
     targets = [float(s["runtime_median_seconds"]) for s in samples]
-    count = len(targets)
-    scales = [max((row[j] for row in features), default=0.0) or 1.0
-              for j in range(len(names))]
-    x = [[row[j] / scales[j] for j in range(len(names))] for row in features]
-    intercept = max(0.0, min(targets))
-    residuals = [t - intercept for t in targets]
-    coeff = [0.0] * len(names)
+    scales = [max((float(s["counters"][n]) for s in samples), default=0.0)
+              or 1.0 for n in names]
+    x = [[float(s["counters"][n]) / scales[j]
+          for j, n in enumerate(names)] + [1.0]
+         for s in samples]
+    dimension = len(names) + 1
+    gram = [[0.0] * dimension for _ in range(dimension)]
+    rhs = [0.0] * dimension
+    for row, target in zip(x, targets):
+        for j, value in enumerate(row):
+            rhs[j] += value * target
+            for k in range(j + 1):
+                gram[j][k] += value * row[k]
+    for j in range(dimension):
+        for k in range(j):
+            gram[k][j] = gram[j][k]
+    coeff = [0.0] * dimension
+    coeff[-1] = max(0.0, min(targets))
     for iteration in range(max_iterations):
-        max_change = 0.0
-        mean_residual = sum(residuals) / count
-        intercept_new = max(0.0, intercept + mean_residual)
-        shift = intercept_new - intercept
-        residuals = [r - shift for r in residuals]
-        intercept = intercept_new
-        max_change = abs(shift)
-        for j in range(len(names)):
-            norm = sum(row[j] * row[j] for row in x)
-            if norm <= 1e-30:
+        change = 0.0
+        for j in range(dimension):
+            if gram[j][j] <= 1e-30:
                 continue
-            delta = sum(row[j] * r for row, r in zip(x, residuals)) / norm
-            new = max(0.0, coeff[j] + delta)
-            change = new - coeff[j]
-            if change:
-                residuals = [r - change * row[j] for row, r in zip(x, residuals)]
-                coeff[j] = new
-                max_change = max(max_change, abs(change))
-        if max_change < 1e-12:
+            gradient = rhs[j] - sum(gram[j][k] * coeff[k]
+                                    for k in range(dimension))
+            new = max(0.0, coeff[j] + gradient / gram[j][j])
+            change = max(change, abs(new - coeff[j]))
+            coeff[j] = new
+        if change < 1e-12:
             break
-    return {"intercept_seconds": intercept,
+    return {"intercept_seconds": coeff[-1],
             "seconds_per_count": {name: coeff[j] / scales[j]
                                   for j, name in enumerate(names)},
             "iterations": iteration + 1}
 
 
+def fit_with_merging(train, correlation_threshold, dependency_tolerance):
+    """Determine feature groups using training data only, then NNLS fit."""
+    analysis = analyze_and_merge(
+        train, COUNTER_NAMES, correlation_threshold, dependency_tolerance)
+    groups = analysis["groups"]
+    collapsed = [collapse_row(row, groups) for row in train]
+    result = fit_nonnegative(collapsed, [g["name"] for g in groups])
+    result["collinearity"] = analysis
+    return result
+
+
 def predict(row, model):
+    groups = model.get("collinearity", {}).get("groups")
+    if groups is None:
+        counts = row["counters"]
+    else:
+        counts = collapse_row(row, groups)["counters"]
     return model["intercept_seconds"] + sum(
-        row["counters"][name] * weight
+        counts[name] * weight
         for name, weight in model["seconds_per_count"].items())
+
+
+def agreement(rows, pooled, sized):
+    if not rows:
+        return {"samples": 0}
+    a = [predict(r, pooled) for r in rows]
+    b = [predict(r, sized) for r in rows]
+    return {
+        "samples": len(rows),
+        "mean_absolute_prediction_difference_seconds":
+            statistics.mean(abs(x - y) for x, y in zip(a, b)),
+        "mean_signed_difference_seconds":
+            statistics.mean(x - y for x, y in zip(a, b)),
+        "pooled_mae_seconds": diagnostics(rows, pooled)["mae_seconds"],
+        "size_mae_seconds": diagnostics(rows, sized)["mae_seconds"],
+    }
 
 
 def diagnostics(rows, model):
@@ -259,15 +295,48 @@ def diagnostics(rows, model):
 
 
 def split(rows, validation_fraction, seed):
-    # Hold out entire puzzle identities to avoid training on variants of a
-    # validation puzzle; variants still permit ranking within each split.
-    keys = sorted({(r["dataset"], r["line"]) for r in rows})
+    """Split symmetry-unique puzzle IDs separately in each size stratum."""
     rng = random.Random(seed)
-    rng.shuffle(keys)
-    n = min(len(keys) - 1, max(1, round(len(keys) * validation_fraction)))
-    holdout = set(keys[:n]) if len(keys) > 1 else set()
-    return ([r for r in rows if (r["dataset"], r["line"]) not in holdout],
-            [r for r in rows if (r["dataset"], r["line"]) in holdout])
+    validation = set()
+    for size in sorted({r["size"] for r in rows}):
+        keys = sorted({r.get("identity", (r["dataset"], r["line"]))
+                       for r in rows if r["size"] == size}, key=str)
+        rng.shuffle(keys)
+        n = min(len(keys) - 1, max(1, round(len(keys) * validation_fraction)))
+        if len(keys) > 1:
+            validation.update((size, key) for key in keys[:n])
+    def in_holdout(row):
+        return (row["size"], row.get("identity", (row["dataset"], row["line"]))) in validation
+    return ([r for r in rows if not in_holdout(r)],
+            [r for r in rows if in_holdout(r)])
+
+
+def fit_four_models(train, validation, correlation_threshold, dependency_tolerance):
+    """Fit size 7/8/9 independently and a pooled model; compare predictions."""
+    fits = {}
+    for name, size in (("size7", 7), ("size8", 8), ("size9", 9),
+                       ("all", None)):
+        training = [r for r in train if size is None or r["size"] == size]
+        holdout = [r for r in validation if size is None or r["size"] == size]
+        if not training:
+            fits[name] = {"status": "unavailable", "reason": "no training observations"}
+            continue
+        model = fit_with_merging(training, correlation_threshold, dependency_tolerance)
+        fits[name] = {"status": "fitted", "coefficients": model,
+                      "train": diagnostics(training, model),
+                      "validation": diagnostics(holdout, model),
+                      "training_puzzles": len(set(r["identity"] for r in training)),
+                      "validation_puzzles": len(set(r["identity"] for r in holdout))}
+    pooled = fits["all"]
+    comparisons = {}
+    if pooled["status"] == "fitted":
+        for size in (7, 8, 9):
+            name = "size" + str(size)
+            if fits[name]["status"] == "fitted":
+                relevant = [r for r in validation if r["size"] == size]
+                comparisons[name] = agreement(
+                    relevant, pooled["coefficients"], fits[name]["coefficients"])
+    return fits, comparisons
 
 
 def main():
