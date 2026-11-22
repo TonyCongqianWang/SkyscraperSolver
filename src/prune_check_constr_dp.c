@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "prune_check_constr.h"
 
 void	init_dp_tables(t_dp_tables *dp, int size)
@@ -44,6 +45,7 @@ static void	update_pref_cell(t_dp_tables *dp, int k, int m, int x)
 	int	max_v;
 	int	min_v;
 
+	work_add(WORK_PROPAGATE_DP_UPDATE, 1);
 	max_v = dp->pref_max[k][m];
 	min_v = dp->pref_min[k][m];
 	if (x > m)
@@ -92,6 +94,7 @@ void	fill_pref_dp(t_dp_tables *dp, int *cell_domains, int size)
 
 static void	update_suff_cell(t_dp_tables *dp, int k, int m, int x)
 {
+	work_add(WORK_PROPAGATE_DP_UPDATE, 1);
 	if (x > m)
 	{
 		if (dp->suff_max[k + 1][x] != -1

@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_selection_cache.h"
 #include "lookahead_marks.h"
 #include "node_selection_eval.h"
@@ -25,6 +26,7 @@ static int	scan_lookahead_pass(t_solver_state *puzzle, t_node_transition *next,
 	node = puzzle->cur_node;
 	while (node->lookahead_ctx->curr_index < node->order_cache->items.count)
 	{
+		work_add(WORK_LOOKAHEAD_SCAN, 1);
 		entry = node->order_cache->items.entries[
 			node->lookahead_ctx->curr_index];
 		cell_idx = entry.cell_idx;

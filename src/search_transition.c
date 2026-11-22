@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "search_context.h"
 #include "solution_storage.h"
 #include "grid_interface.h"
@@ -35,6 +36,7 @@ void	enter_search_child(t_solver_state *puzzle, t_node_transition next,
 	int				d;
 
 	d = ++puzzle->node_stack_top;
+	work_add(WORK_NODE_COPY, 1);
 	puzzle->node_stack[d] = puzzle->node_stack[d - 1];
 	puzzle->cur_node = &puzzle->node_stack[d];
 	node = puzzle->cur_node;

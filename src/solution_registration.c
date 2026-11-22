@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "solution_storage.h"
 
 int	solution_limit_reached(const t_solver_state *puzzle)
@@ -41,6 +42,7 @@ void	rollback_provisional_solution(t_solver_state *puzzle)
 {
 	if (!puzzle->provisional_solution)
 		return ;
+	work_add(WORK_ROLLBACK, 1);
 	puzzle->solutions_found--;
 	puzzle->provisional_solution = 0;
 }
