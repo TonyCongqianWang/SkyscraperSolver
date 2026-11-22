@@ -24,12 +24,23 @@ python3 python_scripts/calibrate_work.py --output scratch/work_calibration.json
 ```
 
 **Default workload:** 128 symmetry-distinct puzzles for **each** size 7, 8,
-and 9, drawn from `benchmarkSet7_easy500.txt`, with extra
-size-7 puzzles from `benchmarkSet7.txt` to reach 128 unique identities,
-plus `benchmarkSet8.txt` and `benchmarkSet9.txt`. Size 7 runs **full enumeration** (`-s 0`);
-sizes 8 and 9 find the first solution (`-s 1`). These modes are recorded
-per puzzle. The script fails if the default datasets cannot supply 128
-distinct puzzles of each size.
+and 9, sampled exclusively from the **active SPSA training datasets**:
+`puzzle_bank/spsa_datasets/le7_train.txt`,
+`puzzle_bank/spsa_datasets/size8_train.txt`, and
+`puzzle_bank/spsa_datasets/size9_train.txt`. The le7 file contains mixed
+sizes 5–7; this calibration selects size 7 from it. A deterministic
+seeded hash-priority sample spans each **entire** training file rather than
+taking the first 128 lines (the SPSA datasets may be ordered by difficulty).
+Size 7 runs **full enumeration** (`-s 0`); sizes 8 and 9 find the first
+solution (`-s 1`). These modes are recorded per puzzle. The script fails
+if the default datasets cannot supply 128 distinct puzzles of each size.
+
+**Calibration holdout:** the 25% holdout is carved from these sampled
+SPSA **training** puzzles, using symmetry-canonical puzzle identities.
+The separate SPSA `*_val.txt` files are **not** used for coefficient
+fitting, feature grouping, or the calibration holdout; they remain untouched
+for independent SPSA validation. This keeps calibration aligned with the
+actual SPSA training distribution without leaking official validation data.
 
 Parameter perturbations are **enabled by default**: 12 variants per size
 (two perturbations of six cache/score parameters), plus baseline.
