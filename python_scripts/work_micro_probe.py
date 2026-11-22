@@ -10,6 +10,7 @@ It never updates the model or chooses its hyperparameters.
 import argparse
 import hashlib
 import json
+import subprocess
 from pathlib import Path
 import tempfile
 
@@ -17,7 +18,7 @@ from calibrate_work import (
     COUNTER_NAMES, ROOT, build, execute, read_puzzles, puzzle_mode,
 )
 from work_model_export import load_compact_model
-from work_section_plausibility import summarize_plausibility
+from work_section_plausibility import TIMED_SECTIONS, summarize_plausibility, timed_affine_fit
 
 VALIDATION_DATASETS = (
     "puzzle_bank/spsa_datasets/le7_val.txt",
@@ -134,9 +135,72 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30):
     }
 
 
+def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
+    """Time separately repeated real C operations at independently chosen sizes.
+
+    Unlike sampled solver sections, intentionally vary copied entries and
+    scanned line sizes, even where a solver's counter columns are collinear.
+    Compile with the same GCC optimization and LTO flags as calibration.
+    """
+    if repeats < 1000 or rounds < 1:
+        raise ValueError("Invalid controlled microbenchmark repetition count")
+    source = ROOT / "python_scripts" / "work_micro_controlled.c"
+    records = []
+    with tempfile.TemporaryDirectory(prefix="sky_controlled_micro_") as temp:
+        binary = Path(temp) / "controlled_micro"
+        sources = [str(path) for path in sorted((ROOT / "src").glob("*.c"))
+                   if path.name != "main.c"]
+        command = ([cc, "-Wall", "-Wextra", "-Werror", "-O2", "-flto",
+                    "-I", str(ROOT / "src"), str(source)]
+                   + sources + ["-o", str(binary)])
+        subprocess.run(command, check=True, cwd=ROOT, capture_output=True,
+                       text=True)
+        for _ in range(rounds):
+            completed = subprocess.run(
+                [str(binary), str(repeats)], check=True, cwd=ROOT,
+                capture_output=True, text=True, timeout=120)
+            for line in completed.stdout.splitlines():
+                if not line.startswith("WORK_BENCH "):
+                    continue
+                parts = line.split()
+                if len(parts) != 6 or parts[:2] != ["WORK_BENCH", "v1"]:
+                    raise ValueError("Malformed controlled microbenchmark output")
+                values = dict(field.split("=", 1) for field in parts[2:])
+                section = values["section"]
+                if section not in TIMED_SECTIONS:
+                    raise ValueError("Unknown controlled microbench section")
+                records.append({
+                    "section": section,
+                    "calls": int(values["calls"]),
+                    "volume": int(values["volume"]),
+                    "cpu_seconds": float(values["cpu_seconds"]),
+                })
+    by_section = {}
+    for name, volume in TIMED_SECTIONS.items():
+        samples = [r for r in records if r["section"] == name]
+        fitted = timed_affine_fit([
+            (r["cpu_seconds"], r["calls"], r["volume"]) for r in samples])
+        by_section[name] = {
+            "volume_counter": volume,
+            "observations": len(samples),
+            "timed_affine_fit": fitted,
+        }
+    return {
+        "method": "isolated_real_C_operations_with_compiler_barriers",
+        "compile_flags": ["-O2", "-flto"],
+        "repeats_per_point": repeats,
+        "rounds": rounds,
+        "raw_measurements": records,
+        "sections": by_section,
+        "caveat": ("Shared caches, compiler barriers, optimizer choices, "
+                   "and system load can affect standalone timings"),
+    }
+
+
 def run_verification(model_path, collinearity_path, output,
                      puzzles_per_size=32, seed=1072, cc="gcc", timeout=30,
-                     datasets=VALIDATION_DATASETS):
+                     datasets=VALIDATION_DATASETS, controlled_repeats=200000,
+                     controlled_rounds=3):
     model_path = Path(model_path)
     model = load_compact_model(model_path)
     collinearity = json.loads(Path(collinearity_path).read_text(encoding="utf-8"))
@@ -146,6 +210,11 @@ def run_verification(model_path, collinearity_path, output,
     if not puzzles:
         raise ValueError("No validation puzzles for micro verification")
     report = verify_model(model, collinearity, puzzles, cc, timeout)
+    controlled = controlled_microbench(cc, controlled_repeats,
+                                       controlled_rounds)
+    report["controlled_microbenchmark"] = controlled
+    report["controlled_split_verification"] = verify_splits(
+        controlled, collinearity, model)
     report["model_file_sha256"] = hashlib.sha256(model_path.read_bytes()).hexdigest()
     report["puzzle_counts_by_size"] = {
         str(n): sum(p["size"] == n for p in puzzles) for n in (7, 8, 9)
@@ -169,14 +238,19 @@ def main():
     parser.add_argument("--seed", type=int, default=1072)
     parser.add_argument("--cc", default="gcc")
     parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--controlled-repeats", type=int, default=200000)
+    parser.add_argument("--controlled-rounds", type=int, default=3)
     args = parser.parse_args()
     result = run_verification(
         args.model, args.collinearity, args.output,
-        args.puzzles_per_size, args.seed, args.cc, args.timeout)
+        args.puzzles_per_size, args.seed, args.cc, args.timeout,
+        controlled_repeats=args.controlled_repeats,
+        controlled_rounds=args.controlled_rounds)
     print(json.dumps({
         "puzzles": result["puzzle_counts_by_size"],
         "plausibility_score": result["overall"]["plausibility_score"],
         "split_verification": result["split_verification"],
+        "controlled_split_verification": result["controlled_split_verification"],
         "report": str(args.output),
     }, indent=2))
 
