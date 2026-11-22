@@ -81,7 +81,10 @@ class IndependentMicroVerificationTests(unittest.TestCase):
                  patch("work_micro_probe.verify_model", return_value={
                      "overall": {"plausibility_score": 0.9},
                      "split_verification": {"checked_splits": 1},
-                 }) as check:
+                 }) as check, \
+                 patch("work_micro_probe.controlled_microbench", return_value={
+                     "sections": {},
+                 }):
                 result = run_verification(
                     model_path, col_path, target, puzzles_per_size=1)
             check.assert_called_once()
@@ -89,6 +92,19 @@ class IndependentMicroVerificationTests(unittest.TestCase):
             self.assertEqual(json.loads(target.read_text())[
                 "overall"]["plausibility_score"], 0.9)
             self.assertEqual(len(result["model_file_sha256"]), 64)
+            self.assertEqual(result["controlled_split_verification"][
+                "checked_splits"], 0)
+
+    def test_controlled_benchmark_runs_real_operations(self):
+        from work_micro_probe import controlled_microbench
+        report = controlled_microbench(repeats=1000, rounds=1)
+        self.assertEqual(set(report["sections"]), {
+            "cache_pair_copy_call", "line_score", "index_copy_call"})
+        self.assertEqual(len(report["raw_measurements"]), 13)
+        self.assertTrue(all(r["cpu_seconds"] > 0
+                            for r in report["raw_measurements"]))
+        self.assertTrue(report["sections"]["cache_pair_copy_call"][
+            "timed_affine_fit"]["identifiable"])
 
 
 if __name__ == "__main__":
