@@ -58,7 +58,9 @@ def verify_splits(summary, collinearity, model, tolerance=2.0):
             membership[name] = group["name"]
     results = {}
     for call, section in summary["sections"].items():
-        volume = section["volume_counter"]
+        volume = section.get("volume_counter")
+        if volume is None:
+            continue
         fitted = section["timed_affine_fit"]
         call_weight = model["seconds_per_count"][call]
         volume_weight = model["seconds_per_count"][volume]
