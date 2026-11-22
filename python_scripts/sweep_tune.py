@@ -13,7 +13,7 @@ from compare_performance import default_environment
 from comparison_statistics import validate_policy
 from param_metadata import (PARAM_METADATA, PARAM_CONSTRAINTS, PARAMETER_ALIASES,
                             MATH_PARAM_GROUPS, STRATEGY_PARAM_NAMES,
-                            EFFECTIVE_DEPTH_PARAM_NAMES)
+                            STRATEGY_PARAM_GROUPS)
 from spsa_metrics import get_sgm_shifts, mean_log_shifted
 from spsa_run_metadata import build_run_metadata, clue_identity, save_run_metadata
 from symmetry import get_symmetries_from_clue_str
@@ -29,13 +29,16 @@ REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
               9: ((0.1, 20000.0), (0.1, 20000.0))}
 
 
+SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_PARAM_GROUPS)
+
+
 def active_parameters(mode):
     if mode in ('math7', 'math8', 'math9'):
         names = MATH_PARAM_GROUPS[mode[-1]]
-    elif mode == 'effective-depth':
-        names = EFFECTIVE_DEPTH_PARAM_NAMES
-    else:
+    elif mode == 'strategy':
         names = STRATEGY_PARAM_NAMES | MATH_PARAM_GROUPS['all']
+    else:
+        names = STRATEGY_PARAM_GROUPS[mode]
     return sorted(n for n in names if PARAMETERS[n][2] > PARAMETERS[n][1])
 
 
@@ -195,7 +198,7 @@ def save_checkpoint(path, values, names, metadata, label):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('math7', 'math8', 'math9', 'strategy', 'effective-depth'), required=True)
+    parser.add_argument('--mode', choices=SWEEP_MODES, required=True)
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')

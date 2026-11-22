@@ -169,15 +169,34 @@ script instead of SPSA:
 ./setup_and_tune.sh --sweep --mode math9 --seed 42 --no-compare
 ./setup_and_tune.sh --sweep --mode strategy --seed 42
 ./setup_and_tune.sh --sweep --mode effective-depth --seed 42
+./setup_and_tune.sh --sweep --mode prune-line --seed 42
+./setup_and_tune.sh --sweep --mode period-base --seed 42
 ```
 
 `math7`, `math8` and `math9` each tune only the 22 size-specific math parameters (16 existing math parameters
 plus six cache-period controls).
 `math7` uses the mixed sizes-5–7 le7 dataset and tunes only `_LE7` parameters.
-The le7 dataset is loaded only for `math7`; shared strategy and effective-depth
-sweeps continue to evaluate sizes 8 and 9 exclusively.
-`strategy` tunes all 74 shared parameters, including the six effective-depth
-coefficients. `effective-depth` tunes just those six shared coefficients.
+The le7 dataset is loaded only for `math7`; shared strategy sweeps
+(including all the subsections below) evaluate sizes 8 and 9 exclusively.
+`strategy` still tunes all 74 shared parameters. For shorter tuning sessions,
+select a disjoint strategy subsection with `--mode`:
+
+| Sweep mode | Parameters | Scope |
+| --- | ---: | --- |
+| `prune-global` | 5 | Global entropy pruning thresholds |
+| `prune-grid` | 11 | Initial, constraint and lookahead grid-pruning thresholds |
+| `prune-line` | 20 | Constraint and lookahead line thresholds, including their paired bounds |
+| `lookahead-continue` | 10 | Lookahead continuation thresholds and slopes |
+| `period-base` | 12 | Selection and depth-dependent period coefficients |
+| `period-tiers` | 10 | Medium and heavy period multipliers |
+| `effective-depth` | 6 | Effective-depth coefficients (existing subsection) |
+
+The seven subsections are derived in `param_metadata.py`, alongside the existing
+`effective-depth` group, and cover every strategy parameter exactly once. A subsection
+sweep holds all other parameters at their current defaults; it does not
+automatically inherit winners from another sweep. Apply desired winners before
+starting a later session. Each mode writes its own uniquely named winner files.
+
 The SPSA `--tune-mode strategy` also includes effective depth;
 `--tune-mode effective-depth` selects it alone, and `--tune-mode math` selects
 only size-specific math parameters.
