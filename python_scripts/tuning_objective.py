@@ -8,7 +8,8 @@ import math
 
 from spsa_metrics import get_sgm_shifts, mean_log_shifted, shifted_geo_mean
 
-MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
+MODE_WEIGHTS = {7: (1.0, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
+LEGACY_SWEEP_MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
 REFERENCES = {
     7: ((0.005, 350.0), (0.01, 2000.0)),
     8: ((0.1, 5000.0), (1.0, 50000.0)),
@@ -32,12 +33,15 @@ def mode_losses(size, enumeration, predicted_or_wall_times, nodes):
     )
 
 
-def weighted_modes(size, values_by_mode):
+def weighted_modes(size, values_by_mode, objective=DEFAULT_OBJECTIVE,
+                   tuner="spsa"):
     """Aggregate mode losses independently of how many puzzles each has."""
     time_loss = 0.0
     nodes_loss = 0.0
     for enumeration, (times, nodes) in values_by_mode.items():
-        weight = MODE_WEIGHTS[size][int(bool(enumeration))]
+        weights = (LEGACY_SWEEP_MODE_WEIGHTS if
+                   objective == LEGACY and tuner == "sweep" else MODE_WEIGHTS)
+        weight = weights[size][int(bool(enumeration))]
         t, n, _, _ = mode_losses(size, enumeration, times, nodes)
         time_loss += weight * t
         nodes_loss += weight * n
