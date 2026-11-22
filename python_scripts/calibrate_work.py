@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import heapq
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -206,14 +207,25 @@ def execute(binary, puzzle, max_solutions, timeout):
     return elapsed, solutions, nodes, counters
 
 
-def fit_nonnegative(samples, names, max_iterations=4000):
-    """Scaled NNLS with nonnegative intercept, using a cached Gram matrix."""
+def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0):
+    """Nonnegative ridge regression on RMS-scaled counters.
+
+    Minimize mean squared error + ridge_alpha * sum(scaled_weight**2).
+    The intercept is nonnegative but NOT regularized. `ridge_alpha=0`
+    recovers ordinary NNLS. Feature scaling is learned from fitting rows.
+    """
     if not samples:
         raise ValueError("Cannot fit empty training rows")
+    if not math.isfinite(ridge_alpha) or ridge_alpha < 0:
+        raise ValueError("ridge_alpha must be a finite nonnegative number")
     names = list(names)
     targets = [float(s["runtime_median_seconds"]) for s in samples]
-    scales = [max((float(s["counters"][n]) for s in samples), default=0.0)
-              or 1.0 for n in names]
+    count = len(samples)
+    scales = [
+        math.sqrt(sum(float(s["counters"][n]) ** 2
+                      for s in samples) / count) or 1.0
+        for n in names
+    ]
     x = [[float(s["counters"][n]) / scales[j]
           for j, n in enumerate(names)] + [1.0]
          for s in samples]
@@ -228,6 +240,9 @@ def fit_nonnegative(samples, names, max_iterations=4000):
     for j in range(dimension):
         for k in range(j):
             gram[k][j] = gram[j][k]
+    # Sum-of-squares form of a mean-squared-error penalty. Do not penalize b.
+    for j in range(len(names)):
+        gram[j][j] += count * ridge_alpha
     coeff = [0.0] * dimension
     coeff[-1] = max(0.0, min(targets))
     for iteration in range(max_iterations):
@@ -245,16 +260,21 @@ def fit_nonnegative(samples, names, max_iterations=4000):
     return {"intercept_seconds": coeff[-1],
             "seconds_per_count": {name: coeff[j] / scales[j]
                                   for j, name in enumerate(names)},
+            "ridge_alpha": ridge_alpha,
+            "feature_scale": "root_mean_square_of_training_count",
+            "objective": "mean_squared_error + alpha * sum(scaled_coefficients^2)",
             "iterations": iteration + 1}
 
 
-def fit_with_merging(train, correlation_threshold, dependency_tolerance):
+def fit_with_merging(train, correlation_threshold, dependency_tolerance,
+                     ridge_alpha=0.0):
     """Determine feature groups using training data only, then NNLS fit."""
     analysis = analyze_and_merge(
         train, COUNTER_NAMES, correlation_threshold, dependency_tolerance)
     groups = analysis["groups"]
     collapsed = [collapse_row(row, groups) for row in train]
-    result = fit_nonnegative(collapsed, [g["name"] for g in groups])
+    result = fit_nonnegative(collapsed, [g["name"] for g in groups],
+                             ridge_alpha=ridge_alpha)
     result["collinearity"] = analysis
     return result
 
