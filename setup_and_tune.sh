@@ -57,6 +57,7 @@ for argument in "$@"; do
 done
 if [ "$objective" = "work" ]; then
     echo "=== Step 4b: Compiling instrumented tunable solver ==="
+    make INSTRUMENT=1 clean
     make INSTRUMENT=1
 fi
 

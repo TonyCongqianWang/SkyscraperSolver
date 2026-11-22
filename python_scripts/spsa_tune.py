@@ -188,6 +188,8 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
                 break
         return elapsed, nodes
     except Exception:
+        if WORK_MODEL is not None:
+            raise
         return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
 
