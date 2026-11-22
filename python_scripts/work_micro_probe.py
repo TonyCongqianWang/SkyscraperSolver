@@ -136,14 +136,14 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30):
 
 
 def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
-    """Time separately repeated real C operations at independently chosen sizes.
+    """Measure every known merged operation, independently of puzzle traces.
 
-    Unlike sampled solver sections, intentionally vary copied entries and
-    scanned line sizes, even where a solver's counter columns are collinear.
-    Compile with the same GCC optimization and LTO flags as calibration.
+    Affine call/volume pairs use repeated real operations at different sizes.
+    Other counters are isolated with the exact underlying C operation.
+    The output retains each independent round for uncertainty diagnostics.
     """
     if repeats < 1000 or rounds < 1:
-        raise ValueError("Invalid controlled microbenchmark repetition count")
+        raise ValueError("Invalid microbenchmark repetition count")
     source = ROOT / "python_scripts" / "work_micro_controlled.c"
     records = []
     with tempfile.TemporaryDirectory(prefix="sky_controlled_micro_") as temp:
@@ -155,45 +155,62 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                    + sources + ["-o", str(binary)])
         subprocess.run(command, check=True, cwd=ROOT, capture_output=True,
                        text=True)
-        for _ in range(rounds):
+        for round_number in range(rounds):
             completed = subprocess.run(
-                [str(binary), str(repeats)], check=True, cwd=ROOT,
-                capture_output=True, text=True, timeout=120)
+                [str(binary), str(repeats), str(round_number)], check=True,
+                cwd=ROOT, capture_output=True, text=True, timeout=120)
             for line in completed.stdout.splitlines():
                 if not line.startswith("WORK_BENCH "):
                     continue
                 parts = line.split()
-                if len(parts) != 6 or parts[:2] != ["WORK_BENCH", "v1"]:
-                    raise ValueError("Malformed controlled microbenchmark output")
-                values = dict(field.split("=", 1) for field in parts[2:])
-                section = values["section"]
-                if section not in TIMED_SECTIONS:
-                    raise ValueError("Unknown controlled microbench section")
-                records.append({
-                    "section": section,
-                    "calls": int(values["calls"]),
-                    "volume": int(values["volume"]),
-                    "cpu_seconds": float(values["cpu_seconds"]),
-                })
-    by_section = {}
-    for name, volume in TIMED_SECTIONS.items():
-        samples = [r for r in records if r["section"] == name]
-        fitted = timed_affine_fit([
-            (r["cpu_seconds"], r["calls"], r["volume"]) for r in samples])
-        by_section[name] = {
-            "volume_counter": volume,
-            "observations": len(samples),
-            "timed_affine_fit": fitted,
-        }
+                if parts[:2] != ["WORK_BENCH", "v2"]:
+                    raise ValueError("Unknown controlled microbenchmark version")
+                fields = dict(field.split("=", 1) for field in parts[2:])
+                if int(fields["round"]) != round_number:
+                    raise ValueError("Controlled microbenchmark round mismatch")
+                if fields["kind"] == "individual":
+                    records.append({
+                        "kind": "individual", "counter": fields["counter"],
+                        "round": round_number, "units": int(fields["units"]),
+                        "cpu_seconds": float(fields["cpu_seconds"]),
+                    })
+                elif fields["kind"] == "affine":
+                    section = fields["section"]
+                    if section not in TIMED_SECTIONS:
+                        raise ValueError("Unexpected affine benchmark section")
+                    records.append({
+                        "kind": "affine", "section": section,
+                        "round": round_number, "calls": int(fields["calls"]),
+                        "volume": int(fields["volume"]),
+                        "cpu_seconds": float(fields["cpu_seconds"]),
+                    })
+                else:
+                    raise ValueError("Unknown controlled microbenchmark kind")
+    # Require a separate benchmark for EVERY original member of the known
+    # merged counter groups. A newly merged group requires a new C benchmark.
+    from work_micro_constraints import controlled_member_costs
+    costs, diagnostics = controlled_member_costs({
+        "rounds": rounds, "raw_measurements": records})
     return {
-        "method": "isolated_real_C_operations_with_compiler_barriers",
+        "method": "real_C_operations_controlled_independent_repetitions",
         "compile_flags": ["-O2", "-flto"],
         "repeats_per_point": repeats,
         "rounds": rounds,
         "raw_measurements": records,
-        "sections": by_section,
-        "caveat": ("Shared caches, compiler barriers, optimizer choices, "
-                   "and system load can affect standalone timings"),
+        "counter_costs_seconds": costs,
+        "counter_diagnostics": diagnostics,
+        "sections": {
+            name: {
+                "volume_counter": volume, "observations": sum(
+                    r["kind"] == "affine" and r["section"] == name
+                    for r in records),
+                "timed_affine_fit": timed_affine_fit([
+                    (r["cpu_seconds"], r["calls"], r["volume"])
+                    for r in records if r["kind"] == "affine"
+                    and r["section"] == name]),
+            }
+            for name, volume in TIMED_SECTIONS.items()
+        },
     }
 
 
