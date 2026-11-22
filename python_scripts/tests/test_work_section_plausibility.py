@@ -8,7 +8,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import calibrate_work as calibration
 from work_section_plausibility import (
-    TIMED_SECTIONS, expanded_coefficients, parse_micro_lines,
+    TIMED_SECTIONS, ATOMIC_SECTIONS, expanded_coefficients, parse_micro_lines,
     summarize_plausibility,
 )
 
@@ -111,7 +111,8 @@ class WorkSectionPlausibilityTests(unittest.TestCase):
                                         include_micro=True)
             self.assertEqual(plain[1:4], micro[1:4])
             for record in micro[4]:
-                self.assertIn(record["section"], TIMED_SECTIONS)
+                self.assertIn(record["section"],
+                              set(TIMED_SECTIONS) | set(ATOMIC_SECTIONS))
                 self.assertLessEqual(record["samples"], record["calls"])
 
 
