@@ -48,6 +48,7 @@ typedef enum e_work_counter
 	WORK_COUNT
 }	t_work_counter;
 
+void				work_dp_init(int size);
 void				work_reset(void);
 void				work_add(t_work_counter counter, unsigned long long amount);
 void				work_sort_shift(t_work_counter compare,
