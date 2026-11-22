@@ -64,6 +64,64 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(results["checked_splits"], 0)
         self.assertEqual(results["unresolved_splits"], 1)
 
+    def test_exact_postfit_allocation_and_no_refit(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        model = {"seconds_per_count": {"a+b": 10.0},
+                 "collinearity": {"groups": [{"name": "a+b",
+                     "members": ["a", "b"], "aggregation": "sum_raw_counts"}]}}
+        rows = [{"counters": {"a": 2 * i, "b": i}} for i in range(1, 8)]
+        benchmark = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": name, "round": rnd,
+             "units": 10000, "cpu_seconds": 10000 * cost}
+            for rnd in range(3)
+            for name, cost in (("a", 1e-6), ("b", 3e-6))]}
+        result = allocate_merged_coefficients(
+            model, rows, benchmark, {"sections": {}})
+        self.assertAlmostEqual(result["seconds_per_count"]["a"], 6.0)
+        self.assertAlmostEqual(result["seconds_per_count"]["b"], 18.0)
+        self.assertLess(result["groups"][0][
+            "max_abs_training_prediction_drift_seconds"], 1e-12)
+        self.assertEqual(model["seconds_per_count"]["a+b"], 10.0)
+
+    def test_both_timing_sources_contribute_to_split(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        model = {"seconds_per_count": {"index_copy_call+index_copy_pair": 1.0},
+                 "collinearity": {"groups": [{
+                     "name": "index_copy_call+index_copy_pair",
+                     "members": ["index_copy_call", "index_copy_pair"],
+                     "aggregation": "sum_raw_counts"}]}}
+        rows = [{"counters": {"index_copy_call": 10, "index_copy_pair": 80}}]
+        benchmark = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": name, "round": rnd,
+             "units": 10000, "cpu_seconds": cost}
+            for rnd in range(3) for name, cost in (
+                ("index_copy_call", 0.01), ("index_copy_pair", 0.03))]}
+        section = {"sections": {"index_copy_call": {
+            "observations": 20, "timed_affine_fit": {
+                "identifiable": True,
+                "seconds_per_volume_relative_to_call": 9.0}}}}
+        allocated = allocate_merged_coefficients(
+            model, rows, benchmark, section)
+        coeff = allocated["seconds_per_count"]
+        ratio = coeff["index_copy_pair"] / coeff["index_copy_call"]
+        self.assertGreater(ratio, 3.0)
+        self.assertLess(ratio, 9.0)
+        sources = {e["source"] for e in allocated["groups"][0]["timing_evidence"]}
+        self.assertEqual(sources, {"controlled_micro", "solver_section"})
+
+    def test_missing_timing_never_defaults_to_equal_weights(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        model = {"seconds_per_count": {"a+b": 1.0},
+                 "collinearity": {"groups": [{
+                     "name": "a+b", "members": ["a", "b"],
+                     "aggregation": "sum_raw_counts"}]}}
+        rows = [{"counters": {"a": 1, "b": 1}}]
+        bench = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": "a", "round": i,
+             "units": 1000, "cpu_seconds": 0.002} for i in range(3)]}
+        with self.assertRaisesRegex(ValueError, "Timing evidence"):
+            allocate_merged_coefficients(model, rows, bench, {"sections": {}})
+
     def test_automatic_verification_writes_independent_report(self):
         with tempfile.TemporaryDirectory() as directory:
             folder = Path(directory)
@@ -100,7 +158,8 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         report = controlled_microbench(repeats=1000, rounds=1)
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call"})
-        self.assertEqual(len(report["raw_measurements"]), 13)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 10)
+        self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 12)
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]))
         self.assertTrue(report["sections"]["cache_pair_copy_call"][
