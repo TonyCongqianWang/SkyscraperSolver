@@ -10,11 +10,9 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# define _POSIX_C_SOURCE 200809L
 # include "work_instrumentation.h"
 
 #if defined(WORK_INSTRUMENTED) && defined(WORK_MICRO_TIMING)
-# include <time.h>
 # include <stdio.h>
 
 static unsigned long long	g_starts[WORK_COUNT];
@@ -25,18 +23,7 @@ static unsigned long long	g_vol_starts[WORK_COUNT];
 static unsigned long long	g_volumes[WORK_COUNT];
 static int					g_active[WORK_COUNT];
 
-static unsigned long long	work_micro_now(void)
-{
-# if defined(CLOCK_PROCESS_CPUTIME_ID)
-	struct timespec	now;
-
-	if (!clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now))
-		return ((unsigned long long)now.tv_sec * 1000000000ULL
-			+ (unsigned long long)now.tv_nsec);
-# endif
-	return ((unsigned long long)clock() * 1000000000ULL
-		/ CLOCKS_PER_SEC);
-}
+unsigned long long	work_micro_now(void);
 
 static t_work_counter	work_micro_volume(t_work_counter counter)
 {
