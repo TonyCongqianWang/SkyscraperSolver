@@ -119,7 +119,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         bench = {"rounds": 3, "raw_measurements": [
             {"kind": "individual", "counter": "a", "round": i,
              "units": 1000, "cpu_seconds": 0.002} for i in range(3)]}
-        with self.assertRaisesRegex(ValueError, "Timing evidence"):
+        with self.assertRaisesRegex(ValueError, "Controlled microbenchmark"):
             allocate_merged_coefficients(model, rows, bench, {"sections": {}})
 
     def test_automatic_verification_writes_independent_report(self):
