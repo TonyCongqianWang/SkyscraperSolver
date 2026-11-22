@@ -171,7 +171,7 @@ def export_collinearity(report, target, source_file=None, created_at=None):
     target = Path(target)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, sort_keys=True, indent=2,
-                                 allow_nan=False) + "\\n", encoding="utf-8")
+                                 allow_nan=False) + "\n", encoding="utf-8")
     return result
 
 
