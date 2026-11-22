@@ -20,6 +20,9 @@ if SCRIPT_DIR not in sys.path:
 from symmetry import get_random_symmetry, canonize_clue_str as canonize
 from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
 from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
+from tuning_objective import (WORK, LEGACY, DEFAULT_OBJECTIVE, MODE_WEIGHTS,
+                              mode_losses, spsa_components)
+from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
 from spsa_run_metadata import build_run_metadata, save_run_metadata
 
 # Training timeout scoring matches the default post-tuning PAR-4 policy.
@@ -43,6 +46,27 @@ def resolve_binary_path(path):
 
 
 BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
+BIN_NATIVE = BIN_CURR
+ACTIVE_OBJECTIVE = LEGACY  # direct library callers retain the existing API
+WORK_MODEL = None
+WORK_MODEL_SHA256 = None
+
+
+def configure_objective(args):
+    """Select the tuner binary and validate its calibration before tuning."""
+    global BIN_CURR, ACTIVE_OBJECTIVE, WORK_MODEL, WORK_MODEL_SHA256
+    ACTIVE_OBJECTIVE = getattr(args, "objective", LEGACY)
+    if ACTIVE_OBJECTIVE == WORK:
+        WORK_MODEL, WORK_MODEL_SHA256 = load_model(
+            getattr(args, "work_model", DEFAULT_MODEL))
+        BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_work"))
+    elif ACTIVE_OBJECTIVE == LEGACY:
+        WORK_MODEL = WORK_MODEL_SHA256 = None
+        BIN_CURR = BIN_NATIVE
+    else:
+        raise ValueError("Unknown tuning objective")
+
+
 BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
 
 SPSA_DATASET_DIR = Path(ROOT_DIR) / 'puzzle_bank' / 'spsa_datasets'
@@ -149,7 +173,13 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
 
         elapsed = time.perf_counter() - t_start
         if proc.returncode != 0:
+            if WORK_MODEL is not None:
+                raise RuntimeError(f"Instrumented solver failed: {stderr[:200]}")
             return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
+
+        if WORK_MODEL is not None:
+            predicted, measured_nodes, _ = parse_record(stdout.splitlines(), WORK_MODEL)
+            return predicted, measured_nodes
 
         nodes = 100000
         for line in stdout.splitlines():
@@ -232,11 +262,15 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
                 group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
                 continue
 
-            node_count = 100000
-            for line in lines:
-                if line.startswith("Nodes visited:"):
-                    node_count = int(line.split(":")[1].strip())
-                    break
+            if WORK_MODEL is not None:
+                predicted, node_count, _ = parse_record(lines, WORK_MODEL)
+                elapsed = predicted
+            else:
+                node_count = 100000
+                for line in lines:
+                    if line.startswith("Nodes visited:"):
+                        node_count = int(line.split(":")[1].strip())
+                        break
             group_results.append((idx, elapsed, node_count))
     finally:
         try:
@@ -371,10 +405,10 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
             sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
             sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
-            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
+            loss_time = 1.0 * mode_losses(7, True, t_enum, n_enum)[0]
+            loss_nodes = 1.0 * mode_losses(7, True, t_enum, n_enum)[1]
 
-            return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
+            return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
         return get_loss
 
     sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
@@ -393,10 +427,10 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
         sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-        loss_time = 1.0 * mean_log_shifted(t_single, single_time_shift, ref_scale_s7_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
-        loss_nodes = 1.0 * mean_log_shifted(n_single, single_node_shift, ref_scale_s7_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
+        loss_time = 1.0 * mode_losses(7, False, t_single, n_single)[0] + 1.5 * mode_losses(7, True, t_enum, n_enum)[0]
+        loss_nodes = 1.0 * mode_losses(7, False, t_single, n_single)[1] + 1.5 * mode_losses(7, True, t_enum, n_enum)[1]
 
-        return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
+        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
@@ -422,10 +456,10 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
             sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
             sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
-            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
+            loss_time = 1.0 * mode_losses(8, True, t_enum, n_enum)[0]
+            loss_nodes = 1.0 * mode_losses(8, True, t_enum, n_enum)[1]
 
-            return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
+            return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
         return get_loss
 
     sampled_single = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
@@ -445,10 +479,10 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
         sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-        loss_time = 0.5 * mean_log_shifted(t_single, single_time_shift, ref_scale_s8_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
-        loss_nodes = 0.5 * mean_log_shifted(n_single, single_node_shift, ref_scale_s8_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
+        loss_time = 0.5 * mode_losses(8, False, t_single, n_single)[0] + 1.5 * mode_losses(8, True, t_enum, n_enum)[0]
+        loss_nodes = 0.5 * mode_losses(8, False, t_single, n_single)[1] + 1.5 * mode_losses(8, True, t_enum, n_enum)[1]
 
-        return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
+        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
@@ -471,10 +505,10 @@ def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumera
         sgm_t = shifted_geo_mean(t_list, single_time_shift)
         sgm_n = shifted_geo_mean(n_list, single_node_shift)
 
-        loss_time = 1.0 * mean_log_shifted(t_list, single_time_shift, ref_scale_s9_time)
-        loss_nodes = 1.0 * mean_log_shifted(n_list, single_node_shift, ref_scale_s9_nodes)
+        loss_time = 1.0 * mode_losses(9, False, t_list, n_list)[0]
+        loss_nodes = 1.0 * mode_losses(9, False, t_list, n_list)[1]
 
-        return loss_time, loss_nodes, (sgm_t, sgm_n, sgm_t, sgm_n)
+        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t, sgm_n, sgm_t, sgm_n))
     return get_loss
 
 
@@ -627,8 +661,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     import compare_performance
     train_reports = compare_performance.run_comparison(
         validation_tasks=train_tasks,
-        baseline_bin=BIN_CURR,
-        tunable_bin=BIN_CURR,
+        baseline_bin=BIN_NATIVE,
+        tunable_bin=BIN_NATIVE,
         tuned_env=get_env_for_theta(theta_final),
         title="TRAINING SET PERFORMANCE COMPARISON (first 10%)",
         log_path=train_log_path,
@@ -641,8 +675,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     )
     val_reports = compare_performance.run_comparison(
         validation_tasks=validation_tasks,
-        baseline_bin=BIN_CURR,
-        tunable_bin=BIN_CURR,
+        baseline_bin=BIN_NATIVE,
+        tunable_bin=BIN_NATIVE,
         tuned_env=get_env_for_theta(theta_final),
         title="VALIDATION SET PERFORMANCE COMPARISON",
         log_path=val_log_path,
@@ -702,6 +736,10 @@ def run_spsa(args, datasets, max_workers):
     RUN_METADATA = build_run_metadata(
         args, datasets, PARAM_METADATA, active_names,
         max_workers, initial_values)
+    RUN_METADATA['objective_mode'] = ACTIVE_OBJECTIVE
+    RUN_METADATA['work_model_sha256'] = WORK_MODEL_SHA256
+    RUN_METADATA['work_model_source'] = (str(getattr(args, 'work_model', DEFAULT_MODEL))
+                                          if WORK_MODEL is not None else None)
     RUN_METADATA['sgm_shifts'] = {
         mode: dict(zip(('time', 'nodes'), get_sgm_shifts(args.size, enumeration)))
         for mode, enumeration in [('single', False), ('enumeration', True)]}
@@ -856,6 +894,11 @@ def run_spsa(args, datasets, max_workers):
 def parse_args():
     parser = argparse.ArgumentParser(description="Run SPSA tuning for a solver size group.")
     parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver size group to optimize (7 uses sizes 5–7)")
+    parser.add_argument("--nodes-time", action="store_const", const=LEGACY,
+                        dest="objective", help="Use the old nodes + wall-time objective")
+    parser.set_defaults(objective=DEFAULT_OBJECTIVE)
+    parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
+                        help="Compact pooled v2 work calibration file")
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
@@ -907,7 +950,9 @@ def main():
         LOG_FILE_HANDLE = open(args.log, "w")
 
     log_print(f"SPSA random seed: {args.seed}")
+    configure_objective(args)
     log_print(f"Starting SPSA optimization for size {args.size} (iterations: {args.iterations})")
+    log_print(f"Training objective: {ACTIVE_OBJECTIVE} (binary={BIN_CURR})")
 
     datasets = load_datasets(args.size)
     theta_final = run_spsa(args, datasets, max_workers)
