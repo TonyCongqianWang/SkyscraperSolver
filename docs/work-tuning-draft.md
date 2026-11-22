@@ -59,120 +59,112 @@ and inspecting the new fit. The previously committed pooled `v2` model
 is temporarily projected onto the original counters for tuning, explicitly
 ignoring the new four work features; a new `v3` calibration should replace it.
 
-## Section timing plausibility during calibration
+## One pooled regression fit, followed by measured unmerging
 
-Normal calibration now builds a **third, separately timed instrumented**
-binary for each configuration and executes each puzzle once more. This is
-enabled by default:
+The calibration computes collinearity groups and runs **one pooled nonnegative
+regression** on summed group counters. The grouped regression coefficients,
+hyperparameters, and validation scores remain exactly as fitted. Afterward:
+
+1. The first calibration phase has already collected native runtimes, all
+   raw work counters, and sampled section CPU timings. For merged counter
+   members, the section measurements provide initial relative-cost evidence.
+2. A controlled benchmark runs **for every counter in the known merged
+   groups**, independently of whether its section timings are available.
+   Its repeated C operations include grid/setup checks, cache builds and
+   copies, cache compaction checks/moves, line and transition
+   comparisons/shifts, and index-copy overhead/volume. It uses the real
+   solver structures, compiler optimizations, and independent timing rounds.
+3. A log-ratio graph combines the measured evidence. Controlled measurements
+   are weighted more heavily than the short, overhead-sensitive CPU section
+   measurements; both contribute where available.
+4. **No refit:** the merged regression coefficient is algebraically allocated
+   to its members using the measured relative costs. The allocation is
+   normalized to preserve the group's *total fitted contribution on training
+   observations*. For exact collinearity it preserves each training
+   prediction; for approximate collinearity, per-puzzle predictions can
+   drift. The report quantifies this drift and evaluates the final allocated
+   coefficients on held-out puzzles.
+5. The compact `work_calibration.model.json` contains **the individually
+   allocated coefficients** (not guessed equal weights), while keeping
+   original merged coefficients, relative-cost evidence and allocation
+   metadata. The separate collinearity JSON also includes these details.
+
+If the benchmark cannot measure a member reliably, the workflow **fails
+closed rather than inventing an equal-cost ratio or exporting a misleading
+v3 model**. The controlled C harness must be extended if a new correlation
+group contains operations it does not yet benchmark. This requirement is
+intentional. Constant/unexcited counters remain excluded from fitting,
+with explicit zero weights rather than invented independent costs.
+
+### Run the complete calibration
 
 ```sh
 python3 python_scripts/calibrate_work.py
-# Smoke test: normal plus micro timing, no parameter perturbation
-python3 python_scripts/calibrate_work.py --puzzles-per-size 4 --no-perturb \
-  --native-repeats 3 --instrumented-repeats 2
-# Turn off the extra timed run when only refitting is needed
-python3 python_scripts/calibrate_work.py --no-section-timing
 ```
 
-Its `section_timing_plausibility` report contains **train** and
-**held-out validation** results, using the same already-fitted pooled
-coefficients in both. The per-section results include Pearson correlation
-between measured section CPU totals and predicted costs, measured/predicted
-ratios, sample counts, and how many observations were unresolved because
-timings were zero or there were too few samples. The report also evaluates
-the pooled model's timing plausibility separately on held-out size-7,
-size-8, and size-9 puzzles, making it easier to isolate the size-8 gap. The overall
-`plausibility_score` is the average of measurable per-section correlations,
-with explicit coverage. If none are measurable it is `null` (not zero).
-The report also records the fraction of the fitted (non-intercept)
-counter cost represented by the six timed call/volume features; a high
-correlation on a small fraction does **not** validate the whole model.
+The script creates:
 
-**Automatic independent check:** once the four fitted models and the compact
-pooled export have been written, calibration automatically invokes the
-standalone micro-timing verification on up to **32 symmetry-distinct puzzles
-per size from the SPSA `*_val.txt` datasets** (not the calibration training
-or held-out observations). It builds a fresh timed baseline executable and
-saves `scratch/work_calibration.micro.json`. This contains the new pooled
-fit's timing plausibility overall and separately by size, plus a
-`split_verification` comparison of timing-derived call/volume cost ratios
-to the pooled coefficients, identifying consistent, disagreeing and
-unresolved splits. The default 2× ratio tolerance is a heuristic, not a
-statistical test. The independent validation data never influence the fit.
-Disable the extra check with `--no-micro-verify` or reduce its size with
-`--micro-puzzles-per-size N`.
+- `scratch/work_calibration.raw.jsonl`: native, counter and section timing
+  observations, written incrementally
+- `scratch/work_calibration.json`: all four regression fits, group membership,
+  micro timings, post-fit coefficient allocation, and held-out diagnostics
+- `scratch/work_calibration.model.json`: **pooled allocated counter weights**
+  for the tuning objectives
+- `scratch/work_calibration.collinearity.json`: merged-group membership,
+  timing-derived ratios, per-member coefficients, and evidence
+- `scratch/work_calibration.micro.json`: controlled raw timings plus a
+  further **independent** test of the allocated ratios on up to 32 fresh
+  SPSA validation puzzles per size
 
-To rerun the verification for an existing v3 fit without recalibration:
+The ordinary calibration automatically runs the controlled benchmark
+**before export** and independent solver-section plausibility checks
+after export. Use `--micro-repeats` and `--micro-rounds` to increase
+measurement stability; at least three independent rounds are required.
+`--no-micro-verify` skips only the *additional* validation-set check,
+not the controlled benchmark needed to split merged coefficients.
+`--no-section-timing` omits the sampled solver sections, but controlled
+measurements still resolve merged groups.
+
+For an inexpensive functional smoke run (the fitted model will not be
+scientifically meaningful):
+
+```sh
+python3 python_scripts/calibrate_work.py --puzzles-per-size 4 \
+  --native-repeats 3 --instrumented-repeats 2 --no-perturb \
+  --no-micro-verify
+```
+
+The optional controlled/validation-set check can be repeated without
+rerunning calibration:
 
 ```sh
 python3 python_scripts/work_micro_probe.py \
   --model scratch/work_calibration.model.json \
   --collinearity scratch/work_calibration.collinearity.json \
-  --puzzles-per-size 32 \
   --output scratch/work_calibration.micro.json
 ```
 
-This automatically performs **two complementary checks**. First, it
-measures sampled CPU section timings on fresh SPSA validation puzzles;
-this tests whether split candidates transfer to unseen real solver runs.
-Second, it compiles a controlled C benchmark using the *actual solver*
-cache-entry copy, index copy and entropy functions with `-O2 -flto`.
-It repeats each operation 200,000 times per point across 3 rounds,
-deliberately varying cache-entry counts (4–256) and active line lengths
-(7–9). It records raw time measurements and independently fits the
-fixed-call and per-unit volume cost for each operation. Large repeated
-batches amortize the timing-call cost.
+### Interpreting timing evidence and plausibility
 
-The report stores `controlled_microbenchmark` and
-`controlled_split_verification` separately from the held-out
-`split_verification`, with verdicts `consistent`, `disagrees` or
-`unresolved`. A disagreement means the measured cost ratios do not
-support the provisional pooled fit on this machine; calibration **does
-not automatically rewrite coefficients**. Both experiments may report
-`unresolved` if measured features remain collinear or costs are zero.
-The controlled benchmark can probe independent call/volume variation
-that does not occur in natural solver traces, but it only covers three
-work packages and cannot resolve all merged counter groups.
+The detailed report contains `section_timing_plausibility` for training,
+held-out puzzles, and each size. Its Pearson score measures the agreement
+between measured and predicted time for the **same sampled operations**.
+Coverage and the fraction of modeled work that was actually timed must be
+considered alongside the correlation: a strong score on a narrow group of
+operations does not validate the entire model.
 
-To shorten the controlled run use `--controlled-repeats 10000
---controlled-rounds 1` with the standalone script.
+The end-of-calibration independent check compares measured per-member
+cost ratios with the deployed allocated coefficients. An agreement is
+supporting plausibility evidence, not proof of universal hardware costs.
+The controlled benchmark is a separate C executable with long timed
+intervals, while section timing samples short real solver operations.
+Their cost estimates can disagree due to caching, compiler effects,
+input distributions and timing overhead; all evidence and differences
+are retained. No regression is repeated or tuning coefficients silently
+reoptimized after allocation.
 
-Each timed section additionally reports a **standalone nonnegative affine
-call/volume fit**, based solely on the CPU samples (not on solver wall
-times). If call counts and sampled work volumes are distinguishable, it
-reports measured seconds per call, seconds per work unit, and their ratio.
-If sampled features are collinear or timing is insufficient, the split is
-marked unidentifiable. This lets you compare a micro-derived split with the
-pooled regression's provisional equal-cost merged groups. The two measured
-CPU coefficients are diagnostics and never overwrite calibration weights.
-
-**Scope:** these checks currently cover only cache-entry copying, line
-entropy scoring, and index copying. They do not establish ratios for all
-merged counter groups. Timing a complete group containing nested or jointly
-executed operations does not by itself identify each member's independent
-cost.
-
-For each selected package, the predicted section work is calculated from
-its **actual sampled invocation count and its actual sampled volume**
-using its two fitted coefficients. The timed version uses the process
-CPU-time clock with nanosecond conversion. Timing begins and ends around
-a sampled invocation (every 64th call) and does not influence model fitting,
-merging or hyperparameter selection. The full calibration report retains
-the timing records alongside the raw work observations.
-
-The standalone script invokes the same separately compiled
-`WORK_MICRO_TIMING` instrumentation, with sampled sections every 64th
-cache-entry copy, line entropy score, and constraint-index copy. It uses
-the provided v3 compact model, never the bundled v2 tuning model. The regular instrumented and native builds
-do not measure time per work package; macros remain only in instrumentation
-implementation files and normal LTO can remove empty probe functions.
-
-**These are observational, not controlled microbenchmarks.** A CPU-time clock query pair can cost as much as the operation it surrounds. Correlated operations
-are not disentangled by timing only one of their jointly executed sites.
-CPU clock granularity, sampling bias, compiler optimizations and machine
-architecture limit interpretation. The micro timing code should be reviewed carefully before merge and
-kept as a separately compiled diagnostic capability, not enabled in the
-normal solver or work-based tuner.
-Only change calibration coefficients with independently validated,
-held-out improvements; don't rewrite the bundled model from these timings
-alone.
+**Important:** the newly added schema-v3 work features require a new
+calibration. The bundled v2 model may still be used temporarily for
+tuning through an explicitly limited compatibility projection, but it
+does not include the added scan counters. The v3 model's real held-out
+ranking performance is not known until the expensive run completes.
