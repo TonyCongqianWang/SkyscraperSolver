@@ -79,7 +79,10 @@ all native timings/medians, SHA256 dataset hashes, build provenance, per-fit
 coefficients, work predictions and held-out diagnostics.
 
 On successful completion the script **also exports a compact pooled model** to
-`scratch/work_calibration.model.json` (or `--model-output PATH`). It has
+`scratch/work_calibration.model.json` (or `--model-output PATH`) and a
+separate pooled collinearity report to
+`scratch/work_calibration.collinearity.json`
+(or `--collinearity-output PATH`). It has
 only a versioned schema, raw-counter weights, intercept, creation timestamp,
 dataset hashes, compiler/commit, selected ridge and contrast penalties, and
 key held-out scores. No raw observations, individual run timings, tuning
@@ -93,8 +96,21 @@ To export an already generated detailed calibration file without recalibrating:
 ```sh
 python3 python_scripts/work_model_export.py \
     --input scratch/work_calibration.json \
-    --output scratch/work_calibration.model.json
+    --output scratch/work_calibration.model.json \
+    --collinearity-output scratch/work_calibration.collinearity.json
 ```
+
+The collinearity file is intentionally **pooled-only**. It includes
+counter schema and raw names, all merged groups with original member
+names and provisional fitted group weights, pairwise correlations with
+their Pearson coefficients, ordered merge decisions (including
+multivariate dependencies), rank diagnostics before/after merging,
+constant/dropped counters and the original detection thresholds.
+It records the same creation timestamp and source revision as the compact
+model. The goal is to identify operations whose relative physical costs
+need microbenchmarking, **not** to interpret a correlation coefficient as
+a measured runtime cost ratio. No size-specific fits, per-puzzle records
+or full tuning grids appear in this export.
 
 The exporter can also read a previous v1 detailed report, retaining that
 original counter schema; only use models with a matching instrumented solver
