@@ -13,11 +13,42 @@ from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'python_scripts'))
 import sweep_tune as sweep
-from param_metadata import EFFECTIVE_DEPTH_PARAM_NAMES, get_active_param_names
+from param_metadata import (EFFECTIVE_DEPTH_PARAM_NAMES, STRATEGY_PARAM_NAMES,
+                            PARAM_CONSTRAINTS, get_active_param_names)
 from spsa_metrics import get_sgm_shifts, mean_log_shifted
 
 
 class SweepTests(unittest.TestCase):
+    def test_strategy_subsections_are_disjoint_complete_and_at_most_20(self):
+        groups = sweep.STRATEGY_SWEEP_GROUPS
+        expected_counts = {
+            'prune-global': 5,
+            'prune-grid': 11,
+            'prune-line': 20,
+            'lookahead-continue': 10,
+            'period-base': 12,
+            'period-tiers': 10,
+            'effective-depth': 6,
+        }
+        self.assertEqual({mode: len(names) for mode, names in groups.items()}, expected_counts)
+        self.assertEqual(groups['effective-depth'], EFFECTIVE_DEPTH_PARAM_NAMES)
+        seen = set()
+        for mode, names in groups.items():
+            self.assertFalse(seen & names, mode)
+            seen.update(names)
+            self.assertEqual(set(sweep.active_parameters(mode)), names)
+            self.assertEqual(sweep.mode_sizes(mode), [8, 9])
+            self.assertEqual(sweep.parse_args(['--mode', mode]).mode, mode)
+            self.assertLessEqual(len(names), 20)
+        self.assertEqual(seen, STRATEGY_PARAM_NAMES)
+        self.assertEqual(seen, set(sweep.active_parameters('strategy')))
+
+        # Both sides of a constrained threshold pair should be tunable together.
+        for lower, upper, _ in PARAM_CONSTRAINTS:
+            if lower in seen:
+                self.assertEqual([mode for mode, names in groups.items() if lower in names],
+                                 [mode for mode, names in groups.items() if upper in names])
+
     def test_group_membership_and_default_panel_sizes(self):
         for size in (7, 8, 9):
             names = set(sweep.active_parameters(f'math{size}'))
@@ -223,6 +254,7 @@ class SweepTests(unittest.TestCase):
                                 text=True, capture_output=True)
         self.assertEqual(result.returncode, 0)
         self.assertIn('math8', result.stdout)
+        self.assertIn('prune-line', result.stdout)
         self.assertNotIn('Compiling', result.stdout)
         result = subprocess.run(['bash', 'setup_and_tune.sh', '--size', '8', '--sweep'], cwd=ROOT,
                                 text=True, capture_output=True)
