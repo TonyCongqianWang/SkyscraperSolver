@@ -137,6 +137,16 @@ def _solve_ratios(members, controlled_costs, section_summary):
                                    controlled_costs[right] / controlled_costs[left],
                                    "controlled_micro", 4.0))
     edges.extend(_section_edges(section_summary, set(members)))
+    # Independently sampled per-operation timers contribute a second cost
+    # estimate for every pair where both members have measurable sections.
+    sections = section_summary.get("sections", {})
+    for i, left in enumerate(members):
+        for right in members[i + 1:]:
+            a = sections.get(left, {}).get("timed_unit_seconds")
+            b = sections.get(right, {}).get("timed_unit_seconds")
+            if _positive(a) and _positive(b):
+                edges.append(_edge(left, right, b / a,
+                                   "solver_section", 1.0))
     edges = [edge for edge in edges if edge is not None]
     if len(members) == 1:
         return {reference: 1.0}, edges
