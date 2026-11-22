@@ -32,7 +32,9 @@ void	copy_order_items(t_order_items *target, const t_order_items *source)
 
 void	copy_node_order(t_node_order *target, const t_node_order *source)
 {
+	work_micro_begin(WORK_CACHE_STATE_COPY);
 	work_add(WORK_CACHE_STATE_COPY, 1);
 	target->state = source->state;
+	work_micro_end(WORK_CACHE_STATE_COPY);
 	copy_order_items(&target->items, &source->items);
 }

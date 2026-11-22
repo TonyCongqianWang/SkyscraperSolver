@@ -41,7 +41,9 @@ void	init_line_order_stack(t_solver_state *puzzle)
 
 void	copy_line_order(t_solver_state *puzzle, int parent_idx)
 {
+	work_micro_begin(WORK_LINE_COPY);
 	puzzle->line_order_stack.orders[puzzle->order_stack.top_idx]
 		= puzzle->line_order_stack.orders[parent_idx];
 	work_add(WORK_LINE_COPY, 1);
+	work_micro_end(WORK_LINE_COPY);
 }
