@@ -125,6 +125,50 @@ class CompactExportTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text()), artifact)
             self.assertTrue(path.read_text().endswith("\n"))
 
+    def test_v3_requires_measured_allocation_and_preserves_model(self):
+        report = sample_report()
+        report["provenance"]["schema"] = "v3"
+        with self.assertRaisesRegex(ValueError, "requires measured"):
+            make_compact_model(report)
+        report["pooled_unmerging"] = {
+            "method": "post_fit_timing_unmerge_no_regression_refit",
+            "all_merged_groups_resolved": True,
+            "seconds_per_count": {
+                "cache_pair_copy": 0.005,
+                "cache_pair_copy_call": 0.015,
+                "line_score": 0.3,
+            },
+            "groups": [{
+                "group": "cache_pair_copy+cache_pair_copy_call",
+                "members": ["cache_pair_copy", "cache_pair_copy_call"],
+                "merged_seconds_per_count": 0.01,
+                "member_cost_ratios": {
+                    "cache_pair_copy": 1.0,
+                    "cache_pair_copy_call": 3.0,
+                },
+                "seconds_per_original_count": {
+                    "cache_pair_copy": 0.005,
+                    "cache_pair_copy_call": 0.015,
+                },
+                "timing_evidence": [{
+                    "source": "controlled_micro", "ratio": 3.0,
+                }],
+                "max_abs_training_prediction_drift_seconds": 0.001,
+            }],
+        }
+        model = make_compact_model(report)
+        self.assertEqual(model["counter_schema"], "v3")
+        self.assertEqual(model["seconds_per_count"]["cache_pair_copy"], 0.005)
+        self.assertEqual(model["seconds_per_count"]["cache_pair_copy_call"], 0.015)
+        self.assertEqual(model["merged_group_coefficients"][
+            "cache_pair_copy+cache_pair_copy_call"], 0.01)
+        collinearity = make_collinearity_export(report)
+        group = collinearity["merged_groups"][0]
+        self.assertEqual(group["allocated_member_seconds_per_count"][
+            "cache_pair_copy_call"], 0.015)
+        self.assertEqual(group["timing_evidence"][0]["source"],
+                         "controlled_micro")
+
     def test_persist_and_reload(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "model.json"
