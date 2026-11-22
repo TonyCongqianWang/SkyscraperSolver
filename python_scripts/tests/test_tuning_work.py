@@ -1,4 +1,4 @@
-"""Strict work-tuning parser, objective, legacy opt-in, and runner smoke tests."""
+"""Strict work-tuning parser, objective, time + nodes opt-in, and runner smoke tests."""
 import math
 from pathlib import Path
 import sys
@@ -8,7 +8,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import spsa_tune
 import sweep_tune
-from tuning_objective import (WORK, LEGACY, DEFAULT_OBJECTIVE,
+from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE,
                               mode_losses, spsa_components, sweep_score)
 from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
 
@@ -42,14 +42,14 @@ class WorkTuningTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     parse_record(invalid, model)
 
-    def test_default_and_explicit_legacy_modes(self):
+    def test_default_and_explicit_time_nodes_modes(self):
         self.assertEqual(DEFAULT_OBJECTIVE, WORK)
         self.assertEqual(sweep_tune.parse_args(["--mode", "math8"]).objective, WORK)
         self.assertEqual(
             sweep_tune.parse_args(["--mode", "math8", "--nodes-time"]).objective,
-            LEGACY)
+            TIME_NODES)
         self.assertEqual(spsa_components(.1, .8, WORK), (.1, .1))
-        self.assertEqual(spsa_components(.1, .8, LEGACY), (.1, .8))
+        self.assertEqual(spsa_components(.1, .8, TIME_NODES), (.1, .8))
 
     def test_sweep_pooled_work_uses_same_mode_loss_as_spsa(self):
         panels = {
