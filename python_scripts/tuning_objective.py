@@ -9,7 +9,7 @@ import math
 from spsa_metrics import get_sgm_shifts, mean_log_shifted, shifted_geo_mean
 
 MODE_WEIGHTS = {7: (1.0, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
-LEGACY_SWEEP_MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
+SWEEP_MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
 REFERENCES = {
     7: ((0.005, 350.0), (0.01, 2000.0)),
     8: ((0.1, 5000.0), (1.0, 50000.0)),
@@ -17,7 +17,7 @@ REFERENCES = {
 }
 SWEEP_TIME_WEIGHTS = {7: 0.7, 8: 0.64, 9: 0.66}
 WORK = "work"
-LEGACY = "nodes-time"
+TIME_NODES = "nodes-time"  # measured wall time + search nodes, fully supported
 DEFAULT_OBJECTIVE = WORK
 
 
@@ -39,8 +39,8 @@ def weighted_modes(size, values_by_mode, objective=DEFAULT_OBJECTIVE,
     time_loss = 0.0
     nodes_loss = 0.0
     for enumeration, (times, nodes) in values_by_mode.items():
-        weights = (LEGACY_SWEEP_MODE_WEIGHTS if
-                   objective == LEGACY and tuner == "sweep" else MODE_WEIGHTS)
+        weights = (SWEEP_MODE_WEIGHTS if
+                   objective == TIME_NODES and tuner == "sweep" else MODE_WEIGHTS)
         weight = weights[size][int(bool(enumeration))]
         t, n, _, _ = mode_losses(size, enumeration, times, nodes)
         time_loss += weight * t
@@ -51,7 +51,7 @@ def weighted_modes(size, values_by_mode, objective=DEFAULT_OBJECTIVE,
 def sweep_score(size, time_loss, nodes_loss, objective=DEFAULT_OBJECTIVE):
     if objective == WORK:
         result = time_loss
-    elif objective == LEGACY:
+    elif objective == TIME_NODES:
         fraction = SWEEP_TIME_WEIGHTS[size]
         result = fraction * time_loss + (1.0 - fraction) * nodes_loss
     else:
@@ -69,6 +69,6 @@ def spsa_components(time_loss, nodes_loss, objective=DEFAULT_OBJECTIVE):
     """
     if objective == WORK:
         return time_loss, time_loss
-    if objective == LEGACY:
+    if objective == TIME_NODES:
         return time_loss, nodes_loss
     raise ValueError(f"Unknown objective: {objective}")
