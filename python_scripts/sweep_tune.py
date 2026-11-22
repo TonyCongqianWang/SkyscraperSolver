@@ -239,7 +239,7 @@ def parse_args(argv=None):
     return args
 
 
-def main(argv=None):
+def _main_impl(argv=None):
     args = parse_args(argv)
     spsa.configure_objective(args)
     sizes = mode_sizes(args.mode)
@@ -306,6 +306,14 @@ def main(argv=None):
             raise
         metadata['comparison_status'] = 'complete'
         save_checkpoint(path, final, names, metadata, 'Final')
+
+
+
+def main(argv=None):
+    try:
+        return _main_impl(argv)
+    finally:
+        spsa.configure_objective(SimpleNamespace(objective=LEGACY))
 
 
 if __name__ == '__main__':

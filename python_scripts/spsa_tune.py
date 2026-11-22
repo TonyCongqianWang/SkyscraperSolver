@@ -387,7 +387,8 @@ def load_datasets(size):
 
 # --- Loss Evaluators ---
 
-def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumeration_only):
+def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=LEGACY):
     s7_train = datasets["s7_train"]
     single_time_shift, single_node_shift = get_sgm_shifts(7)
     enum_time_shift, enum_node_shift = get_sgm_shifts(7, True)
@@ -410,7 +411,7 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
             loss_time = 1.0 * mode_losses(7, True, t_enum, n_enum)[0]
             loss_nodes = 1.0 * mode_losses(7, True, t_enum, n_enum)[1]
 
-            return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
+            return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
         return get_loss
 
     sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
@@ -432,11 +433,12 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumera
         loss_time = 1.0 * mode_losses(7, False, t_single, n_single)[0] + 1.5 * mode_losses(7, True, t_enum, n_enum)[0]
         loss_nodes = 1.0 * mode_losses(7, False, t_single, n_single)[1] + 1.5 * mode_losses(7, True, t_enum, n_enum)[1]
 
-        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
+        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
-def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only):
+def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=LEGACY):
     s8_train = datasets["s8_train"]
     single_time_shift, single_node_shift = get_sgm_shifts(8)
     enum_time_shift, enum_node_shift = get_sgm_shifts(8, True)
@@ -461,7 +463,7 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
             loss_time = 1.0 * mode_losses(8, True, t_enum, n_enum)[0]
             loss_nodes = 1.0 * mode_losses(8, True, t_enum, n_enum)[1]
 
-            return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
+            return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
         return get_loss
 
     sampled_single = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
@@ -484,11 +486,12 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumera
         loss_time = 0.5 * mode_losses(8, False, t_single, n_single)[0] + 1.5 * mode_losses(8, True, t_enum, n_enum)[0]
         loss_nodes = 0.5 * mode_losses(8, False, t_single, n_single)[1] + 1.5 * mode_losses(8, True, t_enum, n_enum)[1]
 
-        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
+        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
-def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only):
+def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=LEGACY):
     s9_train = datasets["s9_train"]
     single_time_shift, single_node_shift = get_sgm_shifts(9)
 
@@ -510,17 +513,21 @@ def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumera
         loss_time = 1.0 * mode_losses(9, False, t_list, n_list)[0]
         loss_nodes = 1.0 * mode_losses(9, False, t_list, n_list)[1]
 
-        return (*spsa_components(loss_time, loss_nodes, ACTIVE_OBJECTIVE), (sgm_t, sgm_n, sgm_t, sgm_n))
+        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t, sgm_n, sgm_t, sgm_n))
     return get_loss
 
 
-def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin, enumeration_only):
+def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin,
+                         enumeration_only, objective=LEGACY):
     if size == 7:
-        return make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumeration_only)
+        return make_loss_evaluator_s7(datasets, batch_size, max_workers,
+                                      use_stdin, enumeration_only, objective)
     elif size == 8:
-        return make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only)
+        return make_loss_evaluator_s8(datasets, batch_size, max_workers,
+                                      use_stdin, enumeration_only, objective)
     elif size == 9:
-        return make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only)
+        return make_loss_evaluator_s9(datasets, batch_size, max_workers,
+                                      use_stdin, enumeration_only, objective)
     raise ValueError(f"Unsupported size: {size}")
 
 
@@ -770,7 +777,8 @@ def run_spsa(args, datasets, max_workers):
             build_loss_evaluator(
                 size=args.size, datasets=datasets, batch_size=part,
                 max_workers=max_workers, use_stdin=args.stdin,
-                enumeration_only=args.enumeration_only)
+                enumeration_only=args.enumeration_only,
+                objective=ACTIVE_OBJECTIVE)
             for part in sizes
         ]
         active_index_set = set(active_indices)
@@ -937,7 +945,7 @@ def parse_args():
     return args
 
 
-def main():
+def _main_impl():
     args = parse_args()
     if args.seed is None:
         args.seed = random.SystemRandom().getrandbits(64)
@@ -965,6 +973,14 @@ def main():
 
     if not args.no_compare:
         run_post_tuning_comparison(args, datasets, theta_final)
+
+
+
+def main():
+    try:
+        return _main_impl()
+    finally:
+        configure_objective(argparse.Namespace(objective=LEGACY))
 
 
 if __name__ == "__main__":
