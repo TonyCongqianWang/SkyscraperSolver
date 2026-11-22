@@ -451,8 +451,14 @@ def fit_four_models(train, validation, correlation_threshold,
             training, correlation_threshold, dependency_tolerance,
             ridge_alpha=chosen["ridge_alpha"],
             contrast_weight=chosen["contrast_weight"])
+        baseline = (model if not chosen["ridge_alpha"]
+                    and not chosen["contrast_weight"] else
+                    fit_with_merging(training, correlation_threshold,
+                                     dependency_tolerance))
         fits[name] = {"status": "fitted", "coefficients": model,
                       "hyperparameter_selection": chosen,
+                      "unregularized_validation":
+                          diagnostics(holdout, baseline, noise_z, min_delta_seconds),
                       "train": diagnostics(training, model, noise_z, min_delta_seconds),
                       "validation": diagnostics(holdout, model, noise_z, min_delta_seconds),
                       "training_puzzles": len(set(r["identity"] for r in training)),
