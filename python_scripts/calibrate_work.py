@@ -2,6 +2,7 @@
 """Reproducible issue #72 work-counter calibration; Python standard library only."""
 import argparse
 import hashlib
+import heapq
 import json
 import os
 from pathlib import Path
@@ -20,10 +21,9 @@ from work_collinearity import analyze_and_merge, collapse_row
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v1"
 DEFAULT_DATASETS = (
-    "benchmark_sets/benchmarkSet7_easy500.txt",
-    "benchmark_sets/benchmarkSet7.txt",
-    "benchmark_sets/benchmarkSet8.txt",
-    "benchmark_sets/benchmarkSet9.txt",
+    "puzzle_bank/spsa_datasets/le7_train.txt",
+    "puzzle_bank/spsa_datasets/size8_train.txt",
+    "puzzle_bank/spsa_datasets/size9_train.txt",
 )
 COUNTER_RE = re.compile(r"^WORK_COUNTERS (v\d+) (.+)$", re.MULTILINE)
 COUNTER_NAMES = (
@@ -49,11 +49,18 @@ PARAM_FILES = {"g_sel_": "params_cache_period.c",
                "g_lookahead_entropy_weight_": "params_math.c"}
 
 
-def read_puzzles(paths, limit):
-    """Take up to limit symmetry-unique puzzles PER SIZE, not per dataset."""
-    puzzles = []
-    counts = {7: 0, 8: 0, 9: 0}
+def read_puzzles(paths, limit, seed=72):
+    """Select deterministic, symmetry-distinct puzzles from each size.
+
+    Sample across entire SPSA training files, rather than taking the first
+    128 lines (SPSA datasets may be organized into difficulty blocks).
+    A bounded hash-priority reservoir keeps at most `limit` per size.
+    """
+    if limit < 1:
+        raise ValueError("puzzles-per-size must be positive")
+    selected = {7: [], 8: [], 9: []}
     seen = set()
+    serial = 0
     for path in paths:
         source = Path(path)
         if not source.is_absolute():
@@ -69,25 +76,37 @@ def read_puzzles(paths, limit):
             clue = parts[0] if parts else raw.strip()
             tokens = clue.split()
             n = len(tokens) // 4
-            if n not in (7, 8, 9) or len(tokens) != 4 * n:
-                raise ValueError(f"Expected size 7/8/9 puzzle at {source}:{index}")
+            if len(tokens) != 4 * n or n < 5 or n > 9:
+                raise ValueError(f"Invalid size-5..9 puzzle at {source}:{index}")
+            # SPSA le7 training is a mixture of sizes 5, 6, and 7.
+            if n < 7:
+                continue
             grid = parts[1] if len(parts) > 1 else None
             if grid is not None and len(grid.split()) != n * n:
                 raise ValueError(f"Invalid grid at {source}:{index}")
-            if counts[n] >= limit:
-                continue
-            # Do not leak rotated/reflected duplicates across validation split.
             identity = (n, canonize_nums(tuple(map(int, tokens))), grid)
             if identity in seen:
                 continue
             seen.add(identity)
-            counts[n] += 1
-            puzzles.append({
+            identity_hash = hashlib.sha256(repr(identity).encode("utf-8")).hexdigest()
+            priority = int(hashlib.sha256(
+                f"{seed}:{identity_hash}".encode("utf-8")).hexdigest(), 16)
+            serial += 1
+            puzzle = {
                 "dataset": str(source.relative_to(ROOT)) if source.is_relative_to(ROOT) else str(source),
                 "dataset_sha256": sha,
                 "line": index, "size": n, "clue": clue, "grid": grid,
-                "identity": hashlib.sha256(repr(identity).encode("utf-8")).hexdigest(),
-            })
+                "identity": identity_hash,
+            }
+            candidate = (-priority, serial, puzzle)
+            heap = selected[n]
+            if len(heap) < limit:
+                heapq.heappush(heap, candidate)
+            elif candidate[0] > heap[0][0]:
+                heapq.heapreplace(heap, candidate)
+    puzzles = []
+    for n in (7, 8, 9):
+        puzzles.extend(item[2] for item in sorted(selected[n], reverse=True))
     if not puzzles:
         raise ValueError("No puzzles in input")
     return puzzles
@@ -366,7 +385,8 @@ def main():
         parser.error("validation-fraction must be between zero and one")
     if args.max_solutions is not None and args.max_solutions < 0:
         parser.error("max-solutions cannot be negative")
-    puzzles = read_puzzles(args.dataset or DEFAULT_DATASETS, args.puzzles_per_size)
+    puzzles = read_puzzles(args.dataset or DEFAULT_DATASETS,
+                           args.puzzles_per_size, args.seed)
     if args.dataset is None:
         for size in (7, 8, 9):
             found = sum(p["size"] == size for p in puzzles)
