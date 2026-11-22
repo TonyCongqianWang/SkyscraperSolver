@@ -499,6 +499,10 @@ def main():
                         help="Skip independent end-of-calibration SPSA-validation micro check")
     parser.add_argument("--micro-puzzles-per-size", type=int, default=32,
                         help="Validation puzzles per size in independent micro check")
+    parser.add_argument("--micro-repeats", type=int, default=200000,
+                        help="Repeated real C operations per controlled micro point")
+    parser.add_argument("--micro-rounds", type=int, default=3,
+                        help="Independent controlled timing rounds; must be >=3")
     parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
                         help="Comma-separated nonnegative ridge penalties")
     parser.add_argument("--contrast-grid", default="0,1,4,16",
@@ -524,6 +528,8 @@ def main():
     args = parser.parse_args()
     if args.micro_puzzles_per_size < 1:
         parser.error("micro-puzzles-per-size must be >= 1")
+    if args.micro_repeats < 1000 or args.micro_rounds < 3:
+        parser.error("micro-repeats >= 1000 and micro-rounds >= 3 required")
     if (args.puzzles_per_size < 1 or args.native_repeats < 2
             or args.instrumented_repeats < 2):
         parser.error("puzzles-per-size must be >= 1 and repeats >= 2")
@@ -569,6 +575,8 @@ def main():
         "section_timing": not args.no_section_timing,
         "micro_verification_enabled": not args.no_micro_verify,
         "micro_validation_puzzles_per_size": args.micro_puzzles_per_size,
+        "controlled_micro_repeats": args.micro_repeats,
+        "controlled_micro_rounds": args.micro_rounds,
         "section_timer": "sampled process CPU nanoseconds, every 64th section",
         "ridge_grid": ridge_grid,
         "contrast_grid": contrast_grid,
@@ -700,9 +708,41 @@ def main():
                 for n in (7, 8, 9)
             },
         }
+    # The regression is now complete. Resolve merged counters using timing
+    # evidence only: NEVER change the merged regression or fit a second time.
+    from work_micro_probe import controlled_microbench
+    from work_micro_constraints import allocate_merged_coefficients
+    controlled = controlled_microbench(
+        args.cc, args.micro_repeats, args.micro_rounds)
+    pooled_model = fits["all"]["coefficients"]
+    timing_training = plausibility["train"] if plausibility else {"sections": {}}
+    allocation = allocate_merged_coefficients(
+        pooled_model, train, controlled, timing_training)
+    flat_weights = allocation["seconds_per_count"]
+    def allocated_predict(row):
+        return pooled_model["intercept_seconds"] + sum(
+            flat_weights.get(name, 0.0) * row["counters"][name]
+            for name in COUNTER_NAMES)
+    allocated_model = {
+        "intercept_seconds": pooled_model["intercept_seconds"],
+        "seconds_per_count": {
+            name: flat_weights.get(name, 0.0) for name in COUNTER_NAMES}}
+    allocation["held_out_validation"] = diagnostics(
+        heldout, allocated_model, args.ranking_noise_z,
+        args.ranking_min_delta_seconds)
+    allocation["held_out_validation_by_size"] = {
+        str(n): diagnostics(
+            [row for row in heldout if row["size"] == n], allocated_model,
+            args.ranking_noise_z, args.ranking_min_delta_seconds)
+        for n in (7, 8, 9)}
+    allocation["regression_fits_changed"] = False
+    for row in rows:
+        row["predictions_seconds"]["pooled_allocated"] = allocated_predict(row)
     payload = {
-        "version": 3, "provenance": provenance,
+        "version": 4, "provenance": provenance,
         "section_timing_plausibility": plausibility,
+        "controlled_microbenchmark": controlled,
+        "pooled_unmerging": allocation,
         "primary_fit": "all",
         "pooled_validation_by_size": pooled_metrics,
         "fits": fits, "agreement": agreement_metrics,
@@ -734,7 +774,8 @@ def main():
         verified = run_verification(
             model_path, collinearity_path, micro_path,
             puzzles_per_size=args.micro_puzzles_per_size,
-            seed=args.seed + 1009, cc=args.cc, timeout=args.timeout)
+            seed=args.seed + 1009, cc=args.cc, timeout=args.timeout,
+            controlled_result=controlled)
         print(f"Saved independent micro verification to {micro_path}")
         print(f"Micro split assessment: {verified['split_verification']}")
     print(f"Saved {len(rows)} samples to {args.output}")
