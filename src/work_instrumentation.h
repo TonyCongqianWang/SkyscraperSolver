@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   work_instrumentation.h                    :+:      :+:    :+:   */
+/*   work_instrumentation.h                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/11/22 00:00:00 by towang            #+#    #+#             */
-/*   Updated: 2026/11/22 00:00:00 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
+/*   Updated: 2025/01/31 00:38:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,8 @@ typedef enum e_work_counter
 
 void				work_reset(void);
 void				work_add(t_work_counter counter, unsigned long long amount);
-void				work_sort_shift(t_work_counter compare, t_work_counter shift);
+void				work_sort_shift(t_work_counter compare,
+						t_work_counter shift);
 unsigned long long	work_get(t_work_counter counter);
 void				work_report(unsigned long long solutions,
 						unsigned long long nodes);

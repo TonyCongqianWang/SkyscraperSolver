@@ -24,8 +24,8 @@ void	sort_node_order_meta(t_node_transition *entries,
 	t_node_transition	key_entry;
 	t_transition_meta	key_meta;
 
-	i = 1;
-	while (i < count)
+	i = 0;
+	while (++i < count)
 	{
 		key_entry = entries[i];
 		key_meta = meta[i];
@@ -43,7 +43,6 @@ void	sort_node_order_meta(t_node_transition *entries,
 		work_add(WORK_TRANSITION_COMPARE, j >= 0);
 		entries[j + 1] = key_entry;
 		meta[j + 1] = key_meta;
-		i++;
 	}
 }
 

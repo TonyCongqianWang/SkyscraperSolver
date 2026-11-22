@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   work_instrumentation_report.c             :+:      :+:    :+:   */
+/*   work_instrumentation_report.c                      :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: towang <towang@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/11/22 00:00:00 by towang            #+#    #+#             */
-/*   Updated: 2026/11/22 00:00:00 by towang           ###   ########.fr       */
+/*   Created: 2025/01/25 11:51:38 by towang            #+#    #+#             */
+/*   Updated: 2025/01/31 00:38:53 by towang           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,9 @@ void	work_report(unsigned long long solutions, unsigned long long nodes)
 	}
 	printf("\n");
 }
+
 #else
+
 void	work_report(unsigned long long solutions, unsigned long long nodes)
 {
 	(void)solutions;
