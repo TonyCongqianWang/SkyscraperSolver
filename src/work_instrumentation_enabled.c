@@ -16,6 +16,13 @@
 
 static unsigned long long	g_counts[WORK_COUNT];
 
+void	work_dp_init(int size)
+{
+	work_add(WORK_DP_INIT_CALL, 1);
+	work_add(WORK_DP_INIT_WRITE, 4 * (size + 1) * (size + 1)
+		+ 2 + 2 * (size + 1));
+}
+
 void	work_reset(void)
 {
 	int	i;
