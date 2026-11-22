@@ -67,6 +67,23 @@ class WorkSectionPlausibilityTests(unittest.TestCase):
         self.assertEqual(section["total_sampled_packages"], 18)
         self.assertIsNone(result["sections"]["index_copy_call"]["pearson_r"])
 
+    def test_timed_affine_cost_split_is_identifiable_across_sizes(self):
+        from work_section_plausibility import timed_affine_fit
+        samples = [
+            (0.000002 * calls + 0.0000005 * volume, calls, volume)
+            for calls, volume in ((20, 140), (80, 640), (100, 900),
+                                  (15, 135), (5, 45), (100, 700))
+        ]
+        result = timed_affine_fit(samples)
+        self.assertTrue(result["identifiable"])
+        self.assertAlmostEqual(result["sampled_call_seconds"], 2e-6, places=11)
+        self.assertAlmostEqual(result["sampled_volume_seconds"], 5e-7, places=11)
+        self.assertAlmostEqual(
+            result["seconds_per_volume_relative_to_call"], 0.25, places=6)
+        ambiguous = timed_affine_fit(
+            [(0.00001 * n, n, 8 * n) for n in (2, 3, 4, 5)])
+        self.assertFalse(ambiguous["identifiable"])
+
     def test_zero_coefficients_and_timing_do_not_fake_correlation(self):
         model = self._model()
         model["seconds_per_count"]["line_score"] = 0.0
