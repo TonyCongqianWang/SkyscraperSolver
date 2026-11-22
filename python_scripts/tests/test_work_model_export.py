@@ -7,6 +7,7 @@ import unittest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from work_model_export import export_compact_model, make_compact_model
+from work_model_export import export_collinearity, make_collinearity_export
 from work_model_export import load_compact_model, predict_seconds
 
 
@@ -36,7 +37,24 @@ def sample_report():
                         "line_score": 0.3,
                     },
                     "ridge_alpha": 0.0001, "contrast_weight": 4.0,
-                    "collinearity": {"groups": [
+                    "collinearity": {
+                        "correlation_threshold": 0.995,
+                        "dependency_tolerance": 0.001,
+                        "method": "centered_pairwise_pearson_then_pivoted_gram_schmidt",
+                        "merge_events": [
+                            {"type": "pairwise", "a": "cache_pair_copy",
+                             "b": "cache_pair_copy_call", "pearson_r": 0.999}],
+                        "correlated_pairs": [
+                            {"a": "cache_pair_copy", "b": "cache_pair_copy_call",
+                             "pearson_r": 0.999}],
+                        "constant_counters": ["unused"],
+                        "constant_merged_groups": [],
+                        "rank_before": {"effective_rank": 2, "column_count": 3,
+                                        "independent": [], "dependent": []},
+                        "rank_after": {"effective_rank": 2, "column_count": 2,
+                                       "independent": [], "dependent": []},
+                        "cost_assumption": "equal per-unit cost within each merged group; provisional",
+                        "groups": [
                         {"name": "cache_pair_copy+cache_pair_copy_call",
                          "members": ["cache_pair_copy", "cache_pair_copy_call"],
                          "aggregation": "sum_raw_counts"},
@@ -82,6 +100,30 @@ class CompactExportTests(unittest.TestCase):
         self.assertLess(len(json.dumps(model)), 3000)
         self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.9)
         self.assertEqual(model["hyperparameters"]["contrast_weight"], 4.0)
+
+    def test_pooled_collinearity_export_for_microbenchmarks(self):
+        report = sample_report()
+        timestamp = "2026-11-22T12:00:00+00:00"
+        artifact = make_collinearity_export(report, "detailed.json", timestamp)
+        self.assertEqual(artifact["fit"], "pooled")
+        self.assertEqual(artifact["counter_schema"], "v2")
+        self.assertEqual(artifact["created_at_utc"], timestamp)
+        self.assertEqual(len(artifact["merged_groups"]), 1)
+        self.assertEqual(artifact["merged_groups"][0]["members"],
+                         ["cache_pair_copy", "cache_pair_copy_call"])
+        self.assertEqual(artifact["merged_groups"][0][
+            "seconds_per_merged_count"], 0.01)
+        self.assertEqual(artifact["correlated_pairs"][0]["pearson_r"], 0.999)
+        self.assertEqual(artifact["merge_events"][0]["type"], "pairwise")
+        self.assertEqual(artifact["rank_before"]["effective_rank"], 2)
+        self.assertEqual(artifact["constant_counters"], ["unused"])
+        self.assertNotIn("size7", artifact)
+        self.assertNotIn("samples", artifact)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "collinearity.json"
+            export_collinearity(report, path, "detailed.json", timestamp)
+            self.assertEqual(json.loads(path.read_text()), artifact)
+            self.assertTrue(path.read_text().endswith("\\n"))
 
     def test_persist_and_reload(self):
         with tempfile.TemporaryDirectory() as directory:
