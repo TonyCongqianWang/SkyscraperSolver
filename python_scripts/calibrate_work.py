@@ -18,6 +18,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from symmetry import canonize_nums
 from work_collinearity import analyze_and_merge, collapse_row
+from work_ranking import ranking_diagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v1"
@@ -333,7 +334,7 @@ def agreement(rows, pooled, sized):
     }
 
 
-def diagnostics(rows, model):
+def diagnostics(rows, model, noise_z=2.0, min_delta_seconds=5e-5):
     if not rows:
         return {"samples": 0}
     errors = [predict(r, model) - r["runtime_median_seconds"] for r in rows]
@@ -342,23 +343,10 @@ def diagnostics(rows, model):
     mean = statistics.mean(ys)
     ss_tot = sum((y - mean) ** 2 for y in ys)
     r2 = 1.0 - sum(e * e for e in errors) / ss_tot if ss_tot else None
-    pairs = 0
-    correct = 0
-    for i, a in enumerate(rows):
-        for b in rows[i + 1:]:
-            if a["dataset"] != b["dataset"] or a["line"] != b["line"]:
-                continue
-            if a["configuration"] == b["configuration"]:
-                continue
-            actual = a["runtime_median_seconds"] - b["runtime_median_seconds"]
-            estimated = predict(a, model) - predict(b, model)
-            if actual == 0:
-                continue
-            pairs += 1
-            correct += (actual * estimated > 0)
-    return {"samples": len(rows), "mae_seconds": mae, "r2": r2,
-            "ranking_pairs": pairs,
-            "ranking_accuracy": correct / pairs if pairs else None}
+    ranking = ranking_diagnostics(
+        rows, lambda row: predict(row, model),
+        noise_z=noise_z, min_delta_seconds=min_delta_seconds)
+    return {"samples": len(rows), "mae_seconds": mae, "r2": r2, **ranking}
 
 
 def split(rows, validation_fraction, seed):
@@ -378,7 +366,75 @@ def split(rows, validation_fraction, seed):
             [r for r in rows if in_holdout(r)])
 
 
-def fit_four_models(train, validation, correlation_threshold, dependency_tolerance):
+def choose_regularization(train, correlation_threshold,
+                          dependency_tolerance, ridge_grid, contrast_grid,
+                          seed=72, noise_z=2.0, min_delta_seconds=5e-5):
+    """Select hyperparameters on an inner puzzle-level holdout ONLY.
+
+    Feature collinearity groups are learned on inner-training observations.
+    The outer calibration validation set is never used for selection.
+    """
+    inner_train, inner_val = split(train, 0.2, seed + 1009)
+    if not inner_train or not inner_val:
+        return {"ridge_alpha": 0.0, "contrast_weight": 0.0,
+                "reason": "insufficient_inner_puzzles", "candidates": []}
+    analysis = analyze_and_merge(inner_train, COUNTER_NAMES,
+                                 correlation_threshold, dependency_tolerance)
+    groups = analysis["groups"]
+    reduced = [dict(collapse_row(row, groups),
+                    identity=row.get("identity",
+                                     (row.get("dataset"), row.get("line"))))
+               for row in inner_train]
+    names = [group["name"] for group in groups]
+    candidates = []
+    best = None
+    best_score = None
+    for ridge_alpha in ridge_grid:
+        for contrast_weight in contrast_grid:
+            model = fit_nonnegative(
+                reduced, names, ridge_alpha=ridge_alpha,
+                contrast_weight=contrast_weight)
+            model["collinearity"] = analysis
+            metrics = diagnostics(
+                inner_val, model, noise_z, min_delta_seconds)
+            clear_pairs = metrics.get("clear_ranking_pairs", 0)
+            all_pairs = metrics.get("ranking_pairs", 0)
+            enough_clear = clear_pairs >= max(20, all_pairs // 10)
+            # Compare robust rankings if measurable; otherwise compare
+            # centered errors rather than global R2 between puzzles.
+            score = ((metrics["clear_ranking_accuracy"] or 0.0)
+                     if enough_clear else
+                     -(metrics["within_puzzle_mae_seconds"] or 0.0))
+            tie = -metrics["within_puzzle_mae_seconds"] if (
+                metrics["within_puzzle_mae_seconds"] is not None) else 0.0
+            preference = (score, tie, -metrics["mae_seconds"],
+                          -ridge_alpha, -contrast_weight)
+            item = {
+                "ridge_alpha": ridge_alpha,
+                "contrast_weight": contrast_weight,
+                "selection_metric": "clear_ranking_accuracy"
+                    if enough_clear else "negative_within_puzzle_mae",
+                "selection_score": score,
+                "inner_validation": metrics,
+            }
+            candidates.append(item)
+            if best_score is None or preference > best_score:
+                best_score = preference
+                best = item
+    return {
+        "ridge_alpha": best["ridge_alpha"],
+        "contrast_weight": best["contrast_weight"],
+        "reason": best["selection_metric"],
+        "inner_training_samples": len(inner_train),
+        "inner_validation_samples": len(inner_val),
+        "candidates": candidates,
+    }
+
+
+def fit_four_models(train, validation, correlation_threshold,
+                    dependency_tolerance, ridge_grid=(0.0, 1e-6, 1e-4, 1e-2),
+                    contrast_grid=(0.0, 1.0, 4.0, 16.0),
+                    seed=72, noise_z=2.0, min_delta_seconds=5e-5):
     """Fit size 7/8/9 independently and a pooled model; compare predictions."""
     fits = {}
     for name, size in (("size7", 7), ("size8", 8), ("size9", 9),
@@ -388,10 +444,17 @@ def fit_four_models(train, validation, correlation_threshold, dependency_toleran
         if not training:
             fits[name] = {"status": "unavailable", "reason": "no training observations"}
             continue
-        model = fit_with_merging(training, correlation_threshold, dependency_tolerance)
+        chosen = choose_regularization(
+            training, correlation_threshold, dependency_tolerance,
+            ridge_grid, contrast_grid, seed, noise_z, min_delta_seconds)
+        model = fit_with_merging(
+            training, correlation_threshold, dependency_tolerance,
+            ridge_alpha=chosen["ridge_alpha"],
+            contrast_weight=chosen["contrast_weight"])
         fits[name] = {"status": "fitted", "coefficients": model,
-                      "train": diagnostics(training, model),
-                      "validation": diagnostics(holdout, model),
+                      "hyperparameter_selection": chosen,
+                      "train": diagnostics(training, model, noise_z, min_delta_seconds),
+                      "validation": diagnostics(holdout, model, noise_z, min_delta_seconds),
                       "training_puzzles": len(set(r["identity"] for r in training)),
                       "validation_puzzles": len(set(r["identity"] for r in holdout))}
     pooled = fits["all"]
