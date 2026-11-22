@@ -193,7 +193,22 @@ def summarize_plausibility(rows, model, counter_names):
         }
     correlations = [data["pearson_r"] for data in sections.values()
                     if data["pearson_r"] is not None]
+    observed_work = 0.0
+    timed_work = 0.0
+    timed_names = set(TIMED_SECTIONS) | set(TIMED_SECTIONS.values())
+    for row in rows:
+        counts = row.get("counters")
+        if counts is None:
+            continue
+        observed_work += sum(weights[name] * counts.get(name, 0)
+                             for name in counter_names)
+        timed_work += sum(weights[name] * counts.get(name, 0)
+                          for name in timed_names)
     return {
+        "timed_counters": len(timed_names),
+        "total_counters": len(counter_names),
+        "timed_fraction_of_modeled_counter_cost":
+            timed_work / observed_work if observed_work > 0 else None,
         "plausibility_score": (
             statistics.mean(correlations) if correlations else None),
         "score_definition": "unweighted mean per-section Pearson correlation",
