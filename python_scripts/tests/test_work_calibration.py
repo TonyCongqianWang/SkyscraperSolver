@@ -13,7 +13,7 @@ spec.loader.exec_module(calibration)
 class CalibrationModelTests(unittest.TestCase):
     def test_compiled_modes_preserve_determinism(self):
         puzzles = calibration.read_puzzles(
-            ["benchmark_sets/benchmarkSet7_easy500.txt"], 1)
+            ["puzzle_bank/spsa_datasets/size8_train.txt"], 1)
         with tempfile.TemporaryDirectory() as tmp:
             directory = Path(tmp)
             variant = {"name": "baseline", "parameters": {}}
@@ -59,14 +59,21 @@ class CalibrationModelTests(unittest.TestCase):
     def test_default_dataset_targets(self):
         self.assertEqual(
             calibration.DEFAULT_DATASETS,
-            ("benchmark_sets/benchmarkSet7_easy500.txt",
-             "benchmark_sets/benchmarkSet7.txt",
-             "benchmark_sets/benchmarkSet8.txt",
-             "benchmark_sets/benchmarkSet9.txt"))
+            ("puzzle_bank/spsa_datasets/le7_train.txt",
+             "puzzle_bank/spsa_datasets/size8_train.txt",
+             "puzzle_bank/spsa_datasets/size9_train.txt"))
         puzzles = calibration.read_puzzles(calibration.DEFAULT_DATASETS, 128)
         self.assertEqual({n: sum(p["size"] == n for p in puzzles)
                           for n in (7, 8, 9)}, {7: 128, 8: 128, 9: 128})
         self.assertEqual(len({p["identity"] for p in puzzles}), 384)
+        self.assertTrue(all(p["dataset"].startswith(
+            "puzzle_bank/spsa_datasets/") for p in puzzles))
+        self.assertEqual(puzzles, calibration.read_puzzles(
+            calibration.DEFAULT_DATASETS, 128))
+        self.assertNotEqual(
+            [p["identity"] for p in puzzles],
+            [p["identity"] for p in calibration.read_puzzles(
+                calibration.DEFAULT_DATASETS, 128, seed=73)])
         self.assertEqual(calibration.puzzle_mode({"size": 7}, None), 0)
         self.assertEqual(calibration.puzzle_mode({"size": 8}, None), 1)
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
