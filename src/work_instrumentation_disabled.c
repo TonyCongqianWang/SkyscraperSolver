@@ -14,6 +14,11 @@
 
 #ifndef WORK_INSTRUMENTED
 
+void	work_dp_init(int size)
+{
+	(void)size;
+}
+
 void	work_reset(void)
 {
 }
