@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "work_instrumentation.h"
+#include "work_instrumentation.h"
 
 #if defined(WORK_INSTRUMENTED) && defined(WORK_MICRO_TIMING)
 # include <stdio.h>
