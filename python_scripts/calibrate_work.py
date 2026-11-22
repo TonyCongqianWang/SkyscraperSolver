@@ -683,6 +683,12 @@ def main():
                 train, fits["all"]["coefficients"], COUNTER_NAMES),
             "validation": summarize_plausibility(
                 heldout, fits["all"]["coefficients"], COUNTER_NAMES),
+            "validation_by_size": {
+                "size" + str(n): summarize_plausibility(
+                    [row for row in heldout if row["size"] == n],
+                    fits["all"]["coefficients"], COUNTER_NAMES)
+                for n in (7, 8, 9)
+            },
         }
     payload = {
         "version": 3, "provenance": provenance,
