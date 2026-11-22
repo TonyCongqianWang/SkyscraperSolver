@@ -123,7 +123,7 @@ class CompactExportTests(unittest.TestCase):
             path = Path(directory) / "collinearity.json"
             export_collinearity(report, path, "detailed.json", timestamp)
             self.assertEqual(json.loads(path.read_text()), artifact)
-            self.assertTrue(path.read_text().endswith("\\n"))
+            self.assertTrue(path.read_text().endswith("\n"))
 
     def test_persist_and_reload(self):
         with tempfile.TemporaryDirectory() as directory:
