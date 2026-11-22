@@ -106,6 +106,75 @@ def make_compact_model(report, source_file=None, created_at=None):
     return result
 
 
+
+def make_collinearity_export(report, source_file=None, created_at=None):
+    """Preserve pooled merged counter dependencies for microbenchmark design.
+
+    Only the *training-derived* collinearity analysis of the pooled fit is
+    included. Correlation does not imply an instruction-level cost ratio.
+    """
+    fit = report["fits"]["all"]
+    if fit["status"] != "fitted":
+        raise ValueError("Pooled fit is not available")
+    coefficients = fit["coefficients"]
+    analysis = coefficients["collinearity"]
+    schema = report["provenance"]["counter_schema"]
+    if created_at is None:
+        created_at = datetime.now(timezone.utc).isoformat()
+
+    # Also validates raw-counter membership, groups and coefficients.
+    compact = make_compact_model(report, source_file, created_at)
+    groups = []
+    for group in analysis["groups"]:
+        if len(group["members"]) < 2:
+            continue
+        groups.append({
+            "name": group["name"],
+            "members": list(group["members"]),
+            "aggregation": group["aggregation"],
+            "seconds_per_merged_count":
+                coefficients["seconds_per_count"][group["name"]],
+        })
+    output = {
+        "format": "skyscraper-work-collinearity",
+        "format_version": 1,
+        "created_at_utc": created_at,
+        "source_calibration_file": str(source_file) if source_file else None,
+        "source_git_commit": compact["source_git_commit"],
+        "counter_schema": report["provenance"]["schema"],
+        "counter_names": list(schema),
+        "fit": "pooled",
+        "correlation_threshold": analysis["correlation_threshold"],
+        "dependency_tolerance": analysis["dependency_tolerance"],
+        "method": analysis["method"],
+        "merge_events": analysis["merge_events"],
+        "correlated_pairs": analysis["correlated_pairs"],
+        "merged_groups": groups,
+        "constant_counters": analysis["constant_counters"],
+        "constant_merged_groups": analysis["constant_merged_groups"],
+        "rank_before": analysis["rank_before"],
+        "rank_after": analysis["rank_after"],
+        "dropped_counters": compact["dropped_counters"],
+        "assumption": analysis["cost_assumption"],
+        "purpose": "Design microbenchmarks to identify independent relative costs",
+        "interpretation": (
+            "Correlated counters were summed for a provisional fit. "
+            "The fitted coefficient is NOT a measured ratio of operation costs."
+        ),
+    }
+    json.dumps(output, allow_nan=False)
+    return output
+
+
+def export_collinearity(report, target, source_file=None, created_at=None):
+    result = make_collinearity_export(report, source_file, created_at)
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(result, sort_keys=True, indent=2,
+                                 allow_nan=False) + "\\n", encoding="utf-8")
+    return result
+
+
 def predict_seconds(model, counters):
     """Predict runtime using a v1 compact artifact and original raw counts."""
     if model.get("format") != FORMAT or model.get("format_version") != FORMAT_VERSION:
@@ -136,11 +205,18 @@ def main():
                         help="Existing detailed work_calibration.json")
     parser.add_argument("--output", type=Path,
                         help="Destination (default: input.model.json)")
+    parser.add_argument("--collinearity-output", type=Path,
+                        help="Diagnostic output (default: input.collinearity.json)")
     args = parser.parse_args()
     report = json.loads(args.input.read_text(encoding="utf-8"))
     target = args.output or args.input.with_suffix(".model.json")
-    export_compact_model(report, target, args.input)
+    timestamp = datetime.now(timezone.utc).isoformat()
+    export_compact_model(report, target, args.input, timestamp)
+    collinearity_target = (args.collinearity_output
+                           or args.input.with_suffix(".collinearity.json"))
+    export_collinearity(report, collinearity_target, args.input, timestamp)
     print(f"Exported pooled model to {target}")
+    print(f"Exported pooled collinearity to {collinearity_target}")
 
 
 if __name__ == "__main__":
