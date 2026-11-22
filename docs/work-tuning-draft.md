@@ -65,7 +65,9 @@ Its `section_timing_plausibility` report contains **train** and
 coefficients in both. The per-section results include Pearson correlation
 between measured section CPU totals and predicted costs, measured/predicted
 ratios, sample counts, and how many observations were unresolved because
-timings were zero or there were too few samples. The overall
+timings were zero or there were too few samples. The report also evaluates
+the pooled model's timing plausibility separately on held-out size-7,
+size-8, and size-9 puzzles, making it easier to isolate the size-8 gap. The overall
 `plausibility_score` is the average of measurable per-section correlations,
 with explicit coverage. If none are measurable it is `null` (not zero).
 
