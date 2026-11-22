@@ -13,7 +13,7 @@ from compare_performance import default_environment
 from comparison_statistics import validate_policy
 from param_metadata import (PARAM_METADATA, PARAM_CONSTRAINTS, PARAMETER_ALIASES,
                             MATH_PARAM_GROUPS, STRATEGY_PARAM_NAMES,
-                            EFFECTIVE_DEPTH_PARAM_NAMES)
+                            STRATEGY_PARAM_GROUPS)
 from spsa_metrics import get_sgm_shifts, mean_log_shifted
 from spsa_run_metadata import build_run_metadata, clue_identity, save_run_metadata
 from symmetry import get_symmetries_from_clue_str
@@ -29,31 +29,7 @@ REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
               9: ((0.1, 20000.0), (0.1, 20000.0))}
 
 
-# Shared strategy sweep subsets; keep related line-pruning constraint pairs together.
-# "strategy" remains the full sweep, while each subset is at most 20 parameters.
-STRATEGY_SWEEP_PREFIXES = {
-    'prune-global': ('PRUNE_MIN_ENTROPY_GLOBAL_',),
-    'prune-grid': ('PRUNE_MIN_ENTROPY_INITIAL_CONSTR_PROP_GRID',
-                   'PRUNE_MIN_ENTROPY_CONSTR_PROP_GRID_',
-                   'PRUNE_MIN_ENTROPY_LA_PROP_GRID_'),
-    'prune-line': ('PRUNE_MIN_ENTROPY_CONSTR_PROP_LINE_',
-                   'CONSTR_LOCAL_MAX_ENTROPY_',
-                   'PRUNE_MIN_ENTROPY_LA_PROP_LINE_',
-                   'LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY_'),
-    'lookahead-continue': ('PRUNE_MIN_ENTROPY_LA_PROP_CONT_',
-                            'LOOKAHEAD_CONTINUE_SLOPE_'),
-    'period-base': ('SEL_PERIOD_COEF_', 'PERIOD_COEF_SCALE_',
-                    'PERIOD_COEF_UNSET_'),
-    'period-tiers': ('PERIOD_TIER_MEDIUM_MULTIPLIER_',
-                     'PERIOD_TIER_HEAVY_MULTIPLIER_'),
-}
-STRATEGY_SWEEP_GROUPS = {
-    mode: {name for name in STRATEGY_PARAM_NAMES
-           if any(name.startswith(prefix) for prefix in prefixes)}
-    for mode, prefixes in STRATEGY_SWEEP_PREFIXES.items()
-}
-STRATEGY_SWEEP_GROUPS['effective-depth'] = EFFECTIVE_DEPTH_PARAM_NAMES
-SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_SWEEP_GROUPS)
+SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_PARAM_GROUPS)
 
 
 def active_parameters(mode):
@@ -62,7 +38,7 @@ def active_parameters(mode):
     elif mode == 'strategy':
         names = STRATEGY_PARAM_NAMES | MATH_PARAM_GROUPS['all']
     else:
-        names = STRATEGY_SWEEP_GROUPS[mode]
+        names = STRATEGY_PARAM_GROUPS[mode]
     return sorted(n for n in names if PARAMETERS[n][2] > PARAMETERS[n][1])
 
 
