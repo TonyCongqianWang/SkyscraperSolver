@@ -89,6 +89,57 @@ def pearson(x, y):
     return sum(a * b for a, b in zip(dx, dy)) / math.sqrt(xx * yy)
 
 
+def timed_affine_fit(pairs):
+    """Independently infer nonnegative call/volume costs from timed sections.
+
+    Raw samples are (elapsed_seconds, sampled_calls, sampled_volume).
+    This fit is NOT fed back into the calibration regression. Return null
+    coefficients when the two columns cannot be distinguished.
+    """
+    if len(pairs) < 3:
+        return {"identifiable": False, "reason": "insufficient_samples"}
+    calls = [float(p[1]) for p in pairs]
+    volumes = [float(p[2]) for p in pairs]
+    times = [float(p[0]) for p in pairs]
+    scales = [
+        math.sqrt(sum(value * value for value in values) / len(values))
+        for values in (calls, volumes)
+    ]
+    if min(scales) <= 0:
+        return {"identifiable": False, "reason": "zero_feature"}
+    a = [v / scales[0] for v in calls]
+    b = [v / scales[1] for v in volumes]
+    aa = sum(v * v for v in a)
+    bb = sum(v * v for v in b)
+    ab = sum(x * y for x, y in zip(a, b))
+    determinant = aa * bb - ab * ab
+    normalized = determinant / (aa * bb)
+    if normalized < 1e-4:
+        return {"identifiable": False, "reason": "collinear_sampled_volumes",
+                "normalized_determinant": normalized}
+    at = sum(x * y for x, y in zip(a, times))
+    bt = sum(x * y for x, y in zip(b, times))
+    solutions = [((at * bb - bt * ab) / determinant,
+                  (bt * aa - at * ab) / determinant),
+                 (max(0.0, at / aa), 0.0),
+                 (0.0, max(0.0, bt / bb)),
+                 (0.0, 0.0)]
+    options = [(sum((time - left * x - right * y) ** 2
+                    for time, x, y in zip(times, a, b)), left, right)
+               for left, right in solutions if left >= 0 and right >= 0]
+    _, left, right = min(options)
+    call_coeff, volume_coeff = left / scales[0], right / scales[1]
+    return {
+        "identifiable": True,
+        "sampled_call_seconds": call_coeff,
+        "sampled_volume_seconds": volume_coeff,
+        "seconds_per_volume_relative_to_call":
+            volume_coeff / call_coeff if call_coeff > 0 else None,
+        "normalized_determinant": normalized,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets",
+    }
+
+
 def summarize_plausibility(rows, model, counter_names):
     """Compare held-out measured CPU timings to matched sampled work terms.
 
@@ -116,7 +167,8 @@ def summarize_plausibility(rows, model, counter_names):
                 continue
             estimate = (weights[name] * record["samples"]
                         + weights[volume] * record["sampled_volume"])
-            pairs.append((measured, estimate, record["samples"]))
+            pairs.append((measured, estimate, record["samples"],
+                          record["sampled_volume"]))
         measured = [x[0] for x in pairs]
         predicted = [x[1] for x in pairs]
         corr = pearson(measured, predicted)
@@ -133,6 +185,9 @@ def summarize_plausibility(rows, model, counter_names):
             "pearson_r": corr,
             "measured_to_model_ratio":
                 sum_measured / sum_pred if sum_pred > 0 else None,
+            "timed_affine_fit": timed_affine_fit(
+                [(measured, count, volume)
+                 for measured, _, count, volume in pairs]),
             "status": ("measurable" if corr is not None
                        else "insufficient_variation_or_timing"),
         }
