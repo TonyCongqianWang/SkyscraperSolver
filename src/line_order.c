@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "line_order.h"
 
 t_line_order	*get_line_order(t_node_state *node)
@@ -42,4 +43,5 @@ void	copy_line_order(t_solver_state *puzzle, int parent_idx)
 {
 	puzzle->line_order_stack.orders[puzzle->order_stack.top_idx]
 		= puzzle->line_order_stack.orders[parent_idx];
+	work_add(WORK_LINE_COPY, 1);
 }

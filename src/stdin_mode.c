@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "stdin_mode.h"
 #include "stdin_tokenize.h"
 #include "print_io.h"
@@ -25,6 +26,7 @@ static void	process_stdin_instance(t_solver_state *puzzle, int argc,
 		char **argv)
 {
 	memset(puzzle, 0, sizeof(*puzzle));
+	work_reset();
 	if (init_puzzle_from_argv(puzzle, argc, argv) != 0)
 	{
 		print_error("Wrong puzzle constraints format.");
@@ -35,6 +37,7 @@ static void	process_stdin_instance(t_solver_state *puzzle, int argc,
 	}
 	solve_puzzle(puzzle, -1);
 	print_value("Nodes visited", puzzle->nodes_visited);
+	work_report(puzzle->solutions_found, puzzle->nodes_visited);
 	printf("--- END_OF_INSTANCE ---\n");
 	fflush(stdout);
 	free_solution_storage(puzzle);

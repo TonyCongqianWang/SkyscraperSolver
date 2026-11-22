@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "solution_storage.h"
 #include <stdlib.h>
 #include <stdint.h>
@@ -44,6 +45,7 @@ int	store_node_if_solution(t_solver_state *puzzle)
 		puzzle->solutions[0] = *puzzle->cur_node;
 	else
 		puzzle->solutions[puzzle->solutions_found] = *puzzle->cur_node;
+	work_add(WORK_SOLUTION_COPY, 1);
 	puzzle->solutions_found++;
 	puzzle->provisional_solution = (kind == REGISTRATION_PROVISIONAL);
 	return (1);

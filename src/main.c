@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "print_io.h"
 #include "print_grid.h"
 #include "puzzle_structs.h"
@@ -28,6 +29,7 @@ int	main(int argc, char **argv)
 
 	if (has_stdin_flag(argc, argv))
 		return (run_stdin_mode(argc, argv));
+	work_reset();
 	parsing_retcode = init_puzzle_from_argv(&puzzle, argc, argv);
 	if (parsing_retcode != 0)
 	{
@@ -45,6 +47,7 @@ static void	solve_puzzle_and_print_result(t_solver_state *puzzle)
 	int					append_nl;
 
 	solve_puzzle(puzzle, -1);
+	work_report(puzzle->solutions_found, puzzle->nodes_visited);
 	print_value("Max solutions", puzzle->max_solutions);
 	print_value("Solutions found", puzzle->solutions_found);
 	if (puzzle->solutions)

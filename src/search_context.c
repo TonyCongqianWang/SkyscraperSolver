@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "search_context.h"
 #include "lookahead_marks.h"
 #include "node_selection_transition.h"
@@ -35,6 +36,7 @@ void	leave_lookahead(t_node_state *node, const t_search_scope *saved)
 
 void	leave_probe(t_solver_state *puzzle, const t_node_state *saved)
 {
+	work_add(WORK_NODE_COPY, 1);
 	*puzzle->cur_node = *saved;
 	sync_cache_stacks(puzzle);
 }

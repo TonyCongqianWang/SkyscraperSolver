@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_selection_score.h"
 #include "params_double.h"
 #include "params_math.h"
@@ -66,6 +67,7 @@ double	calculate_blended_score(t_node_state *node,
 		return (cache->items.meta[idx].cached_br_score);
 	age_lim = (age_lim - (cache->state.lookahead_build_entropy
 				- node->domain.remaining_entropy)) / age_lim;
+	work_add(WORK_LOOKAHEAD_BLEND, 1);
 	return (age_lim * get_lookahead_entropy_weight(node->solver->size)
 		* (1.0 - (s0 * e_pos + (1.0 - s1) * e_neg + (s1 - s0) * e_pos
 				* e_neg)) + cache->items.meta[idx].cached_br_score);

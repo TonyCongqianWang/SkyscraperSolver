@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "search_context.h"
 #include "tree_search.h"
 #include "solution_storage.h"
@@ -55,6 +56,7 @@ int	enter_probe(t_solver_state *puzzle, const t_probe_request *request,
 			t_node_state *saved)
 {
 	rollback_provisional_solution(puzzle);
+	work_add(WORK_NODE_COPY, 1);
 	*saved = *puzzle->cur_node;
 	if (request->depth > 1)
 		save_probe_base_vals(saved);

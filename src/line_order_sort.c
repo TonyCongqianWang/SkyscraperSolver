@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "line_order.h"
 #include "entropy.h"
 
@@ -22,6 +23,7 @@ static void	update_line_scores(t_node_state *node, t_line_order *order)
 	while (i < order->count)
 	{
 		idx = order->entries[i].constr_idx;
+		work_add(WORK_LINE_SCORE, 1);
 		order->entries[i].entropy = compute_constr_entropy(node, idx,
 				node->size);
 		i++;
@@ -44,9 +46,11 @@ void	sort_line_order(t_node_state *node)
 		j = i;
 		while (j > 0 && order->entries[j - 1].entropy > entry.entropy)
 		{
+			work_sort_shift(WORK_LINE_COMPARE, WORK_LINE_SHIFT);
 			order->entries[j] = order->entries[j - 1];
 			j--;
 		}
+		work_add(WORK_LINE_COMPARE, j > 0);
 		order->entries[j] = entry;
 		i++;
 	}

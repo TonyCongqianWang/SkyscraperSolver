@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "grid_manipulation.h"
 #include "grid_availability.h"
 #include "grid_update.h"
@@ -29,6 +30,7 @@ void	set_grid_val_internal(t_node_state *state, int cell_idx, int val,
 		state->domain.is_invalid = 1;
 		return ;
 	}
+	work_add(WORK_ASSIGNMENT, 1);
 	state->domain.vals[cell_idx] = val;
 	state->rows_changed_since_prune |= (1 << (cell_idx / state->size));
 	state->cols_changed_since_prune |= (1 << (cell_idx % state->size));
@@ -52,6 +54,7 @@ void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 		state->domain.is_invalid = 1;
 	if (is_valid_value(state, cell_idx, val))
 	{
+		work_add(WORK_DOMAIN_INVALIDATION, 1);
 		old_cell_count = state->domain.num_cell_vals[cell_idx];
 		state->domain.remaining_entropy -= entropy_delta_cell(old_cell_count,
 				state->size);

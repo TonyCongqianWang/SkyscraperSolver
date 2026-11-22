@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "transition_scoring.h"
 #include "grid_availability.h"
 #include "params_math.h"
@@ -21,6 +22,7 @@ void	score_transition_full(t_node_state *state, t_node_transition *next)
 	double			w_line;
 	t_selection_lut	*lut;
 
+	work_add(WORK_BASE_SCORE, 1);
 	transition_add_num_valids(state, next);
 	w_cell = get_sel_weight_cell_constr_ratio(state->size);
 	w_line = 1.0 - w_cell;
