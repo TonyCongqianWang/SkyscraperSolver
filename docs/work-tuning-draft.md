@@ -70,6 +70,9 @@ the pooled model's timing plausibility separately on held-out size-7,
 size-8, and size-9 puzzles, making it easier to isolate the size-8 gap. The overall
 `plausibility_score` is the average of measurable per-section correlations,
 with explicit coverage. If none are measurable it is `null` (not zero).
+The report also records the fraction of the fitted (non-intercept)
+counter cost represented by the six timed call/volume features; a high
+correlation on a small fraction does **not** validate the whole model.
 
 Each timed section additionally reports a **standalone nonnegative affine
 call/volume fit**, based solely on the CPU samples (not on solver wall
