@@ -13,7 +13,7 @@
 #ifndef WORK_INSTRUMENTATION_H
 # define WORK_INSTRUMENTATION_H
 
-/* Version 2: calls and real variable work volumes are distinct units. */
+/* Version 3: add variable rescoring, resumption and domain scans. */
 typedef enum e_work_counter
 {
 	WORK_SETUP_CELL,
@@ -45,6 +45,10 @@ typedef enum e_work_counter
 	WORK_LOOKAHEAD_SCAN,
 	WORK_SOLUTION_COPY,
 	WORK_ROLLBACK,
+	WORK_RESCORE_SCAN,
+	WORK_RESUME_SCAN,
+	WORK_REL_ENTROPY_VALUE,
+	WORK_DOMAIN_SCAN,
 	WORK_COUNT
 }	t_work_counter;
 

@@ -28,7 +28,7 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertEqual(first[1:3], ordinary[1:3])
             self.assertIsNotNone(first[3])
             self.assertIsNone(ordinary[3])
-            self.assertEqual(calibration.SCHEMA, "v2")
+            self.assertEqual(calibration.SCHEMA, "v3")
             counts = first[3]
             self.assertEqual(
                 counts["line_score_value"],

@@ -11,12 +11,13 @@ import sweep_tune
 from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE,
                               mode_losses, spsa_components, sweep_score)
 from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
+from calibrate_work import COUNTER_NAMES, SCHEMA
 
 
 def example_record(model):
-    counters = {key: 0 for key in model["seconds_per_count"]}
+    counters = {key: 0 for key in COUNTER_NAMES}
     counters["assignment"] = 4
-    return ("WORK_COUNTERS v2 solutions=1 nodes=7 "
+    return (f"WORK_COUNTERS {SCHEMA} solutions=1 nodes=7 "
             + " ".join(f"{key}={value}" for key, value in counters.items()))
 
 
@@ -35,7 +36,7 @@ class WorkTuningTests(unittest.TestCase):
     def test_fail_closed_on_missing_or_incompatible_work_records(self):
         model, _ = load_model()
         record = example_record(model)
-        for invalid in ([], [record, record], [record.replace("v2", "v1")],
+        for invalid in ([], [record, record], [record.replace(SCHEMA, "v1")],
                         [record.replace("assignment=4", "")],
                         [record.replace("assignment=4", "assignment=-4")]):
             with self.subTest(invalid=invalid):

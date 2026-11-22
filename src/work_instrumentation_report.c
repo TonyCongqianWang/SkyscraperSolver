@@ -15,7 +15,7 @@
 #ifdef WORK_INSTRUMENTED
 # include <stdio.h>
 
-/* Frozen v2 counter names, in the order defined by the public enum. */
+/* Frozen v3 counter names, in the order defined by the public enum. */
 static const char	*g_names[WORK_COUNT] = {
 	"setup_cell", "setup_cache_slot", "cache_state_copy",
 	"cache_pair_copy", "cache_pair_copy_call", "cache_build_check",
@@ -26,14 +26,15 @@ static const char	*g_names[WORK_COUNT] = {
 	"base_score", "lookahead_blend", "propagate_dp_update",
 	"dp_init_call", "dp_init_write", "index_copy_call", "index_copy_pair",
 	"gac_check", "assignment", "domain_invalidation",
-	"node_copy", "lookahead_scan", "solution_copy", "rollback"
+	"node_copy", "lookahead_scan", "solution_copy", "rollback",
+	"rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan"
 };
 
 void	work_report(unsigned long long solutions, unsigned long long nodes)
 {
 	int	i;
 
-	printf("WORK_COUNTERS v2 solutions=%llu nodes=%llu", solutions, nodes);
+	printf("WORK_COUNTERS v3 solutions=%llu nodes=%llu", solutions, nodes);
 	i = 0;
 	while (i < WORK_COUNT)
 	{

@@ -23,7 +23,7 @@ from work_model_export import export_compact_model, export_collinearity
 from work_section_plausibility import parse_micro_lines, summarize_plausibility
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = "v2"
+SCHEMA = "v3"
 DEFAULT_DATASETS = (
     "puzzle_bank/spsa_datasets/le7_train.txt",
     "puzzle_bank/spsa_datasets/size8_train.txt",
@@ -39,6 +39,7 @@ COUNTER_NAMES = (
     "dp_init_write", "index_copy_call", "index_copy_pair",
     "gac_check", "assignment", "domain_invalidation",
     "node_copy", "lookahead_scan", "solution_copy", "rollback",
+    "rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan",
 )
 PARAMETER_GROUPS = {
     "le7": ("g_sel_compact_period_le7", "g_sel_rescore_period_le7",

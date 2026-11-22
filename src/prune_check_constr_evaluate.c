@@ -26,6 +26,7 @@ static int	get_cell_domain(t_node_state *state, int cell_idx, int size)
 	v = 1;
 	while (v <= size)
 	{
+		work_add(WORK_DOMAIN_SCAN, 1);
 		if (is_valid_value(state, cell_idx, v))
 			domain_mask |= (1 << (v - 1));
 		v++;
