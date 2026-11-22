@@ -97,6 +97,63 @@ def verify_splits(summary, collinearity, model, tolerance=2.0):
     }
 
 
+def verify_all_merged_groups(controlled, collinearity, model,
+                             tolerance=2.0):
+    """Check measured per-member cost ratios for EVERY merged group."""
+    from work_micro_constraints import controlled_member_costs
+    costs, diagnostics = controlled_member_costs(controlled)
+    result = {}
+    for group in collinearity.get("merged_groups", []):
+        members = group["members"]
+        ref = members[0]
+        estimates = {}
+        if ref in costs:
+            estimates[ref] = 1.0
+            for name in members[1:]:
+                if name in costs:
+                    estimates[name] = costs[name] / costs[ref]
+        predicted = model["seconds_per_count"]
+        observations = []
+        for name in members[1:]:
+            modeled_ratio = (predicted[name] / predicted[ref]
+                             if predicted[ref] > 0 else None)
+            measured_ratio = estimates.get(name)
+            if (modeled_ratio is not None and modeled_ratio > 0
+                    and measured_ratio is not None and measured_ratio > 0):
+                fold = max(measured_ratio / modeled_ratio,
+                           modeled_ratio / measured_ratio)
+                verdict = "consistent" if fold <= tolerance else "disagrees"
+            else:
+                fold = None
+                verdict = ("zero_fitted_group" if predicted[ref] == 0
+                           and measured_ratio is not None else "unresolved")
+            observations.append({
+                "reference": ref, "counter": name,
+                "measured_ratio": measured_ratio,
+                "model_ratio": modeled_ratio,
+                "fold_disagreement": fold, "verdict": verdict,
+            })
+        result[group["name"]] = {
+            "members": members,
+            "all_independently_timed":
+                all(name in costs for name in members),
+            "ratios": observations,
+        }
+    return {
+        "groups": result,
+        "groups_total": len(result),
+        "groups_fully_measured": sum(
+            g["all_independently_timed"] for g in result.values()),
+        "consistent_comparisons": sum(
+            edge["verdict"] == "consistent" for g in result.values()
+            for edge in g["ratios"]),
+        "disagreeing_comparisons": sum(
+            edge["verdict"] == "disagrees" for g in result.values()
+            for edge in g["ratios"]),
+        "counter_diagnostics": diagnostics,
+    }
+
+
 def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30):
     validate_model(model)
     if collinearity.get("counter_schema") != model["counter_schema"]:
@@ -217,7 +274,7 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
 def run_verification(model_path, collinearity_path, output,
                      puzzles_per_size=32, seed=1072, cc="gcc", timeout=30,
                      datasets=VALIDATION_DATASETS, controlled_repeats=200000,
-                     controlled_rounds=3):
+                     controlled_rounds=3, controlled_result=None):
     model_path = Path(model_path)
     model = load_compact_model(model_path)
     collinearity = json.loads(Path(collinearity_path).read_text(encoding="utf-8"))
@@ -227,10 +284,13 @@ def run_verification(model_path, collinearity_path, output,
     if not puzzles:
         raise ValueError("No validation puzzles for micro verification")
     report = verify_model(model, collinearity, puzzles, cc, timeout)
-    controlled = controlled_microbench(cc, controlled_repeats,
-                                       controlled_rounds)
+    controlled = (controlled_result if controlled_result is not None
+                  else controlled_microbench(
+                      cc, controlled_repeats, controlled_rounds))
     report["controlled_microbenchmark"] = controlled
     report["controlled_split_verification"] = verify_splits(
+        controlled, collinearity, model)
+    report["controlled_all_group_verification"] = verify_all_merged_groups(
         controlled, collinearity, model)
     report["model_file_sha256"] = hashlib.sha256(model_path.read_bytes()).hexdigest()
     report["puzzle_counts_by_size"] = {
@@ -268,6 +328,11 @@ def main():
         "plausibility_score": result["overall"]["plausibility_score"],
         "split_verification": result["split_verification"],
         "controlled_split_verification": result["controlled_split_verification"],
+        "controlled_all_group_verification": {
+            key: result["controlled_all_group_verification"][key]
+            for key in ("groups_total", "groups_fully_measured",
+                        "consistent_comparisons", "disagreeing_comparisons")
+        },
         "report": str(args.output),
     }, indent=2))
 
