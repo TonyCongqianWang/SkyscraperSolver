@@ -1,0 +1,377 @@
+{
+  "assumption": "equal per-unit cost within each merged group; provisional",
+  "constant_counters": [
+    "setup_cache_slot",
+    "propagate_dp_update",
+    "dp_init_call",
+    "dp_init_write",
+    "gac_check",
+    "rollback"
+  ],
+  "constant_merged_groups": [],
+  "correlated_pairs": [
+    {
+      "a": "cache_build_check",
+      "b": "setup_cell",
+      "pearson_r": 0.999366275360728
+    },
+    {
+      "a": "cache_pair_copy_call",
+      "b": "cache_state_copy",
+      "pearson_r": 1.0000000000000429
+    },
+    {
+      "a": "cache_pair_copy_call",
+      "b": "line_copy",
+      "pearson_r": 1.0000000000000429
+    },
+    {
+      "a": "cache_state_copy",
+      "b": "line_copy",
+      "pearson_r": 1.0000000000000429
+    },
+    {
+      "a": "compact_check",
+      "b": "compact_move",
+      "pearson_r": 0.998430503300242
+    },
+    {
+      "a": "index_copy_call",
+      "b": "index_copy_pair",
+      "pearson_r": 0.9986503400999805
+    },
+    {
+      "a": "line_compare",
+      "b": "line_shift",
+      "pearson_r": 0.9978744199995394
+    },
+    {
+      "a": "transition_compare",
+      "b": "transition_shift",
+      "pearson_r": 0.9997091714636541
+    }
+  ],
+  "correlation_threshold": 0.995,
+  "counter_names": [
+    "setup_cell",
+    "setup_cache_slot",
+    "cache_state_copy",
+    "cache_pair_copy",
+    "cache_pair_copy_call",
+    "cache_build_check",
+    "compact_check",
+    "compact_move",
+    "transition_compare",
+    "transition_shift",
+    "line_copy",
+    "line_score",
+    "line_score_value",
+    "line_compare",
+    "line_shift",
+    "base_score",
+    "lookahead_blend",
+    "propagate_dp_update",
+    "dp_init_call",
+    "dp_init_write",
+    "index_copy_call",
+    "index_copy_pair",
+    "gac_check",
+    "assignment",
+    "domain_invalidation",
+    "node_copy",
+    "lookahead_scan",
+    "solution_copy",
+    "rollback"
+  ],
+  "counter_schema": "v2",
+  "created_at_utc": "2026-11-22T16:59:04.885526+00:00",
+  "dependency_tolerance": 0.001,
+  "dropped_counters": [
+    "dp_init_call",
+    "dp_init_write",
+    "gac_check",
+    "propagate_dp_update",
+    "rollback",
+    "setup_cache_slot"
+  ],
+  "fit": "pooled",
+  "format": "skyscraper-work-collinearity",
+  "format_version": 1,
+  "interpretation": "Correlated counters were summed for a provisional fit. The fitted coefficient is NOT a measured ratio of operation costs.",
+  "merge_events": [
+    {
+      "a": "cache_build_check",
+      "b": "setup_cell",
+      "pearson_r": 0.999366275360728,
+      "type": "pairwise"
+    },
+    {
+      "a": "cache_pair_copy_call",
+      "b": "cache_state_copy",
+      "pearson_r": 1.0000000000000429,
+      "type": "pairwise"
+    },
+    {
+      "a": "cache_pair_copy_call",
+      "b": "line_copy",
+      "pearson_r": 1.0000000000000429,
+      "type": "pairwise"
+    },
+    {
+      "a": "compact_check",
+      "b": "compact_move",
+      "pearson_r": 0.998430503300242,
+      "type": "pairwise"
+    },
+    {
+      "a": "index_copy_call",
+      "b": "index_copy_pair",
+      "pearson_r": 0.9986503400999805,
+      "type": "pairwise"
+    },
+    {
+      "a": "line_compare",
+      "b": "line_shift",
+      "pearson_r": 0.9978744199995394,
+      "type": "pairwise"
+    },
+    {
+      "a": "transition_compare",
+      "b": "transition_shift",
+      "pearson_r": 0.9997091714636541,
+      "type": "pairwise"
+    }
+  ],
+  "merged_groups": [
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "cache_build_check",
+        "setup_cell"
+      ],
+      "name": "cache_build_check+setup_cell",
+      "seconds_per_merged_count": 2.546844646047142e-06
+    },
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "cache_pair_copy_call",
+        "cache_state_copy",
+        "line_copy"
+      ],
+      "name": "cache_pair_copy_call+cache_state_copy+line_copy",
+      "seconds_per_merged_count": 0.0
+    },
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "compact_check",
+        "compact_move"
+      ],
+      "name": "compact_check+compact_move",
+      "seconds_per_merged_count": 0.0
+    },
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "index_copy_call",
+        "index_copy_pair"
+      ],
+      "name": "index_copy_call+index_copy_pair",
+      "seconds_per_merged_count": 1.2644206151963839e-08
+    },
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "line_compare",
+        "line_shift"
+      ],
+      "name": "line_compare+line_shift",
+      "seconds_per_merged_count": 3.712156225095481e-08
+    },
+    {
+      "aggregation": "sum_raw_counts",
+      "members": [
+        "transition_compare",
+        "transition_shift"
+      ],
+      "name": "transition_compare+transition_shift",
+      "seconds_per_merged_count": 1.6077379146911018e-09
+    }
+  ],
+  "method": "centered_pairwise_pearson_then_pivoted_gram_schmidt",
+  "purpose": "Design microbenchmarks to identify independent relative costs",
+  "rank_after": {
+    "column_count": 16,
+    "dependent": [],
+    "effective_rank": 16,
+    "independent": [
+      {
+        "name": "assignment",
+        "relative_residual": 1.0000000000000038
+      },
+      {
+        "name": "base_score",
+        "relative_residual": 0.49013687259064886
+      },
+      {
+        "name": "cache_build_check+setup_cell",
+        "relative_residual": 0.959887337758378
+      },
+      {
+        "name": "cache_pair_copy",
+        "relative_residual": 0.6066854544683676
+      },
+      {
+        "name": "cache_pair_copy_call+cache_state_copy+line_copy",
+        "relative_residual": 0.1310196520465011
+      },
+      {
+        "name": "compact_check+compact_move",
+        "relative_residual": 0.34358971712430497
+      },
+      {
+        "name": "domain_invalidation",
+        "relative_residual": 0.378518429488774
+      },
+      {
+        "name": "index_copy_call+index_copy_pair",
+        "relative_residual": 0.1520173796678578
+      },
+      {
+        "name": "line_compare+line_shift",
+        "relative_residual": 0.7493689518177543
+      },
+      {
+        "name": "line_score",
+        "relative_residual": 0.1170115963355535
+      },
+      {
+        "name": "line_score_value",
+        "relative_residual": 0.08279124915591049
+      },
+      {
+        "name": "lookahead_blend",
+        "relative_residual": 0.13074661089872727
+      },
+      {
+        "name": "lookahead_scan",
+        "relative_residual": 0.058985991487668976
+      },
+      {
+        "name": "node_copy",
+        "relative_residual": 0.03207066495402205
+      },
+      {
+        "name": "solution_copy",
+        "relative_residual": 0.29910588432116514
+      },
+      {
+        "name": "transition_compare+transition_shift",
+        "relative_residual": 0.3554362525355111
+      }
+    ]
+  },
+  "rank_before": {
+    "column_count": 23,
+    "dependent": [
+      {
+        "name": "cache_state_copy",
+        "relative_residual": 1.3557484799027346e-17
+      },
+      {
+        "name": "line_copy",
+        "relative_residual": 1.3438824322603725e-17
+      }
+    ],
+    "effective_rank": 21,
+    "independent": [
+      {
+        "name": "assignment",
+        "relative_residual": 1.0000000000000038
+      },
+      {
+        "name": "base_score",
+        "relative_residual": 0.49013687259064886
+      },
+      {
+        "name": "cache_build_check",
+        "relative_residual": 0.9599965999731234
+      },
+      {
+        "name": "cache_pair_copy",
+        "relative_residual": 0.6066849496509005
+      },
+      {
+        "name": "cache_pair_copy_call",
+        "relative_residual": 0.13101874042352604
+      },
+      {
+        "name": "compact_check",
+        "relative_residual": 0.33484436592671274
+      },
+      {
+        "name": "compact_move",
+        "relative_residual": 0.046119127121362964
+      },
+      {
+        "name": "domain_invalidation",
+        "relative_residual": 0.33499507123238625
+      },
+      {
+        "name": "index_copy_call",
+        "relative_residual": 0.16388858788613547
+      },
+      {
+        "name": "index_copy_pair",
+        "relative_residual": 0.0372629212527559
+      },
+      {
+        "name": "line_compare",
+        "relative_residual": 0.7475107541460844
+      },
+      {
+        "name": "line_score",
+        "relative_residual": 0.09317873045268382
+      },
+      {
+        "name": "line_score_value",
+        "relative_residual": 0.07956330980162907
+      },
+      {
+        "name": "line_shift",
+        "relative_residual": 0.007460625478361338
+      },
+      {
+        "name": "lookahead_blend",
+        "relative_residual": 0.10300187250821086
+      },
+      {
+        "name": "lookahead_scan",
+        "relative_residual": 0.05205736431357744
+      },
+      {
+        "name": "node_copy",
+        "relative_residual": 0.031051000801959657
+      },
+      {
+        "name": "setup_cell",
+        "relative_residual": 0.025994624698466248
+      },
+      {
+        "name": "solution_copy",
+        "relative_residual": 0.29059327774314914
+      },
+      {
+        "name": "transition_compare",
+        "relative_residual": 0.33098626839191936
+      },
+      {
+        "name": "transition_shift",
+        "relative_residual": 0.012520937075959146
+      }
+    ]
+  },
+  "source_calibration_file": "/kaggle/working/SkyscraperSolver/scratch/work_calibration.json",
+  "source_git_commit": "16c906deaf9573a702073be9b706461bef98b8c4"
+}

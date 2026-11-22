@@ -1,0 +1,108 @@
+{
+  "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
+  "counter_schema": "v2",
+  "counter_semantics": "fixed event counts and actual variable volumes",
+  "created_at_utc": "2026-11-22T16:59:04.885526+00:00",
+  "dataset_sha256": {
+    "puzzle_bank/spsa_datasets/le7_train.txt": "70d49362161cc11674c00be325bd3df075f0ccdaa7c169af8ae01215cdf0555a",
+    "puzzle_bank/spsa_datasets/size8_train.txt": "c5d883198516641c6dedea38f755b85762312270fe42b58dcdc76867fd5ff082",
+    "puzzle_bank/spsa_datasets/size9_train.txt": "a4c821694ce5f6b8ee233e2ae0b14ef47694c315804591d15132d180d9fe03ea"
+  },
+  "dropped_counters": [
+    "dp_init_call",
+    "dp_init_write",
+    "gac_check",
+    "propagate_dp_update",
+    "rollback",
+    "setup_cache_slot"
+  ],
+  "fit": "pooled",
+  "format": "skyscraper-work-model",
+  "format_version": 1,
+  "held_out_score": {
+    "clear_ranking_accuracy": 0.7770353551735323,
+    "clear_ranking_coverage": 0.5146567841880342,
+    "clear_ranking_pairs": 15415,
+    "macro_clear_ranking_accuracy": 0.7825596631349426,
+    "mae_seconds": 0.0011151045635580097,
+    "r2": 0.9992100760548359,
+    "ranking_accuracy": 0.6719751602564102,
+    "samples": 4992,
+    "within_puzzle_mae_seconds": 0.0007821609791238479,
+    "within_puzzle_r2": 0.9952859989991096
+  },
+  "held_out_score_by_size": {
+    "size7": {
+      "clear_ranking_accuracy": 0.8982898289828983,
+      "clear_ranking_coverage": 0.44511217948717946,
+      "mae_seconds": 0.0011509001869981785,
+      "r2": 0.9994947537252331,
+      "within_puzzle_r2": 0.95605117802344
+    },
+    "size8": {
+      "clear_ranking_accuracy": 0.6003442340791738,
+      "clear_ranking_coverage": 0.5819310897435898,
+      "mae_seconds": 0.0007785872327733497,
+      "r2": 0.9724970922557922,
+      "within_puzzle_r2": 0.8115979971405302
+    },
+    "size9": {
+      "clear_ranking_accuracy": 0.871536523929471,
+      "clear_ranking_coverage": 0.5169270833333334,
+      "mae_seconds": 0.0014158262709025012,
+      "r2": 0.9982897750247485,
+      "within_puzzle_r2": 0.9967153730092086
+    }
+  },
+  "hyperparameters": {
+    "contrast_weight": 1.0,
+    "ridge_alpha": 1e-06
+  },
+  "intercept_seconds": 0.0019588385647380316,
+  "max_solutions_by_size": {
+    "7": 0,
+    "8": 1,
+    "9": 1
+  },
+  "objective": "predicted_seconds",
+  "seconds_per_count": {
+    "assignment": 3.3961612591122e-07,
+    "base_score": 1.8379262109513104e-08,
+    "cache_build_check": 2.546844646047142e-06,
+    "cache_pair_copy": 1.4997416856661636e-08,
+    "cache_pair_copy_call": 0.0,
+    "cache_state_copy": 0.0,
+    "compact_check": 0.0,
+    "compact_move": 0.0,
+    "domain_invalidation": 8.008274015667425e-08,
+    "dp_init_call": 0.0,
+    "dp_init_write": 0.0,
+    "gac_check": 0.0,
+    "index_copy_call": 1.2644206151963839e-08,
+    "index_copy_pair": 1.2644206151963839e-08,
+    "line_compare": 3.712156225095481e-08,
+    "line_copy": 0.0,
+    "line_score": 0.0,
+    "line_score_value": 0.0,
+    "line_shift": 3.712156225095481e-08,
+    "lookahead_blend": 0.0,
+    "lookahead_scan": 3.839423808670299e-08,
+    "node_copy": 0.0,
+    "propagate_dp_update": 0.0,
+    "rollback": 0.0,
+    "setup_cache_slot": 0.0,
+    "setup_cell": 2.546844646047142e-06,
+    "solution_copy": 0.0,
+    "transition_compare": 1.6077379146911018e-09,
+    "transition_shift": 1.6077379146911018e-09
+  },
+  "source_calibration_file": "/kaggle/working/SkyscraperSolver/scratch/work_calibration.json",
+  "source_git_commit": "16c906deaf9573a702073be9b706461bef98b8c4",
+  "training_observations": 14976,
+  "training_sizes": [
+    7,
+    8,
+    9
+  ],
+  "validation_observations": 4992
+}
