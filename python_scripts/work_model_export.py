@@ -33,6 +33,10 @@ def make_compact_model(report, source_file=None, created_at=None):
         raise ValueError("Counter names must be nonempty and unique")
     grouped = model["collinearity"]["groups"]
     coefficients = model["seconds_per_count"]
+    allocation = report.get("pooled_unmerging")
+    if provenance["schema"] == "v3" and not allocation:
+        raise ValueError("v3 model requires measured post-fit unmerging")
+    allocation_weights = allocation["seconds_per_count"] if allocation else {}
     weights = dict.fromkeys(names, 0.0)
     seen = set()
     for group in grouped:
@@ -49,15 +53,26 @@ def make_compact_model(report, source_file=None, created_at=None):
             if name not in weights or name in seen:
                 raise ValueError(f"Unknown or repeated raw counter: {name}")
             seen.add(name)
-            weights[name] = weight
+            raw_weight = allocation_weights.get(name) if allocation else weight
+            if not isinstance(raw_weight, (int, float)):
+                raise ValueError(f"Missing independently measured split: {name}")
+            if not math.isfinite(raw_weight) or raw_weight < 0:
+                raise ValueError(f"Invalid allocated counter weight: {name}")
+            weights[name] = raw_weight
     if set(coefficients) != {g["name"] for g in grouped}:
         raise ValueError("Fitted coefficient and group names disagree")
+    if allocation and set(allocation_weights) != seen:
+        raise ValueError("Allocated coefficients must cover all fitted counters")
+    if allocation and not allocation.get("all_merged_groups_resolved"):
+        raise ValueError("Cannot export provisional unresolved merged weights")
     intercept = float(model["intercept_seconds"])
     if not math.isfinite(intercept) or intercept < 0:
         raise ValueError("Invalid nonnegative intercept")
     if created_at is None:
         created_at = datetime.now(timezone.utc).isoformat()
-    validation = fit["validation"]
+    validation = (allocation["held_out_validation"]
+                  if allocation and "held_out_validation" in allocation
+                  else fit["validation"])
     score_keys = (
         "samples", "mae_seconds", "r2", "ranking_accuracy",
         "clear_ranking_accuracy", "clear_ranking_coverage",
@@ -66,7 +81,10 @@ def make_compact_model(report, source_file=None, created_at=None):
     )
     score = {name: validation[name] for name in score_keys
              if name in validation}
-    by_size = report.get("pooled_validation_by_size", {})
+    by_size = ({"size" + size: metrics for size, metrics in
+                allocation["held_out_validation_by_size"].items()}
+               if allocation and "held_out_validation_by_size" in allocation
+               else report.get("pooled_validation_by_size", {}))
     short_size = {
         name: {metric: metrics.get(metric) for metric in (
             "mae_seconds", "r2", "clear_ranking_accuracy",
@@ -98,6 +116,16 @@ def make_compact_model(report, source_file=None, created_at=None):
         "held_out_score": score,
         "held_out_score_by_size": short_size,
         "dropped_counters": sorted(set(names) - seen),
+        "coefficient_allocation_method": (
+            allocation["method"] if allocation else
+            "archived_equal_group_sum_only"),
+        "merged_group_coefficients": (dict(coefficients)
+                                     if allocation else None),
+        "merged_group_allocations": (
+            [{key: val for key, val in group.items()
+              if key != "timing_evidence"} for group in allocation["groups"]]
+            if allocation else None),
+        "regression_held_out_score": fit["validation"],
         "counter_semantics": "fixed event counts and actual variable volumes",
         "objective": "predicted_seconds",
     }
@@ -124,16 +152,29 @@ def make_collinearity_export(report, source_file=None, created_at=None):
 
     # Also validates raw-counter membership, groups and coefficients.
     compact = make_compact_model(report, source_file, created_at)
+    allocated_groups = {
+        group["group"]: group
+        for group in report.get("pooled_unmerging", {}).get("groups", [])}
     groups = []
     for group in analysis["groups"]:
         if len(group["members"]) < 2:
             continue
+        allocated = allocated_groups.get(group["name"])
         groups.append({
             "name": group["name"],
             "members": list(group["members"]),
             "aggregation": group["aggregation"],
             "seconds_per_merged_count":
                 coefficients["seconds_per_count"][group["name"]],
+            "allocated_member_seconds_per_count": (
+                allocated["seconds_per_original_count"] if allocated else None),
+            "measured_cost_ratios": (
+                allocated["member_cost_ratios"] if allocated else None),
+            "timing_evidence": (
+                allocated["timing_evidence"] if allocated else None),
+            "max_abs_training_prediction_drift_seconds": (
+                allocated["max_abs_training_prediction_drift_seconds"]
+                if allocated else None),
         })
     output = {
         "format": "skyscraper-work-collinearity",
@@ -155,6 +196,11 @@ def make_collinearity_export(report, source_file=None, created_at=None):
         "rank_before": analysis["rank_before"],
         "rank_after": analysis["rank_after"],
         "dropped_counters": compact["dropped_counters"],
+        "allocation_method": compact["coefficient_allocation_method"],
+        "controlled_counter_costs_seconds": report.get(
+            "pooled_unmerging", {}).get("controlled_counter_costs_seconds"),
+        "controlled_counter_diagnostics": report.get(
+            "pooled_unmerging", {}).get("controlled_counter_diagnostics"),
         "assumption": analysis["cost_assumption"],
         "purpose": "Design microbenchmarks to identify independent relative costs",
         "interpretation": (
