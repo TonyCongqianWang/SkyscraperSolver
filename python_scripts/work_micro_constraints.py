@@ -39,42 +39,57 @@ def _gaussian_solve(matrix, vector):
 
 
 def controlled_member_costs(benchmark, minimum_rounds=3,
-                            max_spread=2.0):
-    """Derive positive per-unit costs from repeated controlled micro runs.
+                            max_spread=3.0):
+    """Estimate every individually benchmarked operation using round means.
 
-    Each raw measurement must have counter and independent round metadata.
-    Identifiability comes from benchmarking the *individual operation*, not
-    from taking the ratio of two collinear solver counter traces.
+    Affine sections provide two separate counter costs via a per-round
+    nonnegative affine fit; isolated counters use time per executed unit.
+    Each accepted member must have positive, stable measurements in all
+    independent rounds. No equal-weight guesses are ever inserted.
     """
+    from work_section_plausibility import TIMED_SECTIONS, timed_affine_fit
     rounds = benchmark.get("rounds", 0)
-    entries = {}
-    for measurement in benchmark.get("raw_measurements", []):
-        name = measurement.get("counter")
-        if name is None:
-            continue
-        entries.setdefault(name, {}).setdefault(
-            measurement.get("round"), []).append(measurement)
-    costs, diagnostics = {}, {}
-    for name, samples_by_round in sorted(entries.items()):
-        values = []
-        for i in range(rounds):
-            samples = samples_by_round.get(i, [])
-            ratios = [x["cpu_seconds"] / x["units"] for x in samples
-                      if _positive(x.get("cpu_seconds"))
-                      and _positive(x.get("units"))]
-            if ratios:
-                values.append(statistics.median(ratios))
-        spread = (max(values) / min(values)
-                  if values and min(values) > 0 else None)
-        status = ("accepted" if len(values) >= minimum_rounds and spread <=
-                  max_spread else "unresolved")
+    measurements = benchmark.get("raw_measurements", [])
+    series = {}
+    diagnostics = {}
+    for record in measurements:
+        if record.get("kind") == "individual":
+            name = record["counter"]
+            if _positive(record.get("cpu_seconds")) and _positive(record.get("units")):
+                series.setdefault(name, {}).setdefault(
+                    record["round"], []).append(
+                        record["cpu_seconds"] / record["units"])
+    for call, volume in TIMED_SECTIONS.items():
+        for index in range(rounds):
+            points = [r for r in measurements if r.get("kind") == "affine"
+                      and r.get("section") == call
+                      and r.get("round") == index]
+            fitted = timed_affine_fit([
+                (point["cpu_seconds"], point["calls"], point["volume"])
+                for point in points])
+            if fitted.get("identifiable"):
+                for name, key in ((call, "sampled_call_seconds"),
+                                  (volume, "sampled_volume_seconds")):
+                    value = fitted.get(key)
+                    if _positive(value):
+                        series.setdefault(name, {}).setdefault(
+                            index, []).append(value)
+    costs = {}
+    for name, by_round in sorted(series.items()):
+        values = [statistics.median(by_round[i])
+                  for i in range(rounds) if by_round.get(i)]
+        spread = max(values) / min(values) if values else None
+        accepted = (rounds >= minimum_rounds
+                    and len(values) == rounds and spread <= max_spread)
         diagnostics[name] = {
-            "status": status, "round_unit_seconds": values,
-            "round_count": len(values), "max_over_min": spread,
-            "reason": None if status == "accepted" else
+            "status": "accepted" if accepted else "unresolved",
+            "round_unit_seconds": values,
+            "round_count": len(values),
+            "max_over_min": spread,
+            "reason": None if accepted else
                 "insufficient_or_unstable_controlled_measurements",
         }
-        if status == "accepted":
+        if accepted:
             costs[name] = statistics.median(values)
     return costs, diagnostics
 
