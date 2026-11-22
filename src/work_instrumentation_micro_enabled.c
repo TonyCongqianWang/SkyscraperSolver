@@ -76,24 +76,4 @@ void	work_micro_report(void)
 	}
 }
 
-#else
-
-void	work_micro_begin(t_work_counter counter)
-{
-	(void)counter;
-}
-
-void	work_micro_end(t_work_counter counter)
-{
-	(void)counter;
-}
-
-void	work_micro_reset(void)
-{
-}
-
-void	work_micro_report(void)
-{
-}
-
 #endif
