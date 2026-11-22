@@ -24,6 +24,7 @@ static void	update_line_scores(t_node_state *node, t_line_order *order)
 	{
 		idx = order->entries[i].constr_idx;
 		work_add(WORK_LINE_SCORE, 1);
+		work_add(WORK_LINE_SCORE_VALUE, node->size);
 		order->entries[i].entropy = compute_constr_entropy(node, idx,
 				node->size);
 		i++;

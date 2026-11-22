@@ -8,10 +8,10 @@ conditionals; solver code calls the same ordinary ABI in both modes.
 assembly to confirm for a given toolchain; this is an optimization, not a C
 language guarantee). No counters are stored in puzzle/node structs.
 
-Work counters are emitted in a single `WORK_COUNTERS v1` record for each
+Work counters are emitted in a single `WORK_COUNTERS v2` record for each
 successfully parsed solve, including standard input mode. They start before
 solver initialization, and are counted through completion of the solve; printing
-and cleanup are outside the scope. The v1 schema is defined in
+and cleanup are outside the scope. The v2 schema is defined in
 `src/work_instrumentation.h`, with corresponding names in the report source.
 
 ## Calibrate from a fresh clone
@@ -78,7 +78,59 @@ This file survives an interrupted run. On successful completion it writes
 all native timings/medians, SHA256 dataset hashes, build provenance, per-fit
 coefficients, work predictions and held-out diagnostics.
 
-## Four fits and collinearity handling
+On successful completion the script **also exports a compact pooled model** to
+`scratch/work_calibration.model.json` (or `--model-output PATH`) and a
+separate pooled collinearity report to
+`scratch/work_calibration.collinearity.json`
+(or `--collinearity-output PATH`). It has
+only a versioned schema, raw-counter weights, intercept, creation timestamp,
+dataset hashes, compiler/commit, selected ridge and contrast penalties, and
+key held-out scores. No raw observations, individual run timings, tuning
+grid, or size-specific coefficients are included. The model's coefficients
+are already expanded onto the original counter names, so consumers need
+only `intercept_seconds + sum(seconds_per_count[key] * counts[key])`.
+Unidentifiable counters receive an explicit zero weight.
+
+To export an already generated detailed calibration file without recalibrating:
+
+```sh
+python3 python_scripts/work_model_export.py \
+    --input scratch/work_calibration.json \
+    --output scratch/work_calibration.model.json \
+    --collinearity-output scratch/work_calibration.collinearity.json
+```
+
+The collinearity file is intentionally **pooled-only**. It includes
+counter schema and raw names, all merged groups with original member
+names and provisional fitted group weights, pairwise correlations with
+their Pearson coefficients, ordered merge decisions (including
+multivariate dependencies), rank diagnostics before/after merging,
+constant/dropped counters and the original detection thresholds.
+It records the same creation timestamp and source revision as the compact
+model. The goal is to identify operations whose relative physical costs
+need microbenchmarking, **not** to interpret a correlation coefficient as
+a measured runtime cost ratio. No size-specific fits, per-puzzle records
+or full tuning grids appear in this export.
+
+The exporter can also read a previous v1 detailed report, retaining that
+original counter schema; only use models with a matching instrumented solver
+counter schema. For new models this is `v2`. The loader
+`work_model_export.load_compact_model` and predictor
+`work_model_export.predict_seconds` validate the compact format and require
+the complete raw counter set. Treat the compact file as the only
+deployment/tuning artifact; keep the raw JSONL and detailed report for
+reproducibility and diagnostics.
+
+## Pooled model and size-specific diagnostics
+
+The **pooled model is the primary model** and the only one exported for use
+in tuning. The script still fits **size 7**, **size 8**, and **size 9**
+independently for diagnostics, but does not export them as deployable models.
+The detailed report additionally includes
+`pooled_validation_by_size`, showing *the same pooled model* evaluated
+separately on each puzzle size so comparisons do not confuse a size-specific
+fit with a pooled prediction. The pooled fit and diagnostic models each
+retain independent held-out score reports.
 
 The script fits models on **size 7**, **size 8**, **size 9**, and the
 **pooled sizes** separately. All four report independent nonnegative
@@ -106,6 +158,43 @@ different operations. We deliberately retain raw counters so later
 microbenchmarks can establish cost ratios and replace these provisional
 groups. Rank is an approximate numerical diagnostic (Gram–Schmidt), not
 an SVD condition number, and near dependencies can be threshold-sensitive.
+
+## Counter semantics: real work volumes and fixed-size copies
+
+The instrumentation schema has changed from **v1 to v2**. Re-run the
+instrumented calibration to obtain valid coefficients for the new schema.
+The old v1 model must not be combined with v2 raw counters.
+
+For variable-size operations, measure both fixed invocation overhead and
+actual touched work where practical:
+
+| Operation | Calls | Volume |
+| --- | --- | --- |
+| Cache entry pair copy | `cache_pair_copy_call` | `cache_pair_copy` = actual copied entries |
+| Line entropy scoring | `line_score` | `line_score_value` = values scanned in entropy loop |
+| DP table initialization | `dp_init_call` | `dp_init_write` = actual initialized/overwritten table slots |
+| Constraint-index copy | `index_copy_call` | `index_copy_pair` = forward/reverse index pairs copied |
+
+Each call/volume pair lets the pooled regression estimate a fixed term
+plus a variable term. The old `cache_pair_copy` counter already measured
+entries, and now has a separate call counter. Inner loop counters such as
+`gac_check` and `propagate_dp_update` already measure actual work and
+are not multiplied by another polynomial in grid size.
+
+**Crucially,** `t_node_state`, `t_line_order` and `t_order_state`
+are C structs with fixed-maximum arrays (81 grid cells, 18 lines, etc.).
+Assigning one of these copies its entire fixed-size struct, *not only the
+active puzzle cells*. Their `node_copy`, `line_copy`,
+`cache_state_copy` and `solution_copy` counters remain simple counts.
+Do not multiply them by `n*n` or `n`, which would misrepresent actual
+memory traffic. The finite cost of any fixed-size copy is absorbed in
+its count coefficient.
+
+The collinearity analyzer may still merge nearly dependent call/volume
+columns when the training set does not identify separate costs. The
+compact export preserves the exact pooled prediction by expanding the
+merged-group coefficient back onto every original counter. Keep the raw
+v2 counters for later microbenchmarks to determine independent ratios.
 
 ## Ranking-focused regularization and timing uncertainty
 
@@ -157,7 +246,7 @@ rankings unreliable. Compare results from the regularized and unregularized
 models; there is no guarantee regularization will improve rankings.
 
 The surrogate is **not** automatically used for SPSA tuning. Inspect
-held-out rank accuracy (particularly *clear* pairs), four-model agreement,
+held-out rank accuracy (particularly *clear* pairs), pooled performance per size,
 and periodic uninstrumented comparisons before using coefficients in SPSA.
 Size-8 calibration continues to measure first-solution mode by default;
 the SPSA training objective also evaluates enumeration, which needs

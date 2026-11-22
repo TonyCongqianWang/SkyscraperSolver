@@ -17,6 +17,7 @@ void	copy_order_items(t_order_items *target, const t_order_items *source)
 {
 	int	i;
 
+	work_add(WORK_CACHE_PAIR_COPY_CALL, 1);
 	work_add(WORK_CACHE_PAIR_COPY, source->count);
 	target->count = source->count;
 	i = -1;

@@ -19,9 +19,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from symmetry import canonize_nums
 from work_collinearity import analyze_and_merge, collapse_row
 from work_ranking import ranking_diagnostics
+from work_model_export import export_compact_model, export_collinearity
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = "v1"
+SCHEMA = "v2"
 DEFAULT_DATASETS = (
     "puzzle_bank/spsa_datasets/le7_train.txt",
     "puzzle_bank/spsa_datasets/size8_train.txt",
@@ -30,10 +31,12 @@ DEFAULT_DATASETS = (
 COUNTER_RE = re.compile(r"^WORK_COUNTERS (v\d+) (.+)$", re.MULTILINE)
 COUNTER_NAMES = (
     "setup_cell", "setup_cache_slot", "cache_state_copy", "cache_pair_copy",
-    "cache_build_check", "compact_check", "compact_move",
+    "cache_pair_copy_call", "cache_build_check", "compact_check", "compact_move",
     "transition_compare", "transition_shift", "line_copy", "line_score",
-    "line_compare", "line_shift", "base_score", "lookahead_blend",
-    "propagate_dp_update", "gac_check", "assignment", "domain_invalidation",
+    "line_score_value", "line_compare", "line_shift", "base_score",
+    "lookahead_blend", "propagate_dp_update", "dp_init_call",
+    "dp_init_write", "index_copy_call", "index_copy_pair",
+    "gac_check", "assignment", "domain_invalidation",
     "node_copy", "lookahead_scan", "solution_copy", "rollback",
 )
 PARAMETER_GROUPS = {
@@ -501,6 +504,10 @@ def main():
     parser.add_argument("--cc", default=os.environ.get("CC", "gcc"))
     parser.add_argument("--output", type=Path,
                         default=ROOT / "scratch" / "work_calibration.json")
+    parser.add_argument("--model-output", type=Path,
+                        help="Compact pooled model path (default: output.model.json)")
+    parser.add_argument("--collinearity-output", type=Path,
+                        help="Pooled collinearity path (default: output.collinearity.json)")
     args = parser.parse_args()
     if (args.puzzles_per_size < 1 or args.native_repeats < 2
             or args.instrumented_repeats < 2):
@@ -636,8 +643,17 @@ def main():
             for name, fit in fits.items() if fit["status"] == "fitted"
             and (name == "all" or name == "size" + str(row["size"]))
         }
+    pooled_metrics = {}
+    if fits["all"]["status"] == "fitted":
+        for size in (7, 8, 9):
+            pooled_metrics["size" + str(size)] = diagnostics(
+                [row for row in heldout if row["size"] == size],
+                fits["all"]["coefficients"],
+                args.ranking_noise_z, args.ranking_min_delta_seconds)
     payload = {
         "version": 3, "provenance": provenance,
+        "primary_fit": "all",
+        "pooled_validation_by_size": pooled_metrics,
         "fits": fits, "agreement": agreement_metrics,
         "sample_counts": {
             "train": len(train), "validation": len(heldout),
@@ -652,6 +668,15 @@ def main():
     }
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                            encoding="utf-8")
+    model_path = args.model_output or args.output.with_suffix(".model.json")
+    collinearity_path = (args.collinearity_output
+                         or args.output.with_suffix(".collinearity.json"))
+    from datetime import datetime, timezone
+    creation_time = datetime.now(timezone.utc).isoformat()
+    export_compact_model(payload, model_path, args.output, creation_time)
+    export_collinearity(payload, collinearity_path, args.output, creation_time)
+    print(f"Saved pooled model to {model_path}")
+    print(f"Saved pooled collinearity to {collinearity_path}")
     print(f"Saved {len(rows)} samples to {args.output}")
     print(f"Saved each raw solver run to {raw_path}")
     print(json.dumps({

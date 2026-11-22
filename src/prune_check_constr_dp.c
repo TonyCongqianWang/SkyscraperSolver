@@ -18,6 +18,7 @@ void	init_dp_tables(t_dp_tables *dp, int size)
 	int	k;
 	int	m;
 
+	work_dp_init(size);
 	k = -1;
 	while (++k <= size)
 	{

@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "prune_check_constr.h"
 #include "entropy.h"
 
@@ -17,6 +18,8 @@ void	copy_indices(t_solver_state *puzzle, int *grid, int *rev, int size)
 {
 	int	i;
 
+	work_add(WORK_INDEX_COPY_CALL, 1);
+	work_add(WORK_INDEX_COPY_PAIR, size);
 	i = 0;
 	while (i < size)
 	{

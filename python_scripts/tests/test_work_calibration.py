@@ -28,6 +28,19 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertEqual(first[1:3], ordinary[1:3])
             self.assertIsNotNone(first[3])
             self.assertIsNone(ordinary[3])
+            self.assertEqual(calibration.SCHEMA, "v2")
+            counts = first[3]
+            self.assertEqual(
+                counts["line_score_value"],
+                counts["line_score"] * puzzles[0]["size"])
+            self.assertEqual(
+                counts["index_copy_pair"],
+                counts["index_copy_call"] * puzzles[0]["size"])
+            self.assertEqual(
+                counts["dp_init_write"],
+                counts["dp_init_call"]
+                * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
+                   + 2 * (puzzles[0]["size"] + 1)))
 
     def test_nonnegative_fit(self):
         samples = []
