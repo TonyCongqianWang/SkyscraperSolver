@@ -342,25 +342,39 @@ def fit_four_models(train, validation, correlation_threshold, dependency_toleran
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", default=None,
-                        help="Repeat for different benchmark files")
-    parser.add_argument("--limit-per-dataset", type=int, default=8)
+                        help="Repeat for multiple benchmark files; can include size 7/8/9")
+    parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
+                        default=128, dest="puzzles_per_size")
     parser.add_argument("--native-repeats", type=int, default=3)
-    parser.add_argument("--max-solutions", type=int, default=1)
-    parser.add_argument("--perturb", action="store_true",
-                        help="Build cache-period and lookahead-weight variants")
+    parser.add_argument("--max-solutions", type=int, default=None,
+                        help="Override default: size 7 full enumeration (0), 8/9 first solution (1)")
+    parser.add_argument("--no-perturb", action="store_true",
+                        help="Skip default cache-period/lookahead parameter perturbations")
     parser.add_argument("--timeout", type=float, default=30)
     parser.add_argument("--validation-fraction", type=float, default=0.25)
+    parser.add_argument("--correlation-threshold", type=float, default=0.995)
+    parser.add_argument("--dependency-tolerance", type=float, default=1e-3)
     parser.add_argument("--seed", type=int, default=72)
     parser.add_argument("--cc", default=os.environ.get("CC", "gcc"))
     parser.add_argument("--output", type=Path,
                         default=ROOT / "scratch" / "work_calibration.json")
     args = parser.parse_args()
-    if args.limit_per_dataset < 1 or args.native_repeats < 2:
-        parser.error("limit must be >= 1 and native-repeats must be >= 2")
+    if args.puzzles_per_size < 1 or args.native_repeats < 2:
+        parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
     if not 0 < args.validation_fraction < 1:
         parser.error("validation-fraction must be between zero and one")
-    puzzles = read_puzzles(args.dataset or DEFAULT_DATASETS, args.limit_per_dataset)
-    variants_to_run = variants(puzzles, args.perturb)
+    if args.max_solutions is not None and args.max_solutions < 0:
+        parser.error("max-solutions cannot be negative")
+    puzzles = read_puzzles(args.dataset or DEFAULT_DATASETS, args.puzzles_per_size)
+    if args.dataset is None:
+        for size in (7, 8, 9):
+            found = sum(p["size"] == size for p in puzzles)
+            if found != args.puzzles_per_size:
+                raise ValueError(f"Only {found} distinct size-{size} puzzles available; "
+                                 f"requested {args.puzzles_per_size}")
+    variants_to_run = variants(puzzles, not args.no_perturb)
+    counts = {size: sum(p["size"] == size for p in puzzles)
+              for size in (7, 8, 9)}
     provenance = {
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                       capture_output=True, text=True).stdout.strip(),
@@ -370,60 +384,115 @@ def main():
         "schema": SCHEMA,
         "configurations": variants_to_run,
         "datasets": sorted({(p["dataset"], p["dataset_sha256"]) for p in puzzles}),
-        "native_repeats": args.native_repeats, "max_solutions": args.max_solutions,
+        "native_repeats": args.native_repeats,
+        "max_solutions_by_size": {
+            str(size): puzzle_mode({"size": size}, args.max_solutions)
+            for size in (7, 8, 9)},
+        "puzzles_per_size": counts,
+        "seed": args.seed, "validation_fraction": args.validation_fraction,
+        "counter_schema": list(COUNTER_NAMES),
+        "perturbations_enabled": not args.no_perturb,
     }
-    rows = []
-    with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
-        build_dir = Path(directory)
-        for variant in variants_to_run:
-            instr, instr_cmd = build(build_dir, variant, True, args.cc, [])
-            native, native_cmd = build(build_dir, variant, False, args.cc, [])
-            print(f"Configuration: {variant['name']}", flush=True)
-            for p in puzzles:
-                _, solutions, nodes, counts = execute(instr, p, args.max_solutions, args.timeout)
-                again = execute(instr, p, args.max_solutions, args.timeout)
-                if (solutions, nodes, counts) != (again[1], again[2], again[3]):
-                    raise RuntimeError(f"Nondeterministic counters: {p['dataset']}:{p['line']}")
-                times = []
-                for _ in range(args.native_repeats):
-                    seconds, native_sols, native_nodes, no_counts = execute(
-                        native, p, args.max_solutions, args.timeout)
-                    if (native_sols, native_nodes) != (solutions, nodes):
-                        raise RuntimeError("Instrumented and native search results differ")
-                    if no_counts is not None:
-                        raise RuntimeError("Native build contains counter output")
-                    times.append(seconds)
-                rows.append({
-                    "configuration": variant["name"],
-                    "dataset": p["dataset"], "dataset_sha256": p["dataset_sha256"],
-                    "line": p["line"], "size": p["size"], "clue": p["clue"],
-                    "grid": p["grid"], "max_solutions": args.max_solutions,
-                    "solutions": solutions, "nodes": nodes, "counters": counts,
-                    "native_times_seconds": times,
-                    "runtime_median_seconds": statistics.median(times),
-                })
-    train, holdout = split(rows, args.validation_fraction, args.seed)
-    model = fit_nonnegative(train, COUNTER_NAMES)
-    groups = {"le7": lambda r: r["size"] <= 7,
-              "size8": lambda r: r["size"] == 8,
-              "size9": lambda r: r["size"] == 9,
-              "single": lambda r: r["max_solutions"] == 1,
-              "enumeration": lambda r: r["max_solutions"] != 1}
-    evaluation = {"train": diagnostics(train, model),
-                  "validation": diagnostics(holdout, model),
-                  "validation_by_group": {k: diagnostics([r for r in holdout if pred(r)], model)
-                                          for k, pred in groups.items()}}
-    for row in rows:
-        row["work_seconds_estimate"] = predict(row, model)
-        row["split"] = "validation" if row in holdout else "train"
-    payload = {"version": 1, "provenance": provenance, "coefficients": model,
-               "evaluation": evaluation, "samples": rows,
-               "objective": "predicted_seconds; log-shift integration is NOT enabled"}
     args.output.parent.mkdir(parents=True, exist_ok=True)
+    raw_path = args.output.with_suffix(".raw.jsonl")
+    rows = []
+    with raw_path.open("w", encoding="utf-8", buffering=1) as raw_file:
+        with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
+            build_dir = Path(directory)
+            for variant in variants_to_run:
+                selected = [p for p in puzzles if applicable(variant, p)]
+                if not selected:
+                    continue
+                instr, instr_cmd = build(build_dir, variant, True, args.cc, [])
+                native, native_cmd = build(build_dir, variant, False, args.cc, [])
+                print(f"Configuration: {variant['name']} ({len(selected)} puzzles)",
+                      flush=True)
+                for p in selected:
+                    mode = puzzle_mode(p, args.max_solutions)
+                    raw_runs = []
+                    def record(kind, repeat, outcome):
+                        elapsed, solutions, nodes, counters = outcome
+                        event = {
+                            "configuration": variant["name"],
+                            "parameters": variant["parameters"],
+                            "dataset": p["dataset"],
+                            "dataset_sha256": p["dataset_sha256"],
+                            "line": p["line"], "identity": p["identity"],
+                            "size": p["size"], "max_solutions": mode,
+                            "instrumented": kind == "instrumented",
+                            "run_index": repeat, "elapsed_seconds": elapsed,
+                            "solutions": solutions, "nodes": nodes,
+                            "counters": counters,
+                        }
+                        raw_file.write(json.dumps(event, sort_keys=True) + "\n")
+                        raw_runs.append(event)
+                    first = execute(instr, p, mode, args.timeout)
+                    record("instrumented", 0, first)
+                    again = execute(instr, p, mode, args.timeout)
+                    record("instrumented", 1, again)
+                    if first[1:] != again[1:]:
+                        raise RuntimeError(
+                            f"Nondeterministic counters: {p['dataset']}:{p['line']}")
+                    times = []
+                    for repeat in range(args.native_repeats):
+                        result = execute(native, p, mode, args.timeout)
+                        record("native", repeat, result)
+                        seconds, native_sols, native_nodes, no_counts = result
+                        if (native_sols, native_nodes) != first[1:3]:
+                            raise RuntimeError("Instrumented and native search results differ")
+                        if no_counts is not None:
+                            raise RuntimeError("Native build contains counter output")
+                        times.append(seconds)
+                    rows.append({
+                        "configuration": variant["name"],
+                        "parameters": variant["parameters"],
+                        "dataset": p["dataset"],
+                        "dataset_sha256": p["dataset_sha256"],
+                        "line": p["line"], "identity": p["identity"],
+                        "size": p["size"], "clue": p["clue"],
+                        "grid": p["grid"], "max_solutions": mode,
+                        "solutions": first[1], "nodes": first[2],
+                        "counters": first[3],
+                        "native_times_seconds": times,
+                        "instrumented_times_seconds": [first[0], again[0]],
+                        "runtime_median_seconds": statistics.median(times),
+                        "raw_runs": raw_runs,
+                    })
+    train, heldout = split(rows, args.validation_fraction, args.seed)
+    fits, agreement_metrics = fit_four_models(
+        train, heldout, args.correlation_threshold, args.dependency_tolerance)
+    training_ids = {r["identity"] for r in train}
+    for row in rows:
+        row["split"] = "train" if row["identity"] in training_ids else "validation"
+        row["predictions_seconds"] = {
+            name: predict(row, fit["coefficients"])
+            for name, fit in fits.items() if fit["status"] == "fitted"
+            and (name == "all" or name == "size" + str(row["size"]))
+        }
+    payload = {
+        "version": 2, "provenance": provenance,
+        "fits": fits, "agreement": agreement_metrics,
+        "sample_counts": {
+            "train": len(train), "validation": len(heldout),
+            "train_by_size": {str(n): sum(r["size"] == n for r in train)
+                              for n in (7, 8, 9)},
+            "validation_by_size": {str(n): sum(r["size"] == n for r in heldout)
+                                   for n in (7, 8, 9)},
+        },
+        "raw_jsonl": str(raw_path),
+        "samples": rows,
+        "objective": "predicted_seconds; tuning objective integration remains disabled",
+    }
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                            encoding="utf-8")
-    print(f"Saved {len(rows)} rows to {args.output}")
-    print(json.dumps(evaluation, indent=2))
+    print(f"Saved {len(rows)} samples to {args.output}")
+    print(f"Saved each raw solver run to {raw_path}")
+    print(json.dumps({
+        "sample_counts": payload["sample_counts"],
+        "validation": {name: fit.get("validation") for name, fit in fits.items()},
+        "agreement": agreement_metrics,
+    }, indent=2))
+
 
 
 if __name__ == "__main__":
