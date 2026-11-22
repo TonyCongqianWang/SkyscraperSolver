@@ -15,6 +15,12 @@ TIMED_SECTIONS = {
     "index_copy_call": "index_copy_pair",
 }
 
+ATOMIC_SECTIONS = frozenset({
+    "cache_build_check", "setup_cell", "cache_state_copy", "line_copy",
+    "compact_check", "compact_move", "line_compare", "line_shift",
+    "transition_compare", "transition_shift",
+})
+
 
 def parse_micro_lines(lines, counter_names):
     """Read optional WORK_MICRO v2 records; reject partial/mismatched records."""
@@ -43,14 +49,14 @@ def parse_micro_lines(lines, counter_names):
         if idx >= len(counter_names):
             raise ValueError("Unknown micro timing counter index")
         name = counter_names[idx]
-        if name not in TIMED_SECTIONS or name in seen:
+        if name not in TIMED_SECTIONS and name not in ATOMIC_SECTIONS or name in seen:
             raise ValueError("Unexpected or repeated micro timing section")
         if (fields["clock_ticks_per_second"] <= 0
                 or fields["samples"] > fields["calls"]):
             raise ValueError("Invalid micro timing sample counts")
         seen.add(name)
         result.append({
-            "section": name, "volume_counter": TIMED_SECTIONS[name],
+            "section": name, "volume_counter": TIMED_SECTIONS.get(name),
             "calls": fields["calls"], "samples": fields["samples"],
             "sampled_volume": fields["sampled_volume"],
             "sampled_cpu_seconds":
@@ -191,11 +197,45 @@ def summarize_plausibility(rows, model, counter_names):
             "status": ("measurable" if corr is not None
                        else "insufficient_variation_or_timing"),
         }
+    # Every elementary operation in existing merged groups also has a
+    # sampled timer. Its per-unit CPU cost supplies additional relative
+    # evidence, even when measured counter columns are collinear.
+    for name in sorted(ATOMIC_SECTIONS):
+        paired = []
+        missing = 0
+        for row in rows:
+            records = {r["section"]: r for r in row.get("micro_sections", [])}
+            record = records.get(name)
+            if record is None or not record["samples"]:
+                missing += 1
+                continue
+            if record["sampled_cpu_seconds"] <= 0:
+                continue
+            paired.append((
+                record["sampled_cpu_seconds"],
+                weights[name] * record["samples"],
+                record["samples"]))
+        measured = [x[0] for x in paired]
+        predicted = [x[1] for x in paired]
+        sample_total = sum(x[2] for x in paired)
+        sections[name] = {
+            "volume_counter": None,
+            "observations": len(paired),
+            "total_sampled_packages": sample_total,
+            "unobserved_rows": missing,
+            "measured_cpu_seconds": sum(measured),
+            "model_sampled_seconds": sum(predicted),
+            "timed_unit_seconds": (
+                sum(measured) / sample_total if sample_total else None),
+            "pearson_r": pearson(measured, predicted),
+            "status": "measurable" if sample_total else "unmeasured",
+        }
     correlations = [data["pearson_r"] for data in sections.values()
                     if data["pearson_r"] is not None]
     observed_work = 0.0
     timed_work = 0.0
-    timed_names = set(TIMED_SECTIONS) | set(TIMED_SECTIONS.values())
+    timed_names = (set(TIMED_SECTIONS) | set(TIMED_SECTIONS.values())
+                   | set(ATOMIC_SECTIONS))
     for row in rows:
         counts = row.get("counters")
         if counts is None:
@@ -213,7 +253,7 @@ def summarize_plausibility(rows, model, counter_names):
             statistics.mean(correlations) if correlations else None),
         "score_definition": "unweighted mean per-section Pearson correlation",
         "scored_sections": len(correlations),
-        "possible_sections": len(TIMED_SECTIONS),
+        "possible_sections": len(TIMED_SECTIONS) + len(ATOMIC_SECTIONS),
         "observations": len(rows),
         "sections": sections,
         "interpretation": (
