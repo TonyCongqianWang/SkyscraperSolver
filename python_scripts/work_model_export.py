@@ -1,0 +1,147 @@
+"""Compact, self-contained pooled work model for tuning and deployment.
+
+Only the pooled fit is exported. Diagnostic size-specific fits and individual
+run measurements remain in the large calibration report / raw JSONL files.
+This module deliberately has no third-party dependencies.
+"""
+import argparse
+from datetime import datetime, timezone
+import json
+import math
+from pathlib import Path
+
+
+FORMAT = "skyscraper-work-model"
+FORMAT_VERSION = 1
+
+
+def make_compact_model(report, source_file=None, created_at=None):
+    """Flatten fitted merged groups into weights on original counters.
+
+    Since each merged feature is the SUM of its constituent raw counters,
+    assigning its fitted coefficient to every member is exactly equivalent
+    to full-model prediction. A zero coefficient is assigned to every
+    excluded constant/non-identifiable counter.
+    """
+    provenance = report["provenance"]
+    fit = report["fits"]["all"]
+    if fit["status"] != "fitted":
+        raise ValueError("Pooled fit is not available")
+    model = fit["coefficients"]
+    names = provenance["counter_schema"]
+    if len(names) != len(set(names)) or not names:
+        raise ValueError("Counter names must be nonempty and unique")
+    grouped = model["collinearity"]["groups"]
+    coefficients = model["seconds_per_count"]
+    weights = dict.fromkeys(names, 0.0)
+    seen = set()
+    for group in grouped:
+        group_name = group["name"]
+        members = group["members"]
+        if not members or group_name not in coefficients:
+            raise ValueError(f"Invalid group: {group_name}")
+        if group.get("aggregation") != "sum_raw_counts":
+            raise ValueError(f"Unsupported grouping: {group_name}")
+        weight = float(coefficients[group_name])
+        if not math.isfinite(weight) or weight < 0:
+            raise ValueError("Invalid nonnegative coefficient")
+        for name in members:
+            if name not in weights or name in seen:
+                raise ValueError(f"Unknown or repeated raw counter: {name}")
+            seen.add(name)
+            weights[name] = weight
+    if set(coefficients) != {g["name"] for g in grouped}:
+        raise ValueError("Fitted coefficient and group names disagree")
+    intercept = float(model["intercept_seconds"])
+    if not math.isfinite(intercept) or intercept < 0:
+        raise ValueError("Invalid nonnegative intercept")
+    if created_at is None:
+        created_at = datetime.now(timezone.utc).isoformat()
+    validation = fit["validation"]
+    score_keys = (
+        "samples", "mae_seconds", "r2", "ranking_accuracy",
+        "clear_ranking_accuracy", "clear_ranking_coverage",
+        "clear_ranking_pairs", "macro_clear_ranking_accuracy",
+        "within_puzzle_mae_seconds", "within_puzzle_r2",
+    )
+    score = {name: validation[name] for name in score_keys
+             if name in validation}
+    by_size = report.get("pooled_validation_by_size", {})
+    short_size = {
+        name: {metric: metrics.get(metric) for metric in (
+            "mae_seconds", "r2", "clear_ranking_accuracy",
+            "clear_ranking_coverage", "within_puzzle_r2")}
+        for name, metrics in by_size.items()
+    }
+    result = {
+        "format": FORMAT,
+        "format_version": FORMAT_VERSION,
+        "created_at_utc": created_at,
+        "source_calibration_file": str(source_file) if source_file else None,
+        "source_git_commit": provenance.get("git_commit"),
+        "counter_schema": provenance["schema"],
+        "training_sizes": sorted(int(k) for k, n in
+                                 provenance["puzzles_per_size"].items() if n),
+        "max_solutions_by_size": provenance.get("max_solutions_by_size"),
+        "training_observations": report["sample_counts"]["train"],
+        "validation_observations": report["sample_counts"]["validation"],
+        "dataset_sha256": {path: checksum for path, checksum
+                           in provenance["datasets"]},
+        "compiler": provenance.get("compiler"),
+        "fit": "pooled",
+        "intercept_seconds": intercept,
+        "seconds_per_count": weights,
+        "hyperparameters": {
+            "ridge_alpha": model["ridge_alpha"],
+            "contrast_weight": model["contrast_weight"],
+        },
+        "held_out_score": score,
+        "held_out_score_by_size": short_size,
+        "dropped_counters": sorted(set(names) - seen),
+        "counter_semantics": "fixed event counts and actual variable volumes",
+        "objective": "predicted_seconds",
+    }
+    # Guard against serialization of NaN/Infinity in a deployment artifact.
+    json.dumps(result, allow_nan=False)
+    return result
+
+
+def predict_seconds(model, counters):
+    """Predict runtime using a v1 compact artifact and original raw counts."""
+    if model.get("format") != FORMAT or model.get("format_version") != FORMAT_VERSION:
+        raise ValueError("Unsupported compact model format")
+    weights = model["seconds_per_count"]
+    if set(counters) != set(weights):
+        raise ValueError("Counter schema mismatch: provide all counters")
+    return model["intercept_seconds"] + sum(
+        value * counters[name] for name, value in weights.items())
+
+
+def load_compact_model(path):
+    return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def export_compact_model(report, target, source_file=None, created_at=None):
+    model = make_compact_model(report, source_file, created_at)
+    target = Path(target)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(model, sort_keys=True, indent=2,
+                                 allow_nan=False) + "\n", encoding="utf-8")
+    return model
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, required=True,
+                        help="Existing detailed work_calibration.json")
+    parser.add_argument("--output", type=Path,
+                        help="Destination (default: input.model.json)")
+    args = parser.parse_args()
+    report = json.loads(args.input.read_text(encoding="utf-8"))
+    target = args.output or args.input.with_suffix(".model.json")
+    export_compact_model(report, target, args.input)
+    print(f"Exported pooled model to {target}")
+
+
+if __name__ == "__main__":
+    main()
