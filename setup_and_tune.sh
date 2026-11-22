@@ -47,6 +47,19 @@ echo "=== Step 4: Rebuilding tunable solver ==="
 make re
 echo "Saved tunable solver to: ./skyscraper_solver"
 
+# The work executable must see the same environment-overridable
+# parameters as the native tunable solver. Build before unapplying patches.
+objective=work
+for argument in "$@"; do
+    if [ "$argument" = "--nodes-time" ]; then
+        objective=nodes-time
+    fi
+done
+if [ "$objective" = "work" ]; then
+    echo "=== Step 4b: Compiling instrumented tunable solver ==="
+    make INSTRUMENT=1
+fi
+
 echo "=== Step 5: Unapplying environment overrides ==="
 python3 python_scripts/examples/apply_env_overrides.py --unapply
 
