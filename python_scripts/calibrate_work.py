@@ -3,7 +3,6 @@
 import argparse
 import hashlib
 import json
-import math
 import os
 from pathlib import Path
 import random
@@ -14,12 +13,16 @@ import sys
 import tempfile
 import time
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from symmetry import canonize_nums
+from work_collinearity import analyze_and_merge, collapse_row
+
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v1"
 DEFAULT_DATASETS = (
     "benchmark_sets/benchmarkSet7_easy500.txt",
-    "benchmark_sets/benchmarkSet8_easy50.txt",
-    "benchmark_sets/benchmarkSet9_easy14.txt",
+    "benchmark_sets/benchmarkSet8.txt",
+    "benchmark_sets/benchmarkSet9.txt",
 )
 COUNTER_RE = re.compile(r"^WORK_COUNTERS (v\d+) (.+)$", re.MULTILINE)
 COUNTER_NAMES = (
@@ -46,37 +49,64 @@ PARAM_FILES = {"g_sel_": "params_cache_period.c",
 
 
 def read_puzzles(paths, limit):
+    """Take up to limit symmetry-unique puzzles PER SIZE, not per dataset."""
     puzzles = []
+    counts = {7: 0, 8: 0, 9: 0}
+    seen = set()
     for path in paths:
         source = Path(path)
         if not source.is_absolute():
             source = ROOT / source
         if not source.is_file():
             raise ValueError(f"Dataset not found: {source}")
-        lines = source.read_text(encoding="utf-8").splitlines()
-        added = 0
-        for index, raw in enumerate(lines, 1):
+        raw_bytes = source.read_bytes()
+        sha = hashlib.sha256(raw_bytes).hexdigest()
+        for index, raw in enumerate(raw_bytes.decode("utf-8").splitlines(), 1):
             if not raw.strip() or raw.lstrip().startswith("#"):
                 continue
             parts = re.findall(r'"([^"]+)"', raw)
             clue = parts[0] if parts else raw.strip()
-            n = len(clue.split()) // 4
-            if n not in range(4, 10) or len(clue.split()) != 4 * n:
-                raise ValueError(f"Invalid puzzle at {source}:{index}")
+            tokens = clue.split()
+            n = len(tokens) // 4
+            if n not in (7, 8, 9) or len(tokens) != 4 * n:
+                raise ValueError(f"Expected size 7/8/9 puzzle at {source}:{index}")
             grid = parts[1] if len(parts) > 1 else None
             if grid is not None and len(grid.split()) != n * n:
                 raise ValueError(f"Invalid grid at {source}:{index}")
+            if counts[n] >= limit:
+                continue
+            # Do not leak rotated/reflected duplicates across validation split.
+            identity = (n, canonize_nums(tuple(map(int, tokens))), grid)
+            if identity in seen:
+                continue
+            seen.add(identity)
+            counts[n] += 1
             puzzles.append({
                 "dataset": str(source.relative_to(ROOT)) if source.is_relative_to(ROOT) else str(source),
-                "dataset_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+                "dataset_sha256": sha,
                 "line": index, "size": n, "clue": clue, "grid": grid,
+                "identity": hashlib.sha256(repr(identity).encode("utf-8")).hexdigest(),
             })
-            added += 1
-            if added == limit:
-                break
     if not puzzles:
         raise ValueError("No puzzles in input")
     return puzzles
+
+
+def puzzle_mode(puzzle, max_solutions_override):
+    """0 = full enumeration (size 7 default), 1 = first solution."""
+    if max_solutions_override is not None:
+        return max_solutions_override
+    return 0 if puzzle["size"] == 7 else 1
+
+
+def applicable(variant, puzzle):
+    """Skip runs for parameters belonging to another size."""
+    parameters = variant["parameters"]
+    if not parameters:
+        return True
+    name = next(iter(parameters))
+    group = "le7" if puzzle["size"] <= 7 else "s" + str(puzzle["size"])
+    return name in PARAMETER_GROUPS[group]
 
 
 def variants(puzzles, perturb):
