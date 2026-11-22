@@ -14,8 +14,8 @@ from comparison_statistics import validate_policy
 from param_metadata import (PARAM_METADATA, PARAM_CONSTRAINTS, PARAMETER_ALIASES,
                             MATH_PARAM_GROUPS, STRATEGY_PARAM_NAMES,
                             STRATEGY_PARAM_GROUPS)
-from tuning_objective import (WORK, LEGACY, DEFAULT_OBJECTIVE,
-                              LEGACY_SWEEP_MODE_WEIGHTS, MODE_WEIGHTS as WORK_MODE_WEIGHTS,
+from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE,
+                              SWEEP_MODE_WEIGHTS, MODE_WEIGHTS as WORK_MODE_WEIGHTS,
                               SWEEP_TIME_WEIGHTS, REFERENCES,
                               mode_losses, sweep_score)
 from spsa_run_metadata import build_run_metadata, clue_identity, save_run_metadata
@@ -25,7 +25,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PARAMETERS = {row[0]: row for row in PARAM_METADATA}
 MULTIPLIERS = (-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4)
 TIME_WEIGHTS = SWEEP_TIME_WEIGHTS
-MODE_WEIGHTS = LEGACY_SWEEP_MODE_WEIGHTS  # compatibility for legacy callers
+MODE_WEIGHTS = SWEEP_MODE_WEIGHTS  # public sweep weighting
 
 
 SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_PARAM_GROUPS)
@@ -105,7 +105,7 @@ def environment(values):
 
 
 class PanelObjective:
-    def __init__(self, panels, workers, use_stdin, objective=LEGACY):
+    def __init__(self, panels, workers, use_stdin, objective=TIME_NODES):
         self.panels = panels
         self.workers = workers
         self.use_stdin = use_stdin
@@ -200,7 +200,7 @@ def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=SWEEP_MODES, required=True)
     parser.add_argument('--nodes-time', action='store_const', dest='objective',
-                        const=LEGACY, help='Use the original nodes/time objective')
+                        const=TIME_NODES, help='Tune with measured wall time + search nodes instead of calibrated work')
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
     parser.add_argument('--work-model', type=Path, default=spsa.DEFAULT_MODEL,
                         help='Pooled v2 work model used by default')
@@ -313,7 +313,7 @@ def main(argv=None):
     try:
         return _main_impl(argv)
     finally:
-        spsa.configure_objective(SimpleNamespace(objective=LEGACY))
+        spsa.configure_objective(SimpleNamespace(objective=TIME_NODES))
 
 
 if __name__ == '__main__':
