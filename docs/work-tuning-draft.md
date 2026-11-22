@@ -27,8 +27,8 @@ selected explicitly:
 
 `--work-model PATH` can point to another compatible compact model.
 The loss definitions, shifts, references and mode policies reside in
-`python_scripts/tuning_objective.py`. Legacy tuning preserves previous
-nodes/time mix and sweep weighting. In work mode, SPSA's two existing
+`python_scripts/tuning_objective.py`. The measured time + nodes objective retains its own established
+mixing weights for SPSA and sweep. In work mode, SPSA's two existing
 optimizer gradient streams receive the *same work loss*, so their average
 is mathematically the single work gradient, not a mixture with nodes.
 
