@@ -70,6 +70,7 @@ static void prepare(int size)
     line_a.count = 2 * size;
     for (i = 0; i < size * size; i++)
     {
+        puzzle.cell_distance_order[i] = i;
         node.domain.valid_val_bmps[i] = (1 << size) - 1;
         node.domain.vals[i] = 0;
         node.domain.num_cell_vals[i] = size;
@@ -157,14 +158,21 @@ static void bench_setup(int repeats, int round)
         barrier(&node);
     }
     emit_individual("setup_cell", round, repeats, start);
-    start = clock_seconds();
-    for (i = 0; i < repeats; i++)
+    /* Count full cache-build checks, including valid transitions. */
     {
-        sink += (unsigned long long)is_valid_value(&node, i % 49,
-                                                    i % 7 + 1);
-        barrier(&node);
+        int runs = repeats / 343;
+        int units = runs * 343;
+        if (runs < 1)
+            runs = 1, units = 343;
+        start = clock_seconds();
+        for (i = 0; i < runs; i++)
+        {
+            collect_cache_entries(&puzzle, &puzzle.order_stack.orders[0], NULL);
+            barrier(&puzzle.order_stack.orders[0]);
+            sink += (unsigned long long)puzzle.order_stack.orders[0].items.count;
+        }
+        emit_individual("cache_build_check", round, units, start);
     }
-    emit_individual("cache_build_check", round, repeats, start);
 }
 
 static void bench_copies(int repeats, int round)
