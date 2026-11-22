@@ -23,6 +23,15 @@ else
 	MKDIR_CMD = mkdir -p $(OBJ_DIR)
 endif
 
+ifeq ($(INSTRUMENT),1)
+	OBJ_DIR = obj_instrumented
+	BINARY = $(NAME)_work
+	ifeq ($(OS),Windows_NT)
+		BINARY = $(NAME)_work.exe
+	endif
+	CFLAGS += -DWORK_INSTRUMENTED
+endif
+
 all: $(BINARY)
 
 $(BINARY): $(OBJS)
@@ -50,15 +59,18 @@ endif
 debug: CFLAGS += -fsanitize=address,undefined -g
 debug: re
 
+instrumented:
+	$(MAKE) INSTRUMENT=1 all
+
 # VERIFY_ARGS optionally limits verification samples; the default runs all.
 test: $(BINARY)
 	python python_scripts/verify_consistency.py -c $(BINARY) $(VERIFY_ARGS)
 
 # Skip including dependency files if we are cleaning/rebuilding
-ifeq ($(filter clean fclean re debug,$(MAKECMDGOALS)),)
+ifeq ($(filter clean fclean re debug instrumented,$(MAKECMDGOALS)),)
 -include $(DEPS)
 endif
 
-.PHONY: all clean fclean re debug test
+.PHONY: all clean fclean re debug test instrumented
 
 

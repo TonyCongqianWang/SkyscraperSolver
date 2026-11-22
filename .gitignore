@@ -5,6 +5,7 @@ skyscraper_solver*
 *.pyc
 venv/
 obj/
+obj_instrumented/
 *.log
 benchmark_sets/*rand*.txt
 benchmark_sets/*subset*.txt
