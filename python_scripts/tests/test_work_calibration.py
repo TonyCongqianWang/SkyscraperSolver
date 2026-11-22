@@ -60,6 +60,7 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(
             calibration.DEFAULT_DATASETS,
             ("benchmark_sets/benchmarkSet7_easy500.txt",
+             "benchmark_sets/benchmarkSet7.txt",
              "benchmark_sets/benchmarkSet8.txt",
              "benchmark_sets/benchmarkSet9.txt"))
         puzzles = calibration.read_puzzles(calibration.DEFAULT_DATASETS, 128)

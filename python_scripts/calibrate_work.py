@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v1"
 DEFAULT_DATASETS = (
     "benchmark_sets/benchmarkSet7_easy500.txt",
+    "benchmark_sets/benchmarkSet7.txt",
     "benchmark_sets/benchmarkSet8.txt",
     "benchmark_sets/benchmarkSet9.txt",
 )

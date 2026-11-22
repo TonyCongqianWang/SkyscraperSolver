@@ -24,8 +24,9 @@ python3 python_scripts/calibrate_work.py --output scratch/work_calibration.json
 ```
 
 **Default workload:** 128 symmetry-distinct puzzles for **each** size 7, 8,
-and 9, drawn from `benchmarkSet7_easy500.txt`, `benchmarkSet8.txt`, and
-`benchmarkSet9.txt`. Size 7 runs **full enumeration** (`-s 0`);
+and 9, drawn from `benchmarkSet7_easy500.txt`, with extra
+size-7 puzzles from `benchmarkSet7.txt` to reach 128 unique identities,
+plus `benchmarkSet8.txt` and `benchmarkSet9.txt`. Size 7 runs **full enumeration** (`-s 0`);
 sizes 8 and 9 find the first solution (`-s 1`). These modes are recorded
 per puzzle. The script fails if the default datasets cannot supply 128
 distinct puzzles of each size.
