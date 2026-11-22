@@ -2,6 +2,7 @@
 import importlib.util
 from pathlib import Path
 import unittest
+import tempfile
 
 SCRIPT = Path(__file__).resolve().parents[1] / "calibrate_work.py"
 spec = importlib.util.spec_from_file_location("calibrate_work", SCRIPT)
@@ -10,6 +11,24 @@ spec.loader.exec_module(calibration)
 
 
 class CalibrationModelTests(unittest.TestCase):
+    def test_compiled_modes_preserve_determinism(self):
+        puzzles = calibration.read_puzzles(
+            ["benchmark_sets/benchmarkSet7_easy500.txt"], 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            variant = {"name": "baseline", "parameters": {}}
+            instrumented, _ = calibration.build(
+                directory, variant, True, "gcc", [])
+            native, _ = calibration.build(
+                directory, variant, False, "gcc", [])
+            first = calibration.execute(instrumented, puzzles[0], 1, 30)
+            second = calibration.execute(instrumented, puzzles[0], 1, 30)
+            ordinary = calibration.execute(native, puzzles[0], 1, 30)
+            self.assertEqual(first[1:], second[1:])
+            self.assertEqual(first[1:3], ordinary[1:3])
+            self.assertIsNotNone(first[3])
+            self.assertIsNone(ordinary[3])
+
     def test_nonnegative_fit(self):
         samples = []
         for a, b in [(0, 1), (1, 1), (2, 2), (3, 0), (4, 3), (7, 1)]:
