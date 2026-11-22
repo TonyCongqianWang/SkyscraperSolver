@@ -23,17 +23,17 @@ No pip packages are required. Default usage:
 python3 python_scripts/calibrate_work.py --output scratch/work_calibration.json
 ```
 
-**Default workload:** 128 symmetry-distinct puzzles for **each** size 7, 8,
+**Default workload:** 512 symmetry-distinct puzzles for **each** size 7, 8,
 and 9, sampled exclusively from the **active SPSA training datasets**:
 `puzzle_bank/spsa_datasets/le7_train.txt`,
 `puzzle_bank/spsa_datasets/size8_train.txt`, and
 `puzzle_bank/spsa_datasets/size9_train.txt`. The le7 file contains mixed
 sizes 5–7; this calibration selects size 7 from it. A deterministic
 seeded hash-priority sample spans each **entire** training file rather than
-taking the first 128 lines (the SPSA datasets may be ordered by difficulty).
+taking the first 512 lines (the SPSA datasets may be ordered by difficulty).
 Size 7 runs **full enumeration** (`-s 0`); sizes 8 and 9 find the first
 solution (`-s 1`). These modes are recorded per puzzle. The script fails
-if the default datasets cannot supply 128 distinct puzzles of each size.
+if the default datasets cannot supply 512 distinct puzzles of each size.
 
 **Calibration holdout:** the 25% holdout is carved from these sampled
 SPSA **training** puzzles, using symmetry-canonical puzzle identities.
@@ -45,24 +45,27 @@ actual SPSA training distribution without leaking official validation data.
 Parameter perturbations are **enabled by default**: 12 variants per size
 (two perturbations of six cache/score parameters), plus baseline.
 Each variant only runs against its matching size; that makes 13
-configurations per size, **4,992 puzzle/configuration observations** total.
-For every observation there are two instrumented runs (cross-checked for
-identical counters, solution counts and nodes) and three independent native
-wall-time measurements. Total raw executions are **24,960**. This is a
-deliberately substantial benchmark, not a quick smoke test.
+configurations per size, **19,968 puzzle/configuration observations** total.
+For every observation there are **three instrumented runs** (cross-checked
+for identical counters, solution counts and nodes) and **nine independent
+native wall-time measurements**. All calibration and held-out instances
+receive the same repeat counts; there are **239,616 raw executions**.
+This is a substantial benchmark, not a quick smoke test.
 
 With a fixed, per-size 75%/25% puzzle-identity split, the default is
-1,248 training and 416 validation observations **per size** (96 training
-and 32 held-out puzzles, each with 13 configurations): **3,744 training**,
-**1,248 validation** overall. Rotations/reflections of the same clues
+4,992 training and 1,664 validation observations **per size** (384 training
+and 128 held-out puzzles, each with 13 configurations): **14,976 training**,
+**4,992 validation** overall. Rotations/reflections of the same clues
 are grouped under a canonical puzzle identity before selection or splitting.
 
 Options: `--puzzles-per-size N` for smaller smoke runs; `--no-perturb`
 to omit configuration changes; repeat `--dataset PATH` for custom input.
 The `--max-solutions N` option overrides size-specific defaults (e.g.,
 `--max-solutions 0` for enumeration of all sizes). The `--timeout`,
-`--native-repeats`, `--seed`, and `--validation-fraction` options
-control execution and splitting.
+`--native-repeats`, `--instrumented-repeats`, `--seed`, and
+`--validation-fraction` options control execution and splitting. For a
+small smoke run use `--puzzles-per-size 4 --native-repeats 3
+--instrumented-repeats 2 --no-perturb`.
 
 The script compiles instrumented and native binaries in a temporary
 directory without modifying tracked source files. For each run it writes
@@ -104,10 +107,62 @@ microbenchmarks can establish cost ratios and replace these provisional
 groups. Rank is an approximate numerical diagnostic (Gram–Schmidt), not
 an SVD condition number, and near dependencies can be threshold-sensitive.
 
-The surrogate is **not** automatically used for SPSA tuning; first
-inspect held-out ranking quality, agreement among the four fits, and
-periodic uninstrumented native comparisons. Freeze the schema and fitted
-weights for each tuning campaign.
+## Ranking-focused regularization and timing uncertainty
+
+The original fit was nonnegative least squares (NNLS), solved by coordinate
+descent on normalized counter columns and with an unpenalized intercept.
+The new fit uses **nonnegative ridge** with optional within-puzzle
+configuration-contrast loss:
+
+```text
+min_{b>=0, w>=0}  MSE(t, b + Xw)
+               + contrast_weight * mean_squared_centered_puzzle_error
+               + ridge_alpha * sum(w_scaled**2)
+```
+
+Each feature is normalized by its training RMS; only coefficients are
+penalized, not the intercept. The contrast term subtracts the mean target
+and prediction of *each puzzle's configurations*, so that small within-puzzle
+runtime changes count even when between-puzzle runtime variance dominates.
+
+The ridge grid defaults to `0,1e-6,1e-4,1e-2` and contrast grid to
+`0,1,4,16`. The selected pair is chosen by an **inner 20% puzzle-level
+split within the outer training set**; the final 25% held-out set never
+influences fitting or selection. On inner holdout, prefer ranking accuracy
+for confident configuration pairs; if there are too few confident pairs,
+minimize within-puzzle centered MAE instead. Both the full tuning grid
+and the selected parameters are stored per size and for the pooled fit.
+The output also records the unregularized model's held-out metrics for
+direct comparison.
+
+The original pairwise ranking accuracy (including nearly tied configurations)
+is preserved. Additional diagnostics include:
+
+- **Clear-pair ranking accuracy and coverage**: exclude comparisons whose
+  measured time difference is below a noise threshold. The threshold is
+  `max(minimum_delta, noise_z * hypot(SE_median_1, SE_median_2))`, using
+  the standard deviation of repeated native times and a normal-approximation
+  standard error for the median. Defaults: `noise_z=2` and
+  `minimum_delta=0.00005` seconds.
+- **Within-puzzle centered MAE and R²**: remove each puzzle's mean so
+  a good between-puzzle R² cannot hide poor configuration sensitivity.
+- **Macro clear-pair ranking**: average the accuracy across puzzles with
+  clear differences, rather than treating every correlated pair as
+  statistically independent.
+
+Timing confidence filtering is an approximate noise diagnostic, **not**
+a formal significance test. More repeats reduce measurement uncertainty,
+but tiny runtimes and subprocess startup variability can still make near-tie
+rankings unreliable. Compare results from the regularized and unregularized
+models; there is no guarantee regularization will improve rankings.
+
+The surrogate is **not** automatically used for SPSA tuning. Inspect
+held-out rank accuracy (particularly *clear* pairs), four-model agreement,
+and periodic uninstrumented comparisons before using coefficients in SPSA.
+Size-8 calibration continues to measure first-solution mode by default;
+the SPSA training objective also evaluates enumeration, which needs
+separate validation before extrapolating the surrogate across modes.
+
 
 
 Counters capture distinct work units: cache metadata/pair copies; candidate
