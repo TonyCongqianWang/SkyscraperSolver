@@ -113,6 +113,8 @@ static void benchmark_affine(int repeats, int round)
         }
         emit_affine("cache_pair_copy_call", round, repeats,
                     repeats * n, start);
+        if (n == 0)
+            emit_individual("cache_pair_copy_call", round, repeats, start);
     }
     for (n = 0; n <= 9; n += 3)
     {
@@ -126,6 +128,8 @@ static void benchmark_affine(int repeats, int round)
         }
         emit_affine("index_copy_call", round, repeats,
                     repeats * n, start);
+        if (n == 0)
+            emit_individual("index_copy_call", round, repeats, start);
     }
     for (n = 7; n <= 9; n++)
     {
