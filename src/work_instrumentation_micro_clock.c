@@ -10,8 +10,8 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-# define _POSIX_C_SOURCE 200809L
-# include "work_instrumentation.h"
+#define _POSIX_C_SOURCE 200809L
+#include "work_instrumentation.h"
 
 #if defined(WORK_INSTRUMENTED) && defined(WORK_MICRO_TIMING)
 # include <time.h>
