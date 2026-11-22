@@ -385,150 +385,93 @@ def load_datasets(size):
     return {}
 
 
-# --- Loss Evaluators ---
+# --- Loss Evaluators (shared numerical policy in tuning_objective.py) ---
+
+def _mode_tasks(bank, count, enumeration):
+    selected = random.sample(bank, min(len(bank), count))
+    option = "-s 0" if enumeration else "-s 1"
+    return [(option, get_random_symmetry(clue)) for clue in selected]
+
+
+def _evaluate_mode(env, tasks, size, enumeration, max_workers, use_stdin):
+    times, nodes = evaluate_subset(env, tasks, max_workers, use_stdin)
+    return mode_losses(size, enumeration, times, nodes)
+
 
 def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin,
                            enumeration_only, objective=LEGACY):
-    s7_train = datasets["s7_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(7)
-    enum_time_shift, enum_node_shift = get_sgm_shifts(7, True)
-    ref_scale_s7_single_time = 0.005
-    ref_scale_s7_single_nodes = 350.0
-    ref_scale_s7_enum_time = 0.01
-    ref_scale_s7_enum_nodes = 2000.0
-
-    if enumeration_only:
-        sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
-        tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
-
-        def get_loss(config_theta):
-            env = get_env_for_theta(config_theta)
-            t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
-
-            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-            loss_time = 1.0 * mode_losses(7, True, t_enum, n_enum)[0]
-            loss_nodes = 1.0 * mode_losses(7, True, t_enum, n_enum)[1]
-
-            return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
-        return get_loss
-
-    sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
-    sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
-    tasks_single = [("-s 1", get_random_symmetry(clue)) for clue in sampled_single]
-    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
+    bank = datasets["s7_train"]
+    enum_tasks = _mode_tasks(bank, batch_size, True)
+    single_tasks = None if enumeration_only else _mode_tasks(bank, batch_size, False)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
-        t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+        if single_tasks is not None:
+            ts, ns, sgm_ts, sgm_ns = _evaluate_mode(
+                env, single_tasks, 7, False, max_workers, use_stdin)
+        te, ne, sgm_te, sgm_ne = _evaluate_mode(
+            env, enum_tasks, 7, True, max_workers, use_stdin)
+        if single_tasks is None:
+            return (*spsa_components(te, ne, objective),
+                    (sgm_te, sgm_ne, sgm_te, sgm_ne))
+        weights = MODE_WEIGHTS[7]
+        time_loss = weights[0] * ts + weights[1] * te
+        nodes_loss = weights[0] * ns + weights[1] * ne
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_ts, sgm_ns, sgm_te, sgm_ne))
 
-        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
-        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
-
-        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-        loss_time = 1.0 * mode_losses(7, False, t_single, n_single)[0] + 1.5 * mode_losses(7, True, t_enum, n_enum)[0]
-        loss_nodes = 1.0 * mode_losses(7, False, t_single, n_single)[1] + 1.5 * mode_losses(7, True, t_enum, n_enum)[1]
-
-        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
 def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin,
                            enumeration_only, objective=LEGACY):
-    s8_train = datasets["s8_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(8)
-    enum_time_shift, enum_node_shift = get_sgm_shifts(8, True)
-
-    ref_scale_s8_single_time = 0.10
-    ref_scale_s8_single_nodes = 5000.0
-    ref_scale_s8_enum_time = 1.00
-    ref_scale_s8_enum_nodes = 50000.0
-
-    if enumeration_only:
-        sampled_enum = random.sample(s8_train, min(len(s8_train), batch_size))
-        tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
-
-        def get_loss(config_theta):
-            env = get_env_for_theta(config_theta)
-            t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
-
-            # Shift = 2.0s / 100,000 nodes to strongly bias toward instances taking >= 2.0s
-            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-            loss_time = 1.0 * mode_losses(8, True, t_enum, n_enum)[0]
-            loss_nodes = 1.0 * mode_losses(8, True, t_enum, n_enum)[1]
-
-            return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e))
-        return get_loss
-
-    sampled_single = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
-    sampled_enum = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
-
-    tasks_single = [("-s 1", get_random_symmetry(clue)) for clue in sampled_single]
-    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
+    bank = datasets["s8_train"]
+    count = batch_size if enumeration_only else max(1, batch_size // 2)
+    enum_tasks = _mode_tasks(bank, count, True)
+    single_tasks = None if enumeration_only else _mode_tasks(bank, count, False)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
-        t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+        if single_tasks is not None:
+            ts, ns, sgm_ts, sgm_ns = _evaluate_mode(
+                env, single_tasks, 8, False, max_workers, use_stdin)
+        te, ne, sgm_te, sgm_ne = _evaluate_mode(
+            env, enum_tasks, 8, True, max_workers, use_stdin)
+        if single_tasks is None:
+            return (*spsa_components(te, ne, objective),
+                    (sgm_te, sgm_ne, sgm_te, sgm_ne))
+        weights = MODE_WEIGHTS[8]
+        time_loss = weights[0] * ts + weights[1] * te
+        nodes_loss = weights[0] * ns + weights[1] * ne
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_ts, sgm_ns, sgm_te, sgm_ne))
 
-        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
-        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
-
-        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-        loss_time = 0.5 * mode_losses(8, False, t_single, n_single)[0] + 1.5 * mode_losses(8, True, t_enum, n_enum)[0]
-        loss_nodes = 0.5 * mode_losses(8, False, t_single, n_single)[1] + 1.5 * mode_losses(8, True, t_enum, n_enum)[1]
-
-        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e))
     return get_loss
 
 
 def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin,
                            enumeration_only, objective=LEGACY):
-    s9_train = datasets["s9_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(9)
-
-    ref_scale_s9_time = 0.10
-    ref_scale_s9_nodes = 20000.0
-
-    sampled = random.sample(s9_train, min(len(s9_train), batch_size))
-    opt_flag = "-s 0" if enumeration_only else "-s 1"
-    tasks = [(opt_flag, get_random_symmetry(clue)) for clue in sampled]
+    bank = datasets["s9_train"]
+    tasks = _mode_tasks(bank, batch_size, enumeration_only)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_list, n_list = evaluate_subset(env, tasks, max_workers=max_workers, use_stdin=use_stdin)
+        time_loss, nodes_loss, sgm_time, sgm_nodes = _evaluate_mode(
+            env, tasks, 9, enumeration_only, max_workers, use_stdin)
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_time, sgm_nodes, sgm_time, sgm_nodes))
 
-        # High shift = 1.0s / 120,000 nodes to strongly bias toward hard instances (>= 0.5s up to 5s)
-        sgm_t = shifted_geo_mean(t_list, single_time_shift)
-        sgm_n = shifted_geo_mean(n_list, single_node_shift)
-
-        loss_time = 1.0 * mode_losses(9, False, t_list, n_list)[0]
-        loss_nodes = 1.0 * mode_losses(9, False, t_list, n_list)[1]
-
-        return (*spsa_components(loss_time, loss_nodes, objective), (sgm_t, sgm_n, sgm_t, sgm_n))
     return get_loss
 
 
 def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin,
                          enumeration_only, objective=LEGACY):
-    if size == 7:
-        return make_loss_evaluator_s7(datasets, batch_size, max_workers,
-                                      use_stdin, enumeration_only, objective)
-    elif size == 8:
-        return make_loss_evaluator_s8(datasets, batch_size, max_workers,
-                                      use_stdin, enumeration_only, objective)
-    elif size == 9:
-        return make_loss_evaluator_s9(datasets, batch_size, max_workers,
-                                      use_stdin, enumeration_only, objective)
-    raise ValueError(f"Unsupported size: {size}")
+    factories = {7: make_loss_evaluator_s7, 8: make_loss_evaluator_s8,
+                 9: make_loss_evaluator_s9}
+    if size not in factories:
+        raise ValueError(f"Unsupported size: {size}")
+    return factories[size](datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective)
 
 
 # --- Output Helpers ---
