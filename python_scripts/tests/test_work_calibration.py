@@ -44,6 +44,84 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertAlmostEqual(model["seconds_per_count"]["setup_cell"], 0.2, places=5)
         self.assertAlmostEqual(model["seconds_per_count"]["cache_pair_copy"], 0.1, places=5)
 
+    def test_ridge_shrinks_coefficients_without_penalizing_intercept(self):
+        data = [{"counters": {"setup_cell": n},
+                 "runtime_median_seconds": 2.0 + n}
+                for n in (0, 1, 2, 3)]
+        ordinary = calibration.fit_nonnegative(data, ["setup_cell"])
+        regularized = calibration.fit_nonnegative(
+            data, ["setup_cell"], ridge_alpha=100)
+        self.assertAlmostEqual(ordinary["intercept_seconds"], 2.0, places=5)
+        self.assertLess(
+            regularized["seconds_per_count"]["setup_cell"],
+            ordinary["seconds_per_count"]["setup_cell"])
+        self.assertGreater(regularized["intercept_seconds"], 2.0)
+        self.assertEqual(ordinary["ridge_alpha"], 0.0)
+
+    def test_contrast_penalty_changes_configuration_sensitivity(self):
+        rows = []
+        for puzzle, base in (("one", 0), ("two", 10)):
+            for i in range(2):
+                rows.append({
+                    "identity": puzzle,
+                    "counters": {"setup_cell": base + i},
+                    "runtime_median_seconds":
+                        (100.0 if puzzle == "two" else 0.0) + 0.1 * i,
+                })
+        plain = calibration.fit_nonnegative(rows, ["setup_cell"])
+        contrasted = calibration.fit_nonnegative(
+            rows, ["setup_cell"], contrast_weight=200)
+        self.assertLess(
+            contrasted["seconds_per_count"]["setup_cell"],
+            plain["seconds_per_count"]["setup_cell"])
+
+    def test_confident_ranking_filters_small_noisy_deltas(self):
+        from work_ranking import ranking_diagnostics
+        rows = []
+        for name, observed, count in (
+                ("base", 1.0, 0), ("near", 1.00001, 3),
+                ("clear", 1.01, 10)):
+            rows.append({
+                "dataset": "fixture", "identity": "one", "size": 8,
+                "configuration": name, "max_solutions": 1,
+                "runtime_median_seconds": observed,
+                "native_times_seconds": [
+                    observed - 0.001, observed, observed + 0.001],
+                "counters": {"setup_cell": count},
+            })
+        result = ranking_diagnostics(
+            rows, lambda row: row["counters"]["setup_cell"] / 1000)
+        self.assertEqual(result["ranking_pairs"], 3)
+        self.assertEqual(result["clear_ranking_pairs"], 2)
+        self.assertEqual(result["noise_excluded_pairs"], 1)
+        self.assertEqual(result["clear_ranking_accuracy"], 1.0)
+        self.assertIsNotNone(result["within_puzzle_r2"])
+
+    def test_hyperparameter_selection_uses_only_inner_training(self):
+        rows = []
+        for index in range(12):
+            for variant in (0, 1, 2):
+                counts = {name: 0 for name in calibration.COUNTER_NAMES}
+                counts["base_score"] = index ** 2 + variant
+                counts["cache_pair_copy"] = index + 3 * variant
+                rows.append({
+                    "identity": str(index), "dataset": "fixture",
+                    "line": index, "size": 8,
+                    "configuration": str(variant),
+                    "counters": counts,
+                    "runtime_median_seconds":
+                        0.02 + 0.00002 * counts["base_score"]
+                        + 0.00001 * counts["cache_pair_copy"],
+                    "native_times_seconds": [0.01, 0.011, 0.009],
+                })
+        choice = calibration.choose_regularization(
+            rows, 0.995, 1e-3, (0.0, 0.0001), (0.0, 2.0), 72)
+        self.assertEqual(len(choice["candidates"]), 4)
+        self.assertLess(choice["inner_training_samples"], len(rows))
+        self.assertGreater(choice["inner_validation_samples"], 0)
+        self.assertIn(choice["ridge_alpha"], (0.0, 0.0001))
+        self.assertIn(choice["contrast_weight"], (0.0, 2.0))
+
     def test_split_keeps_configuration_variants_together(self):
         rows = []
         for line in range(10):
