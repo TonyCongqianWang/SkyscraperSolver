@@ -39,7 +39,7 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertEqual(
                 counts["dp_init_write"],
                 counts["dp_init_call"]
-                * (4 * (puzzles[0]["size"] + 1) ** 2 + 4
+                * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
                    + 2 * (puzzles[0]["size"] + 1)))
 
     def test_nonnegative_fit(self):
