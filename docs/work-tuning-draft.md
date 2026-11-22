@@ -69,6 +69,21 @@ timings were zero or there were too few samples. The overall
 `plausibility_score` is the average of measurable per-section correlations,
 with explicit coverage. If none are measurable it is `null` (not zero).
 
+Each timed section additionally reports a **standalone nonnegative affine
+call/volume fit**, based solely on the CPU samples (not on solver wall
+times). If call counts and sampled work volumes are distinguishable, it
+reports measured seconds per call, seconds per work unit, and their ratio.
+If sampled features are collinear or timing is insufficient, the split is
+marked unidentifiable. This lets you compare a micro-derived split with the
+pooled regression's provisional equal-cost merged groups. The two measured
+CPU coefficients are diagnostics and never overwrite calibration weights.
+
+**Scope:** these checks currently cover only cache-entry copying, line
+entropy scoring, and index copying. They do not establish ratios for all
+merged counter groups. Timing a complete group containing nested or jointly
+executed operations does not by itself identify each member's independent
+cost.
+
 For each selected package, the predicted section work is calculated from
 its **actual sampled invocation count and its actual sampled volume**
 using its two fitted coefficients. The timed version uses the process
