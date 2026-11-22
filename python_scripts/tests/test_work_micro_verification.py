@@ -158,7 +158,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         report = controlled_microbench(repeats=1000, rounds=1)
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call"})
-        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 10)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 12)
         self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 12)
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]))
