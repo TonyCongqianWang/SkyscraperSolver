@@ -495,6 +495,10 @@ def main():
     parser.add_argument("--instrumented-repeats", type=int, default=3)
     parser.add_argument("--no-section-timing", action="store_true",
                         help="Skip sampled CPU section timing and plausibility check")
+    parser.add_argument("--no-micro-verify", action="store_true",
+                        help="Skip independent end-of-calibration SPSA-validation micro check")
+    parser.add_argument("--micro-puzzles-per-size", type=int, default=32,
+                        help="Validation puzzles per size in independent micro check")
     parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
                         help="Comma-separated nonnegative ridge penalties")
     parser.add_argument("--contrast-grid", default="0,1,4,16",
@@ -518,6 +522,8 @@ def main():
     parser.add_argument("--collinearity-output", type=Path,
                         help="Pooled collinearity path (default: output.collinearity.json)")
     args = parser.parse_args()
+    if args.micro_puzzles_per_size < 1:
+        parser.error("micro-puzzles-per-size must be >= 1")
     if (args.puzzles_per_size < 1 or args.native_repeats < 2
             or args.instrumented_repeats < 2):
         parser.error("puzzles-per-size must be >= 1 and repeats >= 2")
@@ -561,6 +567,8 @@ def main():
         "native_repeats": args.native_repeats,
         "instrumented_repeats": args.instrumented_repeats,
         "section_timing": not args.no_section_timing,
+        "micro_verification_enabled": not args.no_micro_verify,
+        "micro_validation_puzzles_per_size": args.micro_puzzles_per_size,
         "section_timer": "sampled process CPU nanoseconds, every 64th section",
         "ridge_grid": ridge_grid,
         "contrast_grid": contrast_grid,
@@ -720,6 +728,15 @@ def main():
     export_collinearity(payload, collinearity_path, args.output, creation_time)
     print(f"Saved pooled model to {model_path}")
     print(f"Saved pooled collinearity to {collinearity_path}")
+    if not args.no_micro_verify:
+        from work_micro_probe import run_verification
+        micro_path = args.output.with_suffix(".micro.json")
+        verified = run_verification(
+            model_path, collinearity_path, micro_path,
+            puzzles_per_size=args.micro_puzzles_per_size,
+            seed=args.seed + 1009, cc=args.cc, timeout=args.timeout)
+        print(f"Saved independent micro verification to {micro_path}")
+        print(f"Micro split assessment: {verified['split_verification']}")
     print(f"Saved {len(rows)} samples to {args.output}")
     print(f"Saved each raw solver run to {raw_path}")
     print(json.dumps({
