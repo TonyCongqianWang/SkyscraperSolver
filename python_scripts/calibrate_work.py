@@ -20,6 +20,7 @@ from symmetry import canonize_nums
 from work_collinearity import analyze_and_merge, collapse_row
 from work_ranking import ranking_diagnostics
 from work_model_export import export_compact_model, export_collinearity
+from work_section_plausibility import parse_micro_lines, summarize_plausibility
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v2"
@@ -161,7 +162,9 @@ def replace_parameter(text, name, factor):
 
 
 def build(tempdir, variant, instrument, cc, flags):
-    binary = tempdir / (variant["name"] + ("_instrumented" if instrument else "_native"))
+    suffix = "_micro" if "-DWORK_MICRO_TIMING" in flags else (
+        "_instrumented" if instrument else "_native")
+    binary = tempdir / (variant["name"] + suffix)
     sources = sorted((ROOT / "src").glob("*.c"))
     modified = {}
     for prefix, filename in PARAM_FILES.items():
@@ -182,7 +185,7 @@ def build(tempdir, variant, instrument, cc, flags):
     return binary, cmd
 
 
-def execute(binary, puzzle, max_solutions, timeout):
+def execute(binary, puzzle, max_solutions, timeout, include_micro=False):
     argv = [str(binary), "-s", str(max_solutions), puzzle["clue"]]
     if puzzle["grid"]:
         argv.append(puzzle["grid"])
@@ -208,7 +211,10 @@ def execute(binary, puzzle, max_solutions, timeout):
         solutions, nodes = number("Solutions found"), number("Nodes visited")
     if solutions is None or nodes is None:
         raise RuntimeError("Unable to parse solver results")
-    return elapsed, solutions, nodes, counters
+    result = (elapsed, solutions, nodes, counters)
+    if include_micro:
+        return result + (parse_micro_lines(p.stdout.splitlines(), COUNTER_NAMES),)
+    return result
 
 
 def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
@@ -486,6 +492,8 @@ def main():
                         default=512, dest="puzzles_per_size")
     parser.add_argument("--native-repeats", type=int, default=9)
     parser.add_argument("--instrumented-repeats", type=int, default=3)
+    parser.add_argument("--no-section-timing", action="store_true",
+                        help="Skip sampled CPU section timing and plausibility check")
     parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
                         help="Comma-separated nonnegative ridge penalties")
     parser.add_argument("--contrast-grid", default="0,1,4,16",
@@ -551,6 +559,8 @@ def main():
         "datasets": sorted({(p["dataset"], p["dataset_sha256"]) for p in puzzles}),
         "native_repeats": args.native_repeats,
         "instrumented_repeats": args.instrumented_repeats,
+        "section_timing": not args.no_section_timing,
+        "section_timer": "sampled process CPU nanoseconds, every 64th section",
         "ridge_grid": ridge_grid,
         "contrast_grid": contrast_grid,
         "ranking_noise_z": args.ranking_noise_z,
@@ -575,13 +585,17 @@ def main():
                     continue
                 instr, instr_cmd = build(build_dir, variant, True, args.cc, [])
                 native, native_cmd = build(build_dir, variant, False, args.cc, [])
+                micro = None
+                if not args.no_section_timing:
+                    micro, micro_cmd = build(
+                        build_dir, variant, True, args.cc, ["-DWORK_MICRO_TIMING"])
                 print(f"Configuration: {variant['name']} ({len(selected)} puzzles)",
                       flush=True)
                 for p in selected:
                     mode = puzzle_mode(p, args.max_solutions)
                     raw_runs = []
                     def record(kind, repeat, outcome):
-                        elapsed, solutions, nodes, counters = outcome
+                        elapsed, solutions, nodes, counters = outcome[:4]
                         event = {
                             "configuration": variant["name"],
                             "parameters": variant["parameters"],
@@ -594,6 +608,8 @@ def main():
                             "solutions": solutions, "nodes": nodes,
                             "counters": counters,
                         }
+                        if len(outcome) > 4:
+                            event["micro_sections"] = outcome[4]
                         raw_file.write(json.dumps(event, sort_keys=True) + "\n")
                         raw_runs.append(event)
                     instrumented = []
@@ -615,6 +631,15 @@ def main():
                         if no_counts is not None:
                             raise RuntimeError("Native build contains counter output")
                         times.append(seconds)
+                    micro_sections = []
+                    if micro is not None:
+                        timed = execute(micro, p, mode, args.timeout,
+                                        include_micro=True)
+                        if timed[1:4] != first[1:4]:
+                            raise RuntimeError(
+                                "Timed instrumentation changed solver results or counters")
+                        record("micro", 0, timed)
+                        micro_sections = timed[4]
                     rows.append({
                         "configuration": variant["name"],
                         "parameters": variant["parameters"],
@@ -627,6 +652,7 @@ def main():
                         "counters": first[3],
                         "native_times_seconds": times,
                         "instrumented_times_seconds": [r[0] for r in instrumented],
+                        "micro_sections": micro_sections,
                         "runtime_median_seconds": statistics.median(times),
                         "raw_runs": raw_runs,
                     })
@@ -650,8 +676,17 @@ def main():
                 [row for row in heldout if row["size"] == size],
                 fits["all"]["coefficients"],
                 args.ranking_noise_z, args.ranking_min_delta_seconds)
+    plausibility = None
+    if not args.no_section_timing and fits["all"]["status"] == "fitted":
+        plausibility = {
+            "train": summarize_plausibility(
+                train, fits["all"]["coefficients"], COUNTER_NAMES),
+            "validation": summarize_plausibility(
+                heldout, fits["all"]["coefficients"], COUNTER_NAMES),
+        }
     payload = {
         "version": 3, "provenance": provenance,
+        "section_timing_plausibility": plausibility,
         "primary_fit": "all",
         "pooled_validation_by_size": pooled_metrics,
         "fits": fits, "agreement": agreement_metrics,
@@ -687,6 +722,8 @@ def main():
                    "contrast_weight": fit["coefficients"]["contrast_weight"]}
             for name, fit in fits.items() if fit["status"] == "fitted"},
         "agreement": agreement_metrics,
+        "section_timing_plausibility": (
+            plausibility["validation"] if plausibility else None),
     }, indent=2))
 
 
