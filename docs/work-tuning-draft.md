@@ -112,12 +112,30 @@ python3 python_scripts/work_micro_probe.py \
   --output scratch/work_calibration.micro.json
 ```
 
-This is an independent **held-out solver-section timing experiment**, not
-an isolated synthetic-loop microbenchmark. It checks whether the candidate
-cost split transfers to unseen puzzles, but does not isolate the runtime
-of every operation independently. It can report `unresolved` where
-timed call and volume counts remain collinear, fitted costs are zero, or
-samples are too short to estimate a ratio.
+This automatically performs **two complementary checks**. First, it
+measures sampled CPU section timings on fresh SPSA validation puzzles;
+this tests whether split candidates transfer to unseen real solver runs.
+Second, it compiles a controlled C benchmark using the *actual solver*
+cache-entry copy, index copy and entropy functions with `-O2 -flto`.
+It repeats each operation 200,000 times per point across 3 rounds,
+deliberately varying cache-entry counts (4–256) and active line lengths
+(7–9). It records raw time measurements and independently fits the
+fixed-call and per-unit volume cost for each operation. Large repeated
+batches amortize the timing-call cost.
+
+The report stores `controlled_microbenchmark` and
+`controlled_split_verification` separately from the held-out
+`split_verification`, with verdicts `consistent`, `disagrees` or
+`unresolved`. A disagreement means the measured cost ratios do not
+support the provisional pooled fit on this machine; calibration **does
+not automatically rewrite coefficients**. Both experiments may report
+`unresolved` if measured features remain collinear or costs are zero.
+The controlled benchmark can probe independent call/volume variation
+that does not occur in natural solver traces, but it only covers three
+work packages and cannot resolve all merged counter groups.
+
+To shorten the controlled run use `--controlled-repeats 10000
+--controlled-rounds 1` with the standalone script.
 
 Each timed section additionally reports a **standalone nonnegative affine
 call/volume fit**, based solely on the CPU samples (not on solver wall
