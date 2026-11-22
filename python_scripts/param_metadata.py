@@ -323,6 +323,17 @@ PARAMETER_ALIASES['INITIAL_CONSTR_GLOBAL_MIN_ENTROPY'] = 'PRUNE_MIN_ENTROPY_INIT
 
 STRATEGY_PARAM_NAMES = set()
 EFFECTIVE_DEPTH_PARAM_NAMES = set()
+# Subsection membership is classified here, alongside the existing
+# effective-depth and math groups, from the parameter metadata below.
+STRATEGY_PARAM_GROUPS = {
+    "effective-depth": EFFECTIVE_DEPTH_PARAM_NAMES,
+    "prune-global": set(),
+    "prune-grid": set(),
+    "prune-line": set(),
+    "lookahead-continue": set(),
+    "period-base": set(),
+    "period-tiers": set(),
+}
 MATH_PARAM_GROUPS = {
     "all": set(),
     "7": set(),
@@ -346,6 +357,26 @@ for name, *etc in PARAM_METADATA:
             MATH_PARAM_GROUPS["all"].add(name)
     else:
         STRATEGY_PARAM_NAMES.add(name)
+        if name.startswith("PRUNE_MIN_ENTROPY_GLOBAL_"):
+            STRATEGY_PARAM_GROUPS["prune-global"].add(name)
+        elif name.startswith(("PRUNE_MIN_ENTROPY_INITIAL_CONSTR_PROP_GRID",
+                              "PRUNE_MIN_ENTROPY_CONSTR_PROP_GRID_",
+                              "PRUNE_MIN_ENTROPY_LA_PROP_GRID_")):
+            STRATEGY_PARAM_GROUPS["prune-grid"].add(name)
+        elif name.startswith(("PRUNE_MIN_ENTROPY_CONSTR_PROP_LINE_",
+                              "CONSTR_LOCAL_MAX_ENTROPY_",
+                              "PRUNE_MIN_ENTROPY_LA_PROP_LINE_",
+                              "LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY_")):
+            STRATEGY_PARAM_GROUPS["prune-line"].add(name)
+        elif name.startswith(("PRUNE_MIN_ENTROPY_LA_PROP_CONT_",
+                              "LOOKAHEAD_CONTINUE_SLOPE_")):
+            STRATEGY_PARAM_GROUPS["lookahead-continue"].add(name)
+        elif name.startswith(("SEL_PERIOD_COEF_", "PERIOD_COEF_SCALE_",
+                              "PERIOD_COEF_UNSET_")):
+            STRATEGY_PARAM_GROUPS["period-base"].add(name)
+        elif name.startswith(("PERIOD_TIER_MEDIUM_MULTIPLIER_",
+                              "PERIOD_TIER_HEAVY_MULTIPLIER_")):
+            STRATEGY_PARAM_GROUPS["period-tiers"].add(name)
 
 def get_active_param_names(tune_mode, size):
     active_math = set(MATH_PARAM_GROUPS["all"])
