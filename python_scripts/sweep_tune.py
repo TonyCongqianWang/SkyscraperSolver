@@ -261,7 +261,10 @@ def _main_impl(argv=None):
         args.log = str(path.with_suffix('.log'))
     log_path = Path(args.log)
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    metadata_args = SimpleNamespace(**vars(args), size=sizes[0], tune_mode=args.mode, batch_size=None)
+    metadata_args = SimpleNamespace(
+        **{name: str(value) if isinstance(value, Path) else value
+           for name, value in vars(args).items()},
+        size=sizes[0], tune_mode=args.mode, batch_size=None)
     metadata = build_run_metadata(metadata_args, datasets, PARAM_METADATA, names, workers, values)
     metadata.update(optimizer='coordinate_sweep', mode=args.mode,
                     size=sizes[0] if len(sizes) == 1 else None, sizes=sizes,
