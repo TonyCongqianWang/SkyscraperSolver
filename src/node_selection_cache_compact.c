@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 #include "node_selection_score.h"
@@ -34,10 +35,12 @@ void	sort_node_order_meta(t_node_transition *entries,
 				|| (criterion == SELECT_MIN
 					&& entries[j].score > key_entry.score)))
 		{
+			work_sort_shift(WORK_TRANSITION_COMPARE, WORK_TRANSITION_SHIFT);
 			entries[j + 1] = entries[j];
 			meta[j + 1] = meta[j];
 			j--;
 		}
+		work_add(WORK_TRANSITION_COMPARE, j >= 0);
 		entries[j + 1] = key_entry;
 		meta[j + 1] = key_meta;
 		i++;
@@ -53,12 +56,14 @@ void	compact_cache_entries(t_node_state *node, t_node_order *cache)
 	read_idx = 0;
 	while (read_idx < cache->items.count)
 	{
+		work_add(WORK_COMPACT_CHECK, 1);
 		if (is_cell_empty(node, cache->items.entries[read_idx].cell_idx)
 			&& is_valid_value(node, cache->items.entries[read_idx].cell_idx,
 				cache->items.entries[read_idx].cell_val))
 		{
 			if (write_idx != read_idx)
 			{
+				work_add(WORK_COMPACT_MOVE, 1);
 				cache->items.entries[write_idx]
 					= cache->items.entries[read_idx];
 				cache->items.meta[write_idx] = cache->items.meta[read_idx];

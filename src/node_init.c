@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_init.h"
 #include "search_context.h"
 #include "cell_bounds.h"
@@ -75,6 +76,7 @@ static void	init_node_grid(t_node_state *node, int size)
 		node->domain.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(node, idx);
 		node->domain.num_cell_vals[idx] = size;
+		work_add(WORK_SETUP_CELL, 1);
 		idx++;
 	}
 }

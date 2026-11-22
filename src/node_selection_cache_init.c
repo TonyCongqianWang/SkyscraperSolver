@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_selection_cache.h"
 
 void	init_order_stacks(t_solver_state *puzzle)
@@ -32,6 +33,7 @@ void	init_order_stacks(t_solver_state *puzzle)
 		i = -1;
 		while (++i < ORDER_REFRESH_COUNT)
 			order->state.refresh_entropy[i] = -1;
+		work_add(WORK_SETUP_CACHE_SLOT, 1);
 	}
 }
 

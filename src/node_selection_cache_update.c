@@ -10,6 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
+#include "work_instrumentation.h"
 #include "node_selection_cache.h"
 #include "grid_availability.h"
 #include "node_selection_score.h"
@@ -53,6 +54,7 @@ void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 			v = puzzle->size;
 			while (v >= 1)
 			{
+				work_add(WORK_CACHE_BUILD_CHECK, 1);
 				if (is_valid_value(state, c, v))
 					add_transition(cache, (c << 8) | v);
 				v--;
