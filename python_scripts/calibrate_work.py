@@ -474,8 +474,15 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=128, dest="puzzles_per_size")
-    parser.add_argument("--native-repeats", type=int, default=3)
+                        default=512, dest="puzzles_per_size")
+    parser.add_argument("--native-repeats", type=int, default=9)
+    parser.add_argument("--instrumented-repeats", type=int, default=3)
+    parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
+                        help="Comma-separated nonnegative ridge penalties")
+    parser.add_argument("--contrast-grid", default="0,1,4,16",
+                        help="Comma-separated within-puzzle contrast weights")
+    parser.add_argument("--ranking-noise-z", type=float, default=2.0)
+    parser.add_argument("--ranking-min-delta-seconds", type=float, default=5e-5)
     parser.add_argument("--max-solutions", type=int, default=None,
                         help="Override default: size 7 full enumeration (0), 8/9 first solution (1)")
     parser.add_argument("--no-perturb", action="store_true",
@@ -489,8 +496,22 @@ def main():
     parser.add_argument("--output", type=Path,
                         default=ROOT / "scratch" / "work_calibration.json")
     args = parser.parse_args()
-    if args.puzzles_per_size < 1 or args.native_repeats < 2:
-        parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
+    if (args.puzzles_per_size < 1 or args.native_repeats < 2
+            or args.instrumented_repeats < 2):
+        parser.error("puzzles-per-size must be >= 1 and repeats >= 2")
+    if (not math.isfinite(args.ranking_noise_z) or args.ranking_noise_z < 0
+            or not math.isfinite(args.ranking_min_delta_seconds)
+            or args.ranking_min_delta_seconds < 0):
+        parser.error("Ranking noise and minimum delta must be nonnegative")
+    try:
+        ridge_grid = tuple(float(x) for x in args.ridge_grid.split(","))
+        contrast_grid = tuple(float(x) for x in args.contrast_grid.split(","))
+        if (not ridge_grid or not contrast_grid or
+                any(not math.isfinite(v) or v < 0
+                    for v in ridge_grid + contrast_grid)):
+            raise ValueError("Empty, negative or nonfinite hyperparameter")
+    except ValueError as exc:
+        parser.error(f"Invalid regularization grid: {exc}")
     if not 0 < args.validation_fraction < 1:
         parser.error("validation-fraction must be between zero and one")
     if args.max_solutions is not None and args.max_solutions < 0:
@@ -516,6 +537,11 @@ def main():
         "configurations": variants_to_run,
         "datasets": sorted({(p["dataset"], p["dataset_sha256"]) for p in puzzles}),
         "native_repeats": args.native_repeats,
+        "instrumented_repeats": args.instrumented_repeats,
+        "ridge_grid": ridge_grid,
+        "contrast_grid": contrast_grid,
+        "ranking_noise_z": args.ranking_noise_z,
+        "ranking_min_delta_seconds": args.ranking_min_delta_seconds,
         "max_solutions_by_size": {
             str(size): puzzle_mode({"size": size}, args.max_solutions)
             for size in (7, 8, 9)},
@@ -557,13 +583,15 @@ def main():
                         }
                         raw_file.write(json.dumps(event, sort_keys=True) + "\n")
                         raw_runs.append(event)
-                    first = execute(instr, p, mode, args.timeout)
-                    record("instrumented", 0, first)
-                    again = execute(instr, p, mode, args.timeout)
-                    record("instrumented", 1, again)
-                    if first[1:] != again[1:]:
-                        raise RuntimeError(
-                            f"Nondeterministic counters: {p['dataset']}:{p['line']}")
+                    instrumented = []
+                    for repeat in range(args.instrumented_repeats):
+                        result = execute(instr, p, mode, args.timeout)
+                        record("instrumented", repeat, result)
+                        if instrumented and instrumented[0][1:] != result[1:]:
+                            raise RuntimeError(
+                                f"Nondeterministic counters: {p['dataset']}:{p['line']}")
+                        instrumented.append(result)
+                    first = instrumented[0]
                     times = []
                     for repeat in range(args.native_repeats):
                         result = execute(native, p, mode, args.timeout)
@@ -585,13 +613,15 @@ def main():
                         "solutions": first[1], "nodes": first[2],
                         "counters": first[3],
                         "native_times_seconds": times,
-                        "instrumented_times_seconds": [first[0], again[0]],
+                        "instrumented_times_seconds": [r[0] for r in instrumented],
                         "runtime_median_seconds": statistics.median(times),
                         "raw_runs": raw_runs,
                     })
     train, heldout = split(rows, args.validation_fraction, args.seed)
     fits, agreement_metrics = fit_four_models(
-        train, heldout, args.correlation_threshold, args.dependency_tolerance)
+        train, heldout, args.correlation_threshold, args.dependency_tolerance,
+        ridge_grid, contrast_grid, args.seed, args.ranking_noise_z,
+        args.ranking_min_delta_seconds)
     training_ids = {r["identity"] for r in train}
     for row in rows:
         row["split"] = "train" if row["identity"] in training_ids else "validation"
@@ -601,7 +631,7 @@ def main():
             and (name == "all" or name == "size" + str(row["size"]))
         }
     payload = {
-        "version": 2, "provenance": provenance,
+        "version": 3, "provenance": provenance,
         "fits": fits, "agreement": agreement_metrics,
         "sample_counts": {
             "train": len(train), "validation": len(heldout),
@@ -621,6 +651,10 @@ def main():
     print(json.dumps({
         "sample_counts": payload["sample_counts"],
         "validation": {name: fit.get("validation") for name, fit in fits.items()},
+        "selected_penalties": {
+            name: {"ridge_alpha": fit["coefficients"]["ridge_alpha"],
+                   "contrast_weight": fit["coefficients"]["contrast_weight"]}
+            for name, fit in fits.items() if fit["status"] == "fitted"},
         "agreement": agreement_metrics,
     }, indent=2))
 
