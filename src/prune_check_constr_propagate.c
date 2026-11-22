@@ -18,6 +18,7 @@ void	copy_indices(t_solver_state *puzzle, int *grid, int *rev, int size)
 {
 	int	i;
 
+	work_micro_begin(WORK_INDEX_COPY_CALL);
 	work_add(WORK_INDEX_COPY_CALL, 1);
 	work_add(WORK_INDEX_COPY_PAIR, size);
 	i = 0;
@@ -27,6 +28,7 @@ void	copy_indices(t_solver_state *puzzle, int *grid, int *rev, int size)
 		rev[i] = puzzle->constr_bounds.cur_c_pair.grid_indeces[size - 1 - i];
 		i++;
 	}
+	work_micro_end(WORK_INDEX_COPY_CALL);
 }
 
 int	propagate_single_direction(t_prune_args *args)

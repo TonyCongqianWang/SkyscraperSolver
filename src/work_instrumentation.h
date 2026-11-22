@@ -48,6 +48,10 @@ typedef enum e_work_counter
 	WORK_COUNT
 }	t_work_counter;
 
+void				work_micro_begin(t_work_counter counter);
+void				work_micro_end(t_work_counter counter);
+void				work_micro_reset(void);
+void				work_micro_report(void);
 void				work_dp_init(int size);
 void				work_reset(void);
 void				work_add(t_work_counter counter, unsigned long long amount);

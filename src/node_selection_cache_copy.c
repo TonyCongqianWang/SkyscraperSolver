@@ -17,6 +17,7 @@ void	copy_order_items(t_order_items *target, const t_order_items *source)
 {
 	int	i;
 
+	work_micro_begin(WORK_CACHE_PAIR_COPY_CALL);
 	work_add(WORK_CACHE_PAIR_COPY_CALL, 1);
 	work_add(WORK_CACHE_PAIR_COPY, source->count);
 	target->count = source->count;
@@ -26,6 +27,7 @@ void	copy_order_items(t_order_items *target, const t_order_items *source)
 		target->entries[i] = source->entries[i];
 		target->meta[i] = source->meta[i];
 	}
+	work_micro_end(WORK_CACHE_PAIR_COPY_CALL);
 }
 
 void	copy_node_order(t_node_order *target, const t_node_order *source)

@@ -32,6 +32,15 @@ ifeq ($(INSTRUMENT),1)
 	CFLAGS += -DWORK_INSTRUMENTED
 endif
 
+ifeq ($(MICRO_TIMING),1)
+ifneq ($(INSTRUMENT),1)
+$(error MICRO_TIMING requires INSTRUMENT=1)
+endif
+	OBJ_DIR = obj_micro_timing
+	BINARY = $(NAME)_work_micro
+	CFLAGS += -DWORK_MICRO_TIMING
+endif
+
 all: $(BINARY)
 
 $(BINARY): $(OBJS)

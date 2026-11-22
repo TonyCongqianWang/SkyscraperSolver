@@ -41,6 +41,7 @@ void	work_report(unsigned long long solutions, unsigned long long nodes)
 		i++;
 	}
 	printf("\n");
+	work_micro_report();
 }
 
 #else

@@ -30,6 +30,7 @@ void	work_reset(void)
 	i = 0;
 	while (i < WORK_COUNT)
 		g_counts[i++] = 0;
+	work_micro_reset();
 }
 
 void	work_add(t_work_counter counter, unsigned long long amount)
