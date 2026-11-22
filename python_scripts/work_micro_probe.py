@@ -11,45 +11,29 @@ from pathlib import Path
 import subprocess
 
 from calibrate_work import COUNTER_NAMES, DEFAULT_DATASETS, read_puzzles
+from work_section_plausibility import parse_micro_lines, summarize_plausibility
 from tuning_work_runtime import DEFAULT_MODEL, load_model
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def micro_record(lines):
-    probes = []
-    for line in lines:
-        if not line.startswith("WORK_MICRO v1 "):
-            continue
-        parts = dict(word.split("=", 1) for word in line.split()[2:])
-        index = int(parts["counter"])
-        if index not in range(len(COUNTER_NAMES)):
-            raise ValueError("Unknown micro counter id")
-        probes.append({
-            "counter": COUNTER_NAMES[index],
-            "calls": int(parts["calls"]),
-            "samples": int(parts["samples"]),
-            "ticks": int(parts["ticks"]),
-            "ticks_per_second": int(parts["clock_ticks_per_second"]),
-        })
-    return probes
+    return parse_micro_lines(lines, COUNTER_NAMES)
 
 
 def summarize(records, model):
-    aggregated = defaultdict(lambda: [0, 0, 0])
-    for record in records:
-        slot = aggregated[record["counter"]]
-        slot[0] += record["calls"]
-        slot[1] += record["samples"]
-        slot[2] += record["ticks"] / record["ticks_per_second"]
-    return {
-        counter: {
-            "calls": calls, "samples": samples, "sampled_cpu_seconds": seconds,
-            "sampled_seconds_per_package": seconds / samples if samples else None,
-            "regression_seconds_per_count": model["seconds_per_count"][counter],
-            "interpretation": "CPU clock includes begin/end overhead; not a cost ratio",
-        } for counter, (calls, samples, seconds) in sorted(aggregated.items())
+    """Aggregate samples and compare measured sections with matching work."""
+    rows = [{"micro_sections": [record]} for record in records]
+    # The model file has flattened raw-counter coefficients.
+    group_model = {
+        "seconds_per_count": dict(model["seconds_per_count"]),
+        "collinearity": {"groups": [
+            {"name": name, "members": [name],
+             "aggregation": "sum_raw_counts"}
+            for name in model["seconds_per_count"]
+        ]},
     }
+    return summarize_plausibility(rows, group_model, COUNTER_NAMES)
 
 
 def main():
@@ -78,11 +62,11 @@ def main():
         records.extend(micro_record(completed.stdout.splitlines()))
     result = {
         "purpose": "Experimental plausibility check, NOT fitted coefficients",
-        "timer": "sampled process CPU clock, every 64th package",
+        "timer": "sampled process CPU nanoseconds, every 64th package",
         "model_sha256": digest,
         "model_source_git_commit": model["source_git_commit"],
         "puzzles": len(puzzles),
-        "probes": summarize(records, model),
+        "plausibility": summarize(records, model),
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
