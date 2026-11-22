@@ -114,8 +114,9 @@ implementation files and normal LTO can remove empty probe functions.
 **These are observational, not controlled microbenchmarks.** A CPU-time clock query pair can cost as much as the operation it surrounds. Correlated operations
 are not disentangled by timing only one of their jointly executed sites.
 CPU clock granularity, sampling bias, compiler optimizations and machine
-architecture limit interpretation. The micro timing code is meant to be
-reviewed and removed before merge after collecting experimental evidence.
+architecture limit interpretation. The micro timing code should be reviewed carefully before merge and
+kept as a separately compiled diagnostic capability, not enabled in the
+normal solver or work-based tuner.
 Only change calibration coefficients with independently validated,
 held-out improvements; don't rewrite the bundled model from these timings
 alone.
