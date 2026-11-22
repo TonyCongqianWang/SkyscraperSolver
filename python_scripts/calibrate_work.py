@@ -207,17 +207,20 @@ def execute(binary, puzzle, max_solutions, timeout):
     return elapsed, solutions, nodes, counters
 
 
-def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0):
+def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
+                    contrast_weight=0.0):
     """Nonnegative ridge regression on RMS-scaled counters.
 
-    Minimize mean squared error + ridge_alpha * sum(scaled_weight**2).
-    The intercept is nonnegative but NOT regularized. `ridge_alpha=0`
-    recovers ordinary NNLS. Feature scaling is learned from fitting rows.
+    Minimize MSE + contrast_weight * within-puzzle centered MSE
+    + ridge_alpha * sum(scaled_weight**2). The intercept is nonnegative
+    and unregularized. All scaling is learned on the fit rows only.
     """
     if not samples:
         raise ValueError("Cannot fit empty training rows")
     if not math.isfinite(ridge_alpha) or ridge_alpha < 0:
         raise ValueError("ridge_alpha must be a finite nonnegative number")
+    if not math.isfinite(contrast_weight) or contrast_weight < 0:
+        raise ValueError("contrast_weight must be a finite nonnegative number")
     names = list(names)
     targets = [float(s["runtime_median_seconds"]) for s in samples]
     count = len(samples)
@@ -237,6 +240,26 @@ def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0):
             rhs[j] += value * target
             for k in range(j + 1):
                 gram[j][k] += value * row[k]
+    if contrast_weight:
+        # Mean-center observations within each puzzle identity to make
+        # small configuration-to-configuration differences matter.
+        groups = {}
+        for row, sample, target in zip(x, samples, targets):
+            key = sample.get("identity",
+                             (sample.get("dataset"), sample.get("line"),
+                              id(sample)))
+            groups.setdefault(key, []).append((row, target))
+        for group in groups.values():
+            length = len(group)
+            center_x = [sum(entry[0][j] for entry in group) / length
+                        for j in range(dimension)]
+            center_y = sum(entry[1] for entry in group) / length
+            for entry, target in group:
+                centered = [entry[j] - center_x[j] for j in range(dimension)]
+                for j, value in enumerate(centered):
+                    rhs[j] += contrast_weight * value * (target - center_y)
+                    for k in range(j + 1):
+                        gram[j][k] += contrast_weight * value * centered[k]
     for j in range(dimension):
         for k in range(j):
             gram[k][j] = gram[j][k]
@@ -261,20 +284,24 @@ def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0):
             "seconds_per_count": {name: coeff[j] / scales[j]
                                   for j, name in enumerate(names)},
             "ridge_alpha": ridge_alpha,
+            "contrast_weight": contrast_weight,
             "feature_scale": "root_mean_square_of_training_count",
-            "objective": "mean_squared_error + alpha * sum(scaled_coefficients^2)",
+            "objective": "MSE + contrast_weight * centered_puzzle_MSE + ridge_alpha * sum(scaled_coefficients^2)",
             "iterations": iteration + 1}
 
 
 def fit_with_merging(train, correlation_threshold, dependency_tolerance,
-                     ridge_alpha=0.0):
+                     ridge_alpha=0.0, contrast_weight=0.0):
     """Determine feature groups using training data only, then NNLS fit."""
     analysis = analyze_and_merge(
         train, COUNTER_NAMES, correlation_threshold, dependency_tolerance)
     groups = analysis["groups"]
-    collapsed = [collapse_row(row, groups) for row in train]
+    collapsed = [dict(collapse_row(row, groups),
+                      identity=row.get("identity", (row.get("dataset"), row.get("line"))))
+                 for row in train]
     result = fit_nonnegative(collapsed, [g["name"] for g in groups],
-                             ridge_alpha=ridge_alpha)
+                             ridge_alpha=ridge_alpha,
+                             contrast_weight=contrast_weight)
     result["collinearity"] = analysis
     return result
 
