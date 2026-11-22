@@ -14,13 +14,14 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'python_scripts'))
 import sweep_tune as sweep
 from param_metadata import (EFFECTIVE_DEPTH_PARAM_NAMES, STRATEGY_PARAM_NAMES,
-                            PARAM_CONSTRAINTS, get_active_param_names)
+                            STRATEGY_PARAM_GROUPS, PARAM_CONSTRAINTS,
+                            get_active_param_names)
 from spsa_metrics import get_sgm_shifts, mean_log_shifted
 
 
 class SweepTests(unittest.TestCase):
     def test_strategy_subsections_are_disjoint_complete_and_at_most_20(self):
-        groups = sweep.STRATEGY_SWEEP_GROUPS
+        groups = STRATEGY_PARAM_GROUPS
         expected_counts = {
             'prune-global': 5,
             'prune-grid': 11,
