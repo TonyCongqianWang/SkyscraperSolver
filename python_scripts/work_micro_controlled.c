@@ -98,7 +98,7 @@ static void benchmark_affine(int repeats, int round)
     int sizes[] = {0, 4, 16, 64, 256};
     int n, i, k;
     double start;
-    int idx[9], rev[9];
+    int idx[9] = {0}, rev[9] = {0};
 
     for (k = 0; k < 5; k++)
     {
