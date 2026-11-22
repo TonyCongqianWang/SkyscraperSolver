@@ -17,8 +17,8 @@ The wrapper builds two environment-overridable solver variants: the normal
 native binary (used for post-tuning wall-time comparisons) and a dedicated
 instrumented work binary (used for training). Both tuners default to the
 same pooled `v2` calibration file, validate counter names and schema, and
-use deterministic work predictions in **seconds**. The old objective can
-be selected explicitly:
+use deterministic work predictions in **seconds**. The measured time + nodes objective remains a fully supported alternative,
+selected explicitly:
 
 ```sh
 ./setup_and_tune.sh --size 8 --nodes-time --iterations 100
