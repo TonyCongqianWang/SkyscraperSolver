@@ -20,7 +20,7 @@ if SCRIPT_DIR not in sys.path:
 from symmetry import get_random_symmetry, canonize_clue_str as canonize
 from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
 from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
-from tuning_objective import (WORK, LEGACY, DEFAULT_OBJECTIVE, MODE_WEIGHTS,
+from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE, MODE_WEIGHTS,
                               mode_losses, spsa_components)
 from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
 from spsa_run_metadata import build_run_metadata, save_run_metadata
@@ -47,7 +47,7 @@ def resolve_binary_path(path):
 
 BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
 BIN_NATIVE = BIN_CURR
-ACTIVE_OBJECTIVE = LEGACY  # direct library callers retain the existing API
+ACTIVE_OBJECTIVE = TIME_NODES  # direct Python callers default to time + nodes
 WORK_MODEL = None
 WORK_MODEL_SHA256 = None
 
@@ -55,12 +55,12 @@ WORK_MODEL_SHA256 = None
 def configure_objective(args):
     """Select the tuner binary and validate its calibration before tuning."""
     global BIN_CURR, ACTIVE_OBJECTIVE, WORK_MODEL, WORK_MODEL_SHA256
-    ACTIVE_OBJECTIVE = getattr(args, "objective", LEGACY)
+    ACTIVE_OBJECTIVE = getattr(args, "objective", TIME_NODES)
     if ACTIVE_OBJECTIVE == WORK:
         WORK_MODEL, WORK_MODEL_SHA256 = load_model(
             getattr(args, "work_model", DEFAULT_MODEL))
         BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_work"))
-    elif ACTIVE_OBJECTIVE == LEGACY:
+    elif ACTIVE_OBJECTIVE == TIME_NODES:
         WORK_MODEL = WORK_MODEL_SHA256 = None
         BIN_CURR = BIN_NATIVE
     else:
@@ -399,7 +399,7 @@ def _evaluate_mode(env, tasks, size, enumeration, max_workers, use_stdin):
 
 
 def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin,
-                           enumeration_only, objective=LEGACY):
+                           enumeration_only, objective=TIME_NODES):
     bank = datasets["s7_train"]
     enum_tasks = _mode_tasks(bank, batch_size, True)
     single_tasks = None if enumeration_only else _mode_tasks(bank, batch_size, False)
@@ -424,7 +424,7 @@ def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin,
 
 
 def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin,
-                           enumeration_only, objective=LEGACY):
+                           enumeration_only, objective=TIME_NODES):
     bank = datasets["s8_train"]
     count = batch_size if enumeration_only else max(1, batch_size // 2)
     enum_tasks = _mode_tasks(bank, count, True)
@@ -450,7 +450,7 @@ def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin,
 
 
 def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin,
-                           enumeration_only, objective=LEGACY):
+                           enumeration_only, objective=TIME_NODES):
     bank = datasets["s9_train"]
     tasks = _mode_tasks(bank, batch_size, enumeration_only)
 
@@ -465,7 +465,7 @@ def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin,
 
 
 def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin,
-                         enumeration_only, objective=LEGACY):
+                         enumeration_only, objective=TIME_NODES):
     factories = {7: make_loss_evaluator_s7, 8: make_loss_evaluator_s8,
                  9: make_loss_evaluator_s9}
     if size not in factories:
@@ -847,7 +847,7 @@ def run_spsa(args, datasets, max_workers):
 def parse_args():
     parser = argparse.ArgumentParser(description="Run SPSA tuning for a solver size group.")
     parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver size group to optimize (7 uses sizes 5–7)")
-    parser.add_argument("--nodes-time", action="store_const", const=LEGACY,
+    parser.add_argument("--nodes-time", action="store_const", const=TIME_NODES,
                         dest="objective", help="Use the old nodes + wall-time objective")
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
     parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
@@ -860,7 +860,7 @@ def parse_args():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
-    parser.add_argument("--directions", type=int, default=4, help="Perturbation pairs per iteration (1 retains legacy SPSA behavior)")
+    parser.add_argument("--directions", type=int, default=4, help="Perturbation pairs per iteration (1 uses a single direction)")
     parser.add_argument("--grad-clip", type=float, default=2.5, help="Relative gradient norm clipping threshold (multiple of running gradient norm)")
     parser.add_argument("--mom-clip", type=float, default=1.5, help="Momentum buffer norm ceiling factor")
     parser.add_argument("--beta", type=float, default=0.90, help="Momentum decay coefficient (beta)")
@@ -923,7 +923,7 @@ def main():
     try:
         return _main_impl()
     finally:
-        configure_objective(argparse.Namespace(objective=LEGACY))
+        configure_objective(argparse.Namespace(objective=TIME_NODES))
 
 
 if __name__ == "__main__":
