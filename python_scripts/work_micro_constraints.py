@@ -201,6 +201,11 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
         if len(members) == 1:
             flattened[members[0]] = coefficient
             continue
+        missing = sorted(set(members) - set(costs))
+        if missing:
+            raise ValueError(
+                f"Controlled microbenchmark must resolve every member of "
+                f"{group_name}; missing or unstable: {missing}")
         ratios, evidence = _solve_ratios(members, costs, section_summary)
         original_total = sum(sum(row["counters"][member]
                                  for member in members)
