@@ -29,13 +29,40 @@ REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
               9: ((0.1, 20000.0), (0.1, 20000.0))}
 
 
+# Shared strategy sweep subsets; keep related line-pruning constraint pairs together.
+# "strategy" remains the full sweep, while each subset is at most 20 parameters.
+STRATEGY_SWEEP_PREFIXES = {
+    'prune-global': ('PRUNE_MIN_ENTROPY_GLOBAL_',),
+    'prune-grid': ('PRUNE_MIN_ENTROPY_INITIAL_CONSTR_PROP_GRID',
+                   'PRUNE_MIN_ENTROPY_CONSTR_PROP_GRID_',
+                   'PRUNE_MIN_ENTROPY_LA_PROP_GRID_'),
+    'prune-line': ('PRUNE_MIN_ENTROPY_CONSTR_PROP_LINE_',
+                   'CONSTR_LOCAL_MAX_ENTROPY_',
+                   'PRUNE_MIN_ENTROPY_LA_PROP_LINE_',
+                   'LOOKAHEAD_CONSTR_LOCAL_MAX_ENTROPY_'),
+    'lookahead-continue': ('PRUNE_MIN_ENTROPY_LA_PROP_CONT_',
+                            'LOOKAHEAD_CONTINUE_SLOPE_'),
+    'period-base': ('SEL_PERIOD_COEF_', 'PERIOD_COEF_SCALE_',
+                    'PERIOD_COEF_UNSET_'),
+    'period-tiers': ('PERIOD_TIER_MEDIUM_MULTIPLIER_',
+                     'PERIOD_TIER_HEAVY_MULTIPLIER_'),
+}
+STRATEGY_SWEEP_GROUPS = {
+    mode: {name for name in STRATEGY_PARAM_NAMES
+           if any(name.startswith(prefix) for prefix in prefixes)}
+    for mode, prefixes in STRATEGY_SWEEP_PREFIXES.items()
+}
+STRATEGY_SWEEP_GROUPS['effective-depth'] = EFFECTIVE_DEPTH_PARAM_NAMES
+SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_SWEEP_GROUPS)
+
+
 def active_parameters(mode):
     if mode in ('math7', 'math8', 'math9'):
         names = MATH_PARAM_GROUPS[mode[-1]]
-    elif mode == 'effective-depth':
-        names = EFFECTIVE_DEPTH_PARAM_NAMES
-    else:
+    elif mode == 'strategy':
         names = STRATEGY_PARAM_NAMES | MATH_PARAM_GROUPS['all']
+    else:
+        names = STRATEGY_SWEEP_GROUPS[mode]
     return sorted(n for n in names if PARAMETERS[n][2] > PARAMETERS[n][1])
 
 
@@ -195,7 +222,7 @@ def save_checkpoint(path, values, names, metadata, label):
 
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--mode', choices=('math7', 'math8', 'math9', 'strategy', 'effective-depth'), required=True)
+    parser.add_argument('--mode', choices=SWEEP_MODES, required=True)
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')
