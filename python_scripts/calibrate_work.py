@@ -4,6 +4,7 @@ import argparse
 import hashlib
 import heapq
 import json
+import math
 import os
 from pathlib import Path
 import random
@@ -17,6 +18,7 @@ import time
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from symmetry import canonize_nums
 from work_collinearity import analyze_and_merge, collapse_row
+from work_ranking import ranking_diagnostics
 
 ROOT = Path(__file__).resolve().parents[1]
 SCHEMA = "v1"
@@ -206,14 +208,28 @@ def execute(binary, puzzle, max_solutions, timeout):
     return elapsed, solutions, nodes, counters
 
 
-def fit_nonnegative(samples, names, max_iterations=4000):
-    """Scaled NNLS with nonnegative intercept, using a cached Gram matrix."""
+def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
+                    contrast_weight=0.0):
+    """Nonnegative ridge regression on RMS-scaled counters.
+
+    Minimize MSE + contrast_weight * within-puzzle centered MSE
+    + ridge_alpha * sum(scaled_weight**2). The intercept is nonnegative
+    and unregularized. All scaling is learned on the fit rows only.
+    """
     if not samples:
         raise ValueError("Cannot fit empty training rows")
+    if not math.isfinite(ridge_alpha) or ridge_alpha < 0:
+        raise ValueError("ridge_alpha must be a finite nonnegative number")
+    if not math.isfinite(contrast_weight) or contrast_weight < 0:
+        raise ValueError("contrast_weight must be a finite nonnegative number")
     names = list(names)
     targets = [float(s["runtime_median_seconds"]) for s in samples]
-    scales = [max((float(s["counters"][n]) for s in samples), default=0.0)
-              or 1.0 for n in names]
+    count = len(samples)
+    scales = [
+        math.sqrt(sum(float(s["counters"][n]) ** 2
+                      for s in samples) / count) or 1.0
+        for n in names
+    ]
     x = [[float(s["counters"][n]) / scales[j]
           for j, n in enumerate(names)] + [1.0]
          for s in samples]
@@ -225,9 +241,32 @@ def fit_nonnegative(samples, names, max_iterations=4000):
             rhs[j] += value * target
             for k in range(j + 1):
                 gram[j][k] += value * row[k]
+    if contrast_weight:
+        # Mean-center observations within each puzzle identity to make
+        # small configuration-to-configuration differences matter.
+        groups = {}
+        for row, sample, target in zip(x, samples, targets):
+            key = sample.get("identity",
+                             (sample.get("dataset"), sample.get("line"),
+                              id(sample)))
+            groups.setdefault(key, []).append((row, target))
+        for group in groups.values():
+            length = len(group)
+            center_x = [sum(entry[0][j] for entry in group) / length
+                        for j in range(dimension)]
+            center_y = sum(entry[1] for entry in group) / length
+            for entry, target in group:
+                centered = [entry[j] - center_x[j] for j in range(dimension)]
+                for j, value in enumerate(centered):
+                    rhs[j] += contrast_weight * value * (target - center_y)
+                    for k in range(j + 1):
+                        gram[j][k] += contrast_weight * value * centered[k]
     for j in range(dimension):
         for k in range(j):
             gram[k][j] = gram[j][k]
+    # Sum-of-squares form of a mean-squared-error penalty. Do not penalize b.
+    for j in range(len(names)):
+        gram[j][j] += count * ridge_alpha
     coeff = [0.0] * dimension
     coeff[-1] = max(0.0, min(targets))
     for iteration in range(max_iterations):
@@ -245,16 +284,25 @@ def fit_nonnegative(samples, names, max_iterations=4000):
     return {"intercept_seconds": coeff[-1],
             "seconds_per_count": {name: coeff[j] / scales[j]
                                   for j, name in enumerate(names)},
+            "ridge_alpha": ridge_alpha,
+            "contrast_weight": contrast_weight,
+            "feature_scale": "root_mean_square_of_training_count",
+            "objective": "MSE + contrast_weight * centered_puzzle_MSE + ridge_alpha * sum(scaled_coefficients^2)",
             "iterations": iteration + 1}
 
 
-def fit_with_merging(train, correlation_threshold, dependency_tolerance):
+def fit_with_merging(train, correlation_threshold, dependency_tolerance,
+                     ridge_alpha=0.0, contrast_weight=0.0):
     """Determine feature groups using training data only, then NNLS fit."""
     analysis = analyze_and_merge(
         train, COUNTER_NAMES, correlation_threshold, dependency_tolerance)
     groups = analysis["groups"]
-    collapsed = [collapse_row(row, groups) for row in train]
-    result = fit_nonnegative(collapsed, [g["name"] for g in groups])
+    collapsed = [dict(collapse_row(row, groups),
+                      identity=row.get("identity", (row.get("dataset"), row.get("line"))))
+                 for row in train]
+    result = fit_nonnegative(collapsed, [g["name"] for g in groups],
+                             ridge_alpha=ridge_alpha,
+                             contrast_weight=contrast_weight)
     result["collinearity"] = analysis
     return result
 
@@ -286,7 +334,7 @@ def agreement(rows, pooled, sized):
     }
 
 
-def diagnostics(rows, model):
+def diagnostics(rows, model, noise_z=2.0, min_delta_seconds=5e-5):
     if not rows:
         return {"samples": 0}
     errors = [predict(r, model) - r["runtime_median_seconds"] for r in rows]
@@ -295,23 +343,10 @@ def diagnostics(rows, model):
     mean = statistics.mean(ys)
     ss_tot = sum((y - mean) ** 2 for y in ys)
     r2 = 1.0 - sum(e * e for e in errors) / ss_tot if ss_tot else None
-    pairs = 0
-    correct = 0
-    for i, a in enumerate(rows):
-        for b in rows[i + 1:]:
-            if a["dataset"] != b["dataset"] or a["line"] != b["line"]:
-                continue
-            if a["configuration"] == b["configuration"]:
-                continue
-            actual = a["runtime_median_seconds"] - b["runtime_median_seconds"]
-            estimated = predict(a, model) - predict(b, model)
-            if actual == 0:
-                continue
-            pairs += 1
-            correct += (actual * estimated > 0)
-    return {"samples": len(rows), "mae_seconds": mae, "r2": r2,
-            "ranking_pairs": pairs,
-            "ranking_accuracy": correct / pairs if pairs else None}
+    ranking = ranking_diagnostics(
+        rows, lambda row: predict(row, model),
+        noise_z=noise_z, min_delta_seconds=min_delta_seconds)
+    return {"samples": len(rows), "mae_seconds": mae, "r2": r2, **ranking}
 
 
 def split(rows, validation_fraction, seed):
@@ -331,7 +366,75 @@ def split(rows, validation_fraction, seed):
             [r for r in rows if in_holdout(r)])
 
 
-def fit_four_models(train, validation, correlation_threshold, dependency_tolerance):
+def choose_regularization(train, correlation_threshold,
+                          dependency_tolerance, ridge_grid, contrast_grid,
+                          seed=72, noise_z=2.0, min_delta_seconds=5e-5):
+    """Select hyperparameters on an inner puzzle-level holdout ONLY.
+
+    Feature collinearity groups are learned on inner-training observations.
+    The outer calibration validation set is never used for selection.
+    """
+    inner_train, inner_val = split(train, 0.2, seed + 1009)
+    if not inner_train or not inner_val:
+        return {"ridge_alpha": 0.0, "contrast_weight": 0.0,
+                "reason": "insufficient_inner_puzzles", "candidates": []}
+    analysis = analyze_and_merge(inner_train, COUNTER_NAMES,
+                                 correlation_threshold, dependency_tolerance)
+    groups = analysis["groups"]
+    reduced = [dict(collapse_row(row, groups),
+                    identity=row.get("identity",
+                                     (row.get("dataset"), row.get("line"))))
+               for row in inner_train]
+    names = [group["name"] for group in groups]
+    candidates = []
+    best = None
+    best_score = None
+    for ridge_alpha in ridge_grid:
+        for contrast_weight in contrast_grid:
+            model = fit_nonnegative(
+                reduced, names, ridge_alpha=ridge_alpha,
+                contrast_weight=contrast_weight)
+            model["collinearity"] = analysis
+            metrics = diagnostics(
+                inner_val, model, noise_z, min_delta_seconds)
+            clear_pairs = metrics.get("clear_ranking_pairs", 0)
+            all_pairs = metrics.get("ranking_pairs", 0)
+            enough_clear = clear_pairs >= max(20, all_pairs // 10)
+            # Compare robust rankings if measurable; otherwise compare
+            # centered errors rather than global R2 between puzzles.
+            score = ((metrics["clear_ranking_accuracy"] or 0.0)
+                     if enough_clear else
+                     -(metrics["within_puzzle_mae_seconds"] or 0.0))
+            tie = -metrics["within_puzzle_mae_seconds"] if (
+                metrics["within_puzzle_mae_seconds"] is not None) else 0.0
+            preference = (score, tie, -metrics["mae_seconds"],
+                          -ridge_alpha, -contrast_weight)
+            item = {
+                "ridge_alpha": ridge_alpha,
+                "contrast_weight": contrast_weight,
+                "selection_metric": "clear_ranking_accuracy"
+                    if enough_clear else "negative_within_puzzle_mae",
+                "selection_score": score,
+                "inner_validation": metrics,
+            }
+            candidates.append(item)
+            if best_score is None or preference > best_score:
+                best_score = preference
+                best = item
+    return {
+        "ridge_alpha": best["ridge_alpha"],
+        "contrast_weight": best["contrast_weight"],
+        "reason": best["selection_metric"],
+        "inner_training_samples": len(inner_train),
+        "inner_validation_samples": len(inner_val),
+        "candidates": candidates,
+    }
+
+
+def fit_four_models(train, validation, correlation_threshold,
+                    dependency_tolerance, ridge_grid=(0.0, 1e-6, 1e-4, 1e-2),
+                    contrast_grid=(0.0, 1.0, 4.0, 16.0),
+                    seed=72, noise_z=2.0, min_delta_seconds=5e-5):
     """Fit size 7/8/9 independently and a pooled model; compare predictions."""
     fits = {}
     for name, size in (("size7", 7), ("size8", 8), ("size9", 9),
@@ -341,10 +444,23 @@ def fit_four_models(train, validation, correlation_threshold, dependency_toleran
         if not training:
             fits[name] = {"status": "unavailable", "reason": "no training observations"}
             continue
-        model = fit_with_merging(training, correlation_threshold, dependency_tolerance)
+        chosen = choose_regularization(
+            training, correlation_threshold, dependency_tolerance,
+            ridge_grid, contrast_grid, seed, noise_z, min_delta_seconds)
+        model = fit_with_merging(
+            training, correlation_threshold, dependency_tolerance,
+            ridge_alpha=chosen["ridge_alpha"],
+            contrast_weight=chosen["contrast_weight"])
+        baseline = (model if not chosen["ridge_alpha"]
+                    and not chosen["contrast_weight"] else
+                    fit_with_merging(training, correlation_threshold,
+                                     dependency_tolerance))
         fits[name] = {"status": "fitted", "coefficients": model,
-                      "train": diagnostics(training, model),
-                      "validation": diagnostics(holdout, model),
+                      "hyperparameter_selection": chosen,
+                      "unregularized_validation":
+                          diagnostics(holdout, baseline, noise_z, min_delta_seconds),
+                      "train": diagnostics(training, model, noise_z, min_delta_seconds),
+                      "validation": diagnostics(holdout, model, noise_z, min_delta_seconds),
                       "training_puzzles": len(set(r["identity"] for r in training)),
                       "validation_puzzles": len(set(r["identity"] for r in holdout))}
     pooled = fits["all"]
@@ -364,8 +480,15 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=128, dest="puzzles_per_size")
-    parser.add_argument("--native-repeats", type=int, default=3)
+                        default=512, dest="puzzles_per_size")
+    parser.add_argument("--native-repeats", type=int, default=9)
+    parser.add_argument("--instrumented-repeats", type=int, default=3)
+    parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
+                        help="Comma-separated nonnegative ridge penalties")
+    parser.add_argument("--contrast-grid", default="0,1,4,16",
+                        help="Comma-separated within-puzzle contrast weights")
+    parser.add_argument("--ranking-noise-z", type=float, default=2.0)
+    parser.add_argument("--ranking-min-delta-seconds", type=float, default=5e-5)
     parser.add_argument("--max-solutions", type=int, default=None,
                         help="Override default: size 7 full enumeration (0), 8/9 first solution (1)")
     parser.add_argument("--no-perturb", action="store_true",
@@ -379,8 +502,22 @@ def main():
     parser.add_argument("--output", type=Path,
                         default=ROOT / "scratch" / "work_calibration.json")
     args = parser.parse_args()
-    if args.puzzles_per_size < 1 or args.native_repeats < 2:
-        parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
+    if (args.puzzles_per_size < 1 or args.native_repeats < 2
+            or args.instrumented_repeats < 2):
+        parser.error("puzzles-per-size must be >= 1 and repeats >= 2")
+    if (not math.isfinite(args.ranking_noise_z) or args.ranking_noise_z < 0
+            or not math.isfinite(args.ranking_min_delta_seconds)
+            or args.ranking_min_delta_seconds < 0):
+        parser.error("Ranking noise and minimum delta must be nonnegative")
+    try:
+        ridge_grid = tuple(float(x) for x in args.ridge_grid.split(","))
+        contrast_grid = tuple(float(x) for x in args.contrast_grid.split(","))
+        if (not ridge_grid or not contrast_grid or
+                any(not math.isfinite(v) or v < 0
+                    for v in ridge_grid + contrast_grid)):
+            raise ValueError("Empty, negative or nonfinite hyperparameter")
+    except ValueError as exc:
+        parser.error(f"Invalid regularization grid: {exc}")
     if not 0 < args.validation_fraction < 1:
         parser.error("validation-fraction must be between zero and one")
     if args.max_solutions is not None and args.max_solutions < 0:
@@ -406,6 +543,11 @@ def main():
         "configurations": variants_to_run,
         "datasets": sorted({(p["dataset"], p["dataset_sha256"]) for p in puzzles}),
         "native_repeats": args.native_repeats,
+        "instrumented_repeats": args.instrumented_repeats,
+        "ridge_grid": ridge_grid,
+        "contrast_grid": contrast_grid,
+        "ranking_noise_z": args.ranking_noise_z,
+        "ranking_min_delta_seconds": args.ranking_min_delta_seconds,
         "max_solutions_by_size": {
             str(size): puzzle_mode({"size": size}, args.max_solutions)
             for size in (7, 8, 9)},
@@ -447,13 +589,15 @@ def main():
                         }
                         raw_file.write(json.dumps(event, sort_keys=True) + "\n")
                         raw_runs.append(event)
-                    first = execute(instr, p, mode, args.timeout)
-                    record("instrumented", 0, first)
-                    again = execute(instr, p, mode, args.timeout)
-                    record("instrumented", 1, again)
-                    if first[1:] != again[1:]:
-                        raise RuntimeError(
-                            f"Nondeterministic counters: {p['dataset']}:{p['line']}")
+                    instrumented = []
+                    for repeat in range(args.instrumented_repeats):
+                        result = execute(instr, p, mode, args.timeout)
+                        record("instrumented", repeat, result)
+                        if instrumented and instrumented[0][1:] != result[1:]:
+                            raise RuntimeError(
+                                f"Nondeterministic counters: {p['dataset']}:{p['line']}")
+                        instrumented.append(result)
+                    first = instrumented[0]
                     times = []
                     for repeat in range(args.native_repeats):
                         result = execute(native, p, mode, args.timeout)
@@ -475,13 +619,15 @@ def main():
                         "solutions": first[1], "nodes": first[2],
                         "counters": first[3],
                         "native_times_seconds": times,
-                        "instrumented_times_seconds": [first[0], again[0]],
+                        "instrumented_times_seconds": [r[0] for r in instrumented],
                         "runtime_median_seconds": statistics.median(times),
                         "raw_runs": raw_runs,
                     })
     train, heldout = split(rows, args.validation_fraction, args.seed)
     fits, agreement_metrics = fit_four_models(
-        train, heldout, args.correlation_threshold, args.dependency_tolerance)
+        train, heldout, args.correlation_threshold, args.dependency_tolerance,
+        ridge_grid, contrast_grid, args.seed, args.ranking_noise_z,
+        args.ranking_min_delta_seconds)
     training_ids = {r["identity"] for r in train}
     for row in rows:
         row["split"] = "train" if row["identity"] in training_ids else "validation"
@@ -491,7 +637,7 @@ def main():
             and (name == "all" or name == "size" + str(row["size"]))
         }
     payload = {
-        "version": 2, "provenance": provenance,
+        "version": 3, "provenance": provenance,
         "fits": fits, "agreement": agreement_metrics,
         "sample_counts": {
             "train": len(train), "validation": len(heldout),
@@ -511,6 +657,10 @@ def main():
     print(json.dumps({
         "sample_counts": payload["sample_counts"],
         "validation": {name: fit.get("validation") for name, fit in fits.items()},
+        "selected_penalties": {
+            name: {"ridge_alpha": fit["coefficients"]["ridge_alpha"],
+                   "contrast_weight": fit["coefficients"]["contrast_weight"]}
+            for name, fit in fits.items() if fit["status"] == "fitted"},
         "agreement": agreement_metrics,
     }, indent=2))
 
