@@ -163,7 +163,8 @@ class SweepTests(unittest.TestCase):
             clues = [' '.join(['1'] * 20), ' '.join(['1'] * 28)]
             data = dict(s7_train=clues, s7_val=clues)
             for skip in (True, False):
-                argv = ['--mode', 'math7', '--seed', '42', '--s7-single', '2', '--s7-enumeration', '1']
+                argv = ['--mode', 'math7', '--nodes-time', '--seed', '42',
+                        '--s7-single', '2', '--s7-enumeration', '1']
                 if skip:
                     argv.append('--no-compare')
                 with patch.object(sweep, 'output_path', return_value=path), \
@@ -227,7 +228,7 @@ class SweepTests(unittest.TestCase):
             clue = ' '.join(['1'] * 32)
             data = {f's{s}_{split}': [clue] * 2 for s in (8, 9) for split in ('train', 'val')}
             for skip in (True, False):
-                argv = ['--mode', 'strategy', '--seed', '3', '--s8-single', '1',
+                argv = ['--mode', 'strategy', '--nodes-time', '--seed', '3', '--s8-single', '1',
                         '--s8-enumeration', '1', '--s9-single', '1']
                 if skip:
                     argv.append('--no-compare')
