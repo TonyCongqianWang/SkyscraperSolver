@@ -18,10 +18,12 @@
 #include "push_dirty_constraints.h"
 #include "node_selection_eval.h"
 #include "selectivity.h"
+#include "work_instrumentation.h"
 #include <limits.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
+#include <stdlib.h>
 
 static t_solver_state puzzle;
 static t_node_state node;
@@ -35,6 +37,29 @@ static volatile unsigned long long sink;
 static void barrier(void *p)
 {
     __asm__ __volatile__("" : : "g"(p) : "memory");
+}
+
+/* The normal timing binary stays uninstrumented. A second, instrumented
+ * run checks actual loop counts before accepting the timing measurements.
+ */
+static void check_work_units(const char *label, t_work_counter counter,
+                             unsigned long long before,
+                             unsigned long long expected)
+{
+#ifdef WORK_INSTRUMENTED
+    unsigned long long after = work_get(counter);
+    if (after < before || after - before != expected)
+    {
+        fprintf(stderr, "Work unit mismatch for %s: expected %llu, got %llu\n",
+                label, expected, after >= before ? after - before : 0ULL);
+        exit(3);
+    }
+#else
+    (void)label;
+    (void)counter;
+    (void)before;
+    (void)expected;
+#endif
 }
 
 static double clock_seconds(void)
@@ -473,16 +498,24 @@ static void bench_dp_scans(int repeats, int round)
     int i, k, m, scanned;
     int domains[9];
     t_dp_tables dp;
-    t_prune_args args;
+    t_prune_args args = {0};
     double start;
+    unsigned long long before;
 
     prepare(7);
+    node.domain.is_invalid = 0;
     for (i = 0; i < 7; i++)
     {
         domains[i] = 0x7f;
         node.domain.vals[i] = 0;
-        node.domain.valid_val_bmps[i] = 0;
+        node.domain.valid_val_bmps[i] = 0x7f;
+        node.domain.num_cell_vals[i] = 7;
+        puzzle.constr_bounds.cur_c_pair.grid_indeces[i] = i;
     }
+    /* Warm up the actual DP calculation outside the timed loop. Repeating
+     * the same DP fill is stable; timing init_dp_tables here would attribute
+     * DP initialization writes to the prefix/suffix scan counters.
+     */
     init_dp_tables(&dp, 7);
     fill_pref_dp(&dp, domains, 7);
     scanned = 0;
@@ -490,37 +523,60 @@ static void bench_dp_scans(int repeats, int round)
         for (m = 0; m <= 7; m++)
             if (dp.pref_max[k][m] != -1)
                 scanned += 7;
+    before = work_get(WORK_DP_PREFIX_CANDIDATE_SCAN);
     start = clock_seconds();
     for (i = 0; i < repeats; i++)
     {
-        init_dp_tables(&dp, 7);
         fill_pref_dp(&dp, domains, 7);
         barrier(&dp);
     }
+    check_work_units("dp_prefix_candidate_scan",
+                     WORK_DP_PREFIX_CANDIDATE_SCAN, before,
+                     (unsigned long long)scanned * repeats);
     emit_individual("dp_prefix_candidate_scan", round,
                     scanned * repeats, start);
+
+    init_dp_tables(&dp, 7);
+    fill_suff_dp(&dp, domains, 7);
+    before = work_get(WORK_DP_SUFFIX_CANDIDATE_SCAN);
     start = clock_seconds();
     for (i = 0; i < repeats; i++)
     {
-        init_dp_tables(&dp, 7);
         fill_suff_dp(&dp, domains, 7);
         barrier(&dp);
     }
+    check_work_units("dp_suffix_candidate_scan",
+                     WORK_DP_SUFFIX_CANDIDATE_SCAN, before,
+                     7ULL * 8 * 7 * repeats);
     emit_individual("dp_suffix_candidate_scan", round,
                     7 * 8 * 7 * repeats, start);
+
+    /* Use complete, mutually consistent tables and valid domains. With
+     * clue 1 and unrestricted domains, every value is feasible, so
+     * prune_candidates must not modify the puzzle between repetitions.
+     */
+    init_dp_tables(&dp, 7);
+    fill_pref_dp(&dp, domains, 7);
+    fill_suff_dp(&dp, domains, 7);
     args.solver = &puzzle;
     args.state = &node;
     args.size = 7;
+    args.target_clue = 1;
     args.dp = &dp;
     args.grid_indices = puzzle.constr_bounds.cur_c_pair.grid_indeces;
-    for (i = 0; i < 7; i++)
-        puzzle.constr_bounds.cur_c_pair.grid_indeces[i] = i;
+    before = work_get(WORK_DP_PRUNE_VALUE_SCAN);
     start = clock_seconds();
     for (i = 0; i < repeats; i++)
     {
-        sink += (unsigned long long)prune_candidates(&args);
+        if (prune_candidates(&args) != 0 || node.domain.is_invalid)
+        {
+            fprintf(stderr, "DP microbenchmark changed its domain state\n");
+            exit(3);
+        }
         barrier(&node);
     }
+    check_work_units("dp_prune_value_scan", WORK_DP_PRUNE_VALUE_SCAN,
+                     before, 49ULL * repeats);
     emit_individual("dp_prune_value_scan", round, 49 * repeats, start);
 }
 
