@@ -512,8 +512,7 @@ static void bench_dp_scans(int repeats, int round)
     args.state = &node;
     args.size = 7;
     args.dp = &dp;
-    for (i = 0; i < 7; i++)
-        args.grid_indices = puzzle.constr_bounds.cur_c_pair.grid_indeces;
+    args.grid_indices = puzzle.constr_bounds.cur_c_pair.grid_indeces;
     for (i = 0; i < 7; i++)
         puzzle.constr_bounds.cur_c_pair.grid_indeces[i] = i;
     start = clock_seconds();

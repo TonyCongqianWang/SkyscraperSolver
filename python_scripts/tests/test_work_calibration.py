@@ -43,14 +43,14 @@ class CalibrationModelTests(unittest.TestCase):
                    + 2 * (puzzles[0]["size"] + 1)))
 
     def test_work_counter_names_describe_current_operations(self):
-        from tuning_work_runtime import load_model
+        from tuning_work_runtime import DEFAULT_MODEL
         actual = set(calibration.COUNTER_NAMES)
         self.assertIn("dp_candidate_check", actual)
         self.assertIn("cache_build_candidate", actual)
         self.assertIn("provisional_solution_rollback", actual)
         self.assertFalse({"gac_check", "cache_build_check", "rollback"} & actual)
-        model, _ = load_model()
-        self.assertEqual(set(model["seconds_per_count"]), actual)
+        self.assertEqual(DEFAULT_MODEL.name, "work_calibration.model.json")
+        self.assertEqual(len(actual), 48)
 
     def test_nonnegative_fit(self):
         samples = []

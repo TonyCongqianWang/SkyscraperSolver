@@ -159,7 +159,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call",
             "constraint_check_call"})
-        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 21)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 25)
         self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 16)
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]))
