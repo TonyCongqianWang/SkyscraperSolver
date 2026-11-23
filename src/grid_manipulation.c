@@ -48,6 +48,7 @@ void	set_value_invalid_internal(t_node_state *state, int cell_idx, int val)
 {
 	int	old_cell_count;
 
+	work_add(WORK_DOMAIN_INVALIDATION_ATTEMPT, 1);
 	if (state->domain.is_invalid)
 		return ;
 	if (state->domain.vals[cell_idx] == val)

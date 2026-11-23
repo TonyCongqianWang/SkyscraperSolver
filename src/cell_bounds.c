@@ -13,6 +13,7 @@
 #include "cell_bounds.h"
 #include "grid_availability.h"
 #include "constraint_checking.h"
+#include "work_instrumentation.h"
 
 void	update_cell_bounds(t_node_state *state, int idx)
 {
@@ -23,12 +24,14 @@ void	update_cell_bounds(t_node_state *state, int idx)
 	while (lb < state->size
 		&& !is_valid_value(state, idx, lb))
 	{
+		work_add(WORK_CELL_BOUND_SKIP, 1);
 		lb++;
 	}
 	ub = state->size;
 	while (ub > 1
 		&& !is_valid_value(state, idx, ub))
 	{
+		work_add(WORK_CELL_BOUND_SKIP, 1);
 		ub--;
 	}
 	lb &= 0x0F;

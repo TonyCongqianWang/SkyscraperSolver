@@ -12,6 +12,7 @@
 
 #include "constraint_update.h"
 #include "cell_bounds.h"
+#include "work_instrumentation.h"
 
 int	update_constr_bounds(t_solver_state *puzzle, int abs_idx)
 {
@@ -26,6 +27,7 @@ int	update_constr_bounds(t_solver_state *puzzle, int abs_idx)
 	{
 		if (constr->max_height_lb == puzzle->size)
 			return (1);
+		work_add(WORK_CONSTRAINT_CHECK_UNSET_CELL, 1);
 		get_cell_bounds(puzzle->cur_node, abs_idx, &val_lb, &val_ub);
 		return (update_constr_bounds_unset(constr, val_lb, val_ub));
 	}

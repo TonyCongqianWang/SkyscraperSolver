@@ -13,6 +13,7 @@
 #include "constraint_checking.h"
 #include "constraint_selection.h"
 #include "constraint_update.h"
+#include "work_instrumentation.h"
 
 int	check_constraints(t_solver_state *puzzle, int insert_idx)
 {
@@ -34,7 +35,7 @@ int	check_constraints(t_solver_state *puzzle, int insert_idx)
 	return (1);
 }
 
-int	check_active_constr(t_solver_state *puzzle)
+static int	check_constr_line(t_solver_state *puzzle)
 {
 	int					sub_idx;
 	int					grid_idx;
@@ -49,6 +50,7 @@ int	check_active_constr(t_solver_state *puzzle)
 	while (sub_idx < size && bounds->max_height_lb < size)
 	{
 		sub_idx++;
+		work_add(WORK_CONSTRAINT_CHECK_CELL, 1);
 		if (bounds->is_reverse)
 			grid_idx = bounds->cur_c_pair.grid_indeces[size - sub_idx];
 		else
@@ -60,6 +62,19 @@ int	check_active_constr(t_solver_state *puzzle)
 			return (0);
 	}
 	return (1);
+}
+
+int	check_active_constr(t_solver_state *puzzle)
+{
+	int	result;
+
+	if (puzzle->constr_bounds.cur_c_pair.fwd_val == 0)
+		return (1);
+	work_add(WORK_CONSTRAINT_CHECK_CALL, 1);
+	work_micro_begin(WORK_CONSTRAINT_CHECK_CALL);
+	result = check_constr_line(puzzle);
+	work_micro_end(WORK_CONSTRAINT_CHECK_CALL);
+	return (result);
 }
 
 int	check_constr_bounds_violations(t_constraint_bounds *constr)
