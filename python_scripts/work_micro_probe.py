@@ -214,6 +214,16 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                    + sources + ["-o", str(binary)])
         subprocess.run(command, check=True, cwd=ROOT, capture_output=True,
                        text=True)
+        # Check the reported DP scan units against the real counters on
+        # every invocation of the controlled benchmark. Keep instrumentation
+        # out of the actual CPU timing binary.
+        checked_binary = Path(temp) / "controlled_micro_checked"
+        checked_command = (command[:-2] + ["-DWORK_INSTRUMENTED",
+                            "-o", str(checked_binary)])
+        subprocess.run(checked_command, check=True, cwd=ROOT,
+                       capture_output=True, text=True)
+        subprocess.run([str(checked_binary), "1000", "0"], check=True,
+                       cwd=ROOT, capture_output=True, text=True, timeout=120)
         for round_number in range(rounds):
             completed = subprocess.run(
                 [str(binary), str(repeats), str(round_number)], check=True,
