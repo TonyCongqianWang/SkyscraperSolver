@@ -17,6 +17,8 @@
 #include "check_node_validity.h"
 #include "push_dirty_constraints.h"
 #include "node_selection_eval.h"
+#include "selectivity.h"
+#include <limits.h>
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -438,6 +440,91 @@ static void bench_cache_traversals(int repeats, int round)
     prepare(7);
 }
 
+
+static void bench_prune_line_scan(int repeats, int round)
+{
+    int i;
+    double start;
+    t_constr_limits limits;
+    t_line_order *order = &puzzle.line_order_stack.orders[0];
+
+    prepare(7);
+    order->count = 14;
+    for (i = 0; i < order->count; ++i)
+    {
+        order->entries[i].constr_idx = i;
+        puzzle.constraint_pairs[i].fwd_val = 0;
+        puzzle.constraint_pairs[i].bwd_val = 0;
+    }
+    limits.min_entropy = 0.0;
+    limits.max_entropy = 1.0;
+    limits.global_min_entropy = INT_MAX;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        prune_check_constr(&puzzle, SELECTIVITY_NONE, &limits);
+        barrier(order);
+    }
+    emit_individual("prune_line_scan", round, 14 * repeats, start);
+}
+
+static void bench_dp_scans(int repeats, int round)
+{
+    int i, k, m, scanned;
+    int domains[9];
+    t_dp_tables dp;
+    t_prune_args args;
+    double start;
+
+    prepare(7);
+    for (i = 0; i < 7; i++)
+    {
+        domains[i] = 0x7f;
+        node.domain.vals[i] = 0;
+        node.domain.valid_val_bmps[i] = 0;
+    }
+    init_dp_tables(&dp, 7);
+    fill_pref_dp(&dp, domains, 7);
+    scanned = 0;
+    for (k = 0; k < 7; k++)
+        for (m = 0; m <= 7; m++)
+            if (dp.pref_max[k][m] != -1)
+                scanned += 7;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        init_dp_tables(&dp, 7);
+        fill_pref_dp(&dp, domains, 7);
+        barrier(&dp);
+    }
+    emit_individual("dp_prefix_candidate_scan", round,
+                    scanned * repeats, start);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        init_dp_tables(&dp, 7);
+        fill_suff_dp(&dp, domains, 7);
+        barrier(&dp);
+    }
+    emit_individual("dp_suffix_candidate_scan", round,
+                    7 * 8 * 7 * repeats, start);
+    args.solver = &puzzle;
+    args.state = &node;
+    args.size = 7;
+    args.dp = &dp;
+    for (i = 0; i < 7; i++)
+        args.grid_indices = puzzle.constr_bounds.cur_c_pair.grid_indeces;
+    for (i = 0; i < 7; i++)
+        puzzle.constr_bounds.cur_c_pair.grid_indeces[i] = i;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        sink += (unsigned long long)prune_candidates(&args);
+        barrier(&node);
+    }
+    emit_individual("dp_prune_value_scan", round, 49 * repeats, start);
+}
+
 int main(int argc, char **argv)
 {
     int repeats, round;
@@ -454,6 +541,8 @@ int main(int argc, char **argv)
     bench_constraint_affine(repeats, round);
     bench_constraint_subtasks(repeats, round);
     bench_cache_traversals(repeats, round);
+    bench_prune_line_scan(repeats, round);
+    bench_dp_scans(repeats, round);
     if (sink == 0xFFFFFFFFFFFFFFFFULL)
         fprintf(stderr, "sink=%llu\n", sink);
     return 0;
