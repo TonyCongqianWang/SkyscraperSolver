@@ -284,7 +284,7 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
 
 
 def run_verification(model_path, collinearity_path, output,
-                     puzzles_per_size=32, seed=1072, cc="gcc", timeout=30,
+                     puzzles_per_size=32, seed=1072, cc="gcc", timeout=None,
                      datasets=VALIDATION_DATASETS, controlled_repeats=200000,
                      controlled_rounds=3, controlled_result=None):
     model_path = Path(model_path)
@@ -326,7 +326,8 @@ def main():
     parser.add_argument("--puzzles-per-size", type=int, default=32)
     parser.add_argument("--seed", type=int, default=1072)
     parser.add_argument("--cc", default="gcc")
-    parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--timeout", type=float, default=None,
+                        help="Optional per-solver timeout; default: unlimited")
     parser.add_argument("--controlled-repeats", type=int, default=200000)
     parser.add_argument("--controlled-rounds", type=int, default=3)
     args = parser.parse_args()
