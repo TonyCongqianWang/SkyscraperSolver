@@ -25,7 +25,7 @@ class WorkTuningTests(unittest.TestCase):
     def test_committed_model_loads_and_schema_is_exact(self):
         model, digest = load_model(DEFAULT_MODEL)
         self.assertEqual(model["fit"], "pooled")
-        self.assertEqual(model["counter_schema"], "v2")
+        self.assertEqual(model["counter_schema"], "v1")
         self.assertEqual(len(digest), 64)
         predicted, nodes, solutions = parse_record(
             [example_record(model)], model)
@@ -36,7 +36,7 @@ class WorkTuningTests(unittest.TestCase):
     def test_fail_closed_on_missing_or_incompatible_work_records(self):
         model, _ = load_model()
         record = example_record(model)
-        for invalid in ([], [record, record], [record.replace(SCHEMA, "v1")],
+        for invalid in ([], [record, record], [record.replace(SCHEMA, "v99")],
                         [record.replace("assignment=4", "")],
                         [record.replace("assignment=4", "assignment=-4")]):
             with self.subTest(invalid=invalid):

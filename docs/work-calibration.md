@@ -8,10 +8,10 @@ conditionals; solver code calls the same ordinary ABI in both modes.
 assembly to confirm for a given toolchain; this is an optimization, not a C
 language guarantee). No counters are stored in puzzle/node structs.
 
-Work counters are emitted in a single `WORK_COUNTERS v2` record for each
+Work counters are emitted in a single `WORK_COUNTERS v1` record for each
 successfully parsed solve, including standard input mode. They start before
 solver initialization, and are counted through completion of the solve; printing
-and cleanup are outside the scope. The v2 schema is defined in
+and cleanup are outside the scope. The v1 schema is defined in
 `src/work_instrumentation.h`, with corresponding names in the report source.
 
 ## Calibrate from a fresh clone
@@ -114,7 +114,7 @@ or full tuning grids appear in this export.
 
 The exporter can also read a previous v1 detailed report, retaining that
 original counter schema; only use models with a matching instrumented solver
-counter schema. For new models this is `v2`. The loader
+counter schema. For new models this is `v1`. The loader
 `work_model_export.load_compact_model` and predictor
 `work_model_export.predict_seconds` validate the compact format and require
 the complete raw counter set. Treat the compact file as the only
@@ -161,9 +161,9 @@ an SVD condition number, and near dependencies can be threshold-sensitive.
 
 ## Counter semantics: real work volumes and fixed-size copies
 
-The instrumentation schema has changed from **v1 to v2**. Re-run the
+The instrumentation schema has changed from **v1 to v1**. Re-run the
 instrumented calibration to obtain valid coefficients for the new schema.
-The old v1 model must not be combined with v2 raw counters.
+The old v1 model must not be combined with v1 raw counters.
 
 For variable-size operations, measure both fixed invocation overhead and
 actual touched work where practical:
@@ -194,7 +194,7 @@ The collinearity analyzer may still merge nearly dependent call/volume
 columns when the training set does not identify separate costs. The
 compact export preserves the exact pooled prediction by expanding the
 merged-group coefficient back onto every original counter. Keep the raw
-v2 counters for later microbenchmarks to determine independent ratios.
+v1 counters for later microbenchmarks to determine independent ratios.
 
 ## Ranking-focused regularization and timing uncertainty
 

@@ -28,7 +28,7 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertEqual(first[1:3], ordinary[1:3])
             self.assertIsNotNone(first[3])
             self.assertIsNone(ordinary[3])
-            self.assertEqual(calibration.SCHEMA, "v3")
+            self.assertEqual(calibration.SCHEMA, "v1")
             counts = first[3]
             self.assertEqual(
                 counts["line_score_value"],
@@ -169,14 +169,35 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 8}, None), 1)
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
-    def test_size_specific_perturbations(self):
+    def test_seeded_spsa_perturbations(self):
         puzzles = [{"size": n} for n in (7, 8, 9)]
-        configs = calibration.variants(puzzles, True)
+        configs = calibration.variants(puzzles, True, seed=1234)
         self.assertEqual(len(configs), 37)
-        for n in (7, 8, 9):
-            self.assertEqual(
-                sum(calibration.applicable(config, {"size": n})
-                    for config in configs), 13)
+        self.assertEqual(configs, calibration.variants(puzzles, True, seed=1234))
+        self.assertNotEqual(configs, calibration.variants(puzzles, True, seed=4321))
+        for n, group in ((7, "le7"), (8, "s8"), (9, "s9")):
+            selected = [c for c in configs
+                        if calibration.applicable(c, {"size": n})]
+            self.assertEqual(len(selected), 13)
+            for pair in range(6):
+                left, right = selected[1 + 2 * pair:3 + 2 * pair]
+                self.assertEqual(set(left["parameters"]),
+                                 set(calibration.PARAMETER_GROUPS[group]))
+                for name in left["parameters"]:
+                    self.assertAlmostEqual(
+                        left["parameters"][name] + right["parameters"][name], 2.0)
+                    self.assertGreater(left["parameters"][name], 0.0)
+                    self.assertGreater(right["parameters"][name], 0.0)
+
+    def test_millisecond_optimizer_retains_second_unit_outputs(self):
+        samples = [{"counters": {"setup_cell": i},
+                    "runtime_median_seconds": 0.00025 + 0.00001 * i}
+                   for i in range(10)]
+        fit = calibration.fit_nonnegative(samples, ("setup_cell",))
+        self.assertEqual(fit["optimizer_target_unit"], "milliseconds")
+        self.assertAlmostEqual(fit["intercept_seconds"], 0.00025, places=8)
+        self.assertAlmostEqual(
+            fit["seconds_per_count"]["setup_cell"], 0.00001, places=8)
 
     def test_merge_exact_collinear_features(self):
         from work_collinearity import analyze_and_merge

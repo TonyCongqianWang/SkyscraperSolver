@@ -203,7 +203,7 @@ def parse_args(argv=None):
                         const=TIME_NODES, help='Tune with measured wall time + search nodes instead of calibrated work')
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
     parser.add_argument('--work-model', type=Path, default=spsa.DEFAULT_MODEL,
-                        help='Pooled v2 work model used by default')
+                        help='Pooled v1 work model used by default')
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')

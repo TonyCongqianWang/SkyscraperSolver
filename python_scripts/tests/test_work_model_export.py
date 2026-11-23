@@ -14,7 +14,7 @@ from work_model_export import load_compact_model, predict_seconds
 def sample_report():
     return {
         "provenance": {
-            "git_commit": "123abc", "schema": "v2",
+            "git_commit": "123abc", "schema": "v1",
             "counter_schema": [
                 "node_copy", "cache_pair_copy_call", "cache_pair_copy",
                 "line_score", "line_score_value", "unused",
@@ -70,6 +70,30 @@ def sample_report():
                 },
             },
         },
+        "pooled_unmerging": {
+            "method": "post_fit_timing_unmerge_no_regression_refit",
+            "all_merged_groups_resolved": True,
+            "seconds_per_count": {
+                "cache_pair_copy": 0.005,
+                "cache_pair_copy_call": 0.015,
+                "line_score": 0.3,
+            },
+            "groups": [{
+                "group": "cache_pair_copy+cache_pair_copy_call",
+                "members": ["cache_pair_copy", "cache_pair_copy_call"],
+                "merged_seconds_per_count": 0.01,
+                "member_cost_ratios": {
+                    "cache_pair_copy": 1.0,
+                    "cache_pair_copy_call": 3.0,
+                },
+                "seconds_per_original_count": {
+                    "cache_pair_copy": 0.005,
+                    "cache_pair_copy_call": 0.015,
+                },
+                "timing_evidence": [{"source": "controlled_micro", "ratio": 3.0}],
+                "max_abs_training_prediction_drift_seconds": 0.001,
+            }],
+        },
         "pooled_validation_by_size": {
             "size7": {"mae_seconds": 0.002, "r2": 0.98,
                       "clear_ranking_accuracy": 0.9,
@@ -80,12 +104,12 @@ def sample_report():
 
 
 class CompactExportTests(unittest.TestCase):
-    def test_flattened_merged_model_exact_prediction(self):
+    def test_export_uses_timing_allocated_coefficients(self):
         report = sample_report()
         model = make_compact_model(
             report, "calibration.json", "2026-11-22T12:00:00+00:00")
         self.assertEqual(model["fit"], "pooled")
-        self.assertEqual(model["counter_schema"], "v2")
+        self.assertEqual(model["counter_schema"], "v1")
         self.assertEqual(model["created_at_utc"], "2026-11-22T12:00:00+00:00")
         self.assertEqual(model["dropped_counters"],
                          ["line_score_value", "node_copy", "unused"])
@@ -96,7 +120,7 @@ class CompactExportTests(unittest.TestCase):
         }
         self.assertAlmostEqual(
             predict_seconds(model, counters),
-            0.2 + 0.01 * (20 + 3) + 0.3 * 2)
+            0.2 + 0.005 * 20 + 0.015 * 3 + 0.3 * 2)
         self.assertLess(len(json.dumps(model)), 3000)
         self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.9)
         self.assertEqual(model["hyperparameters"]["contrast_weight"], 4.0)
@@ -106,7 +130,7 @@ class CompactExportTests(unittest.TestCase):
         timestamp = "2026-11-22T12:00:00+00:00"
         artifact = make_collinearity_export(report, "detailed.json", timestamp)
         self.assertEqual(artifact["fit"], "pooled")
-        self.assertEqual(artifact["counter_schema"], "v2")
+        self.assertEqual(artifact["counter_schema"], "v1")
         self.assertEqual(artifact["created_at_utc"], timestamp)
         self.assertEqual(len(artifact["merged_groups"]), 1)
         self.assertEqual(artifact["merged_groups"][0]["members"],
@@ -125,9 +149,9 @@ class CompactExportTests(unittest.TestCase):
             self.assertEqual(json.loads(path.read_text()), artifact)
             self.assertTrue(path.read_text().endswith("\n"))
 
-    def test_v3_requires_measured_allocation_and_preserves_model(self):
+    def test_v1_requires_measured_allocation_and_preserves_model(self):
         report = sample_report()
-        report["provenance"]["schema"] = "v3"
+        report.pop("pooled_unmerging")
         with self.assertRaisesRegex(ValueError, "requires measured"):
             make_compact_model(report)
         report["pooled_unmerging"] = {
@@ -157,7 +181,7 @@ class CompactExportTests(unittest.TestCase):
             }],
         }
         model = make_compact_model(report)
-        self.assertEqual(model["counter_schema"], "v3")
+        self.assertEqual(model["counter_schema"], "v1")
         self.assertEqual(model["seconds_per_count"]["cache_pair_copy"], 0.005)
         self.assertEqual(model["seconds_per_count"]["cache_pair_copy_call"], 0.015)
         self.assertEqual(model["merged_group_coefficients"][

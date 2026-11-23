@@ -1,7 +1,7 @@
 # Draft: work-based tuning and experimental micro probes
 
 The bundled compact model in `python_scripts/models/work_calibration.model.json`
-is the user-provided pooled v2 model (trained on 14,976 observations; validated
+is the user-provided pooled v1 model (trained on 14,976 observations; validated
 on 4,992). The adjacent collinearity file records its merged counter groups.
 
 ## Tuning
@@ -16,7 +16,7 @@ From a clean clone:
 The wrapper builds two environment-overridable solver variants: the normal
 native binary (used for post-tuning wall-time comparisons) and a dedicated
 instrumented work binary (used for training). Both tuners default to the
-same pooled `v2` calibration file, validate counter names and schema, and
+same pooled `v1` calibration file, validate counter names and schema, and
 use deterministic work predictions in **seconds**. The measured time + nodes objective remains a fully supported alternative,
 selected explicitly:
 
@@ -45,7 +45,7 @@ clear-pair held-out ranking was 60.0%; don't deploy as a new permanent
 SPSA objective without confirming actual native batch rankings, especially
 on these solve modes.
 
-## Additional v3 counters and model compatibility
+## Additional v1 counters and model compatibility
 
 Four previously unrepresented operations are now counted in the solver:
 `rescore_scan` counts every cached score rescan,
@@ -53,11 +53,11 @@ Four previously unrepresented operations are now counted in the solver:
 `rel_entropy_value` counts the active values evaluated by relative
 constraint-entropy calculations, and `domain_scan` counts candidate
 values checked while constructing a constraint domain. The instrumentation
-record is now `WORK_COUNTERS v3`. This improves physical coverage but
+record is now `WORK_COUNTERS v1`. This improves physical coverage but
 **does not establish the reason for size-8 ranking errors** without rerunning
-and inspecting the new fit. The previously committed pooled `v2` model
+and inspecting the new fit. The previously committed pooled `v1` model
 is temporarily projected onto the original counters for tuning, explicitly
-ignoring the new four work features; a new `v3` calibration should replace it.
+ignoring the new four work features; a new `v1` calibration should replace it.
 
 ## One pooled regression fit, followed by measured unmerging
 
@@ -91,7 +91,7 @@ hyperparameters, and validation scores remain exactly as fitted. Afterward:
 
 If the benchmark cannot measure a member reliably, the workflow **fails
 closed rather than inventing an equal-cost ratio or exporting a misleading
-v3 model**. The controlled C harness must be extended if a new correlation
+v1 model**. The controlled C harness must be extended if a new correlation
 group contains operations it does not yet benchmark. This requirement is
 intentional. Constant/unexcited counters remain excluded from fitting,
 with explicit zero weights rather than invented independent costs.
@@ -163,8 +163,8 @@ input distributions and timing overhead; all evidence and differences
 are retained. No regression is repeated or tuning coefficients silently
 reoptimized after allocation.
 
-**Important:** the newly added schema-v3 work features require a new
-calibration. The bundled v2 model may still be used temporarily for
+**Important:** the newly added schema-v1 work features require a new
+calibration. The bundled v1 model may still be used temporarily for
 tuning through an explicitly limited compatibility projection, but it
-does not include the added scan counters. The v3 model's real held-out
+does not include the added scan counters. The v1 model's real held-out
 ranking performance is not known until the expensive run completes.

@@ -848,7 +848,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run SPSA tuning for a solver size group.")
     parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver size group to optimize (7 uses sizes 5–7)")
     parser.add_argument("--nodes-time", action="store_const", const=TIME_NODES,
-                        dest="objective", help="Use the old nodes + wall-time objective")
+                        dest="objective", help="Tune with measured wall time + search nodes")
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
     parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
                         help="Compact pooled v2 work calibration file")

@@ -27,10 +27,10 @@ class WorkSectionPlausibilityTests(unittest.TestCase):
                 for name in names]},
         }
 
-    def test_parse_v2_sampled_cpu_timing_and_volume(self):
+    def test_parse_v1_sampled_cpu_timing_and_volume(self):
         i = calibration.COUNTER_NAMES.index("line_score")
         source = [
-            f"WORK_MICRO v2 counter={i} calls=128 samples=2 "
+            f"WORK_MICRO v1 counter={i} calls=128 samples=2 "
             "ticks=5000 clock_ticks_per_second=1000000000 sampled_volume=18"
         ]
         rows = parse_micro_lines(source, calibration.COUNTER_NAMES)
@@ -38,7 +38,7 @@ class WorkSectionPlausibilityTests(unittest.TestCase):
         self.assertEqual(rows[0]["samples"], 2)
         self.assertEqual(rows[0]["sampled_volume"], 18)
         self.assertAlmostEqual(rows[0]["sampled_cpu_seconds"], 5e-6)
-        for bad in (source[0].replace("v2", "v1"),
+        for bad in (source[0].replace("v1", "v99"),
                     source[0].replace("samples=2", "samples=200"),
                     source[0].replace("sampled_volume=18", ""),
                     source[0] + " extra=9"):

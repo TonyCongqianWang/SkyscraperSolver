@@ -128,8 +128,8 @@ class IndependentMicroVerificationTests(unittest.TestCase):
             model_path = folder / "model.json"
             col_path = folder / "col.json"
             target = folder / "micro.json"
-            model_path.write_text(json.dumps({"counter_schema": "v3"}))
-            col_path.write_text(json.dumps({"counter_schema": "v3"}))
+            model_path.write_text(json.dumps({"counter_schema": "v1"}))
+            col_path.write_text(json.dumps({"counter_schema": "v1"}))
             dataset = folder / "dataset.txt"
             # Use the existing SPSA dataset instead of an artificial puzzle.
             with patch("work_micro_probe.read_puzzles", return_value=[
