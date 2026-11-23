@@ -30,6 +30,7 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertIsNone(ordinary[3])
             self.assertEqual(calibration.SCHEMA, "v1")
             self.assertEqual(len(calibration.COUNTER_NAMES), 48)
+            counts = first[3]
             self.assertGreater(counts["constraint_check_call"], 0)
             self.assertGreaterEqual(
                 counts["constraint_check_cell"],
@@ -37,7 +38,6 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertGreaterEqual(
                 counts["domain_invalidation_attempt"],
                 counts["domain_invalidation"])
-            counts = first[3]
             self.assertEqual(
                 counts["line_score_value"],
                 counts["line_score"] * puzzles[0]["size"])
