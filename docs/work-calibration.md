@@ -3,19 +3,19 @@
 ## Current counter and output schema
 
 The single supported solver counter schema is `WORK_COUNTERS v1`, with
-33 fixed-count / variable-volume event counters. The counter names in
+48 fixed-count / variable-volume event counters. The counter names in
 `src/work_instrumentation.h`, `src/work_instrumentation_report.c`, and
 `python_scripts/calibrate_work.py` must agree exactly. The normal native
 solver does not emit these counters. The instrumented solver includes no
 wall-clock timers unless explicitly compiled with `WORK_MICRO_TIMING`.
 
 The sole supported compact model schema is `v1`, with format
-`skyscraper-work-model` version 1. The repository includes the completed
-pooled calibration as `python_scripts/models/work_calibration.model.json`
-and its independently measured split diagnostics as
-`python_scripts/models/work_calibration.collinearity.json`. The supplied
-fit used 14,976 training and 4,992 held-out observations, with 33 counters.
-The default tuner objective uses this model directly in **seconds**.
+`skyscraper-work-model` version 1. The previous pooled fit is invalid after the new instrumentation. Run
+calibration before using the work tuning objective; it writes a new
+`scratch/work_calibration.model.json` and corresponding collinearity
+report. The work tuning objective loads that generated model in **seconds**
+and fails if it is missing. There is no compatibility projection or
+fallback to obsolete fitted coefficients.
 The measured **time + nodes** objective remains separately available.
 
 ## Run calibration
@@ -155,3 +155,21 @@ counted separately, but ordinary `check_active_constr` line iterations and
 bounds updates are currently **not counted directly**. Adding those work
 features requires a new regression calibration and cannot be represented by
 simply renaming the existing deployed coefficients.
+
+## Recalibration required after adding work counters
+
+The 15 new counters capture clue-bound checking calls and actual per-line
+positions, unset-cell bounds processing, dirty-entry dequeue/enqueue,
+failed-or-successful domain invalidation attempts, cell-bound skips,
+cache-build cell traversal, candidate selection and resumption scans,
+next-valid-value probes, pruning line traversal, and DP prefix/suffix/prune
+candidate loop probes. The existing successful `domain_invalidation` counter
+remains distinct, and `assignment` remains one fixed event.
+
+All previous 33-counter coefficients were fitted without these operations,
+so they must **not** be reused as a tuning cost model. Full recalibration
+produces the replacement model at `scratch/work_calibration.model.json`.
+The new counters are counted in instrumentation without modifying solver
+logic. The controlled microbenchmark must also independently time every
+member of any new collinear group before coefficient allocation can complete;
+calibration fails closed when this is not possible.

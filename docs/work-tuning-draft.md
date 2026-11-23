@@ -1,8 +1,9 @@
 # Draft: work-based tuning and measured time + nodes
 
-The repository's default pooled work model is the completed, measured
-33-counter calibration, stored at
-`python_scripts/models/work_calibration.model.json`. The only supported
+The current work-counter schema contains 48 counters. The previously
+bundled 33-counter model has been removed because it lacks the new
+size-dependent work components. Run the full calibration and use its
+`scratch/work_calibration.model.json` before work-based tuning. The only supported
 work-counter schema is **v1**. The bundled model was trained using 14,976
 observations and validated on 4,992 held-out observations.
 

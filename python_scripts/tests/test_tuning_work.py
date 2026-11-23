@@ -1,4 +1,6 @@
 """Strict work-tuning parser, objective, time + nodes opt-in, and runner smoke tests."""
+import json
+import tempfile
 import math
 from pathlib import Path
 import sys
@@ -22,8 +24,27 @@ def example_record(model):
 
 
 class WorkTuningTests(unittest.TestCase):
-    def test_committed_model_loads_and_schema_is_exact(self):
-        model, digest = load_model(DEFAULT_MODEL)
+    def _fixture_model(self):
+        fixture = {
+            "format": "skyscraper-work-model",
+            "format_version": 1,
+            "fit": "pooled",
+            "counter_schema": SCHEMA,
+            "intercept_seconds": 0.002,
+            "seconds_per_count": {name: 1e-9 for name in COUNTER_NAMES},
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            file = Path(directory) / "work_calibration.model.json"
+            file.write_text(json.dumps(fixture), encoding="utf-8")
+            return load_model(file)
+
+    def test_unavailable_fresh_calibration_is_rejected(self):
+        with tempfile.TemporaryDirectory() as directory:
+            with self.assertRaises(FileNotFoundError):
+                load_model(Path(directory) / "nonexistent.json")
+
+    def test_calibrated_model_loads_and_schema_is_exact(self):
+        model, digest = self._fixture_model()
         self.assertEqual(model["fit"], "pooled")
         self.assertEqual(model["counter_schema"], "v1")
         self.assertEqual(len(digest), 64)
@@ -34,7 +55,7 @@ class WorkTuningTests(unittest.TestCase):
                                + 4 * model["seconds_per_count"]["assignment"])
 
     def test_fail_closed_on_missing_or_incompatible_work_records(self):
-        model, _ = load_model()
+        model, _ = self._fixture_model()
         record = example_record(model)
         for invalid in ([], [record, record], [record.replace(SCHEMA, "v99")],
                         [record.replace("assignment=4", "")],
@@ -68,7 +89,7 @@ class WorkTuningTests(unittest.TestCase):
         self.assertAlmostEqual(sweep_score(8, 1.1, 3.0, WORK), 1.1)
 
     def test_spsa_standalone_uses_work_not_wall_clock(self):
-        model, _ = load_model()
+        model, _ = self._fixture_model()
         proc = MagicMock()
         proc.communicate.return_value = (example_record(model) + "\n", "")
         proc.returncode = 0
@@ -80,7 +101,7 @@ class WorkTuningTests(unittest.TestCase):
                                + 4 * model["seconds_per_count"]["assignment"])
 
     def test_stdin_batch_uses_work_not_pipe_latency(self):
-        model, _ = load_model()
+        model, _ = self._fixture_model()
         proc = MagicMock()
         proc.stdin = MagicMock()
         lines = [example_record(model) + "\n", "--- END_OF_INSTANCE ---\n"]

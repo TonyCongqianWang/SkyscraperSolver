@@ -7,7 +7,7 @@ from pathlib import Path
 from calibrate_work import COUNTER_NAMES, SCHEMA
 from work_model_export import FORMAT, FORMAT_VERSION, predict_seconds
 
-DEFAULT_MODEL = (Path(__file__).resolve().parent / "models"
+DEFAULT_MODEL = (Path(__file__).resolve().parents[1] / "scratch"
                  / "work_calibration.model.json")
 
 
