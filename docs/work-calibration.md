@@ -62,6 +62,29 @@ times per observation by default, instrumentation 3 times, and section
 timing once. Use `--puzzles-per-size`, `--native-repeats` and
 `--instrumented-repeats` to control the workload.
 
+## Interruptions, resuming, and timeouts
+
+Solver runs have **no timeout by default**. If you explicitly need one, pass
+`--timeout SECONDS`; that limit applies to each native, instrumented, and
+CPU-section-timing invocation. The controlled benchmark retains its separate
+sanity timeout.
+
+Every completed solver invocation is appended immediately to
+`scratch/work_calibration.raw.jsonl`, including runs from partially completed
+puzzles. Existing journals are protected from accidental overwriting.
+If calibration stops, preserve the JSONL file and resume using the **original
+seed and all original sampling/benchmark options**:
+
+```sh
+python3 python_scripts/calibrate_work.py --seed 123456 --resume
+```
+
+Resume validates puzzle identities, dataset hashes, parameter perturbations,
+run counts and work-counter schemas before reusing records; completed runs
+are not rerun. For a new calibration using the same output file, specify
+`--fresh` to intentionally discard the existing raw journal. Never use
+`--fresh` when you wish to recover an interrupted run.
+
 ## Numerical fitting and cost splits
 
 Work features with near-duplicate counter patterns are merged before
