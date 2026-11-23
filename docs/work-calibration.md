@@ -137,3 +137,21 @@ is pooled; size-specific fits are diagnostics.
 **Scope:** calibration is trained on size-7 enumeration and size-8/9
 first-solution runs. Size-8 enumeration remains an out-of-distribution
 tuning mode until separately validated.
+
+## Work-counter terminology and constraint-checking coverage
+
+`dp_candidate_check` counts previous-maximum state iterations in the **current
+prefix/suffix DP candidate-feasibility checker**; it is unrelated to the
+removed generalized arc consistency algorithm. `cache_build_candidate`
+counts candidate values examined during cache construction (the candidate
+may also generate a transition). `provisional_solution_rollback` counts
+a reversal of a speculative solution registration, **not** ordinary search
+backtracking. These label-only changes preserve existing fitted coefficients.
+
+`assignment` counts one event regardless of puzzle size, whereas its
+candidate invalidation attempts and the ordinary clue-bound checks that
+follow are size dependent. Successful domain invalidations are already
+counted separately, but ordinary `check_active_constr` line iterations and
+bounds updates are currently **not counted directly**. Adding those work
+features requires a new regression calibration and cannot be represented by
+simply renaming the existing deployed coefficients.

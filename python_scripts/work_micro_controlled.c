@@ -171,7 +171,7 @@ static void bench_setup(int repeats, int round)
             barrier(&puzzle.order_stack.orders[0]);
             sink += (unsigned long long)puzzle.order_stack.orders[0].items.count;
         }
-        emit_individual("cache_build_check", round, units, start);
+        emit_individual("cache_build_candidate", round, units, start);
     }
 }
 

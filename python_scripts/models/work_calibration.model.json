@@ -13,10 +13,10 @@
     "domain_scan",
     "dp_init_call",
     "dp_init_write",
-    "gac_check",
+    "dp_candidate_check",
     "propagate_dp_update",
     "resume_scan",
-    "rollback",
+    "provisional_solution_rollback",
     "setup_cache_slot"
   ],
   "fit": "pooled",
@@ -69,20 +69,20 @@
   },
   "merged_group_allocations": [
     {
-      "group": "cache_build_check+setup_cell",
+      "group": "cache_build_candidate+setup_cell",
       "max_abs_training_prediction_drift_seconds": 0,
       "member_cost_ratios": {
-        "cache_build_check": 1,
+        "cache_build_candidate": 1,
         "setup_cell": 1.3517881763451933
       },
       "members": [
-        "cache_build_check",
+        "cache_build_candidate",
         "setup_cell"
       ],
       "merged_seconds_per_count": 0,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "cache_build_check": 0,
+        "cache_build_candidate": 0,
         "setup_cell": 0
       }
     },
@@ -183,7 +183,7 @@
   "merged_group_coefficients": {
     "assignment": 1.450254883925319e-7,
     "base_score": 1.1819161356572426e-8,
-    "cache_build_check+setup_cell": 0,
+    "cache_build_candidate+setup_cell": 0,
     "cache_pair_copy": 7.480810669502504e-9,
     "cache_pair_copy_call+cache_state_copy+line_copy": 0,
     "compact_check+compact_move": 9.966461372889756e-10,
@@ -222,7 +222,7 @@
   "seconds_per_count": {
     "assignment": 1.450254883925319e-7,
     "base_score": 1.1819161356572426e-8,
-    "cache_build_check": 0,
+    "cache_build_candidate": 0,
     "cache_pair_copy": 7.480810669502504e-9,
     "cache_pair_copy_call": 0,
     "cache_state_copy": 0,
@@ -232,7 +232,7 @@
     "domain_scan": 0,
     "dp_init_call": 0,
     "dp_init_write": 0,
-    "gac_check": 0,
+    "dp_candidate_check": 0,
     "index_copy_call": 6.9192562098769315e-9,
     "index_copy_pair": 4.61062295037892e-9,
     "line_compare": 1.916601320651208e-8,
@@ -247,7 +247,7 @@
     "rel_entropy_value": 0,
     "rescore_scan": 3.713302942408409e-9,
     "resume_scan": 0,
-    "rollback": 0,
+    "provisional_solution_rollback": 0,
     "setup_cache_slot": 0,
     "setup_cell": 0,
     "solution_copy": 3.166749891244067e-7,

@@ -42,11 +42,11 @@ static void	collect_cell_entries(t_node_state *state,
 	value = size;
 	while (value >= 1)
 	{
-		work_micro_begin(WORK_CACHE_BUILD_CHECK);
-		work_add(WORK_CACHE_BUILD_CHECK, 1);
+		work_micro_begin(WORK_CACHE_BUILD_CANDIDATE);
+		work_add(WORK_CACHE_BUILD_CANDIDATE, 1);
 		if (is_valid_value(state, cell, value))
 			add_transition(cache, (cell << 8) | value);
-		work_micro_end(WORK_CACHE_BUILD_CHECK);
+		work_micro_end(WORK_CACHE_BUILD_CANDIDATE);
 		value--;
 	}
 }

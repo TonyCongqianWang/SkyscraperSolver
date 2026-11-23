@@ -42,6 +42,16 @@ class CalibrationModelTests(unittest.TestCase):
                 * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
                    + 2 * (puzzles[0]["size"] + 1)))
 
+    def test_work_counter_names_describe_current_operations(self):
+        from tuning_work_runtime import load_model
+        actual = set(calibration.COUNTER_NAMES)
+        self.assertIn("dp_candidate_check", actual)
+        self.assertIn("cache_build_candidate", actual)
+        self.assertIn("provisional_solution_rollback", actual)
+        self.assertFalse({"gac_check", "cache_build_check", "rollback"} & actual)
+        model, _ = load_model()
+        self.assertEqual(set(model["seconds_per_count"]), actual)
+
     def test_nonnegative_fit(self):
         samples = []
         for a, b in [(0, 1), (1, 1), (2, 2), (3, 0), (4, 3), (7, 1)]:

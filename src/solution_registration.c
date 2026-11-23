@@ -42,7 +42,7 @@ void	rollback_provisional_solution(t_solver_state *puzzle)
 {
 	if (!puzzle->provisional_solution)
 		return ;
-	work_add(WORK_ROLLBACK, 1);
+	work_add(WORK_PROVISIONAL_SOLUTION_ROLLBACK, 1);
 	puzzle->solutions_found--;
 	puzzle->provisional_solution = 0;
 }

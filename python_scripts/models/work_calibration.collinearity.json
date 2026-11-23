@@ -6,14 +6,14 @@
     "propagate_dp_update",
     "dp_init_call",
     "dp_init_write",
-    "gac_check",
-    "rollback",
+    "dp_candidate_check",
+    "provisional_solution_rollback",
     "resume_scan",
     "domain_scan"
   ],
   "constant_merged_groups": [],
   "controlled_counter_costs_seconds": {
-    "cache_build_check": 1.8574429036500656e-9,
+    "cache_build_candidate": 1.8574429036500656e-9,
     "cache_pair_copy": 4.714652090458277e-10,
     "cache_pair_copy_call": 1.9503798924418547e-9,
     "cache_state_copy": 9.168165000000001e-9,
@@ -30,7 +30,7 @@
     "transition_shift": 1.4919050000000001e-9
   },
   "controlled_counter_diagnostics": {
-    "cache_build_check": {
+    "cache_build_candidate": {
       "max_over_min": 1.1074679300967483,
       "reason": null,
       "round_count": 3,
@@ -198,7 +198,7 @@
   },
   "correlated_pairs": [
     {
-      "a": "cache_build_check",
+      "a": "cache_build_candidate",
       "b": "setup_cell",
       "pearson_r": 0.999366275360728
     },
@@ -245,7 +245,7 @@
     "cache_state_copy",
     "cache_pair_copy",
     "cache_pair_copy_call",
-    "cache_build_check",
+    "cache_build_candidate",
     "compact_check",
     "compact_move",
     "transition_compare",
@@ -262,13 +262,13 @@
     "dp_init_write",
     "index_copy_call",
     "index_copy_pair",
-    "gac_check",
+    "dp_candidate_check",
     "assignment",
     "domain_invalidation",
     "node_copy",
     "lookahead_scan",
     "solution_copy",
-    "rollback",
+    "provisional_solution_rollback",
     "rescore_scan",
     "resume_scan",
     "rel_entropy_value",
@@ -281,10 +281,10 @@
     "domain_scan",
     "dp_init_call",
     "dp_init_write",
-    "gac_check",
+    "dp_candidate_check",
     "propagate_dp_update",
     "resume_scan",
-    "rollback",
+    "provisional_solution_rollback",
     "setup_cache_slot"
   ],
   "fit": "pooled",
@@ -293,7 +293,7 @@
   "interpretation": "Correlated counters were summed for a provisional fit. The fitted coefficient is NOT a measured ratio of operation costs.",
   "merge_events": [
     {
-      "a": "cache_build_check",
+      "a": "cache_build_candidate",
       "b": "setup_cell",
       "pearson_r": 0.999366275360728,
       "type": "pairwise"
@@ -339,23 +339,23 @@
     {
       "aggregation": "sum_raw_counts",
       "allocated_member_seconds_per_count": {
-        "cache_build_check": 0,
+        "cache_build_candidate": 0,
         "setup_cell": 0
       },
       "max_abs_training_prediction_drift_seconds": 0,
       "measured_cost_ratios": {
-        "cache_build_check": 1,
+        "cache_build_candidate": 1,
         "setup_cell": 1.3517881763451933
       },
       "members": [
-        "cache_build_check",
+        "cache_build_candidate",
         "setup_cell"
       ],
-      "name": "cache_build_check+setup_cell",
+      "name": "cache_build_candidate+setup_cell",
       "seconds_per_merged_count": 0,
       "timing_evidence": [
         {
-          "a": "cache_build_check",
+          "a": "cache_build_candidate",
           "b": "setup_cell",
           "metadata": {},
           "ratio": 1.1907795365626457,
@@ -363,7 +363,7 @@
           "weight": 4
         },
         {
-          "a": "cache_build_check",
+          "a": "cache_build_candidate",
           "b": "setup_cell",
           "metadata": {},
           "ratio": 2.2450073466331353,
@@ -580,7 +580,7 @@
         "relative_residual": 0.49013687259064886
       },
       {
-        "name": "cache_build_check+setup_cell",
+        "name": "cache_build_candidate+setup_cell",
         "relative_residual": 0.959887337758378
       },
       {
@@ -668,7 +668,7 @@
         "relative_residual": 0.49013687259064886
       },
       {
-        "name": "cache_build_check",
+        "name": "cache_build_candidate",
         "relative_residual": 0.9599965999731234
       },
       {

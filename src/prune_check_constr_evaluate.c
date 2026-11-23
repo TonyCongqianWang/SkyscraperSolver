@@ -64,7 +64,7 @@ static int	check_candidate(t_prune_args *args, int i, int v)
 	m = 0;
 	while (m <= args->size)
 	{
-		work_add(WORK_GAC_CHECK, 1);
+		work_add(WORK_DP_CANDIDATE_CHECK, 1);
 		if (args->dp->pref_max[i][m] != -1)
 		{
 			vis_add = (v > m);

@@ -32,13 +32,13 @@ DEFAULT_DATASETS = (
 COUNTER_RE = re.compile(r"^WORK_COUNTERS (v\d+) (.+)$", re.MULTILINE)
 COUNTER_NAMES = (
     "setup_cell", "setup_cache_slot", "cache_state_copy", "cache_pair_copy",
-    "cache_pair_copy_call", "cache_build_check", "compact_check", "compact_move",
+    "cache_pair_copy_call", "cache_build_candidate", "compact_check", "compact_move",
     "transition_compare", "transition_shift", "line_copy", "line_score",
     "line_score_value", "line_compare", "line_shift", "base_score",
     "lookahead_blend", "propagate_dp_update", "dp_init_call",
     "dp_init_write", "index_copy_call", "index_copy_pair",
-    "gac_check", "assignment", "domain_invalidation",
-    "node_copy", "lookahead_scan", "solution_copy", "rollback",
+    "dp_candidate_check", "assignment", "domain_invalidation",
+    "node_copy", "lookahead_scan", "solution_copy", "provisional_solution_rollback",
     "rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan",
 )
 PARAMETER_GROUPS = {

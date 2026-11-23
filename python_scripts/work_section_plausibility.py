@@ -16,7 +16,7 @@ TIMED_SECTIONS = {
 }
 
 ATOMIC_SECTIONS = frozenset({
-    "cache_build_check", "setup_cell", "cache_state_copy", "line_copy",
+    "cache_build_candidate", "setup_cell", "cache_state_copy", "line_copy",
     "compact_check", "compact_move", "line_compare", "line_shift",
     "transition_compare", "transition_shift",
 })
