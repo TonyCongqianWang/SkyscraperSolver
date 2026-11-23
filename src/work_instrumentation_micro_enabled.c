@@ -93,7 +93,7 @@ void	work_micro_report(void)
 	{
 		if (!g_samples[i])
 			continue ;
-		printf("WORK_MICRO v2 counter=%d calls=%llu samples=%llu"
+		printf("WORK_MICRO v1 counter=%d calls=%llu samples=%llu"
 			" ticks=%llu clock_ticks_per_second=1000000000"
 			" sampled_volume=%llu\n",
 			i, g_calls[i], g_samples[i], g_ticks[i],

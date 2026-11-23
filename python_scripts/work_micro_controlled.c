@@ -41,7 +41,7 @@ static void emit_individual(const char *name, int round, int units,
     double duration = clock_seconds() - start;
     if (duration <= 0.0)
         duration = 0.0;
-    printf("WORK_BENCH v2 kind=individual counter=%s round=%d"
+    printf("WORK_BENCH v1 kind=individual counter=%s round=%d"
            " units=%d cpu_seconds=%.12f\n",
            name, round, units, duration);
 }
@@ -52,7 +52,7 @@ static void emit_affine(const char *name, int round, int calls, int volume,
     double duration = clock_seconds() - start;
     if (duration <= 0.0)
         duration = 0.0;
-    printf("WORK_BENCH v2 kind=affine section=%s round=%d calls=%d"
+    printf("WORK_BENCH v1 kind=affine section=%s round=%d calls=%d"
            " volume=%d cpu_seconds=%.12f\n",
            name, round, calls, volume, duration);
 }

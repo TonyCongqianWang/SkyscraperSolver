@@ -5,12 +5,6 @@ import math
 from pathlib import Path
 
 from calibrate_work import COUNTER_NAMES, SCHEMA
-
-# The shipped v2 model remains usable for tuning while v3 calibration is
-# regenerated. Its predictions deliberately omit the four new scan features.
-V3_ADDED_COUNTERS = frozenset(
-    ("rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan"))
-V2_COUNTERS = frozenset(COUNTER_NAMES) - V3_ADDED_COUNTERS
 from work_model_export import FORMAT, FORMAT_VERSION, predict_seconds
 
 DEFAULT_MODEL = (Path(__file__).resolve().parent / "models"
@@ -24,12 +18,10 @@ def load_model(path=DEFAULT_MODEL):
     if (model.get("format") != FORMAT
             or model.get("format_version") != FORMAT_VERSION
             or model.get("fit") != "pooled"
-            or model.get("counter_schema") not in (SCHEMA, "v2")):
+            or model.get("counter_schema") != SCHEMA):
         raise ValueError("Unsupported pooled work calibration format or counter schema")
     coeffs = model.get("seconds_per_count", {})
-    expected = (set(COUNTER_NAMES) if model["counter_schema"] == SCHEMA
-                else V2_COUNTERS)
-    if set(coeffs) != expected:
+    if set(coeffs) != set(COUNTER_NAMES):
         raise ValueError("Work counter names do not match model schema")
     for value in [model.get("intercept_seconds"), *coeffs.values()]:
         if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
@@ -56,9 +48,7 @@ def parse_record(lines, model):
         parsed[name] = int(raw)
     if set(parsed) != set(COUNTER_NAMES) | {"nodes", "solutions"}:
         raise ValueError("Incomplete work counter record")
-    # Explicit compatibility projection for the bundled v2 calibration.
-    # A new v3 fit should replace it before judging newly added work.
-    counters = {name: parsed[name] for name in model["seconds_per_count"]}
+    counters = {name: parsed[name] for name in COUNTER_NAMES}
     seconds = predict_seconds(model, counters)
     if not math.isfinite(seconds) or seconds < 0:
         raise ValueError("Invalid predicted work")

@@ -13,7 +13,7 @@
 #ifndef WORK_INSTRUMENTATION_H
 # define WORK_INSTRUMENTATION_H
 
-/* Version 3: add variable rescoring, resumption and domain scans. */
+/* Version 1: add variable rescoring, resumption and domain scans. */
 typedef enum e_work_counter
 {
 	WORK_SETUP_CELL,

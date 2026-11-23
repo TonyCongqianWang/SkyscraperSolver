@@ -15,7 +15,7 @@ from pathlib import Path
 import tempfile
 
 from calibrate_work import (
-    COUNTER_NAMES, ROOT, build, execute, read_puzzles, puzzle_mode,
+    COUNTER_NAMES, SCHEMA, ROOT, build, execute, read_puzzles, puzzle_mode,
 )
 from work_model_export import load_compact_model
 from work_section_plausibility import TIMED_SECTIONS, summarize_plausibility, timed_affine_fit
@@ -28,8 +28,8 @@ VALIDATION_DATASETS = (
 
 
 def validate_model(model):
-    if model.get("fit") != "pooled" or model.get("counter_schema") != "v3":
-        raise ValueError("Independent micro check requires the new pooled v3 model")
+    if model.get("fit") != "pooled" or model.get("counter_schema") != SCHEMA:
+        raise ValueError("Independent micro check requires the pooled v1 model")
     if set(model.get("seconds_per_count", {})) != set(COUNTER_NAMES):
         raise ValueError("Model counter schema does not match solver")
 
@@ -222,7 +222,7 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                 if not line.startswith("WORK_BENCH "):
                     continue
                 parts = line.split()
-                if parts[:2] != ["WORK_BENCH", "v2"]:
+                if parts[:2] != ["WORK_BENCH", "v1"]:
                     raise ValueError("Unknown controlled microbenchmark version")
                 fields = dict(field.split("=", 1) for field in parts[2:])
                 if int(fields["round"]) != round_number:

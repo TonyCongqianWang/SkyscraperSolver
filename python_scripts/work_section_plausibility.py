@@ -23,7 +23,7 @@ ATOMIC_SECTIONS = frozenset({
 
 
 def parse_micro_lines(lines, counter_names):
-    """Read optional WORK_MICRO v2 records; reject partial/mismatched records."""
+    """Read optional WORK_MICRO v1 records; reject partial/mismatched records."""
     result = []
     seen = set()
     for line in lines:
@@ -31,7 +31,7 @@ def parse_micro_lines(lines, counter_names):
         if not line.startswith("WORK_MICRO "):
             continue
         parts = line.split()
-        if len(parts) != 8 or parts[:2] != ["WORK_MICRO", "v2"]:
+        if len(parts) != 8 or parts[:2] != ["WORK_MICRO", "v1"]:
             raise ValueError("Unexpected or incomplete WORK_MICRO schema")
         fields = {}
         for token in parts[2:]:

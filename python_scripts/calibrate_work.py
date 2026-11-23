@@ -23,7 +23,7 @@ from work_model_export import export_compact_model, export_collinearity
 from work_section_plausibility import parse_micro_lines, summarize_plausibility
 
 ROOT = Path(__file__).resolve().parents[1]
-SCHEMA = "v3"
+SCHEMA = "v1"
 DEFAULT_DATASETS = (
     "puzzle_bank/spsa_datasets/le7_train.txt",
     "puzzle_bank/spsa_datasets/size8_train.txt",
@@ -56,7 +56,7 @@ PARAM_FILES = {"g_sel_": "params_cache_period.c",
                "g_lookahead_entropy_weight_": "params_math.c"}
 
 
-def read_puzzles(paths, limit, seed=72):
+def read_puzzles(paths, limit, seed=0):
     """Select deterministic, symmetry-distinct puzzles from each size.
 
     Sample across entire SPSA training files, rather than taking the first
@@ -136,15 +136,23 @@ def applicable(variant, puzzle):
     return name in PARAMETER_GROUPS[group]
 
 
-def variants(puzzles, perturb):
-    groups = sorted({"le7" if p["size"] <= 7 else "s" + str(p["size"]) for p in puzzles})
+def variants(puzzles, perturb, seed=0):
+    """Use seeded antithetic simultaneous parameter draws, as in SPSA."""
+    groups = sorted({"le7" if p["size"] <= 7 else "s" + str(p["size"])
+                     for p in puzzles})
     options = [{"name": "baseline", "parameters": {}}]
     if perturb:
-        # One-at-a-time changes avoid confounded counter costs.
         for group in groups:
-            for name in PARAMETER_GROUPS[group]:
-                for factor in (0.5, 1.5):
-                    options.append({"name": f"{name}_x{factor}", "parameters": {name: factor}})
+            rng = random.Random(f"{seed}:perturbations:{group}")
+            for pair in range(6):
+                deltas = {name: rng.choice((-1, 1)) * rng.uniform(0.25, 0.75)
+                          for name in PARAMETER_GROUPS[group]}
+                for direction, sign in (("plus", 1), ("minus", -1)):
+                    options.append({
+                        "name": f"{group}_spsa_{pair:02d}_{direction}",
+                        "parameters": {name: 1.0 + sign * delta
+                                       for name, delta in deltas.items()},
+                    })
     return options
 
 
@@ -233,7 +241,11 @@ def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
     if not math.isfinite(contrast_weight) or contrast_weight < 0:
         raise ValueError("contrast_weight must be a finite nonnegative number")
     names = list(names)
-    targets = [float(s["runtime_median_seconds"]) for s in samples]
+    # Optimize in milliseconds for a better-scaled absolute stop tolerance.
+    # Public predictions, fitted coefficients, and artifacts remain seconds.
+    target_scale = 1000.0
+    targets = [target_scale * float(s["runtime_median_seconds"])
+               for s in samples]
     count = len(samples)
     scales = [
         math.sqrt(sum(float(s["counters"][n]) ** 2
@@ -291,12 +303,14 @@ def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
             coeff[j] = new
         if change < 1e-12:
             break
-    return {"intercept_seconds": coeff[-1],
-            "seconds_per_count": {name: coeff[j] / scales[j]
-                                  for j, name in enumerate(names)},
+    return {"intercept_seconds": coeff[-1] / target_scale,
+            "seconds_per_count": {
+                name: coeff[j] / (scales[j] * target_scale)
+                for j, name in enumerate(names)},
             "ridge_alpha": ridge_alpha,
             "contrast_weight": contrast_weight,
             "feature_scale": "root_mean_square_of_training_count",
+            "optimizer_target_unit": "milliseconds",
             "objective": "MSE + contrast_weight * centered_puzzle_MSE + ridge_alpha * sum(scaled_coefficients^2)",
             "iterations": iteration + 1}
 
@@ -517,7 +531,8 @@ def main():
     parser.add_argument("--validation-fraction", type=float, default=0.25)
     parser.add_argument("--correlation-threshold", type=float, default=0.995)
     parser.add_argument("--dependency-tolerance", type=float, default=1e-3)
-    parser.add_argument("--seed", type=int, default=72)
+    parser.add_argument("--seed", type=int, default=None,
+                        help="Random default; pass an integer to reproduce puzzle splits and perturbations")
     parser.add_argument("--cc", default=os.environ.get("CC", "gcc"))
     parser.add_argument("--output", type=Path,
                         default=ROOT / "scratch" / "work_calibration.json")
@@ -526,6 +541,9 @@ def main():
     parser.add_argument("--collinearity-output", type=Path,
                         help="Pooled collinearity path (default: output.collinearity.json)")
     args = parser.parse_args()
+    if args.seed is None:
+        args.seed = random.SystemRandom().getrandbits(64)
+    print(f"Calibration seed: {args.seed}", flush=True)
     if args.micro_puzzles_per_size < 1:
         parser.error("micro-puzzles-per-size must be >= 1")
     if args.micro_repeats < 1000 or args.micro_rounds < 3:
@@ -558,7 +576,7 @@ def main():
             if found != args.puzzles_per_size:
                 raise ValueError(f"Only {found} distinct size-{size} puzzles available; "
                                  f"requested {args.puzzles_per_size}")
-    variants_to_run = variants(puzzles, not args.no_perturb)
+    variants_to_run = variants(puzzles, not args.no_perturb, args.seed)
     counts = {size: sum(p["size"] == size for p in puzzles)
               for size in (7, 8, 9)}
     provenance = {
@@ -587,6 +605,9 @@ def main():
             for size in (7, 8, 9)},
         "puzzles_per_size": counts,
         "seed": args.seed, "validation_fraction": args.validation_fraction,
+        "sampling_strategy": "seeded_symmetry_unique_hash_priority",
+        "perturbation_strategy": "seeded_spsa_antithetic_pairs",
+        "perturbation_pairs_per_size": 6,
         "counter_schema": list(COUNTER_NAMES),
         "perturbations_enabled": not args.no_perturb,
     }
@@ -739,7 +760,7 @@ def main():
     for row in rows:
         row["predictions_seconds"]["pooled_allocated"] = allocated_predict(row)
     payload = {
-        "version": 4, "provenance": provenance,
+        "version": 1, "provenance": provenance,
         "section_timing_plausibility": plausibility,
         "controlled_microbenchmark": controlled,
         "pooled_unmerging": allocation,
