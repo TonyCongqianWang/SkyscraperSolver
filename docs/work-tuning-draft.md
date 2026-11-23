@@ -4,8 +4,8 @@ The current work-counter schema contains 48 counters. The previously
 bundled 33-counter model has been removed because it lacks the new
 size-dependent work components. Run the full calibration and use its
 `scratch/work_calibration.model.json` before work-based tuning. The only supported
-work-counter schema is **v1**. The bundled model was trained using 14,976
-observations and validated on 4,992 held-out observations.
+work-counter schema is **v1**. There is currently **no deployable
+48-counter model** until calibration is rerun.
 
 Both **calibrated work** and **measured time + nodes** are first-class
 tuning objectives. Calibrated work is the default, while the explicit
@@ -14,7 +14,8 @@ and sweep. Neither option is deprecated. The same numerical loss policy,
 mode weighting and shifted-log references are centralized in
 `python_scripts/tuning_objective.py`.
 
-From a clean checkout:
+After regenerating `scratch/work_calibration.model.json`, work-based
+tuning can be launched with:
 
 ```sh
 ./setup_and_tune.sh --size 8 --iterations 100
@@ -73,8 +74,8 @@ manufacture an equal-cost ratio.
 
 ### Remaining validation work
 
-The committed model was calibrated with size-7 enumeration and
-size-8/9 first-solution runs. The pooled size-8 held-out clear-ranking
-accuracy improved substantially, but size-8 enumeration and actual
-SPSA batch objective ranking against native runtimes still require
-validation. The PR remains a draft for that reason.
+Recalibrate the new 48-counter model and verify its pooled holdout rankings.
+The previous 33-counter results remain historical, not an estimate of the
+new model's accuracy. Size-8 enumeration and actual SPSA batch objective
+rankings against native runtimes also require validation. The PR remains
+a draft pending these measurements.

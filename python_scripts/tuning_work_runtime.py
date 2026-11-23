@@ -13,6 +13,10 @@ DEFAULT_MODEL = (Path(__file__).resolve().parents[1] / "scratch"
 
 def load_model(path=DEFAULT_MODEL):
     source = Path(path)
+    if not source.is_file():
+        raise FileNotFoundError(
+            f"Current 48-counter work model missing at {source}. "
+            "Run python3 python_scripts/calibrate_work.py first.")
     payload = source.read_bytes()
     model = json.loads(payload)
     if (model.get("format") != FORMAT
