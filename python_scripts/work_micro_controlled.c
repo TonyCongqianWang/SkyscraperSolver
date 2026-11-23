@@ -9,6 +9,14 @@
 #include "cell_bounds.h"
 #include "line_order.h"
 #include "entropy.h"
+#include "constraint_checking.h"
+#include "constraint_selection.h"
+#include "constraint_update.h"
+#include "grid_manipulation.h"
+#include "grid_interface.h"
+#include "check_node_validity.h"
+#include "push_dirty_constraints.h"
+#include "node_selection_eval.h"
 #include <stdio.h>
 #include <time.h>
 #include <string.h>
@@ -268,6 +276,168 @@ static void bench_sort(int repeats, int round)
     emit_individual("transition_shift", round, repeats, start);
 }
 
+
+/* Repeated genuine clue-bound checks with independently varied line size.
+ * The first point measures call overhead, with zero scanned cells.
+ */
+static void bench_constraint_affine(int repeats, int round)
+{
+    int n, i;
+    double start;
+    t_constraint_bounds *bounds = &puzzle.constr_bounds;
+
+    for (n = 0; n <= 9; n += 3)
+    {
+        puzzle.size = n;
+        node.size = n;
+        bounds->size = n;
+        bounds->cur_c_pair.fwd_val = n > 0 ? n : 1;
+        bounds->is_reverse = 0;
+        for (i = 0; i < n; i++)
+        {
+            bounds->cur_c_pair.grid_indeces[i] = i;
+            node.domain.vals[i] = 0;
+            node.domain.valid_val_bmps[i] = (1 << n) - 1;
+            update_cell_bounds(&node, i);
+        }
+        start = clock_seconds();
+        for (i = 0; i < repeats; i++)
+        {
+            reset_constraint_bounds(&puzzle);
+            sink += (unsigned long long)check_active_constr(&puzzle);
+            barrier(bounds);
+        }
+        emit_affine("constraint_check_call", round, repeats,
+                    repeats * n, start);
+    }
+    prepare(7);
+}
+
+static void bench_constraint_subtasks(int repeats, int round)
+{
+    int i;
+    double start;
+
+    puzzle.constr_bounds.size = 7;
+    puzzle.constr_bounds.cur_c_pair.fwd_val = 7;
+    node.domain.vals[0] = 0;
+    node.domain.valid_val_bmps[0] = 0x7f;
+    update_cell_bounds(&node, 0);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        reset_constraint_bounds(&puzzle);
+        sink += (unsigned long long)update_constr_bounds(&puzzle, 0);
+        barrier(&puzzle.constr_bounds);
+    }
+    emit_individual("constraint_check_unset_cell", round, repeats, start);
+    puzzle.grid_constr_map[0][0] = 0;
+    puzzle.grid_constr_map[0][1] = 1;
+    puzzle.constraint_pairs[0].fwd_val = 1;
+    puzzle.constraint_pairs[0].bwd_val = 0;
+    puzzle.constraint_pairs[1].fwd_val = 0;
+    puzzle.constraint_pairs[1].bwd_val = 0;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        node.dirty_constrs.count = 0;
+        node.dirty_constrs.in_stack_bmp = 0;
+        push_dirty_constraints(&node, 0);
+        barrier(&node.dirty_constrs);
+        sink += (unsigned long long)node.dirty_constrs.count;
+    }
+    emit_individual("dirty_constraint_enqueue", round, repeats, start);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        node.dirty_constrs.count = 1;
+        node.dirty_constrs.entries[0] = 0;
+        node.dirty_constrs.in_stack_bmp = 1;
+        check_node_validity(&puzzle, g_check_none);
+        barrier(&node.dirty_constrs);
+        sink += (unsigned long long)node.dirty_constrs.count;
+    }
+    emit_individual("dirty_constraint_entry", round, repeats, start);
+    node.domain.is_invalid = 1;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        set_value_invalid_internal(&node, 0, 1);
+        barrier(&node);
+    }
+    emit_individual("domain_invalidation_attempt", round, repeats, start);
+    node.domain.is_invalid = 0;
+    node.size = 9;
+    node.domain.valid_val_bmps[0] = 0x10;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        update_cell_bounds(&node, 0);
+        barrier(&node);
+    }
+    emit_individual("cell_bound_skip", round, 8 * repeats, start);
+    prepare(7);
+}
+
+static void bench_cache_traversals(int repeats, int round)
+{
+    int i;
+    double start;
+    t_node_transition next;
+    t_node_select_config config;
+    t_node_order *cache = &puzzle.order_stack.orders[0];
+
+    for (i = 0; i < 49; i++)
+        node.domain.vals[i] = 1;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        collect_cache_entries(&puzzle, cache, NULL);
+        barrier(cache);
+        sink += (unsigned long long)cache->items.count;
+    }
+    emit_individual("cache_build_cell_scan", round, 49 * repeats, start);
+    cache->items.count = 16;
+    for (i = 0; i < 16; i++)
+    {
+        cache->items.entries[i].cell_idx = i;
+        cache->items.entries[i].cell_val = 1;
+    }
+    config.selectivity = SELECTIVITY_VALUE_SET;
+    next.cell_idx = -1;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        next.cell_idx = -1;
+        get_next_from_cache(&puzzle, &next, &config);
+        barrier(cache);
+    }
+    emit_individual("cache_next_scan", round, 16 * repeats, start);
+    next = cache->items.entries[15];
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        next = cache->items.entries[15];
+        get_next_from_cache(&puzzle, &next, &config);
+        barrier(cache);
+    }
+    emit_individual("cache_resume_scan", round, 16 * repeats, start);
+    prepare(9);
+    node.domain.valid_val_bmps[0] = 0x100;
+    node.domain.cell_bounds[0] = (char)0x91;
+    next.cell_idx = 0;
+    next.cell_val = 1;
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        next.cell_val = 1;
+        sink += (unsigned long long)set_next_valid_val(&puzzle, &next);
+        barrier(&next);
+    }
+    emit_individual("next_value_scan", round, 9 * repeats, start);
+    prepare(7);
+}
+
 int main(int argc, char **argv)
 {
     int repeats, round;
@@ -281,6 +451,9 @@ int main(int argc, char **argv)
     bench_copies(repeats, round);
     bench_compact(repeats, round);
     bench_sort(repeats, round);
+    bench_constraint_affine(repeats, round);
+    bench_constraint_subtasks(repeats, round);
+    bench_cache_traversals(repeats, round);
     if (sink == 0xFFFFFFFFFFFFFFFFULL)
         fprintf(stderr, "sink=%llu\n", sink);
     return 0;
