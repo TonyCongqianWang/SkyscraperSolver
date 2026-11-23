@@ -506,6 +506,83 @@ def fit_four_models(train, validation, correlation_threshold,
     return fits, comparisons
 
 
+def _raw_run_key(configuration, puzzle, kind, repeat):
+    """Identity of one deterministic solver invocation in the raw journal."""
+    return (configuration, puzzle["dataset"], puzzle["line"], kind, repeat)
+
+
+def _outcome_from_raw(event):
+    result = (event["elapsed_seconds"], event["solutions"], event["nodes"],
+              event["counters"])
+    if event["run_type"] == "micro":
+        return result + (event["micro_sections"],)
+    return result
+
+
+def load_completed_runs(path, puzzles, configurations, max_solutions,
+                        native_repeats, instrumented_repeats,
+                        section_timing):
+    """Recover completed individual invocations, including partial puzzles.
+
+    Fail closed if a journal entry does not belong to this exact sampled
+    workload. Never silently mix different seeds, parameter choices, data
+    files, or counter schemas. Legacy journals need no added manifest.
+    """
+    by_puzzle = {(p["dataset"], p["line"]): p for p in puzzles}
+    by_configuration = {v["name"]: v for v in configurations}
+    completed = {}
+    with path.open(encoding="utf-8") as source:
+        for line_number, line in enumerate(source, 1):
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+                configuration = by_configuration[event["configuration"]]
+                puzzle = by_puzzle[(event["dataset"], event["line"])]
+                kind = event["run_type"]
+                repeat = event["run_index"]
+                limit = {"native": native_repeats,
+                         "instrumented": instrumented_repeats,
+                         "micro": 1 if section_timing else 0}[kind]
+                if (type(repeat) is not int or not 0 <= repeat < limit
+                        or event["dataset_sha256"] != puzzle["dataset_sha256"]
+                        or event["identity"] != puzzle["identity"]
+                        or event["size"] != puzzle["size"]
+                        or event["max_solutions"] != puzzle_mode(puzzle, max_solutions)
+                        or event["parameters"] != configuration["parameters"]
+                        or not applicable(configuration, puzzle)):
+                    raise ValueError("mismatched puzzle, parameters, or run")
+                counters = event["counters"]
+                if kind == "native":
+                    if counters is not None:
+                        raise ValueError("native run has work counters")
+                elif (not isinstance(counters, dict)
+                      or set(counters) != set(COUNTER_NAMES)
+                      or any(type(value) is not int or value < 0
+                             for value in counters.values())):
+                    raise ValueError("incompatible work counter schema")
+                if (kind == "micro") != ("micro_sections" in event):
+                    raise ValueError("incompatible section-timing record")
+                if kind == "micro" and not isinstance(event["micro_sections"], list):
+                    raise ValueError("malformed micro sections")
+                seconds = event["elapsed_seconds"]
+                if (not isinstance(seconds, (int, float))
+                        or not math.isfinite(seconds) or seconds < 0
+                        or any(type(event[name]) is not int or event[name] < 0
+                               for name in ("solutions", "nodes"))):
+                    raise ValueError("invalid solver measurement")
+                key = _raw_run_key(configuration["name"], puzzle, kind, repeat)
+                if key in completed:
+                    raise ValueError("duplicate solver invocation")
+                completed[key] = event
+            except (ValueError, TypeError, KeyError, IndexError) as exc:
+                raise ValueError(
+                    f"Cannot resume {path}, line {line_number}: {exc}. "
+                    "Preserve the raw file; use the original seed and options."
+                ) from exc
+    return completed
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", default=None,
@@ -534,7 +611,12 @@ def main():
                         help="Override default: size 7 full enumeration (0), 8/9 first solution (1)")
     parser.add_argument("--no-perturb", action="store_true",
                         help="Skip default cache-period/lookahead parameter perturbations")
-    parser.add_argument("--timeout", type=float, default=30)
+    parser.add_argument("--timeout", type=float, default=None,
+                        help="Optional per-solver-run timeout in seconds; default: unlimited")
+    parser.add_argument("--resume", action="store_true",
+                        help="Reuse validated individual runs from the existing raw JSONL journal")
+    parser.add_argument("--fresh", action="store_true",
+                        help="Explicitly overwrite an existing raw journal and start over")
     parser.add_argument("--validation-fraction", type=float, default=0.25)
     parser.add_argument("--correlation-threshold", type=float, default=0.995)
     parser.add_argument("--dependency-tolerance", type=float, default=1e-3)
@@ -548,6 +630,13 @@ def main():
     parser.add_argument("--collinearity-output", type=Path,
                         help="Pooled collinearity path (default: output.collinearity.json)")
     args = parser.parse_args()
+    if args.resume and args.fresh:
+        parser.error("--resume and --fresh cannot be combined")
+    if args.resume and args.seed is None:
+        parser.error("--resume requires the original --seed")
+    if args.timeout is not None and (not math.isfinite(args.timeout)
+                                    or args.timeout <= 0):
+        parser.error("--timeout must be a positive number of seconds")
     if args.seed is None:
         args.seed = random.SystemRandom().getrandbits(64)
     print(f"Calibration seed: {args.seed}", flush=True)
@@ -599,6 +688,8 @@ def main():
         "instrumented_repeats": args.instrumented_repeats,
         "section_timing": not args.no_section_timing,
         "micro_verification_enabled": not args.no_micro_verify,
+        "solver_timeout_seconds": args.timeout,
+        "resumed_from_raw": args.resume,
         "micro_validation_puzzles_per_size": args.micro_puzzles_per_size,
         "controlled_micro_repeats": args.micro_repeats,
         "controlled_micro_rounds": args.micro_rounds,
@@ -620,8 +711,25 @@ def main():
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     raw_path = args.output.with_suffix(".raw.jsonl")
+    if args.resume:
+        if not raw_path.is_file():
+            raise FileNotFoundError(f"No raw journal to resume: {raw_path}")
+        completed = load_completed_runs(
+            raw_path, puzzles, variants_to_run, args.max_solutions,
+            args.native_repeats, args.instrumented_repeats,
+            not args.no_section_timing)
+        print(f"Resuming {len(completed)} completed solver runs from "
+              f"{raw_path}", flush=True)
+    else:
+        completed = {}
+        if raw_path.exists() and not args.fresh:
+            raise FileExistsError(
+                f"Existing calibration journal: {raw_path}. Use --resume "
+                "with its original --seed to preserve completed work, or "
+                "--fresh to explicitly overwrite it.")
     rows = []
-    with raw_path.open("w", encoding="utf-8", buffering=1) as raw_file:
+    raw_mode = "a" if args.resume else ("w" if args.fresh else "x")
+    with raw_path.open(raw_mode, encoding="utf-8", buffering=1) as raw_file:
         with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
             build_dir = Path(directory)
             for variant in variants_to_run:
@@ -658,10 +766,20 @@ def main():
                             event["micro_sections"] = outcome[4]
                         raw_file.write(json.dumps(event, sort_keys=True) + "\n")
                         raw_runs.append(event)
+                    def run_or_reuse(kind, repeat, binary, include_micro=False):
+                        key = _raw_run_key(variant["name"], p, kind, repeat)
+                        event = completed.pop(key, None)
+                        if event is not None:
+                            raw_runs.append(event)
+                            return _outcome_from_raw(event)
+                        result = execute(binary, p, mode, args.timeout,
+                                         include_micro=include_micro)
+                        record(kind, repeat, result)
+                        return result
+
                     instrumented = []
                     for repeat in range(args.instrumented_repeats):
-                        result = execute(instr, p, mode, args.timeout)
-                        record("instrumented", repeat, result)
+                        result = run_or_reuse("instrumented", repeat, instr)
                         if instrumented and instrumented[0][1:] != result[1:]:
                             raise RuntimeError(
                                 f"Nondeterministic counters: {p['dataset']}:{p['line']}")
@@ -669,8 +787,7 @@ def main():
                     first = instrumented[0]
                     times = []
                     for repeat in range(args.native_repeats):
-                        result = execute(native, p, mode, args.timeout)
-                        record("native", repeat, result)
+                        result = run_or_reuse("native", repeat, native)
                         seconds, native_sols, native_nodes, no_counts = result
                         if (native_sols, native_nodes) != first[1:3]:
                             raise RuntimeError("Instrumented and native search results differ")
@@ -679,12 +796,10 @@ def main():
                         times.append(seconds)
                     micro_sections = []
                     if micro is not None:
-                        timed = execute(micro, p, mode, args.timeout,
-                                        include_micro=True)
+                        timed = run_or_reuse("micro", 0, micro, include_micro=True)
                         if timed[1:4] != first[1:4]:
                             raise RuntimeError(
                                 "Timed instrumentation changed solver results or counters")
-                        record("micro", 0, timed)
                         micro_sections = timed[4]
                     rows.append({
                         "configuration": variant["name"],
@@ -702,6 +817,9 @@ def main():
                         "runtime_median_seconds": statistics.median(times),
                         "raw_runs": raw_runs,
                     })
+    if completed:
+        raise ValueError(f"{len(completed)} unused cached solver runs; "
+                         "preserve the raw journal and verify the parameters")
     train, heldout = split(rows, args.validation_fraction, args.seed)
     fits, agreement_metrics = fit_four_models(
         train, heldout, args.correlation_threshold, args.dependency_tolerance,
@@ -783,7 +901,7 @@ def main():
         },
         "raw_jsonl": str(raw_path),
         "samples": rows,
-        "objective": "predicted_seconds; tuning objective integration remains disabled",
+        "objective": "predicted_seconds",
     }
     args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
                            encoding="utf-8")
