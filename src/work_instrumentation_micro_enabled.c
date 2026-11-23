@@ -33,6 +33,8 @@ static t_work_counter	work_micro_volume(t_work_counter counter)
 		return (WORK_LINE_SCORE_VALUE);
 	if (counter == WORK_INDEX_COPY_CALL)
 		return (WORK_INDEX_COPY_PAIR);
+	if (counter == WORK_CONSTRAINT_CHECK_CALL)
+		return (WORK_CONSTRAINT_CHECK_CELL);
 	return (WORK_COUNT);
 }
 

@@ -13,6 +13,7 @@ TIMED_SECTIONS = {
     "cache_pair_copy_call": "cache_pair_copy",
     "line_score": "line_score_value",
     "index_copy_call": "index_copy_pair",
+    "constraint_check_call": "constraint_check_cell",
 }
 
 ATOMIC_SECTIONS = frozenset({

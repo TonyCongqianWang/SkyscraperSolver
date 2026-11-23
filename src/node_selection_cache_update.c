@@ -64,6 +64,7 @@ void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 	i = 0;
 	while (i < puzzle->squared_size)
 	{
+		work_add(WORK_CACHE_BUILD_CELL_SCAN, 1);
 		c = puzzle->cell_distance_order[i];
 		if (is_cell_empty(state, c))
 			collect_cell_entries(state, cache, c, puzzle->size);

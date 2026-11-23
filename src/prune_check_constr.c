@@ -15,6 +15,7 @@
 #include "selectivity.h"
 #include "check_node_validity.h"
 #include "line_order.h"
+#include "work_instrumentation.h"
 
 static int	do_prop(t_solver_state *puzzle, int *clues, int *grid, int *rev)
 {
@@ -63,6 +64,7 @@ static int	check_constr_lines(t_solver_state *puzzle, t_node_state *state,
 	i = 0;
 	while (i < order->count && !state->domain.is_invalid)
 	{
+		work_add(WORK_PRUNE_LINE_SCAN, 1);
 		idx = order->entries[i].constr_idx;
 		if (should_process_line(state, idx, selectivity))
 		{

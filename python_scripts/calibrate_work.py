@@ -40,6 +40,13 @@ COUNTER_NAMES = (
     "dp_candidate_check", "assignment", "domain_invalidation",
     "node_copy", "lookahead_scan", "solution_copy", "provisional_solution_rollback",
     "rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan",
+    "constraint_check_call", "constraint_check_cell",
+    "constraint_check_unset_cell", "dirty_constraint_entry",
+    "dirty_constraint_enqueue", "domain_invalidation_attempt",
+    "cell_bound_skip", "cache_build_cell_scan", "cache_next_scan",
+    "cache_resume_scan", "next_value_scan", "prune_line_scan",
+    "dp_prefix_candidate_scan", "dp_suffix_candidate_scan",
+    "dp_prune_value_scan",
 )
 PARAMETER_GROUPS = {
     "le7": ("g_sel_compact_period_le7", "g_sel_rescore_period_le7",

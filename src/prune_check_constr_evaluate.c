@@ -93,6 +93,7 @@ static void	collect_cell_prunes(t_prune_args *args, int i,
 	v = 1;
 	while (v <= args->size)
 	{
+		work_add(WORK_DP_PRUNE_VALUE_SCAN, 1);
 		if (is_valid_value(args->state, cell, v)
 			&& !check_candidate(args, i, v))
 		{
