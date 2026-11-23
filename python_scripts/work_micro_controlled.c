@@ -506,10 +506,13 @@ static void bench_dp_scans(int repeats, int round)
     node.domain.is_invalid = 0;
     for (i = 0; i < 7; i++)
     {
-        domains[i] = 0x7f;
+        /* The first cell is the tallest building; subsequent heights
+         * stay below it, so clue 1 permits every remaining candidate.
+         */
+        domains[i] = (i == 0) ? 0x40 : 0x3f;
         node.domain.vals[i] = 0;
-        node.domain.valid_val_bmps[i] = 0x7f;
-        node.domain.num_cell_vals[i] = 7;
+        node.domain.valid_val_bmps[i] = domains[i];
+        node.domain.num_cell_vals[i] = (i == 0) ? 1 : 6;
         puzzle.constr_bounds.cur_c_pair.grid_indeces[i] = i;
     }
     /* Warm up the actual DP calculation outside the timed loop. Repeating
@@ -552,7 +555,7 @@ static void bench_dp_scans(int repeats, int round)
                     7 * 8 * 7 * repeats, start);
 
     /* Use complete, mutually consistent tables and valid domains. With
-     * clue 1 and unrestricted domains, every value is feasible, so
+     * clue 1 and these clue-consistent domains, every value is feasible, so
      * prune_candidates must not modify the puzzle between repetitions.
      */
     init_dp_tables(&dp, 7);
