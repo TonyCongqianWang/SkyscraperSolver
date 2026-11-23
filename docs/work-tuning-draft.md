@@ -1,170 +1,79 @@
-# Draft: work-based tuning and experimental micro probes
+# Draft: work-based tuning and measured time + nodes
 
-The bundled compact model in `python_scripts/models/work_calibration.model.json`
-is the user-provided pooled v1 model (trained on 14,976 observations; validated
-on 4,992). The adjacent collinearity file records its merged counter groups.
+The repository's default pooled work model is the completed, measured
+33-counter calibration, stored at
+`python_scripts/models/work_calibration.model.json`. The only supported
+work-counter schema is **v1**. The bundled model was trained using 14,976
+observations and validated on 4,992 held-out observations.
 
-## Tuning
+Both **calibrated work** and **measured time + nodes** are first-class
+tuning objectives. Calibrated work is the default, while the explicit
+`--nodes-time` flag selects measured time and node counts for both SPSA
+and sweep. Neither option is deprecated. The same numerical loss policy,
+mode weighting and shifted-log references are centralized in
+`python_scripts/tuning_objective.py`.
 
-From a clean clone:
+From a clean checkout:
 
 ```sh
 ./setup_and_tune.sh --size 8 --iterations 100
 ./setup_and_tune.sh --sweep --mode math8 --no-compare
-```
-
-The wrapper builds two environment-overridable solver variants: the normal
-native binary (used for post-tuning wall-time comparisons) and a dedicated
-instrumented work binary (used for training). Both tuners default to the
-same pooled `v1` calibration file, validate counter names and schema, and
-use deterministic work predictions in **seconds**. The measured time + nodes objective remains a fully supported alternative,
-selected explicitly:
-
-```sh
 ./setup_and_tune.sh --size 8 --nodes-time --iterations 100
 ./setup_and_tune.sh --sweep --mode math8 --nodes-time
 ```
 
-`--work-model PATH` can point to another compatible compact model.
-The loss definitions, shifts, references and mode policies reside in
-`python_scripts/tuning_objective.py`. The measured time + nodes objective retains its own established
-mixing weights for SPSA and sweep. In work mode, SPSA's two existing
-optimizer gradient streams receive the *same work loss*, so their average
-is mathematically the single work gradient, not a mixture with nodes.
+The wrapper builds a native solver for real comparisons and a dedicated
+instrumented solver for work-based tuning. The work objective predicts
+**seconds**, not clock time spent in the instrumented binary. Run metadata
+includes the deployed model file and its SHA256.
 
-Timeouts keep the 40-second PAR4 penalty, not the surrogate intercept.
-Missing, malformed or mismatched counter records raise errors rather than
-receiving an artificially cheap work score. Native comparisons remain
-un-instrumented and report true time and nodes. Each run records the
-calibration SHA256 in metadata.
+## Calibration workflow
 
-**Model limitations:** It was trained for full enumeration of size 7, and
-first-solution search for sizes 8 and 9. Size 8 enumeration and sizes 5–6
-within the mixed le7 dataset are **out of distribution**. The size-8 pooled
-clear-pair held-out ranking was 60.0%; don't deploy as a new permanent
-SPSA objective without confirming actual native batch rankings, especially
-on these solve modes.
+The default calibration now draws a *fresh random seed* and prints it.
+A supplied `--seed N` deterministically reproduces puzzle sampling,
+puzzle-level train/validation splits and simultaneous antithetic
+SPSA-style perturbation pairs. The default has six such random
+perturbation pairs per size (plus baseline) and 512 symmetry-distinct
+puzzles of each size 7, 8 and 9. Source datasets are exclusively the
+SPSA training files.
 
-## Additional v1 counters and model compatibility
+The fitter uses **milliseconds internally** for better numerical
+convergence tolerance, but exports and predicts **seconds**. The fitted
+merged groups are not refitted: sampled solver-section timing and
+controlled microbenchmarks independently measure member costs, and
+their ratios allocate the already-fitted pooled group coefficients.
+Every member of a merged group must have reliable timing evidence;
+equal-cost guesses are not accepted. The compact pooled model and
+collinearity export record the final allocations and the original
+group coefficients.
 
-Four previously unrepresented operations are now counted in the solver:
-`rescore_scan` counts every cached score rescan,
-`resume_scan` counts resume-index linear-search comparisons,
-`rel_entropy_value` counts the active values evaluated by relative
-constraint-entropy calculations, and `domain_scan` counts candidate
-values checked while constructing a constraint domain. The instrumentation
-record is now `WORK_COUNTERS v1`. This improves physical coverage but
-**does not establish the reason for size-8 ranking errors** without rerunning
-and inspecting the new fit. The previously committed pooled `v1` model
-is temporarily projected onto the original counters for tuning, explicitly
-ignoring the new four work features; a new `v1` calibration should replace it.
-
-## One pooled regression fit, followed by measured unmerging
-
-The calibration computes collinearity groups and runs **one pooled nonnegative
-regression** on summed group counters. The grouped regression coefficients,
-hyperparameters, and validation scores remain exactly as fitted. Afterward:
-
-1. The first calibration phase has already collected native runtimes, all
-   raw work counters, and sampled section CPU timings. For merged counter
-   members, the section measurements provide initial relative-cost evidence.
-2. A controlled benchmark runs **for every counter in the known merged
-   groups**, independently of whether its section timings are available.
-   Its repeated C operations include grid/setup checks, cache builds and
-   copies, cache compaction checks/moves, line and transition
-   comparisons/shifts, and index-copy overhead/volume. It uses the real
-   solver structures, compiler optimizations, and independent timing rounds.
-3. A log-ratio graph combines the measured evidence. Controlled measurements
-   are weighted more heavily than the short, overhead-sensitive CPU section
-   measurements; both contribute where available.
-4. **No refit:** the merged regression coefficient is algebraically allocated
-   to its members using the measured relative costs. The allocation is
-   normalized to preserve the group's *total fitted contribution on training
-   observations*. For exact collinearity it preserves each training
-   prediction; for approximate collinearity, per-puzzle predictions can
-   drift. The report quantifies this drift and evaluates the final allocated
-   coefficients on held-out puzzles.
-5. The compact `work_calibration.model.json` contains **the individually
-   allocated coefficients** (not guessed equal weights), while keeping
-   original merged coefficients, relative-cost evidence and allocation
-   metadata. The separate collinearity JSON also includes these details.
-
-If the benchmark cannot measure a member reliably, the workflow **fails
-closed rather than inventing an equal-cost ratio or exporting a misleading
-v1 model**. The controlled C harness must be extended if a new correlation
-group contains operations it does not yet benchmark. This requirement is
-intentional. Constant/unexcited counters remain excluded from fitting,
-with explicit zero weights rather than invented independent costs.
-
-### Run the complete calibration
+Run calibration with:
 
 ```sh
 python3 python_scripts/calibrate_work.py
+python3 python_scripts/calibrate_work.py --seed 123456
 ```
 
-The script creates:
+Outputs:
 
-- `scratch/work_calibration.raw.jsonl`: native, counter and section timing
-  observations, written incrementally
-- `scratch/work_calibration.json`: all four regression fits, group membership,
-  micro timings, post-fit coefficient allocation, and held-out diagnostics
-- `scratch/work_calibration.model.json`: **pooled allocated counter weights**
-  for the tuning objectives
-- `scratch/work_calibration.collinearity.json`: merged-group membership,
-  timing-derived ratios, per-member coefficients, and evidence
-- `scratch/work_calibration.micro.json`: controlled raw timings plus a
-  further **independent** test of the allocated ratios on up to 32 fresh
-  SPSA validation puzzles per size
+- `scratch/work_calibration.raw.jsonl`: native runs and instrumentation data
+- `scratch/work_calibration.json`: detailed fitted and timed diagnostics
+- `scratch/work_calibration.model.json`: compact pooled coefficients
+- `scratch/work_calibration.collinearity.json`: merged-group splits and timing evidence
+- `scratch/work_calibration.micro.json`: independent micro plausibility checks
 
-The ordinary calibration automatically runs the controlled benchmark
-**before export** and independent solver-section plausibility checks
-after export. Use `--micro-repeats` and `--micro-rounds` to increase
-measurement stability; at least three independent rounds are required.
-`--no-micro-verify` skips only the *additional* validation-set check,
-not the controlled benchmark needed to split merged coefficients.
-`--no-section-timing` omits the sampled solver sections, but controlled
-measurements still resolve merged groups.
+The final timed-section validation checks up to 32 fresh SPSA validation
+puzzles per size. `--no-micro-verify` skips this independent check, but
+not the controlled microbenchmark required for the coefficient split.
+`--no-section-timing` skips solver-section samples, leaving controlled
+measurements as the sole timing source. If a newly observed merged group
+does not yet have a benchmark, the calibration must fail rather than
+manufacture an equal-cost ratio.
 
-For an inexpensive functional smoke run (the fitted model will not be
-scientifically meaningful):
+### Remaining validation work
 
-```sh
-python3 python_scripts/calibrate_work.py --puzzles-per-size 4 \
-  --native-repeats 3 --instrumented-repeats 2 --no-perturb \
-  --no-micro-verify
-```
-
-The optional controlled/validation-set check can be repeated without
-rerunning calibration:
-
-```sh
-python3 python_scripts/work_micro_probe.py \
-  --model scratch/work_calibration.model.json \
-  --collinearity scratch/work_calibration.collinearity.json \
-  --output scratch/work_calibration.micro.json
-```
-
-### Interpreting timing evidence and plausibility
-
-The detailed report contains `section_timing_plausibility` for training,
-held-out puzzles, and each size. Its Pearson score measures the agreement
-between measured and predicted time for the **same sampled operations**.
-Coverage and the fraction of modeled work that was actually timed must be
-considered alongside the correlation: a strong score on a narrow group of
-operations does not validate the entire model.
-
-The end-of-calibration independent check compares measured per-member
-cost ratios with the deployed allocated coefficients. An agreement is
-supporting plausibility evidence, not proof of universal hardware costs.
-The controlled benchmark is a separate C executable with long timed
-intervals, while section timing samples short real solver operations.
-Their cost estimates can disagree due to caching, compiler effects,
-input distributions and timing overhead; all evidence and differences
-are retained. No regression is repeated or tuning coefficients silently
-reoptimized after allocation.
-
-**Important:** the newly added schema-v1 work features require a new
-calibration. The bundled v1 model may still be used temporarily for
-tuning through an explicitly limited compatibility projection, but it
-does not include the added scan counters. The v1 model's real held-out
-ranking performance is not known until the expensive run completes.
+The committed model was calibrated with size-7 enumeration and
+size-8/9 first-solution runs. The pooled size-8 held-out clear-ranking
+accuracy improved substantially, but size-8 enumeration and actual
+SPSA batch objective ranking against native runtimes still require
+validation. The PR remains a draft for that reason.
