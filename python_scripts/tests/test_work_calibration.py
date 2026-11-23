@@ -80,7 +80,7 @@ class CalibrationModelTests(unittest.TestCase):
         }
         with tempfile.TemporaryDirectory() as temp:
             journal = Path(temp) / "measurements.raw.jsonl"
-            journal.write_text(json.dumps(event) + "\\n", encoding="utf-8")
+            journal.write_text(json.dumps(event) + "\n", encoding="utf-8")
             found = calibration.load_completed_runs(
                 journal, puzzles, [variant], None, 9, 3, True)
             key = calibration._raw_run_key("baseline", puzzle,
@@ -90,18 +90,18 @@ class CalibrationModelTests(unittest.TestCase):
                              (0.002, 1, 4, counts))
             # A partial puzzle is valid. Exact duplicate invocations,
             # changed datasets and counter schemas are not.
-            journal.write_text(json.dumps(event) + "\\n" +
-                               json.dumps(event) + "\\n", encoding="utf-8")
+            journal.write_text(json.dumps(event) + "\n" +
+                               json.dumps(event) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "duplicate"):
                 calibration.load_completed_runs(
                     journal, puzzles, [variant], None, 9, 3, True)
             changed = dict(event, dataset_sha256="incorrect")
-            journal.write_text(json.dumps(changed) + "\\n", encoding="utf-8")
+            journal.write_text(json.dumps(changed) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "mismatched"):
                 calibration.load_completed_runs(
                     journal, puzzles, [variant], None, 9, 3, True)
             changed = dict(event, counters={"setup_cell": 1})
-            journal.write_text(json.dumps(changed) + "\\n", encoding="utf-8")
+            journal.write_text(json.dumps(changed) + "\n", encoding="utf-8")
             with self.assertRaisesRegex(ValueError, "schema"):
                 calibration.load_completed_runs(
                     journal, puzzles, [variant], None, 9, 3, True)
