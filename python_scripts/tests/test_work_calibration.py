@@ -1,5 +1,6 @@
 """Smoke tests for the work-calibration fit; no external dependencies."""
 import importlib.util
+import json
 from pathlib import Path
 import unittest
 import tempfile
@@ -59,6 +60,51 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertFalse({"gac_check", "cache_build_check", "rollback"} & actual)
         self.assertEqual(DEFAULT_MODEL.name, "work_calibration.model.json")
         self.assertEqual(len(actual), 48)
+
+    def test_resume_reuses_partial_puzzle_and_rejects_incompatible_runs(self):
+        puzzles = calibration.read_puzzles(
+            ["puzzle_bank/spsa_datasets/size8_train.txt"], 1, seed=42)
+        puzzle = puzzles[0]
+        variant = {"name": "baseline", "parameters": {}}
+        counts = {name: 0 for name in calibration.COUNTER_NAMES}
+        event = {
+            "configuration": variant["name"],
+            "parameters": variant["parameters"],
+            "dataset": puzzle["dataset"],
+            "dataset_sha256": puzzle["dataset_sha256"],
+            "line": puzzle["line"], "identity": puzzle["identity"],
+            "size": puzzle["size"], "max_solutions": 1,
+            "run_type": "instrumented", "instrumented": True,
+            "run_index": 0, "elapsed_seconds": 0.002,
+            "solutions": 1, "nodes": 4, "counters": counts,
+        }
+        with tempfile.TemporaryDirectory() as temp:
+            journal = Path(temp) / "measurements.raw.jsonl"
+            journal.write_text(json.dumps(event) + "\\n", encoding="utf-8")
+            found = calibration.load_completed_runs(
+                journal, puzzles, [variant], None, 9, 3, True)
+            key = calibration._raw_run_key("baseline", puzzle,
+                                           "instrumented", 0)
+            self.assertEqual(found[key], event)
+            self.assertEqual(calibration._outcome_from_raw(event),
+                             (0.002, 1, 4, counts))
+            # A partial puzzle is valid. Exact duplicate invocations,
+            # changed datasets and counter schemas are not.
+            journal.write_text(json.dumps(event) + "\\n" +
+                               json.dumps(event) + "\\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate"):
+                calibration.load_completed_runs(
+                    journal, puzzles, [variant], None, 9, 3, True)
+            changed = dict(event, dataset_sha256="incorrect")
+            journal.write_text(json.dumps(changed) + "\\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "mismatched"):
+                calibration.load_completed_runs(
+                    journal, puzzles, [variant], None, 9, 3, True)
+            changed = dict(event, counters={"setup_cell": 1})
+            journal.write_text(json.dumps(changed) + "\\n", encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "schema"):
+                calibration.load_completed_runs(
+                    journal, puzzles, [variant], None, 9, 3, True)
 
     def test_nonnegative_fit(self):
         samples = []
