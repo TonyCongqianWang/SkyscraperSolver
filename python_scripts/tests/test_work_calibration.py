@@ -339,6 +339,24 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 8}, None), 1)
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
+    def test_default_workload_doubles_distinct_evaluations(self):
+        sizes = {7: 6656, 8: 6656, 9: 6656}
+        plan = calibration.calibration_workload_plan(
+            sizes, perturb=True, native_repeats=2,
+            instrumented_repeats=2, section_timing=True)
+        self.assertEqual(plan["distinct_puzzles"], 19968)
+        self.assertEqual(plan["configurations_per_puzzle"], 2)
+        self.assertEqual(plan["puzzle_configuration_evaluations"], 39936)
+        self.assertEqual(plan["native_solver_executions"], 79872)
+        self.assertEqual(plan["instrumented_solver_executions"], 79872)
+        self.assertEqual(plan["section_timing_solver_executions"], 39936)
+        self.assertEqual(plan["total_solver_executions"], 199680)
+        no_perturb_plan = calibration.calibration_workload_plan(
+            {8: 2}, perturb=False, native_repeats=2,
+            instrumented_repeats=2, section_timing=False)
+        self.assertEqual(no_perturb_plan["puzzle_configuration_evaluations"], 2)
+        self.assertEqual(no_perturb_plan["total_solver_executions"], 8)
+
     def test_one_ellipsoid_pair_per_puzzle_perturbs_all_spsa_parameters(self):
         from param_metadata import PARAM_METADATA, get_active_param_names
         puzzles = [{"size": size, "identity": f"puzzle-{size}-{i}"}

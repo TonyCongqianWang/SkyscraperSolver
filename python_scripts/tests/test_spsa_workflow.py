@@ -239,7 +239,9 @@ class WorkflowTests(unittest.TestCase):
         from unittest.mock import MagicMock
         from comparison_measurements import parse_output
         from calibrate_work import COUNTER_NAMES
+        from work_model_export import FORMAT, FORMAT_VERSION
         model = {
+            "format": FORMAT, "format_version": FORMAT_VERSION,
             "fit": "pooled", "counter_schema": "v1",
             "intercept_seconds": 0.001,
             "seconds_per_count": {name: 1e-9 for name in COUNTER_NAMES}}

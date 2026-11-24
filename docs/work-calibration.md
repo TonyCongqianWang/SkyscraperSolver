@@ -35,7 +35,7 @@ code, puzzle selection, splits and parameter variants are reproducible.
 Native runtime measurements and CPU microtimings naturally remain subject
 to machine scheduling and load.
 
-Default sampling draws 1,024 symmetry-distinct puzzles of each size 7, 8
+Default sampling draws 6,656 symmetry-distinct puzzles of each size 7, 8
 and 9 from the corresponding **active SPSA training datasets**, across
 their entire files:
 
@@ -61,10 +61,16 @@ parameter's SPSA perturbation scale. Its marginal scale is approximately
 number of active parameters grows; legal ranges and linked constraints
 are projected using the same rules as SPSA.
 
-This gives 6,144 unique puzzle–configuration observations by default,
-with exactly two native and two instrumented measurements per observation
-(12,288 native and 12,288 instrumented executions). Timing spreads are
-saved as a simple stability proxy. Native, instrumented and section-timed
+This gives **39,936 distinct puzzle–configuration observations**
+(19,968 puzzles × two parameter configurations) by default—double the
+previous 19,968 observations, not merely double the puzzle count.
+Each observation receives two native and two instrumented measurements:
+**79,872 native and 79,872 instrumented executions**, plus 39,936
+section-timing executions when enabled (199,680 solver invocations total,
+excluding the separately controlled microbenchmark). Timing spreads
+are saved as a simple stability proxy. A preflight log prints this budget
+and fails clearly when any requested puzzle size lacks enough unique
+puzzles rather than silently reducing coverage. Native, instrumented and section-timed
 binaries are each compiled only once; a temporary generated runtime
 override constructor applies parameter values through environment variables
 without editing the repository's C source files. The default calibration
