@@ -252,15 +252,21 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         assignment = [r for r in report["raw_measurements"]
                       if r.get("counter") == "assignment"]
         self.assertEqual(len(assignment), 1)
-        self.assertEqual(assignment[0]["timing_scope"],
-                         "inclusive_assignment")
-        self.assertGreater(assignment[0]["gross_cpu_seconds"],
-                           assignment[0]["reset_cpu_seconds"])
+        self.assertEqual(assignment[0]["timing_scope"], "paired_residual")
+        self.assertGreater(assignment[0]["gross_cpu_seconds"], 0)
+        self.assertGreater(assignment[0]["nested_cpu_seconds"], 0)
+        self.assertAlmostEqual(
+            assignment[0]["gross_cpu_seconds"]
+            - assignment[0]["nested_cpu_seconds"],
+            assignment[0]["cpu_seconds"], delta=1e-9)
         self.assertEqual(assignment[0]["nested_invalidation_attempts_per_unit"], 18)
         self.assertEqual(assignment[0]["nested_dirty_enqueues_per_unit"], 2)
         self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 16)
         self.assertTrue(all(r["cpu_seconds"] > 0
-                            for r in report["raw_measurements"]))
+                            for r in report["raw_measurements"]
+                            if r.get("counter") != "assignment"))
+        # The paired residual may be indistinguishable from zero or
+        # negative due to noise; preserve the raw timing instead of failing.
         self.assertTrue(report["sections"]["cache_pair_copy_call"][
             "timed_affine_fit"]["identifiable"])
 

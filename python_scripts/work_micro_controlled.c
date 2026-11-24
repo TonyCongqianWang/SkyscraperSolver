@@ -340,16 +340,15 @@ static void bench_constraint_affine(int repeats, int round)
     prepare(7);
 }
 
-/* Measure a genuine successful assignment, excluding only fixture reset cost.
- * Assignment invokes invalidation and queue operations. These are counted
- * separately and deliberately NOT subtracted using unrelated time estimates:
- * the measured assignment cost is inclusive, not a pure exclusive overhead.
- * Preserve gross and reset times so the overlap is explicit in the record.
+/* Paired timing: real assignment versus its independently counted nested
+ * invalidations and queue operations. Both paths include the same node reset.
+ * The residual estimates assignment-only bookkeeping; the gross and nested
+ * CPU times are retained because the residual can be near zero or noisy.
  */
 static void bench_assignment(int repeats, int round)
 {
     int i, j;
-    double start, reset_seconds, gross_seconds, net_seconds;
+    double start, gross_seconds, nested_seconds, net_seconds;
     unsigned long long before_assignment, before_attempts, before_invalids;
     unsigned long long before_enqueue;
     t_node_state clean;
@@ -373,19 +372,49 @@ static void bench_assignment(int repeats, int round)
         for (j = 0; j < 7; j++)
             node.domain.constrs.num_val_positions[i][j] = 7;
     }
-    /* Exercise the real enqueue path on the assigned row and column. */
     puzzle.constraint_pairs[0].fwd_val = 1;
     puzzle.constraint_pairs[7].fwd_val = 1;
     clean = node;
 
+    /* Control: same 18 actual invalidations and two enqueues, without the
+     * successful assignment itself. Leave the assigned cell unset, but its
+     * candidate value and adjacent domain state are otherwise identical.
+     */
+    before_assignment = work_get(WORK_ASSIGNMENT);
+    before_attempts = work_get(WORK_DOMAIN_INVALIDATION_ATTEMPT);
+    before_invalids = work_get(WORK_DOMAIN_INVALIDATION);
+    before_enqueue = work_get(WORK_DIRTY_CONSTRAINT_ENQUEUE);
     start = clock_seconds();
     for (i = 0; i < repeats; i++)
     {
         node = clean;
+        for (j = 2; j <= 7; j++)
+            set_value_invalid_internal(&node, 0, j);
+        for (j = 1; j < 7; j++)
+            set_value_invalid_internal(&node, j * 7, 1);
+        for (j = 1; j < 7; j++)
+            set_value_invalid_internal(&node, j, 1);
+        push_dirty_constraints(&node, 0);
         barrier(&node);
-        sink += (unsigned long long)node.domain.vals[0];
+        sink += (unsigned long long)node.domain.num_unset;
     }
-    reset_seconds = clock_seconds() - start;
+    nested_seconds = clock_seconds() - start;
+    if (node.domain.is_invalid || node.dirty_constrs.count != 2)
+    {
+        fprintf(stderr, "Nested assignment control invalid state\n");
+        exit(3);
+    }
+    check_work_units("nested_control_no_assignment", WORK_ASSIGNMENT,
+                     before_assignment, 0);
+    check_work_units("nested_control_invalidation_attempts",
+                     WORK_DOMAIN_INVALIDATION_ATTEMPT, before_attempts,
+                     18ULL * (unsigned long long)repeats);
+    check_work_units("nested_control_domain_invalidations",
+                     WORK_DOMAIN_INVALIDATION, before_invalids,
+                     18ULL * (unsigned long long)repeats);
+    check_work_units("nested_control_dirty_enqueues",
+                     WORK_DIRTY_CONSTRAINT_ENQUEUE, before_enqueue,
+                     2ULL * (unsigned long long)repeats);
 
     before_assignment = work_get(WORK_ASSIGNMENT);
     before_attempts = work_get(WORK_DOMAIN_INVALIDATION_ATTEMPT);
@@ -417,14 +446,14 @@ static void bench_assignment(int repeats, int round)
     check_work_units("assignment_dirty_enqueues",
                      WORK_DIRTY_CONSTRAINT_ENQUEUE, before_enqueue,
                      2ULL * (unsigned long long)repeats);
-    net_seconds = gross_seconds - reset_seconds;
+    net_seconds = gross_seconds - nested_seconds;
     printf("WORK_BENCH v1 kind=individual counter=assignment round=%d"
            " units=%d cpu_seconds=%.12f gross_cpu_seconds=%.12f"
-           " reset_cpu_seconds=%.12f timing_scope=inclusive_assignment"
+           " nested_cpu_seconds=%.12f timing_scope=paired_residual"
            " nested_invalidation_attempts_per_unit=18"
            " nested_domain_invalidations_per_unit=18"
            " nested_dirty_enqueues_per_unit=2\n",
-           round, repeats, net_seconds, gross_seconds, reset_seconds);
+           round, repeats, net_seconds, gross_seconds, nested_seconds);
     prepare(7);
 }
 

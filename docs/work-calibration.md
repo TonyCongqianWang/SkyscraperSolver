@@ -125,15 +125,17 @@ The controlled microbenchmark uses actual C operations, repeated under
 check uses SPSA validation puzzles and never changes coefficients.
 Timing disagreements and their source measurements remain visible.
 The controlled harness now also measures real successful `assignment`
-operations. It constructs a consistent, seven-by-seven state and resets
-that state before each operation. The timing subtracts a separately
-measured state-copy baseline, and the instrumented check confirms one
-assignment plus the expected nested invalidation and queue counter
-increments per operation. Both gross and reset timings are retained in
-the raw benchmark records. This is an *inclusive* assignment cost (it
-includes nested invalidation/queue work), **not** an independently
-identified exclusive CPU cost. The report preserves that distinction
-rather than silently asserting that overlapping work has been separated.
+operations. It constructs a consistent seven-by-seven state and resets
+that state before each operation. The paired control performs the same
+18 invalidations and two dirty-constraint enqueues, but no assignment;
+the instrumented build checks these exact counter increments for both
+paths. The reported assignment-only cost is the difference between the
+full assignment time and this matched nested-work control. Both gross
+and control times are retained in the raw benchmark records. The
+difference is an approximate residual, not a guarantee of independently
+identifying an instruction-level exclusive cost: near-zero or negative
+estimates remain visible, are flagged as unstable, and never silently
+converted to positive coefficients.
 
 ## Output artifacts
 

@@ -256,11 +256,11 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                         "round": round_number, "units": int(fields["units"]),
                         "cpu_seconds": float(fields["cpu_seconds"]),
                     }
-                    if fields.get("timing_scope") == "inclusive_assignment":
+                    if fields.get("timing_scope") == "paired_residual":
                         record.update({
                             "timing_scope": fields["timing_scope"],
                             "gross_cpu_seconds": float(fields["gross_cpu_seconds"]),
-                            "reset_cpu_seconds": float(fields["reset_cpu_seconds"]),
+                            "nested_cpu_seconds": float(fields["nested_cpu_seconds"]),
                             "nested_invalidation_attempts_per_unit": int(
                                 fields["nested_invalidation_attempts_per_unit"]),
                             "nested_domain_invalidations_per_unit": int(
