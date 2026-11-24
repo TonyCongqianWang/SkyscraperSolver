@@ -63,4 +63,3 @@ void	put_number(unsigned long long nbr)
 	val += nbr % 10;
 	put_char(val);
 }
-
