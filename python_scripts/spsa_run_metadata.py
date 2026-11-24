@@ -10,6 +10,17 @@ from datetime import datetime, timezone
 ROOT_DIR = Path(__file__).resolve().parent.parent
 
 
+def _json_compatible(value):
+    """Make filesystem paths portable without masking other JSON type errors."""
+    if isinstance(value, Path):
+        return str(value)
+    if isinstance(value, dict):
+        return {key: _json_compatible(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_compatible(item) for item in value]
+    return value
+
+
 def clue_identity(clues):
     """Hash the ordered dataset actually loaded, independent of its location."""
     content = ''.join(f'{clue}\n' for clue in clues).encode('utf-8')
@@ -46,7 +57,8 @@ def build_run_metadata(args, datasets, parameters, active_names, workers,
         'platform': platform.platform(),
         'solver_sha256': hashlib.sha256((ROOT_DIR / 'skyscraper_solver').read_bytes()).hexdigest()
                          if (ROOT_DIR / 'skyscraper_solver').is_file() else None,
-        'config': {key: value for key, value in vars(args).items() if key != 'log'},
+        'config': {key: _json_compatible(value) for key, value in
+                   vars(args).items() if key != 'log'},
         'workers': workers,
         'batch_size': args.batch_size if args.batch_size is not None else
                       {7: 128, 8: 32, 9: 256}[args.size],
@@ -66,5 +78,6 @@ def save_run_metadata(winners_path, metadata, label):
     payload = dict(metadata, label=label, complete=label.startswith('Final'))
     path = Path(winners_path).with_suffix('.json')
     temporary = path.with_suffix('.json.tmp')
-    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n')
+    temporary.write_text(json.dumps(_json_compatible(payload),
+                                   indent=2, sort_keys=True) + '\n')
     temporary.replace(path)

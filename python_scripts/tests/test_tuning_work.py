@@ -14,6 +14,8 @@ from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE,
                               mode_losses, spsa_components, sweep_score)
 from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
 from calibrate_work import COUNTER_NAMES, SCHEMA
+from spsa_run_metadata import build_run_metadata, save_run_metadata
+from param_metadata import PARAM_METADATA
 
 
 def example_record(model):
@@ -47,6 +49,34 @@ class WorkTuningTests(unittest.TestCase):
         self.assertEqual(len(sha), 64)
         self.assertTrue(all(v is not None for v in
                             model["seconds_per_count"].values()))
+
+    def test_spsa_startup_metadata_accepts_path_work_model(self):
+        # Reproduce the default --work-model Path from argparse. Previously
+        # json.dumps() raised TypeError before the first SPSA iteration.
+        argv = ["spsa_tune.py", "--size", "9", "--iterations", "400",
+                "--batch-size", "256", "--seed", "13959159128998499823"]
+        with patch.object(sys, "argv", argv):
+            args = spsa_tune.parse_args()
+        self.assertIsInstance(args.work_model, Path)
+        metadata = build_run_metadata(
+            args, {"train": ["a"], "validation": ["b"]},
+            PARAM_METADATA, set(), 4, {})
+        self.assertEqual(metadata["config"]["work_model"], str(DEFAULT_MODEL))
+        metadata["nested_paths"] = {
+            "extra": [Path("scratch") / "calibration.json"]}
+        with tempfile.TemporaryDirectory() as directory:
+            winners = Path(directory) / "spsa_winners_s9_0.txt"
+            save_run_metadata(winners, metadata, "Started")
+            saved = json.loads(winners.with_suffix(".json").read_text())
+            self.assertEqual(saved["config"]["work_model"],
+                             str(DEFAULT_MODEL))
+            self.assertEqual(saved["nested_paths"]["extra"],
+                             ["scratch/calibration.json"])
+            self.assertEqual(saved["label"], "Started")
+            self.assertFalse(saved["complete"])
+            save_run_metadata(winners, metadata, "Final")
+            self.assertTrue(json.loads(
+                winners.with_suffix(".json").read_text())["complete"])
 
     def test_unavailable_fresh_calibration_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
