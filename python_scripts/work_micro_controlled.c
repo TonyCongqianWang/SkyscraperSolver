@@ -388,6 +388,11 @@ static void bench_assignment(int repeats, int round)
     for (i = 0; i < repeats; i++)
     {
         node = clean;
+        /* The assigned cell is already occupied in the real path.
+         * Replicate that state without calling the assignment function:
+         * otherwise the last invalidation would trigger forced assignment.
+         */
+        node.domain.vals[0] = 1;
         for (j = 2; j <= 7; j++)
             set_value_invalid_internal(&node, 0, j);
         for (j = 1; j < 7; j++)
