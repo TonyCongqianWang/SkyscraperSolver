@@ -3,6 +3,7 @@ import os
 import sys
 import argparse
 import json
+from collections import Counter
 from contextlib import ExitStack
 
 from comparison_measurements import measure_batch
@@ -96,7 +97,14 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
             work_rows["Baseline"], work_rows["Optimized"])
             if a["status"] == b["status"] == "ok"
             and "predicted_seconds" in a and "predicted_seconds" in b]
+        reasons = {
+            arm: dict(Counter(
+                row.get("prediction_error") or row["status"]
+                for row in values if row["status"] != "ok"))
+            for arm, values in work_rows.items()
+        }
         work_report = {
+            "failure_reasons": reasons,
             "valid_pairs": len(pairs),
             "total_puzzles": len(clues),
             "failures": {arm: sum(row["status"] != "ok" for row in values)
@@ -117,14 +125,16 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
         log_print("Predicted work (48-counter model, not wall time):")
         if work_report["shifted_geo_mean_seconds"] is None:
             log_print(f"  No valid paired predictions; "
-                      f"{work_report['failures']}")
+                      f"{work_report['failures']}; "
+                      f"reasons={work_report['failure_reasons']}")
         else:
             change = work_report["change_pct"]
             change_text = f"{change:+.3f}%" if change is not None else "n/a"
             log_print(f"  Baseline={base:.8g}s, Optimized={tuned:.8g}s, "
                       f"change={change_text}; "
                       f"pairs={len(pairs)}/{len(clues)}; "
-                      f"failures={work_report['failures']}")
+                      f"failures={work_report['failures']}; "
+                      f"reasons={work_report['failure_reasons']}")
     rounds = []
     valid = True
     for repeat in range(repeats):

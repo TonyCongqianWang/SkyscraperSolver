@@ -9,6 +9,8 @@ import io
 import json
 from pathlib import Path
 import random
+import shutil
+import subprocess
 import sys
 import tempfile
 import types
@@ -253,6 +255,18 @@ class WorkflowTests(unittest.TestCase):
         parsed = parse_output(lines, 0.02, model=model)
         self.assertEqual(parsed["status"], "ok")
         self.assertAlmostEqual(parsed["predicted_seconds"], 0.001000004)
+        # Actual instrumented --stdin output has no separate Solutions
+        # found line. WORK_COUNTERS is authoritative for that count.
+        stdin_lines = [lines[0], lines[2], "--- END_OF_INSTANCE ---\n"]
+        stdin_parsed = parse_output(stdin_lines, 0.02, model=model)
+        self.assertEqual(stdin_parsed["status"], "ok")
+        self.assertEqual(stdin_parsed["solutions"], 1)
+        self.assertEqual(stdin_parsed["nodes"], 42)
+        self.assertAlmostEqual(stdin_parsed["predicted_seconds"], 0.001000004)
+        invalid_lines = [lines[0], "Solutions found: 2\n", lines[2]]
+        invalid = parse_output(invalid_lines, 0.02, model=model)
+        self.assertEqual(invalid["status"], "error")
+        self.assertIn("solutions disagree", invalid["prediction_error"])
 
         def batch(binary, options, clues, env, **kwargs):
             predicted = kwargs.get("model") is not None
@@ -279,6 +293,53 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(work["valid_pairs"], 2)
         self.assertLess(work["change_pct"], 0)
         self.assertAlmostEqual(report["summary"]["total_time"]["diff_pct"], -10)
+
+    @unittest.skipUnless(shutil.which("gcc"), "gcc required for actual work-output test")
+    def test_real_instrumented_stdin_comparison_produces_predictions(self):
+        """Compile the real instrumented C solver, not a mocked WORK record.
+
+        Catch mode-dependent CLI/stdin output discrepancies before users
+        spend hours tuning and discover all comparisons were discarded.
+        """
+        from tuning_work_runtime import DEFAULT_MODEL, load_model
+        from comparison_measurements import measure_batch
+        model, _ = load_model(DEFAULT_MODEL)
+        clue_path = ROOT / "puzzle_bank/spsa_datasets/size9_val.txt"
+        clue = clue_path.read_text(encoding="utf-8").splitlines()[0].strip('"')
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "real_instrumented_solver"
+            sources = sorted((ROOT / "src").glob("*.c"))
+            subprocess.run(
+                ["gcc", "-O0", "-DWORK_INSTRUMENTED", "-I",
+                 str(ROOT / "src"), *map(str, sources), "-o", str(executable)],
+                check=True, capture_output=True, text=True, timeout=120)
+            for use_stdin in (True, False):
+                with self.subTest(stdin=use_stdin):
+                    rows = measure_batch(
+                        str(executable), "-s 1", [clue], {},
+                        workers=1, use_stdin=use_stdin, warmup=0,
+                        timeout=20.0, model=model)
+                    self.assertEqual(len(rows), 1)
+                    self.assertEqual(rows[0]["status"], "ok", rows[0])
+                    self.assertGreater(rows[0]["predicted_seconds"], 0)
+                    self.assertIsInstance(rows[0]["solutions"], int)
+                    self.assertIsInstance(rows[0]["nodes"], int)
+            with redirect_stdout(io.StringIO()):
+                reports = comparison.run_comparison(
+                    [("size9", "-s 1", [clue])],
+                    str(executable), str(executable),
+                    max_workers=1, repeats=2, warmup=0, timeout=20.0,
+                    size=9, report_work_prediction=True,
+                    work_model_path=DEFAULT_MODEL,
+                    work_binary=str(executable),
+                    records_path=str(self.directory / "real_work.jsonl"))
+            self.assertEqual(len(reports), 1)
+            self.assertTrue(reports[0]["valid"])
+            predicted = reports[0]["work_prediction"]
+            self.assertEqual(predicted["valid_pairs"], 1, predicted)
+            self.assertEqual(predicted["failures"],
+                             {"Baseline": 0, "Optimized": 0})
+            self.assertIsNotNone(predicted["shifted_geo_mean_seconds"])
 
     def test_comparison_infers_compact_and_delimited_clue_sizes(self):
 

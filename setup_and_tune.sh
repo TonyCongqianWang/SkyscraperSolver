@@ -55,7 +55,14 @@ for argument in "$@"; do
         objective=nodes-time
     fi
 done
-if [ "$objective" = "work" ]; then
+# A nodes-time tuning run may still request work predictions in comparisons.
+report_work_prediction=false
+for argument in "$@"; do
+    if [ "$argument" = "--report-work-prediction" ]; then
+        report_work_prediction=true
+    fi
+done
+if [ "$objective" = "work" ] || [ "$report_work_prediction" = true ]; then
     echo "=== Step 4b: Compiling instrumented tunable solver ==="
     make INSTRUMENT=1 clean
     make INSTRUMENT=1
