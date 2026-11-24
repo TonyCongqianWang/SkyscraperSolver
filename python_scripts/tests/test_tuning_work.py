@@ -38,6 +38,16 @@ class WorkTuningTests(unittest.TestCase):
             file.write_text(json.dumps(fixture), encoding="utf-8")
             return load_model(file)
 
+    def test_bundled_default_calibration_is_ready_for_tuning(self):
+        model, sha = load_model(DEFAULT_MODEL)
+        self.assertTrue(model["usable_for_tuning"])
+        self.assertEqual(model["status"], "complete")
+        self.assertEqual(model["fit"], "pooled")
+        self.assertEqual(len(model["seconds_per_count"]), 48)
+        self.assertEqual(len(sha), 64)
+        self.assertTrue(all(v is not None for v in
+                            model["seconds_per_count"].values()))
+
     def test_unavailable_fresh_calibration_is_rejected(self):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(FileNotFoundError):

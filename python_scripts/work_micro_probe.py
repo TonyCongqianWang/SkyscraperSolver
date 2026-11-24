@@ -284,8 +284,9 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
     # Require a separate benchmark for EVERY original member of the known
     # merged counter groups. A newly merged group requires a new C benchmark.
     from work_micro_constraints import controlled_member_costs
-    costs, diagnostics = controlled_member_costs({
-        "rounds": rounds, "raw_measurements": records})
+    costs, diagnostics = controlled_member_costs(
+        {"rounds": rounds, "raw_measurements": records},
+        expected_names=COUNTER_NAMES)
     return {
         "method": "real_C_operations_controlled_independent_repetitions",
         "compile_flags": ["-O2", "-flto"],
@@ -294,6 +295,20 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
         "raw_measurements": records,
         "counter_costs_seconds": costs,
         "counter_diagnostics": diagnostics,
+        "coverage": {
+            "expected_counters": len(COUNTER_NAMES),
+            "accepted_counters": sum(
+                x["status"] == "accepted" for x in diagnostics.values()),
+            "not_benchmarked": sorted(
+                n for n, x in diagnostics.items()
+                if x["reason"] == "not_benchmarked"),
+            "insufficient_timing_evidence": sorted(
+                n for n, x in diagnostics.items()
+                if x["reason"] == "insufficient_timing_evidence"),
+            "unstable": sorted(
+                n for n, x in diagnostics.items()
+                if x["reason"] == "unstable"),
+        },
         "sections": {
             name: {
                 "volume_counter": volume, "observations": sum(

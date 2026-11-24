@@ -39,7 +39,7 @@ def _gaussian_solve(matrix, vector):
 
 
 def controlled_member_costs(benchmark, minimum_rounds=3,
-                            max_spread=3.0):
+                            max_spread=3.0, expected_names=()):
     """Estimate every individually benchmarked operation using round means.
 
     Affine sections provide two separate counter costs via a per-round
@@ -52,6 +52,14 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
     measurements = benchmark.get("raw_measurements", [])
     series = {}
     diagnostics = {}
+    observed = set()
+    for record in measurements:
+        if record.get("kind") == "individual":
+            observed.add(record["counter"])
+        elif record.get("kind") == "affine":
+            section = record.get("section")
+            if section in TIMED_SECTIONS:
+                observed.update((section, TIMED_SECTIONS[section]))
     for record in measurements:
         if record.get("kind") == "individual":
             name = record["counter"]
@@ -75,7 +83,7 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
                         series.setdefault(name, {}).setdefault(
                             index, []).append(value)
     # Include operations with no identifiable positive rounds in diagnostics.
-    expected = set(series)
+    expected = set(series) | set(expected_names)
     for record in measurements:
         if record.get("kind") == "individual":
             expected.add(record["counter"])
@@ -89,15 +97,21 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
         values = [statistics.median(by_round[i])
                   for i in range(rounds) if by_round.get(i)]
         spread = max(values) / min(values) if values else None
-        accepted = (rounds >= minimum_rounds
-                    and len(values) == rounds and spread <= max_spread)
+        if name not in observed:
+            reason = "not_benchmarked"
+        elif rounds < minimum_rounds or len(values) < rounds:
+            reason = "insufficient_timing_evidence"
+        elif spread is None or spread > max_spread:
+            reason = "unstable"
+        else:
+            reason = None
+        accepted = reason is None
         diagnostics[name] = {
             "status": "accepted" if accepted else "unresolved",
             "round_unit_seconds": values,
             "round_count": len(values),
             "max_over_min": spread,
-            "reason": None if accepted else
-                "insufficient_or_unstable_controlled_measurements",
+            "reason": reason,
         }
         if accepted:
             costs[name] = statistics.median(values)
@@ -195,7 +209,9 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
     """
     groups = model["collinearity"]["groups"]
     group_coefficients = model["seconds_per_count"]
-    costs, cost_diagnostics = controlled_member_costs(benchmark)
+    expected = {member for group in groups for member in group["members"]}
+    costs, cost_diagnostics = controlled_member_costs(
+        benchmark, expected_names=expected)
     allocations = []
     flattened = {}
     errors = []
@@ -210,10 +226,12 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
             continue
 
         missing = sorted(set(members) - set(costs))
+        missing_reasons = {
+            name: cost_diagnostics[name]["reason"] for name in missing}
         try:
             if missing:
                 raise ValueError(
-                    f"Controlled microbenchmark missing or unstable: {missing}")
+                    f"Controlled microbenchmark cannot resolve {missing_reasons}")
             ratios, evidence = _solve_ratios(members, costs, section_summary)
             original_total = sum(
                 sum(row["counters"][member] for member in members)
@@ -235,13 +253,15 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
             warnings.append(warning)
             unresolved_groups.append({
                 "group": group_name, "members": members,
-                "missing_or_unstable_counters": missing, "reason": reason,
+                "missing_or_unstable_counters": missing,
+                "counter_reasons": missing_reasons, "reason": reason,
             })
             flattened.update({name: None for name in members})
             allocations.append({
                 "group": group_name, "members": members,
                 "status": "unresolved", "reason": reason,
                 "missing_or_unstable_counters": missing,
+                "counter_reasons": missing_reasons,
                 "merged_seconds_per_count": coefficient,
                 "member_cost_ratios": None,
                 "seconds_per_original_count": None,

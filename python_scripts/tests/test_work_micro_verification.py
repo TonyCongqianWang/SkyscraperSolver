@@ -11,6 +11,42 @@ from work_micro_probe import run_verification, verify_splits
 
 
 class IndependentMicroVerificationTests(unittest.TestCase):
+    def test_timing_diagnostics_distinguish_missing_unstable_insufficient(self):
+        from work_micro_constraints import controlled_member_costs
+        bench = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": "unstable", "round": i,
+             "units": 1000, "cpu_seconds": v}
+            for i, v in enumerate((.001, .001, .01))
+        ] + [{"kind": "individual", "counter": "insufficient",
+               "round": 0, "units": 1000, "cpu_seconds": .001}]}
+        costs, details = controlled_member_costs(
+            bench, expected_names=("missing", "unstable", "insufficient"))
+        self.assertFalse(costs)
+        self.assertEqual(details["missing"]["reason"], "not_benchmarked")
+        self.assertEqual(details["unstable"]["reason"], "unstable")
+        self.assertEqual(details["insufficient"]["reason"],
+                         "insufficient_timing_evidence")
+
+    def test_lookahead_dependency_is_resolved_when_benchmarked(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        group = "index_copy_call+index_copy_pair+lookahead_scan"
+        model = {"collinearity": {"groups": [{
+            "name": group, "members": group.split("+"),
+            "aggregation": "sum_raw_counts"}]},
+            "seconds_per_count": {group: 1e-8}}
+        rows = [{"counters": {name: 8 for name in group.split("+")}}]
+        benchmark = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": name, "round": rd,
+             "units": 1000, "cpu_seconds": cost}
+            for rd in range(3)
+            for name, cost in (("index_copy_call", .002),
+                               ("index_copy_pair", .001),
+                               ("lookahead_scan", .004))]}
+        result = allocate_merged_coefficients(model, rows, benchmark,
+                                               {"sections": {}})
+        self.assertTrue(result["all_merged_groups_resolved"])
+        self.assertGreater(result["seconds_per_count"]["lookahead_scan"], 0)
+
     def test_equal_weight_merged_split_is_checked_not_assumed(self):
         summary = {"sections": {
             "index_copy_call": {
@@ -248,7 +284,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call",
             "constraint_check_call"})
-        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 26)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 33)
         assignment = [r for r in report["raw_measurements"]
                       if r.get("counter") == "assignment"]
         self.assertEqual(len(assignment), 1)
@@ -262,6 +298,13 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(assignment[0]["nested_invalidation_attempts_per_unit"], 18)
         self.assertEqual(assignment[0]["nested_dirty_enqueues_per_unit"], 2)
         self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 16)
+        counters = {r.get("counter") for r in report["raw_measurements"]
+                    if r["kind"] == "individual"}
+        self.assertTrue({"lookahead_scan", "resume_scan", "rescore_scan",
+                         "base_score", "rel_entropy_value", "node_copy",
+                         "solution_copy"} <= counters)
+        self.assertEqual(report["coverage"]["expected_counters"], 48)
+        self.assertNotIn("lookahead_scan", report["coverage"]["not_benchmarked"])
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]
                             if r.get("counter") != "assignment"))

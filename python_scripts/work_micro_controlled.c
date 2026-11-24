@@ -17,6 +17,8 @@
 #include "check_node_validity.h"
 #include "push_dirty_constraints.h"
 #include "node_selection_eval.h"
+#include "node_selection_score.h"
+#include "transition_scoring.h"
 #include "selectivity.h"
 #include "work_instrumentation.h"
 #include <limits.h>
@@ -705,6 +707,134 @@ static void bench_dp_scans(int repeats, int round)
     emit_individual("dp_prune_value_scan", round, 49 * repeats, start);
 }
 
+
+/* Additional real solver operations that can become collinear under another
+ * calibration seed. All paths check that their actual work units were seen
+ * by the instrumented shadow executable, but the timing binary is native.
+ * Counters with no meaningful active implementation in this workload remain
+ * explicitly unbenchmarked rather than being given fabricated costs.
+ */
+static void bench_extra_counters(int repeats, int round)
+{
+    int i, j;
+    double start;
+    unsigned long long before;
+    t_node_order *cache = &puzzle.order_stack.orders[0];
+    t_lookahead_ctx *ctx = &puzzle.lookahead_stack[0];
+    t_node_transition next;
+
+    prepare(7);
+    cache->items.count = 16;
+    for (j = 0; j < 16; j++)
+    {
+        cache->items.entries[j].cell_idx = j;
+        cache->items.entries[j].cell_val = 1;
+        cache->items.meta[j].cached_br_score = 1.0;
+        node.domain.vals[j] = 1;
+    }
+    node.lookahead_ctx = ctx;
+    ctx->probe_pass = LOOKAHEAD_NONE;
+    ctx->selectivity = SELECTIVITY_VALUE_SET;
+    for (j = 0; j < 49; j++)
+        ctx->cell_passes[j] = 0;
+    before = work_get(WORK_LOOKAHEAD_SCAN);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        next.cell_idx = -1;
+        next.cell_val = 1;
+        if (get_next_lookahead(&puzzle, &next))
+        {
+            fprintf(stderr, "Lookahead scan unexpectedly selected a value\n");
+            exit(3);
+        }
+        barrier(ctx);
+    }
+    check_work_units("lookahead_scan", WORK_LOOKAHEAD_SCAN, before,
+                     16ULL * (unsigned long long)repeats);
+    emit_individual("lookahead_scan", round, 16 * repeats, start);
+
+    before = work_get(WORK_RESUME_SCAN);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        next.cell_idx = 48;
+        next.cell_val = 1;
+        get_next_lookahead(&puzzle, &next);
+        barrier(ctx);
+    }
+    check_work_units("resume_scan", WORK_RESUME_SCAN, before,
+                     16ULL * (unsigned long long)repeats);
+    emit_individual("resume_scan", round, 16 * repeats, start);
+
+    cache->state.lookahead_build_entropy = -1;
+    before = work_get(WORK_RESCORE_SCAN);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        recalculate_cache_scores(&node, cache);
+        barrier(cache);
+    }
+    check_work_units("rescore_scan", WORK_RESCORE_SCAN, before,
+                     16ULL * (unsigned long long)repeats);
+    emit_individual("rescore_scan", round, 16 * repeats, start);
+
+    prepare(7);
+    next.cell_idx = 0;
+    next.cell_val = 1;
+    before = work_get(WORK_BASE_SCORE);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        score_transition_full(&node, &next);
+        barrier(&next);
+    }
+    check_work_units("base_score", WORK_BASE_SCORE, before,
+                     (unsigned long long)repeats);
+    emit_individual("base_score", round, repeats, start);
+
+    puzzle.constr_max_entropy = 100;
+    before = work_get(WORK_REL_ENTROPY_VALUE);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        sink += (unsigned long long)get_relative_constr_entropy(&node, 0, 7);
+        barrier(&node);
+    }
+    check_work_units("rel_entropy_value", WORK_REL_ENTROPY_VALUE, before,
+                     7ULL * (unsigned long long)repeats);
+    emit_individual("rel_entropy_value", round, 7 * repeats, start);
+
+    before = work_get(WORK_NODE_COPY);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        /* The same full-node copy performed by enter_search_child(). */
+        puzzle.node_stack[1] = puzzle.node_stack[0];
+        barrier(&puzzle.node_stack[1]);
+        sink += (unsigned long long)puzzle.node_stack[1].size;
+    }
+    /* This copy is a real operation, but not the wrapper that increments
+     * WORK_NODE_COPY; count the executed copies explicitly via loop size.
+     */
+    check_work_units("node_copy_is_not_instrumented_here",
+                     WORK_NODE_COPY, before, 0);
+    emit_individual("node_copy", round, repeats, start);
+
+    before = work_get(WORK_SOLUTION_COPY);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        puzzle.sol_node_storage = node;
+        barrier(&puzzle.sol_node_storage);
+        sink += (unsigned long long)puzzle.sol_node_storage.size;
+    }
+    check_work_units("solution_copy_is_not_instrumented_here",
+                     WORK_SOLUTION_COPY, before, 0);
+    emit_individual("solution_copy", round, repeats, start);
+    prepare(7);
+}
+
 int main(int argc, char **argv)
 {
     int repeats, round;
@@ -724,6 +854,7 @@ int main(int argc, char **argv)
     bench_cache_traversals(repeats, round);
     bench_prune_line_scan(repeats, round);
     bench_dp_scans(repeats, round);
+    bench_extra_counters(repeats, round);
     if (sink == 0xFFFFFFFFFFFFFFFFULL)
         fprintf(stderr, "sink=%llu\n", sink);
     return 0;

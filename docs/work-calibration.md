@@ -10,10 +10,12 @@ solver does not emit these counters. The instrumented solver includes no
 wall-clock timers unless explicitly compiled with `WORK_MICRO_TIMING`.
 
 The sole supported compact model schema is `v1`, with format
-`skyscraper-work-model` version 1. The previous pooled fit is invalid after the new instrumentation. Run
-calibration before using the work tuning objective; it writes a new
-`scratch/work_calibration.model.json` and corresponding collinearity
-report. The work tuning objective loads that generated model in **seconds**
+`skyscraper-work-model` version 1. A completed, verified 48-counter pooled model is now committed at
+`scratch/work_calibration.model.json`, the default SPSA tuning path.
+It is based on the fully resolved November 24 calibration and is usable
+immediately for tuning on this branch. A new full calibration overwrites
+that file locally when requested; it does not need to be rerun before
+the initial tuning run. The previous 33-counter fit is obsolete. The work tuning objective loads that generated model in **seconds**
 and fails if it is missing. There is no compatibility projection or
 fallback to obsolete fitted coefficients.
 The measured **time + nodes** objective remains separately available.
@@ -119,6 +121,15 @@ conclusions about unresolved individual cost ratios. This projected
 predictor is solely for diagnostics, never substituted into the exported
 tuning model. A separate evaluation reports the allocated model's held-out
 ranking and prediction drift only if every split is resolved.
+
+The controlled microbenchmark covers the previously merged groups plus
+additional genuine operations including `lookahead_scan`, `resume_scan`,
+`rescore_scan`, `base_score`, `rel_entropy_value`, and representative
+node/solution copies. Missing or unidentifiable counters remain visible in
+the 48-counter coverage report instead of being silently assumed timed.
+The `counter_diagnostics` reason distinguishes `not_benchmarked`,
+`insufficient_timing_evidence`, and `unstable`. These are diagnostic
+states, not calibration-fatal errors.
 
 The controlled microbenchmark uses actual C operations, repeated under
 `-O2 -flto` to amortize timer overhead. The independent section-timing
