@@ -43,6 +43,17 @@ class WorkTuningTests(unittest.TestCase):
             with self.assertRaises(FileNotFoundError):
                 load_model(Path(directory) / "nonexistent.json")
 
+    def test_incomplete_saved_model_is_rejected_for_tuning(self):
+        model, _ = self._fixture_model()
+        model["status"] = "incomplete"
+        model["usable_for_tuning"] = False
+        model["seconds_per_count"]["assignment"] = None
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "partial.model.json"
+            target.write_text(json.dumps(model), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "Unresolved work calibration"):
+                load_model(target)
+
     def test_calibrated_model_loads_and_schema_is_exact(self):
         model, digest = self._fixture_model()
         self.assertEqual(model["fit"], "pooled")

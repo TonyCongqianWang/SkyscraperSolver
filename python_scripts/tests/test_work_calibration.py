@@ -4,6 +4,8 @@ import json
 from pathlib import Path
 import unittest
 import tempfile
+import sys
+from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "calibrate_work.py"
 spec = importlib.util.spec_from_file_location("calibrate_work", SCRIPT)
@@ -50,6 +52,110 @@ class CalibrationModelTests(unittest.TestCase):
                 counts["dp_init_call"]
                 * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
                    + 2 * (puzzles[0]["size"] + 1)))
+
+    def test_unresolved_assignment_saves_all_reports_and_still_validates(self):
+        from work_micro_probe import run_verification
+        with tempfile.TemporaryDirectory() as directory:
+            folder = Path(directory)
+            output = folder / "work_calibration.json"
+            puzzles = [{
+                "size": 8, "identity": f"p{i}", "dataset": "dummy.txt",
+                "dataset_sha256": "abcdef", "line": i + 1,
+                "clue": "fake", "grid": [],
+            } for i in range(2)]
+            counts = dict.fromkeys(calibration.COUNTER_NAMES, 1)
+            fit = {
+                "intercept_seconds": 0.01,
+                "seconds_per_count": {
+                    "assignment+constraint_check_call": 0.0001},
+                "ridge_alpha": 0.0, "contrast_weight": 0.0,
+                "collinearity": {
+                    "groups": [{
+                        "name": "assignment+constraint_check_call",
+                        "members": ["assignment", "constraint_check_call"],
+                        "aggregation": "sum_raw_counts",
+                    }],
+                    "correlation_threshold": 0.995,
+                    "dependency_tolerance": 1e-3,
+                    "method": "test", "merge_events": [],
+                    "correlated_pairs": [], "constant_counters": [],
+                    "constant_merged_groups": [], "rank_before": {},
+                    "rank_after": {}, "cost_assumption": "provisional",
+                },
+            }
+            fits = {"all": {
+                "status": "fitted", "coefficients": fit,
+                "validation": {"samples": 1, "mae_seconds": 0.01}}}
+            controlled = {"rounds": 3, "sections": {}, "raw_measurements": [
+                {"kind": "individual", "counter": "constraint_check_call",
+                 "round": i, "units": 1000, "cpu_seconds": 0.001}
+                for i in range(3)]}
+
+            def fake_execute(binary, puzzle, mode, timeout,
+                             include_micro=False):
+                return (0.01, 1, 3,
+                        counts if str(binary) == "instrumented" else None)
+
+            def fake_verify(model_path, collinearity_path, micro_path, **kwargs):
+                self.assertEqual(kwargs["unresolved_groups"],
+                                 ["assignment+constraint_check_call"])
+                self.assertTrue(kwargs["diagnostic_model"]["diagnostic_projection"])
+                self.assertEqual(kwargs["diagnostic_model"][
+                    "seconds_per_count"]["assignment"], 0.0001)
+                report = {
+                    "status": "completed_with_unresolved_allocation",
+                    "split_verification": {"unresolved_splits": 1},
+                }
+                Path(micro_path).write_text(json.dumps(report))
+                return report
+
+            argv = ["calibrate_work.py", "--dataset", "dummy.txt",
+                    "--puzzles-per-size", "2", "--native-repeats", "2",
+                    "--instrumented-repeats", "2", "--no-perturb",
+                    "--no-section-timing", "--micro-repeats", "1000",
+                    "--micro-rounds", "3", "--seed", "1234",
+                    "--output", str(output)]
+            with patch.object(sys, "argv", argv), \
+                 patch.object(calibration, "read_puzzles", return_value=puzzles), \
+                 patch.object(calibration, "variants", return_value=[
+                     {"name": "baseline", "parameters": {}}]), \
+                 patch.object(calibration, "applicable", return_value=True), \
+                 patch.object(calibration, "build",
+                              side_effect=lambda *args: (
+                                  Path("instrumented" if args[2] else "native"), [])), \
+                 patch.object(calibration, "execute", side_effect=fake_execute), \
+                 patch.object(calibration, "split",
+                              side_effect=lambda rows, *args: (rows[:1], rows[1:])), \
+                 patch.object(calibration, "fit_four_models",
+                              return_value=(fits, {})), \
+                 patch.object(calibration, "predict", return_value=0.01), \
+                 patch.object(calibration, "diagnostics",
+                              return_value={"samples": 1}), \
+                 patch("work_micro_probe.controlled_microbench",
+                       return_value=controlled), \
+                 patch("work_micro_probe.run_verification",
+                       side_effect=fake_verify) as verify:
+                calibration.main()
+
+            verify.assert_called_once()
+            for path in (output, output.with_suffix(".raw.jsonl"),
+                         output.with_suffix(".model.json"),
+                         output.with_suffix(".collinearity.json"),
+                         output.with_suffix(".micro.json")):
+                self.assertTrue(path.exists(), str(path))
+            detail = json.loads(output.read_text())
+            self.assertEqual(detail["status"], "partial")
+            self.assertEqual(detail["micro_verification_status"],
+                             "completed_with_unresolved_allocation")
+            self.assertEqual(len(detail["samples"]), 2)
+            self.assertIsNone(detail["samples"][0]["predictions_seconds"][
+                "pooled_allocated"])
+            self.assertIn("assignment", detail["warnings"][0])
+            model = json.loads(output.with_suffix(".model.json").read_text())
+            self.assertFalse(model["usable_for_tuning"])
+            self.assertIsNone(model["seconds_per_count"]["assignment"])
+            self.assertEqual(len(output.with_suffix(".raw.jsonl").
+                                 read_text().splitlines()), 8)
 
     def test_work_counter_names_describe_current_operations(self):
         from tuning_work_runtime import DEFAULT_MODEL

@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from work_model_export import export_compact_model, make_compact_model
 from work_model_export import export_collinearity, make_collinearity_export
 from work_model_export import load_compact_model, predict_seconds
+from work_model_export import pooled_validation_projection
 
 
 def sample_report():
@@ -192,6 +193,58 @@ class CompactExportTests(unittest.TestCase):
             "cache_pair_copy_call"], 0.015)
         self.assertEqual(group["timing_evidence"][0]["source"],
                          "controlled_micro")
+
+    def test_incomplete_allocation_saves_diagnostics_without_fake_weights(self):
+        report = sample_report()
+        allocation = report["pooled_unmerging"]
+        allocation["all_merged_groups_resolved"] = False
+        allocation["seconds_per_count"]["cache_pair_copy"] = None
+        allocation["seconds_per_count"]["cache_pair_copy_call"] = None
+        allocation["unresolved_groups"] = [{
+            "group": "cache_pair_copy+cache_pair_copy_call",
+            "members": ["cache_pair_copy", "cache_pair_copy_call"],
+            "missing_or_unstable_counters": ["cache_pair_copy_call"],
+            "reason": "unstable micro timing",
+        }]
+        allocation["groups"][0] = {
+            "group": "cache_pair_copy+cache_pair_copy_call",
+            "status": "unresolved",
+            "members": ["cache_pair_copy", "cache_pair_copy_call"],
+            "reason": "unstable micro timing",
+            "missing_or_unstable_counters": ["cache_pair_copy_call"],
+            "merged_seconds_per_count": 0.01,
+            "member_cost_ratios": None,
+            "seconds_per_original_count": None,
+            "timing_evidence": [],
+            "max_abs_training_prediction_drift_seconds": None,
+        }
+        report["warnings"] = ["Unresolved group: unstable micro timing"]
+        model = make_compact_model(report)
+        self.assertFalse(model["usable_for_tuning"])
+        self.assertEqual(model["status"], "incomplete")
+        self.assertIsNone(model["seconds_per_count"]["cache_pair_copy"])
+        self.assertEqual(model["seconds_per_count"]["line_score"], 0.3)
+        with self.assertRaisesRegex(ValueError, "Unresolved calibration"):
+            predict_seconds(model, {
+                name: 0 for name in report["provenance"]["counter_schema"]})
+        collinearity = make_collinearity_export(report)
+        self.assertEqual(collinearity["merged_groups"][0]["status"], "unresolved")
+        self.assertEqual(collinearity["merged_groups"][0]["reason"],
+                         "unstable micro timing")
+        projected = pooled_validation_projection(report)
+        self.assertEqual(projected["seconds_per_count"]["cache_pair_copy"], 0.01)
+        self.assertEqual(projected["seconds_per_count"]["cache_pair_copy_call"],
+                         0.01)
+        self.assertTrue(projected["diagnostic_projection"])
+        with tempfile.TemporaryDirectory() as directory:
+            model_path = Path(directory) / "model.json"
+            col_path = Path(directory) / "collinearity.json"
+            export_compact_model(report, model_path)
+            export_collinearity(report, col_path)
+            self.assertIsNone(json.loads(model_path.read_text())[
+                "seconds_per_count"]["cache_pair_copy"])
+            self.assertFalse(json.loads(col_path.read_text())[
+                "usable_for_tuning"])
 
     def test_persist_and_reload(self):
         with tempfile.TemporaryDirectory() as directory:

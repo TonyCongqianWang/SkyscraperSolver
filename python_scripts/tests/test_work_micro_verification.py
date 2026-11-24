@@ -119,8 +119,97 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         bench = {"rounds": 3, "raw_measurements": [
             {"kind": "individual", "counter": "a", "round": i,
              "units": 1000, "cpu_seconds": 0.002} for i in range(3)]}
-        with self.assertRaisesRegex(ValueError, "Controlled microbenchmark"):
-            allocate_merged_coefficients(model, rows, bench, {"sections": {}})
+        result = allocate_merged_coefficients(
+            model, rows, bench, {"sections": {}})
+        self.assertFalse(result["all_merged_groups_resolved"])
+        self.assertEqual(result["seconds_per_count"], {"a": None, "b": None})
+        self.assertEqual(result["groups"][0]["status"], "unresolved")
+        self.assertEqual(result["unresolved_groups"][0][
+            "missing_or_unstable_counters"], ["b"])
+        self.assertIn("Controlled microbenchmark", result["warnings"][0])
+
+    def test_unresolved_group_preserves_other_resolved_allocations(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        groups = [
+            {"name": name, "members": members, "aggregation": "sum_raw_counts"}
+            for name, members in (("a+b", ["a", "b"]), ("c+d", ["c", "d"]))]
+        model = {"seconds_per_count": {"a+b": 1.0, "c+d": 2.0},
+                 "collinearity": {"groups": groups}}
+        rows = [{"counters": {"a": 4, "b": 4, "c": 2, "d": 2}}]
+        bench = {"rounds": 3, "raw_measurements": [
+            {"kind": "individual", "counter": name, "round": i,
+             "units": 1000, "cpu_seconds": cost}
+            for i in range(3) for name, cost in
+            (("a", .001), ("c", .001), ("d", .002))]}
+        result = allocate_merged_coefficients(
+            model, rows, bench, {"sections": {}})
+        self.assertFalse(result["all_merged_groups_resolved"])
+        self.assertIsNone(result["seconds_per_count"]["a"])
+        self.assertIsNone(result["seconds_per_count"]["b"])
+        self.assertGreater(result["seconds_per_count"]["c"], 0)
+        self.assertGreater(result["seconds_per_count"]["d"], 0)
+        self.assertEqual(result["groups"][1]["status"], "resolved")
+
+    def test_unresolved_split_still_retains_timing_observations(self):
+        summary = {"sections": {
+            "index_copy_call": {
+                "volume_counter": "index_copy_pair",
+                "timed_affine_fit": {
+                    "identifiable": True,
+                    "seconds_per_volume_relative_to_call": 5.0,
+                },
+            },
+        }}
+        group = "index_copy_call+index_copy_pair"
+        collinearity = {"merged_groups": [{
+            "name": group, "members": ["index_copy_call", "index_copy_pair"]}]}
+        model = {"seconds_per_count": {
+            "index_copy_call": 0.01, "index_copy_pair": 0.01}}
+        result = verify_splits(summary, collinearity, model,
+                               unresolved_groups=[group])
+        self.assertEqual(result["checked_splits"], 0)
+        self.assertEqual(result["unresolved_splits"], 1)
+        split = result["splits"]["index_copy_call"]
+        self.assertEqual(split["timed_volume_per_call_cost_ratio"], 5.0)
+        self.assertIsNone(split["modeled_volume_per_call_cost_ratio"])
+        self.assertEqual(split["verdict"], "unresolved")
+
+    def test_validation_runs_with_unresolved_allocation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory)
+            model_path = path / "model.json"
+            col_path = path / "collinearity.json"
+            output = path / "micro.json"
+            model_path.write_text(json.dumps({
+                "status": "incomplete", "usable_for_tuning": False}))
+            col_path.write_text(json.dumps({
+                "counter_schema": "v1", "merged_groups": []}))
+            puzzle = {"size": 8, "identity": "puzzle-id",
+                      "dataset": "size8_val.txt", "line": 1}
+            diagnostic_model = {"fit": "pooled", "counter_schema": "v1",
+                                "seconds_per_count": {"assignment": 0.5}}
+            with patch("work_micro_probe.read_puzzles",
+                       return_value=[puzzle]), \
+                 patch("work_micro_probe.verify_model",
+                       return_value={
+                           "overall": {"sections": {}},
+                           "split_verification": {"checked_splits": 0},
+                       }) as verify:
+                report = run_verification(
+                    model_path, col_path, output,
+                    puzzles_per_size=1, controlled_result={
+                        "rounds": 0, "raw_measurements": [], "sections": {}},
+                    diagnostic_model=diagnostic_model,
+                    unresolved_groups=["assignment+constraint_check_call"])
+            self.assertEqual(report["status"],
+                             "completed_with_unresolved_allocation")
+            self.assertEqual(report["validation_basis"],
+                             "pooled_merged_regression_projection")
+            self.assertEqual(json.loads(output.read_text())["status"],
+                             "completed_with_unresolved_allocation")
+            self.assertEqual(verify.call_count, 1)
+            self.assertEqual(verify.call_args.kwargs["unresolved_groups"],
+                             ("assignment+constraint_check_call",))
 
     def test_automatic_verification_writes_independent_report(self):
         with tempfile.TemporaryDirectory() as directory:

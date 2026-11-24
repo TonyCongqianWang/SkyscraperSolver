@@ -870,7 +870,7 @@ def main():
         warn(f"Controlled microbenchmark unavailable: {exc}")
         controlled = {
             "status": "failed", "error": str(exc),
-            "rounds": 0, "raw_measurements": [],
+            "rounds": 0, "raw_measurements": [], "sections": {},
             "repeats_per_point": args.micro_repeats,
             "requested_rounds": args.micro_rounds,
         }

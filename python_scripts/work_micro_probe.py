@@ -61,7 +61,7 @@ def verify_splits(summary, collinearity, model, tolerance=2.0,
             membership[name] = group["name"]
     results = {}
     unresolved_groups = set(unresolved_groups)
-    for call, section in summary["sections"].items():
+    for call, section in summary.get("sections", {}).items():
         volume = section.get("volume_counter")
         if volume is None:
             continue

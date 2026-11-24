@@ -102,9 +102,23 @@ counter in the known collinear groups** are combined to estimate
 relative operation costs. Those timing-derived ratios distribute the
 single fitted merged-group coefficient algebraically among its original
 members, preserving total training-set group contribution. No refitting
-occurs. Unmeasured members are an error, not an arbitrary equal-weight
-fallback. A separate evaluation reports the allocated model's held-out
-ranking and prediction drift.
+occurs. Unmeasured or unstable members are recorded as warnings, not used for
+arbitrary equal-weight fallback, and not a reason to discard any calibration
+results. The detailed report preserves the pooled regression, solver timings
+and counter measurements. The compact model is still written, but an
+unresolved group has `null` per-counter coefficients and is tagged
+`status: incomplete` / `usable_for_tuning: false`; tuning refuses it.
+The collinearity export identifies each unresolved group and missing
+member. Already resolved allocations remain in the report.
+
+Independent SPSA validation *still runs* when timing cost allocation is
+unresolved. The validator uses an in-memory algebraic projection of the
+single fitted **pooled regression**, and records those validation outcomes
+alongside observed CPU timing ratios; it explicitly withholds only
+conclusions about unresolved individual cost ratios. This projected
+predictor is solely for diagnostics, never substituted into the exported
+tuning model. A separate evaluation reports the allocated model's held-out
+ranking and prediction drift only if every split is resolved.
 
 The controlled microbenchmark uses actual C operations, repeated under
 `-O2 -flto` to amortize timer overhead. The independent section-timing
@@ -126,6 +140,13 @@ the deployable pooled per-counter coefficients, intercept, training
 provenance, holdout scores and hyperparameters. The collinearity file
 contains original merged groups and timing-derived allocations. The micro
 file independently verifies timing ratios on validation puzzles.
+When individual allocations remain unresolved, the micro report is still
+produced with `completed_with_unresolved_allocation`, using independently
+sampled validation puzzles and the pooled predictor. The report preserves
+measured ratios and marks unsupported split comparisons `unresolved`.
+An actual validation execution error produces a warning and a `failed` report,
+without deleting the calibration outputs. Explicit
+`--no-micro-verify` writes a `skipped_by_request` report.
 
 To export the compact files again from the detailed report:
 
