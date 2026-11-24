@@ -20,6 +20,7 @@ from symmetry import canonize_nums
 from work_collinearity import analyze_and_merge, collapse_row
 from work_ranking import ranking_diagnostics
 from work_model_export import export_compact_model, export_collinearity
+from param_metadata import PARAM_METADATA, PARAMETER_MAPPING, get_active_param_names
 from work_section_plausibility import parse_micro_lines, summarize_plausibility
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -48,19 +49,9 @@ COUNTER_NAMES = (
     "dp_prefix_candidate_scan", "dp_suffix_candidate_scan",
     "dp_prune_value_scan",
 )
-PARAMETER_GROUPS = {
-    "le7": ("g_sel_compact_period_le7", "g_sel_rescore_period_le7",
-            "g_sel_blend_period_le7", "g_sel_sort_period_le7",
-            "g_sel_line_sort_period_le7", "g_lookahead_entropy_weight_le7"),
-    "s8": ("g_sel_compact_period_s8", "g_sel_rescore_period_s8",
-           "g_sel_blend_period_s8", "g_sel_sort_period_s8",
-           "g_sel_line_sort_period_s8", "g_lookahead_entropy_weight_s8"),
-    "s9": ("g_sel_compact_period_s9", "g_sel_rescore_period_s9",
-           "g_sel_blend_period_s9", "g_sel_sort_period_s9",
-           "g_sel_line_sort_period_s9", "g_lookahead_entropy_weight_s9"),
-}
-PARAM_FILES = {"g_sel_": "params_cache_period.c",
-               "g_lookahead_entropy_weight_": "params_math.c"}
+CALIBRATION_PERTURB = 0.03
+CALIBRATION_RADIUS = 4.0
+
 
 
 def read_puzzles(paths, limit, seed=0):
@@ -134,33 +125,53 @@ def puzzle_mode(puzzle, max_solutions_override):
 
 
 def applicable(variant, puzzle):
-    """Skip runs for parameters belonging to another size."""
-    parameters = variant["parameters"]
-    if not parameters:
-        return True
-    name = next(iter(parameters))
-    group = "le7" if puzzle["size"] <= 7 else "s" + str(puzzle["size"])
-    return name in PARAMETER_GROUPS[group]
+    """Only run a configuration against its own sampled puzzle."""
+    identity = variant.get("puzzle_identity")
+    return identity is None or identity == puzzle["identity"]
 
 
-def variants(puzzles, perturb, seed=0):
-    """Use seeded antithetic simultaneous parameter draws, as in SPSA."""
-    groups = sorted({"le7" if p["size"] <= 7 else "s" + str(p["size"])
-                     for p in puzzles})
-    options = [{"name": "baseline", "parameters": {}}]
-    if perturb:
-        for group in groups:
-            rng = random.Random(f"{seed}:perturbations:{group}")
-            for pair in range(6):
-                deltas = {name: rng.choice((-1, 1)) * rng.uniform(0.25, 0.75)
-                          for name in PARAMETER_GROUPS[group]}
-                for direction, sign in (("plus", 1), ("minus", -1)):
-                    options.append({
-                        "name": f"{group}_spsa_{pair:02d}_{direction}",
-                        "parameters": {name: 1.0 + sign * delta
-                                       for name, delta in deltas.items()},
-                    })
-    return options
+def variants(puzzles, perturb, seed=0, c=CALIBRATION_PERTURB,
+             radius=CALIBRATION_RADIUS):
+    """One independently sampled antithetic ellipsoid pair for each puzzle."""
+    from spsa_tune import get_default_theta, get_physical_params, project_constraints
+    default = project_constraints(get_default_theta())
+    configs = []
+    for puzzle in puzzles:
+        identity = puzzle["identity"]
+        size = puzzle["size"]
+        prefix = f"s{size}_{identity}"
+        if not perturb:
+            configs.append({"name": prefix + "_baseline",
+                            "puzzle_identity": identity, "parameters": {}})
+            continue
+        active_names = get_active_param_names("all", size)
+        indices = [i for i, (name, low, high, *_)
+                   in enumerate(PARAM_METADATA)
+                   if name in active_names and high > low]
+        if not indices:
+            raise ValueError(f"No active SPSA parameters for size {size}")
+        rng = random.Random(f"{seed}:ellipsoid:{identity}")
+        direction = [rng.gauss(0.0, 1.0) for _ in indices]
+        norm = math.sqrt(sum(x * x for x in direction))
+        if norm <= 0:
+            raise ValueError("Failed to sample an ellipsoid direction")
+        radial = rng.random() ** (1.0 / len(indices))
+        # sqrt(d) maintains a roughly 4c marginal scale per coordinate.
+        factor = radius * c * math.sqrt(len(indices)) * radial / norm
+        for label, sign in (("plus", 1), ("minus", -1)):
+            theta = list(default)
+            for delta, idx in zip(direction, indices):
+                scale = PARAM_METADATA[idx][5]
+                theta[idx] = max(0.0, min(1.0, theta[idx] + sign * factor * scale * delta))
+            physical = get_physical_params(project_constraints(theta))
+            configs.append({
+                "name": prefix + "_" + label,
+                "puzzle_identity": identity,
+                "parameters": {PARAM_METADATA[idx][0]: physical[PARAM_METADATA[idx][0]]
+                               for idx in indices},
+            })
+    return configs
+
 
 
 def replace_parameter(text, name, factor):
@@ -177,36 +188,56 @@ def replace_parameter(text, name, factor):
     return text[:match.start(2)] + format(value, ".17g") + text[match.end(2):]
 
 
+def runtime_override_source():
+    """Temporary runtime override constructor for the entire SPSA parameter set."""
+    declarations, assignments, seen = [], [], set()
+    for name, _, _, _, kind, _ in PARAM_METADATA:
+        if name not in PARAMETER_MAPPING:
+            raise ValueError(f"Missing SPSA parameter mapping: {name}")
+        _, symbol, c_type = PARAMETER_MAPPING[name]
+        if symbol in seen:
+            raise ValueError(f"Duplicated mapped parameter: {name}")
+        seen.add(symbol)
+        if c_type != ("int" if kind is int else "double"):
+            raise ValueError(f"C type mismatch: {name}")
+        declarations.append(f"extern {c_type} {symbol};")
+        conversion = "atoi" if kind is int else "atof"
+        assignments.append(
+            f'    value = getenv("{name}");\n'
+            f'    if (value != NULL) {symbol} = {conversion}(value);')
+    return ("\n#include <stdlib.h>\n" + "\n".join(declarations) +
+            "\n__attribute__((constructor))\n"
+            "static void calibration_runtime_overrides(void)\n{\n"
+            "    const char *value;\n" + "\n".join(assignments) +
+            "\n}\n")
+
+
 def build(tempdir, variant, instrument, cc, flags):
+    """Compile once per mode; use env to vary parameters between puzzles."""
     suffix = "_micro" if "-DWORK_MICRO_TIMING" in flags else (
         "_instrumented" if instrument else "_native")
     binary = tempdir / (variant["name"] + suffix)
+    overlay = tempdir / "calibration_runtime_overrides.c"
+    overlay.write_text(runtime_override_source(), encoding="utf-8")
     sources = sorted((ROOT / "src").glob("*.c"))
-    modified = {}
-    for prefix, filename in PARAM_FILES.items():
-        parameters = {k: v for k, v in variant["parameters"].items() if k.startswith(prefix)}
-        if parameters:
-            text = (ROOT / "src" / filename).read_text(encoding="utf-8")
-            for name, factor in parameters.items():
-                text = replace_parameter(text, name, factor)
-            path = tempdir / (variant["name"] + "_" + filename)
-            path.write_text(text, encoding="utf-8")
-            modified[filename] = path
-    commands = [str(modified.get(s.name, s)) for s in sources]
-    cmd = [cc, "-Wall", "-Wextra", "-Werror", "-O2", "-flto", "-I", str(ROOT / "src")]
+    cmd = [cc, "-Wall", "-Wextra", "-Werror", "-O2", "-flto",
+           "-I", str(ROOT / "src")]
     if instrument:
         cmd += ["-DWORK_INSTRUMENTED"]
-    cmd += flags + commands + ["-o", str(binary)]
-    subprocess.run(cmd, check=True, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    cmd += flags + [str(source) for source in sources] + [
+        str(overlay), "-o", str(binary)]
+    subprocess.run(cmd, check=True, cwd=ROOT,
+                   stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     return binary, cmd
 
 
-def execute(binary, puzzle, max_solutions, timeout, include_micro=False):
+
+def execute(binary, puzzle, max_solutions, timeout, include_micro=False, env=None):
     argv = [str(binary), "-s", str(max_solutions), puzzle["clue"]]
     if puzzle["grid"]:
         argv.append(puzzle["grid"])
     start = time.perf_counter_ns()
-    p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout)
+    p = subprocess.run(argv, capture_output=True, text=True, timeout=timeout, env=env)
     elapsed = (time.perf_counter_ns() - start) / 1e9
     if p.returncode:
         raise RuntimeError(f"{argv[0]} failed ({p.returncode}): {p.stderr[:500]}")
@@ -588,9 +619,9 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=512, dest="puzzles_per_size")
-    parser.add_argument("--native-repeats", type=int, default=9)
-    parser.add_argument("--instrumented-repeats", type=int, default=3)
+                        default=1024, dest="puzzles_per_size")
+    parser.add_argument("--native-repeats", type=int, default=2)
+    parser.add_argument("--instrumented-repeats", type=int, default=2)
     parser.add_argument("--no-section-timing", action="store_true",
                         help="Skip sampled CPU section timing and plausibility check")
     parser.add_argument("--no-micro-verify", action="store_true",
@@ -609,6 +640,10 @@ def main():
     parser.add_argument("--ranking-min-delta-seconds", type=float, default=5e-5)
     parser.add_argument("--max-solutions", type=int, default=None,
                         help="Override default: size 7 full enumeration (0), 8/9 first solution (1)")
+    parser.add_argument("--perturb", type=float, default=CALIBRATION_PERTURB,
+                        help="SPSA-normalized perturbation c (default 0.03)")
+    parser.add_argument("--perturb-radius", type=float, default=CALIBRATION_RADIUS,
+                        help="Ellipsoid axis multiplier relative to c (default 4)")
     parser.add_argument("--no-perturb", action="store_true",
                         help="Skip default cache-period/lookahead parameter perturbations")
     parser.add_argument("--timeout", type=float, default=None,
@@ -660,6 +695,10 @@ def main():
             raise ValueError("Empty, negative or nonfinite hyperparameter")
     except ValueError as exc:
         parser.error(f"Invalid regularization grid: {exc}")
+    if not math.isfinite(args.perturb) or args.perturb <= 0:
+        parser.error("--perturb must be finite and positive")
+    if not math.isfinite(args.perturb_radius) or args.perturb_radius <= 0:
+        parser.error("--perturb-radius must be finite and positive")
     if not 0 < args.validation_fraction < 1:
         parser.error("validation-fraction must be between zero and one")
     if args.max_solutions is not None and args.max_solutions < 0:
@@ -672,7 +711,8 @@ def main():
             if found != args.puzzles_per_size:
                 raise ValueError(f"Only {found} distinct size-{size} puzzles available; "
                                  f"requested {args.puzzles_per_size}")
-    variants_to_run = variants(puzzles, not args.no_perturb, args.seed)
+    variants_to_run = variants(puzzles, not args.no_perturb, args.seed,
+                               args.perturb, args.perturb_radius)
     counts = {size: sum(p["size"] == size for p in puzzles)
               for size in (7, 8, 9)}
     provenance = {
@@ -704,8 +744,14 @@ def main():
         "puzzles_per_size": counts,
         "seed": args.seed, "validation_fraction": args.validation_fraction,
         "sampling_strategy": "seeded_symmetry_unique_hash_priority",
-        "perturbation_strategy": "seeded_spsa_antithetic_pairs",
-        "perturbation_pairs_per_size": 6,
+        "perturbation_strategy": "one_antithetic_ellipsoid_pair_per_puzzle_all_spsa_parameters",
+        "perturbation_pairs_per_puzzle": 1,
+        "perturbation_c": args.perturb,
+        "perturbation_radius_multiplier": args.perturb_radius,
+        "runtime_parameter_overrides": True,
+        "active_parameters_by_size": {
+            str(size): sorted(get_active_param_names("all", size))
+            for size in (7, 8, 9)},
         "counter_schema": list(COUNTER_NAMES),
         "perturbations_enabled": not args.no_perturb,
     }
@@ -729,22 +775,31 @@ def main():
                 "--fresh to explicitly overwrite it.")
     rows = []
     raw_mode = "a" if args.resume else ("w" if args.fresh else "x")
+    by_puzzle = {}
+    for variant in variants_to_run:
+        by_puzzle.setdefault(variant.get("puzzle_identity"), []).append(variant)
+    from spsa_tune import get_default_theta, get_physical_params, project_constraints
+    defaults = get_physical_params(project_constraints(get_default_theta()))
+    default_env = os.environ.copy()
+    default_env.update({name: str(value) for name, value in defaults.items()})
     with raw_path.open(raw_mode, encoding="utf-8", buffering=1) as raw_file:
         with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
             build_dir = Path(directory)
-            for variant in variants_to_run:
-                selected = [p for p in puzzles if applicable(variant, p)]
+            fixed = {"name": "calibration", "parameters": {}}
+            instr, instr_cmd = build(build_dir, fixed, True, args.cc, [])
+            native, native_cmd = build(build_dir, fixed, False, args.cc, [])
+            micro = None
+            if not args.no_section_timing:
+                micro, micro_cmd = build(
+                    build_dir, fixed, True, args.cc, ["-DWORK_MICRO_TIMING"])
+            for position, p in enumerate(puzzles, 1):
+                selected = by_puzzle.get(p["identity"], []) + by_puzzle.get(None, [])
                 if not selected:
-                    continue
-                instr, instr_cmd = build(build_dir, variant, True, args.cc, [])
-                native, native_cmd = build(build_dir, variant, False, args.cc, [])
-                micro = None
-                if not args.no_section_timing:
-                    micro, micro_cmd = build(
-                        build_dir, variant, True, args.cc, ["-DWORK_MICRO_TIMING"])
-                print(f"Configuration: {variant['name']} ({len(selected)} puzzles)",
-                      flush=True)
-                for p in selected:
+                    raise ValueError("No configurations for selected puzzle")
+                for variant in selected:
+                    env = dict(default_env)
+                    env.update({name: str(value)
+                                for name, value in variant["parameters"].items()})
                     mode = puzzle_mode(p, args.max_solutions)
                     raw_runs = []
                     def record(kind, repeat, outcome):
@@ -773,7 +828,7 @@ def main():
                             raw_runs.append(event)
                             return _outcome_from_raw(event)
                         result = execute(binary, p, mode, args.timeout,
-                                         include_micro=include_micro)
+                                         include_micro=include_micro, env=env)
                         record(kind, repeat, result)
                         return result
 
@@ -815,8 +870,15 @@ def main():
                         "instrumented_times_seconds": [r[0] for r in instrumented],
                         "micro_sections": micro_sections,
                         "runtime_median_seconds": statistics.median(times),
+                        "native_pair_spread_seconds": max(times) - min(times),
+                        "native_pair_relative_spread": (
+                            (max(times) - min(times)) / statistics.mean(times)
+                            if statistics.mean(times) > 0 else None),
                         "raw_runs": raw_runs,
                     })
+                if position % 64 == 0:
+                    print(f"Completed {position}/{len(puzzles)} distinct puzzles",
+                          flush=True)
     if completed:
         raise ValueError(f"{len(completed)} unused cached solver runs; "
                          "preserve the raw journal and verify the parameters")
