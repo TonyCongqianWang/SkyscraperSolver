@@ -12,7 +12,6 @@
 
 #include <unistd.h>
 #include "print_io.h"
-#include "work_instrumentation.h"
 
 void	put_char(const char ch)
 {
@@ -65,16 +64,3 @@ void	put_number(unsigned long long nbr)
 	put_char(val);
 }
 
-/*
-** Shared output contract for standalone and --stdin solver invocations.
-** Only solution-grid rendering and the stdin instance delimiter differ.
-*/
-void	print_solver_summary(t_solver_state *puzzle)
-{
-	print_value("Max solutions", puzzle->max_solutions);
-	print_value("Solutions found", puzzle->solutions_found);
-	print_value("Nodes visited", puzzle->nodes_visited);
-	print_value("Main nodes visited", puzzle->main_nodes_visited);
-	print_value("Pruning runs", puzzle->prune_runs_count);
-	work_report(puzzle->solutions_found, puzzle->nodes_visited);
-}
