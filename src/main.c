@@ -17,6 +17,7 @@
 #include "solution_storage.h"
 #include "argument_parsing.h"
 #include "stdin_mode.h"
+#include "stdin_tokenize.h"
 
 int	main(int argc, char **argv)
 {
