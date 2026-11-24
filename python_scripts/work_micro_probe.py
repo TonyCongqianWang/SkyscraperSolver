@@ -28,6 +28,8 @@ VALIDATION_DATASETS = (
 
 
 def validate_model(model):
+    if model.get("usable_for_tuning") is False:
+        raise ValueError("Incomplete work model: unresolved merged group allocation")
     if model.get("fit") != "pooled" or model.get("counter_schema") != SCHEMA:
         raise ValueError("Independent micro check requires the pooled v1 model")
     if set(model.get("seconds_per_count", {})) != set(COUNTER_NAMES):
@@ -45,7 +47,8 @@ def group_model(model):
     }
 
 
-def verify_splits(summary, collinearity, model, tolerance=2.0):
+def verify_splits(summary, collinearity, model, tolerance=2.0,
+                  unresolved_groups=()):
     """Check whether timed *relative* costs support modeled split candidates.
 
     A merged equal-weight group proposes a cost ratio of 1. Otherwise test
@@ -57,6 +60,7 @@ def verify_splits(summary, collinearity, model, tolerance=2.0):
         for name in group["members"]:
             membership[name] = group["name"]
     results = {}
+    unresolved_groups = set(unresolved_groups)
     for call, section in summary["sections"].items():
         volume = section.get("volume_counter")
         if volume is None:
@@ -69,6 +73,8 @@ def verify_splits(summary, collinearity, model, tolerance=2.0):
         timed_ratio = fitted.get("seconds_per_volume_relative_to_call")
         shared_group = (membership.get(call) is not None
                         and membership.get(call) == membership.get(volume))
+        if shared_group and membership.get(call) in unresolved_groups:
+            predicted_ratio = None  # Timed result exists, split cannot be judged.
         verdict = "unresolved"
         fold_error = None
         if (fitted.get("identifiable") and timed_ratio is not None
@@ -100,10 +106,11 @@ def verify_splits(summary, collinearity, model, tolerance=2.0):
 
 
 def verify_all_merged_groups(controlled, collinearity, model,
-                             tolerance=2.0):
+                             tolerance=2.0, unresolved_groups=()):
     """Check measured per-member cost ratios for EVERY merged group."""
     from work_micro_constraints import controlled_member_costs
     costs, diagnostics = controlled_member_costs(controlled)
+    unresolved_groups = set(unresolved_groups)
     result = {}
     for group in collinearity.get("merged_groups", []):
         members = group["members"]
@@ -118,7 +125,8 @@ def verify_all_merged_groups(controlled, collinearity, model,
         observations = []
         for name in members[1:]:
             modeled_ratio = (predicted[name] / predicted[ref]
-                             if predicted[ref] > 0 else None)
+                             if predicted[ref] > 0 and group["name"] not in unresolved_groups
+                             else None)
             measured_ratio = estimates.get(name)
             if (modeled_ratio is not None and modeled_ratio > 0
                     and measured_ratio is not None and measured_ratio > 0):
@@ -128,7 +136,9 @@ def verify_all_merged_groups(controlled, collinearity, model,
             else:
                 fold = None
                 verdict = ("zero_fitted_group" if predicted[ref] == 0
-                           and measured_ratio is not None else "unresolved")
+                           and measured_ratio is not None
+                           and group["name"] not in unresolved_groups
+                           else "unresolved")
             observations.append({
                 "reference": ref, "counter": name,
                 "measured_ratio": measured_ratio,
@@ -156,7 +166,8 @@ def verify_all_merged_groups(controlled, collinearity, model,
     }
 
 
-def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30):
+def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
+                 unresolved_groups=()):
     validate_model(model)
     if collinearity.get("counter_schema") != model["counter_schema"]:
         raise ValueError("Model and collinearity schemas differ")
@@ -190,7 +201,9 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30):
                 [r for r in rows if r["size"] == n], grouped, COUNTER_NAMES)
             for n in (7, 8, 9)
         },
-        "split_verification": verify_splits(overall, collinearity, model),
+        "split_verification": verify_splits(
+            overall, collinearity, model,
+            unresolved_groups=unresolved_groups),
     }
 
 
@@ -286,24 +299,39 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
 def run_verification(model_path, collinearity_path, output,
                      puzzles_per_size=32, seed=1072, cc="gcc", timeout=None,
                      datasets=VALIDATION_DATASETS, controlled_repeats=200000,
-                     controlled_rounds=3, controlled_result=None):
+                     controlled_rounds=3, controlled_result=None,
+                     diagnostic_model=None, unresolved_groups=()):
     model_path = Path(model_path)
-    model = load_compact_model(model_path)
+    model = (diagnostic_model if diagnostic_model is not None
+             else load_compact_model(model_path))
+    unresolved_groups = tuple(unresolved_groups)
     collinearity = json.loads(Path(collinearity_path).read_text(encoding="utf-8"))
     if puzzles_per_size < 1:
         raise ValueError("puzzles_per_size must be positive")
     puzzles = read_puzzles(datasets, puzzles_per_size, seed=seed)
     if not puzzles:
         raise ValueError("No validation puzzles for micro verification")
-    report = verify_model(model, collinearity, puzzles, cc, timeout)
+    if diagnostic_model is None:
+        report = verify_model(model, collinearity, puzzles, cc, timeout)
+    else:
+        report = verify_model(model, collinearity, puzzles, cc, timeout,
+                              unresolved_groups=unresolved_groups)
+    report["status"] = ("completed_with_unresolved_allocation"
+                        if unresolved_groups else "complete")
+    report["validation_basis"] = ("pooled_merged_regression_projection"
+                                  if diagnostic_model is not None
+                                  else "allocated_per_counter_model")
+    report["unresolved_groups"] = list(unresolved_groups)
     controlled = (controlled_result if controlled_result is not None
                   else controlled_microbench(
                       cc, controlled_repeats, controlled_rounds))
     report["controlled_microbenchmark"] = controlled
     report["controlled_split_verification"] = verify_splits(
-        controlled, collinearity, model)
+        controlled, collinearity, model,
+        unresolved_groups=unresolved_groups)
     report["controlled_all_group_verification"] = verify_all_merged_groups(
-        controlled, collinearity, model)
+        controlled, collinearity, model,
+        unresolved_groups=unresolved_groups)
     report["model_file_sha256"] = hashlib.sha256(model_path.read_bytes()).hexdigest()
     report["puzzle_counts_by_size"] = {
         str(n): sum(p["size"] == n for p in puzzles) for n in (7, 8, 9)

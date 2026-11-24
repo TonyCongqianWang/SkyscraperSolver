@@ -24,6 +24,9 @@ def load_model(path=DEFAULT_MODEL):
             or model.get("fit") != "pooled"
             or model.get("counter_schema") != SCHEMA):
         raise ValueError("Unsupported pooled work calibration format or counter schema")
+    if model.get("usable_for_tuning") is False:
+        raise ValueError("Unresolved work calibration: incomplete model cannot be used "
+                         "for tuning; inspect calibration warnings")
     coeffs = model.get("seconds_per_count", {})
     if set(coeffs) != set(COUNTER_NAMES):
         raise ValueError("Work counter names do not match model schema")

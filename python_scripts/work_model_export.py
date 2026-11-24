@@ -39,6 +39,8 @@ def make_compact_model(report, source_file=None, created_at=None):
     if not allocation:
         raise ValueError("Pooled model requires measured post-fit unmerging")
     allocation_weights = allocation["seconds_per_count"]
+    complete = allocation.get("all_merged_groups_resolved") is True
+    unresolved_counters = []
     weights = dict.fromkeys(names, 0.0)
     seen = set()
     for group in grouped:
@@ -56,6 +58,10 @@ def make_compact_model(report, source_file=None, created_at=None):
                 raise ValueError(f"Unknown or repeated raw counter: {name}")
             seen.add(name)
             raw_weight = allocation_weights.get(name)
+            if raw_weight is None and not complete:
+                weights[name] = None
+                unresolved_counters.append(name)
+                continue
             if not isinstance(raw_weight, (int, float)):
                 raise ValueError(f"Missing independently measured split: {name}")
             if not math.isfinite(raw_weight) or raw_weight < 0:
@@ -65,8 +71,8 @@ def make_compact_model(report, source_file=None, created_at=None):
         raise ValueError("Fitted coefficient and group names disagree")
     if set(allocation_weights) != seen:
         raise ValueError("Allocated coefficients must cover all fitted counters")
-    if not allocation.get("all_merged_groups_resolved"):
-        raise ValueError("Cannot export provisional unresolved merged weights")
+    if complete and unresolved_counters:
+        raise ValueError("Resolved allocation cannot contain null weights")
     intercept = float(model["intercept_seconds"])
     if not math.isfinite(intercept) or intercept < 0:
         raise ValueError("Invalid nonnegative intercept")
@@ -93,6 +99,11 @@ def make_compact_model(report, source_file=None, created_at=None):
     }
     result = {
         "format": FORMAT,
+        "status": "complete" if complete else "incomplete",
+        "usable_for_tuning": complete,
+        "unresolved_counters": sorted(unresolved_counters),
+        "unresolved_groups": allocation.get("unresolved_groups", []),
+        "warnings": report.get("warnings", []),
         "format_version": FORMAT_VERSION,
         "created_at_utc": created_at,
         "source_calibration_file": str(source_file) if source_file else None,
@@ -131,6 +142,34 @@ def make_compact_model(report, source_file=None, created_at=None):
 
 
 
+def pooled_validation_projection(report):
+    """In-memory representation of the *fitted pooled* predictor for validation.
+
+    Each merged sum-of-counts feature is expanded algebraically. These
+    projected coefficients are NOT individually calibrated and must never
+    be exported as tuning coefficients.
+    """
+    fit = report["fits"]["all"]
+    if fit["status"] != "fitted":
+        raise ValueError("Pooled regression is not available for validation")
+    coefficients = fit["coefficients"]
+    names = report["provenance"]["counter_schema"]
+    weights = dict.fromkeys(names, 0.0)
+    for group in coefficients["collinearity"]["groups"]:
+        for member in group["members"]:
+            if member not in weights:
+                raise ValueError(f"Unknown fitted counter: {member}")
+            weights[member] = coefficients["seconds_per_count"][group["name"]]
+    return {
+        "fit": "pooled",
+        "counter_schema": report["provenance"]["schema"],
+        "source_git_commit": report["provenance"].get("git_commit"),
+        "intercept_seconds": coefficients["intercept_seconds"],
+        "seconds_per_count": weights,
+        "diagnostic_projection": True,
+    }
+
+
 def make_collinearity_export(report, source_file=None, created_at=None):
     """Preserve pooled merged counter dependencies for microbenchmark design.
 
@@ -159,6 +198,12 @@ def make_collinearity_export(report, source_file=None, created_at=None):
         groups.append({
             "name": group["name"],
             "members": list(group["members"]),
+            "status": (allocated.get("status", "resolved")
+                       if allocated else "unresolved"),
+            "reason": allocated.get("reason") if allocated else "Not allocated",
+            "missing_or_unstable_counters": (
+                allocated.get("missing_or_unstable_counters", [])
+                if allocated else list(group["members"])),
             "aggregation": group["aggregation"],
             "seconds_per_merged_count":
                 coefficients["seconds_per_count"][group["name"]],
@@ -174,6 +219,10 @@ def make_collinearity_export(report, source_file=None, created_at=None):
         })
     output = {
         "format": "skyscraper-work-collinearity",
+        "status": compact["status"],
+        "usable_for_tuning": compact["usable_for_tuning"],
+        "unresolved_groups": compact["unresolved_groups"],
+        "warnings": compact["warnings"],
         "format_version": 1,
         "created_at_utc": created_at,
         "source_calibration_file": str(source_file) if source_file else None,
@@ -221,6 +270,8 @@ def predict_seconds(model, counters):
     """Predict runtime using a v1 compact artifact and original raw counts."""
     if model.get("format") != FORMAT or model.get("format_version") != FORMAT_VERSION:
         raise ValueError("Unsupported compact model format")
+    if model.get("usable_for_tuning") is False:
+        raise ValueError("Unresolved calibration: incomplete model is not usable for tuning")
     weights = model["seconds_per_count"]
     if set(counters) != set(weights):
         raise ValueError("Counter schema mismatch: provide all counters")

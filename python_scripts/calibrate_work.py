@@ -854,38 +854,63 @@ def main():
                 for n in (7, 8, 9)
             },
         }
-    # The regression is now complete. Resolve merged counters using timing
-    # evidence only: NEVER change the merged regression or fit a second time.
+    # The pooled regression is complete; uncertain timing is not fatal.
+    warnings = []
+    def warn(message):
+        warnings.append(message)
+        print(f"WARNING: {message}", file=sys.stderr, flush=True)
+
     from work_micro_probe import controlled_microbench
     from work_micro_constraints import allocate_merged_coefficients
-    controlled = controlled_microbench(
-        args.cc, args.micro_repeats, args.micro_rounds)
+    try:
+        controlled = controlled_microbench(
+            args.cc, args.micro_repeats, args.micro_rounds)
+    except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError,
+            subprocess.TimeoutExpired) as exc:
+        warn(f"Controlled microbenchmark unavailable: {exc}")
+        controlled = {
+            "status": "failed", "error": str(exc),
+            "rounds": 0, "raw_measurements": [],
+            "repeats_per_point": args.micro_repeats,
+            "requested_rounds": args.micro_rounds,
+        }
+
     pooled_model = fits["all"]["coefficients"]
     timing_training = plausibility["train"] if plausibility else {"sections": {}}
     allocation = allocate_merged_coefficients(
         pooled_model, train, controlled, timing_training)
-    flat_weights = allocation["seconds_per_count"]
-    def allocated_predict(row):
-        return pooled_model["intercept_seconds"] + sum(
-            flat_weights.get(name, 0.0) * row["counters"][name]
-            for name in COUNTER_NAMES)
-    allocated_model = {
-        "intercept_seconds": pooled_model["intercept_seconds"],
-        "seconds_per_count": {
-            name: flat_weights.get(name, 0.0) for name in COUNTER_NAMES}}
-    allocation["held_out_validation"] = diagnostics(
-        heldout, allocated_model, args.ranking_noise_z,
-        args.ranking_min_delta_seconds)
-    allocation["held_out_validation_by_size"] = {
-        str(n): diagnostics(
-            [row for row in heldout if row["size"] == n], allocated_model,
-            args.ranking_noise_z, args.ranking_min_delta_seconds)
-        for n in (7, 8, 9)}
+    for warning in allocation["warnings"]:
+        warn(warning)
+
+    if allocation["all_merged_groups_resolved"]:
+        flat_weights = allocation["seconds_per_count"]
+        allocated_model = {
+            "intercept_seconds": pooled_model["intercept_seconds"],
+            "seconds_per_count": {
+                name: flat_weights.get(name, 0.0) for name in COUNTER_NAMES}}
+        allocation["held_out_validation"] = diagnostics(
+            heldout, allocated_model, args.ranking_noise_z,
+            args.ranking_min_delta_seconds)
+        allocation["held_out_validation_by_size"] = {
+            str(n): diagnostics(
+                [row for row in heldout if row["size"] == n], allocated_model,
+                args.ranking_noise_z, args.ranking_min_delta_seconds)
+            for n in (7, 8, 9)}
+        for row in rows:
+            row["predictions_seconds"]["pooled_allocated"] = (
+                pooled_model["intercept_seconds"] + sum(
+                    flat_weights.get(name, 0.0) * row["counters"][name]
+                    for name in COUNTER_NAMES))
+    else:
+        allocation["held_out_validation"] = None
+        allocation["held_out_validation_by_size"] = {}
+        for row in rows:
+            row["predictions_seconds"]["pooled_allocated"] = None
     allocation["regression_fits_changed"] = False
-    for row in rows:
-        row["predictions_seconds"]["pooled_allocated"] = allocated_predict(row)
     payload = {
         "version": 1, "provenance": provenance,
+        "status": "partial" if warnings else "complete",
+        "warnings": warnings,
         "section_timing_plausibility": plausibility,
         "controlled_microbenchmark": controlled,
         "pooled_unmerging": allocation,
@@ -914,16 +939,56 @@ def main():
     export_collinearity(payload, collinearity_path, args.output, creation_time)
     print(f"Saved pooled model to {model_path}")
     print(f"Saved pooled collinearity to {collinearity_path}")
-    if not args.no_micro_verify:
-        from work_micro_probe import run_verification
-        micro_path = args.output.with_suffix(".micro.json")
-        verified = run_verification(
-            model_path, collinearity_path, micro_path,
-            puzzles_per_size=args.micro_puzzles_per_size,
-            seed=args.seed + 1009, cc=args.cc, timeout=args.timeout,
-            controlled_result=controlled)
-        print(f"Saved independent micro verification to {micro_path}")
-        print(f"Micro split assessment: {verified['split_verification']}")
+    # Always validate independently, including when individual allocations
+    # are unresolved. Use the already-fitted pooled predictor as a diagnostic
+    # projection; it is not an exported replacement for missing weights.
+    micro_path = args.output.with_suffix(".micro.json")
+    from work_micro_probe import run_verification
+    from work_model_export import pooled_validation_projection
+    if args.no_micro_verify:
+        micro_report = {
+            "status": "skipped_by_request",
+            "warnings": ["Independent micro verification disabled by --no-micro-verify"],
+            "controlled_microbenchmark": controlled,
+        }
+    else:
+        unresolved = [g["group"] for g in allocation["unresolved_groups"]]
+        verification_options = {}
+        if unresolved:
+            verification_options = {
+                "diagnostic_model": pooled_validation_projection(payload),
+                "unresolved_groups": unresolved,
+            }
+            warn("Independent validation will use the fitted pooled regression "
+                 "while unresolved per-counter cost ratios remain unverified")
+        try:
+            micro_report = run_verification(
+                model_path, collinearity_path, micro_path,
+                puzzles_per_size=args.micro_puzzles_per_size,
+                seed=args.seed + 1009, cc=args.cc, timeout=args.timeout,
+                controlled_result=controlled, **verification_options)
+            print(f"Micro split assessment: {micro_report['split_verification']}")
+        except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError,
+                subprocess.TimeoutExpired) as exc:
+            warn(f"Independent validation failed, retaining other results: {exc}")
+            micro_report = {
+                "status": "failed", "warnings": [str(exc)],
+                "validation_basis": ("pooled_merged_regression_projection"
+                                     if unresolved else "allocated_per_counter_model"),
+                "unresolved_groups": unresolved,
+                "controlled_microbenchmark": controlled,
+            }
+    if args.no_micro_verify or micro_report.get("status") == "failed":
+        micro_path.parent.mkdir(parents=True, exist_ok=True)
+        micro_path.write_text(
+            json.dumps(micro_report, indent=2, sort_keys=True,
+                       allow_nan=False) + "\n", encoding="utf-8")
+    payload["micro_verification_status"] = micro_report.get("status", "complete")
+    payload["status"] = "partial" if warnings else "complete"
+    payload["warnings"] = warnings
+    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n",
+                           encoding="utf-8")
+    print(f"Saved micro verification report to {micro_path}")
     print(f"Saved {len(rows)} samples to {args.output}")
     print(f"Saved each raw solver run to {raw_path}")
     print(json.dumps({

@@ -74,8 +74,18 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
                     if _positive(value):
                         series.setdefault(name, {}).setdefault(
                             index, []).append(value)
+    # Include operations with no identifiable positive rounds in diagnostics.
+    expected = set(series)
+    for record in measurements:
+        if record.get("kind") == "individual":
+            expected.add(record["counter"])
+        elif record.get("kind") == "affine":
+            call = record.get("section")
+            if call in TIMED_SECTIONS:
+                expected.update((call, TIMED_SECTIONS[call]))
     costs = {}
-    for name, by_round in sorted(series.items()):
+    for name in sorted(expected):
+        by_round = series.get(name, {})
         values = [statistics.median(by_round[i])
                   for i in range(rounds) if by_round.get(i)]
         spread = max(values) / min(values) if values else None
@@ -178,15 +188,10 @@ def _solve_ratios(members, controlled_costs, section_summary):
 
 def allocate_merged_coefficients(model, training_rows, benchmark,
                                  section_summary):
-    """Unmerge pooled NNLS coefficients algebraically: NEVER refit.
+    """Preserve pooled fit and measured allocations even when a split is unresolved.
 
-    Normalize each group's timing-derived member ratios so the sum of its
-    contribution over the original training observations is identical to
-    the already-fitted merged feature. When counts are exactly dependent,
-    its prediction is preserved on every such observation.
-
-    Missing timing evidence is an explicit unresolved error; no implicit
-    equal-cost weighting is ever assigned to a multi-member group.
+    Missing or unstable independent timing must not abort calibration and
+    must never be replaced with a guessed equal-cost allocation.
     """
     groups = model["collinearity"]["groups"]
     group_coefficients = model["seconds_per_count"]
@@ -194,6 +199,8 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
     allocations = []
     flattened = {}
     errors = []
+    unresolved_groups = []
+    warnings = []
     for group in groups:
         members = list(group["members"])
         group_name = group["name"]
@@ -201,22 +208,49 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
         if len(members) == 1:
             flattened[members[0]] = coefficient
             continue
+
         missing = sorted(set(members) - set(costs))
-        if missing:
-            raise ValueError(
-                f"Controlled microbenchmark must resolve every member of "
-                f"{group_name}; missing or unstable: {missing}")
-        ratios, evidence = _solve_ratios(members, costs, section_summary)
-        original_total = sum(sum(row["counters"][member]
-                                 for member in members)
-                             for row in training_rows)
-        weighted_total = sum(sum(row["counters"][member] * ratios[member]
-                                 for member in members)
-                             for row in training_rows)
-        if not _positive(weighted_total) or original_total <= 0:
-            raise ValueError(f"No training observations for {group_name}")
-        factor = coefficient * original_total / weighted_total
-        assigned = {member: factor * ratios[member] for member in members}
+        try:
+            if missing:
+                raise ValueError(
+                    f"Controlled microbenchmark missing or unstable: {missing}")
+            ratios, evidence = _solve_ratios(members, costs, section_summary)
+            original_total = sum(
+                sum(row["counters"][member] for member in members)
+                for row in training_rows)
+            weighted_total = sum(
+                sum(row["counters"][member] * ratios[member]
+                    for member in members) for row in training_rows)
+            if not _positive(weighted_total) or original_total <= 0:
+                raise ValueError("No positive training observations")
+            factor = coefficient * original_total / weighted_total
+            assigned = {member: factor * ratios[member] for member in members}
+            if any(not math.isfinite(value) or value < 0
+                   for value in assigned.values()):
+                raise ValueError("Nonfinite timing-derived coefficients")
+        except (ValueError, ArithmeticError, OverflowError) as exc:
+            reason = str(exc)
+            warning = (f"Unresolved merged group {group_name}: {reason}; "
+                       "retaining the pooled fit without guessing raw weights")
+            warnings.append(warning)
+            unresolved_groups.append({
+                "group": group_name, "members": members,
+                "missing_or_unstable_counters": missing, "reason": reason,
+            })
+            flattened.update({name: None for name in members})
+            allocations.append({
+                "group": group_name, "members": members,
+                "status": "unresolved", "reason": reason,
+                "missing_or_unstable_counters": missing,
+                "merged_seconds_per_count": coefficient,
+                "member_cost_ratios": None,
+                "seconds_per_original_count": None,
+                "normalization": None,
+                "max_abs_training_prediction_drift_seconds": None,
+                "timing_evidence": [],
+            })
+            continue
+
         flattened.update(assigned)
         drift = [
             sum(assigned[member] * row["counters"][member]
@@ -227,6 +261,7 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
         errors.extend(drift)
         allocations.append({
             "group": group_name, "members": members,
+            "status": "resolved",
             "merged_seconds_per_count": coefficient,
             "member_cost_ratios": ratios,
             "seconds_per_original_count": assigned,
@@ -239,9 +274,12 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
         "method": "post_fit_timing_unmerge_no_regression_refit",
         "seconds_per_count": flattened,
         "groups": allocations,
+        "unresolved_groups": unresolved_groups,
+        "warnings": warnings,
         "controlled_counter_costs_seconds": costs,
         "controlled_counter_diagnostics": cost_diagnostics,
         "mean_abs_group_drift_seconds": (
-            statistics.mean(abs(x) for x in errors) if errors else 0.0),
-        "all_merged_groups_resolved": True,
+            statistics.mean(abs(x) for x in errors) if errors else None),
+        "prediction_drift_complete": not unresolved_groups,
+        "all_merged_groups_resolved": not unresolved_groups,
     }
