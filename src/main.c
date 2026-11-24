@@ -47,9 +47,7 @@ static void	solve_puzzle_and_print_result(t_solver_state *puzzle)
 	int					append_nl;
 
 	solve_puzzle(puzzle, -1);
-	work_report(puzzle->solutions_found, puzzle->nodes_visited);
-	print_value("Max solutions", puzzle->max_solutions);
-	print_value("Solutions found", puzzle->solutions_found);
+	print_solver_summary(puzzle);
 	if (puzzle->solutions)
 	{
 		solution_idx = 0;
@@ -64,7 +62,4 @@ static void	solve_puzzle_and_print_result(t_solver_state *puzzle)
 			solution_idx++;
 		}
 	}
-	print_value("Nodes visited", puzzle->nodes_visited);
-	print_value("Main nodes visited", puzzle->main_nodes_visited);
-	print_value("Pruning runs", puzzle->prune_runs_count);
 }

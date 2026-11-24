@@ -36,8 +36,7 @@ static void	process_stdin_instance(t_solver_state *puzzle, int argc,
 		return ;
 	}
 	solve_puzzle(puzzle, -1);
-	print_value("Nodes visited", puzzle->nodes_visited);
-	work_report(puzzle->solutions_found, puzzle->nodes_visited);
+	print_solver_summary(puzzle);
 	printf("--- END_OF_INSTANCE ---\n");
 	fflush(stdout);
 	free_solution_storage(puzzle);

@@ -13,25 +13,24 @@ def parse_output(lines, elapsed, model=None):
                           text, re.M | re.I)
     result = {'seconds': elapsed, 'nodes': int(nodes[1]) if nodes else None,
               'solutions': int(solutions[1]) if solutions else None,
-              'status': 'ok' if nodes else 'error'}
+              'status': 'ok' if nodes and solutions else 'error'}
     if model is not None:
         from tuning_work_runtime import parse_record
         try:
-            # In --stdin mode, the instrumented solver emits Nodes visited
-            # and WORK_COUNTERS but *not* a separate Solutions found line.
-            # The counter record is authoritative when that line is absent.
+            # Both CLI modes must emit the same labeled result fields.
+            # WORK_COUNTERS is an independent, instrumented cross-check.
+            if result['status'] != 'ok':
+                raise ValueError(
+                    "Missing Solutions found or Nodes visited in solver output; "
+                    "rebuild the unified solver CLI")
             predicted, counter_nodes, counter_solutions = parse_record(
                 text.splitlines(), model)
-            if result['nodes'] is None:
-                raise ValueError("Missing Nodes visited in instrumented output")
             if counter_nodes != result['nodes']:
                 raise ValueError(
                     "WORK_COUNTERS nodes disagree with Nodes visited")
-            if (result['solutions'] is not None
-                    and counter_solutions != result['solutions']):
+            if counter_solutions != result['solutions']:
                 raise ValueError(
                     "WORK_COUNTERS solutions disagree with Solutions found")
-            result['solutions'] = counter_solutions
             result['predicted_seconds'] = predicted
         except (ValueError, KeyError, TypeError) as exc:
             result['status'] = 'error'

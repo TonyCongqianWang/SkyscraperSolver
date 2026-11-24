@@ -255,14 +255,13 @@ class WorkflowTests(unittest.TestCase):
         parsed = parse_output(lines, 0.02, model=model)
         self.assertEqual(parsed["status"], "ok")
         self.assertAlmostEqual(parsed["predicted_seconds"], 0.001000004)
-        # Actual instrumented --stdin output has no separate Solutions
-        # found line. WORK_COUNTERS is authoritative for that count.
+        # A missing summary field violates the shared standalone/stdin
+        # output contract, even if WORK_COUNTERS contains that value.
         stdin_lines = [lines[0], lines[2], "--- END_OF_INSTANCE ---\n"]
         stdin_parsed = parse_output(stdin_lines, 0.02, model=model)
-        self.assertEqual(stdin_parsed["status"], "ok")
-        self.assertEqual(stdin_parsed["solutions"], 1)
-        self.assertEqual(stdin_parsed["nodes"], 42)
-        self.assertAlmostEqual(stdin_parsed["predicted_seconds"], 0.001000004)
+        self.assertEqual(stdin_parsed["status"], "error")
+        self.assertIn("Missing Solutions found",
+                      stdin_parsed["prediction_error"])
         invalid_lines = [lines[0], "Solutions found: 2\n", lines[2]]
         invalid = parse_output(invalid_lines, 0.02, model=model)
         self.assertEqual(invalid["status"], "error")
@@ -313,6 +312,22 @@ class WorkflowTests(unittest.TestCase):
                 ["gcc", "-O0", "-DWORK_INSTRUMENTED", "-I",
                  str(ROOT / "src"), *map(str, sources), "-o", str(executable)],
                 check=True, capture_output=True, text=True, timeout=120)
+            fields = ("Max solutions", "Solutions found", "Nodes visited",
+                      "Main nodes visited", "Pruning runs")
+            def field_summary(output):
+                return [line for line in output.splitlines()
+                        if line.startswith(tuple(label + ": " for label in fields))]
+            standalone = subprocess.run(
+                [str(executable), "-s", "1", clue],
+                capture_output=True, text=True, timeout=20.0, check=True)
+            stdin = subprocess.run(
+                [str(executable), "-s", "1", "--stdin"], input=f'"{clue}"\n',
+                capture_output=True, text=True, timeout=20.0, check=True)
+            self.assertEqual(field_summary(standalone.stdout),
+                             field_summary(stdin.stdout))
+            self.assertEqual(len(field_summary(stdin.stdout)), len(fields))
+            self.assertNotIn("--- END_OF_INSTANCE ---", standalone.stdout)
+            self.assertIn("--- END_OF_INSTANCE ---", stdin.stdout)
             for use_stdin in (True, False):
                 with self.subTest(stdin=use_stdin):
                     rows = measure_batch(
