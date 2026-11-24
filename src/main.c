@@ -12,15 +12,11 @@
 
 #include "work_instrumentation.h"
 #include "print_io.h"
-#include "print_grid.h"
 #include "puzzle_structs.h"
 #include "puzzle_solver.h"
 #include "solution_storage.h"
 #include "argument_parsing.h"
 #include "stdin_mode.h"
-#include "stdin_tokenize.h"
-
-static void	solve_puzzle_and_print_result(t_solver_state *puzzle);
 
 int	main(int argc, char **argv)
 {
@@ -36,30 +32,9 @@ int	main(int argc, char **argv)
 		free_solution_storage(&puzzle);
 		return (parsing_retcode);
 	}
-	solve_puzzle_and_print_result(&puzzle);
+	solve_puzzle(&puzzle, -1);
+	print_solver_result(&puzzle);
 	free_solution_storage(&puzzle);
 	return (0);
 }
 
-static void	solve_puzzle_and_print_result(t_solver_state *puzzle)
-{
-	t_sol_count			solution_idx;
-	int					append_nl;
-
-	solve_puzzle(puzzle, -1);
-	print_solver_summary(puzzle);
-	if (puzzle->solutions)
-	{
-		solution_idx = 0;
-		while (solution_idx < puzzle->solutions_found
-			&& (solution_idx < puzzle->max_solutions
-				|| solution_idx == 0))
-		{
-			append_nl = solution_idx < puzzle->solutions_found - 1;
-			append_nl &= solution_idx < puzzle->max_solutions - 1;
-			puzzle->cur_node = puzzle->solutions + solution_idx;
-			print_solution_grid(puzzle, append_nl);
-			solution_idx++;
-		}
-	}
-}

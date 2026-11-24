@@ -293,6 +293,70 @@ class WorkflowTests(unittest.TestCase):
         self.assertLess(work["change_pct"], 0)
         self.assertAlmostEqual(report["summary"]["total_time"]["diff_pct"], -10)
 
+    @unittest.skipUnless(shutil.which("gcc"), "gcc required for actual CLI test")
+    def test_stdin_and_standalone_outputs_match_including_solution_grids(self):
+        """Both CLI modes must emit byte-identical per-instance stdout.
+
+        A streaming process can solve multiple puzzles in one invocation.
+        Its sole output addition is the end-of-instance delimiter.
+        """
+        clue_path = ROOT / "puzzle_bank/spsa_datasets/size9_val.txt"
+        clues = [line.strip().strip('"') for line in
+                 clue_path.read_text(encoding="utf-8").splitlines()[:2]]
+        n = 7
+        empty_constraints = " ".join(["0"] * (4 * n))
+        completed_grid = " ".join(
+            str((row + col) % n + 1)
+            for row in range(n) for col in range(n))
+        cases = [
+            ("1", [(clues[0],), (clues[1],), (clues[0],)]),
+            ("0", [(empty_constraints, completed_grid),
+                   (empty_constraints, completed_grid)]),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            for instrument in (False, True):
+                executable = Path(directory) / (
+                    "solver_work" if instrument else "solver_native")
+                sources = sorted((ROOT / "src").glob("*.c"))
+                flags = ["-DWORK_INSTRUMENTED"] if instrument else []
+                subprocess.run(
+                    ["gcc", "-O0", *flags, "-I", str(ROOT / "src"),
+                     *map(str, sources), "-o", str(executable)],
+                    check=True, capture_output=True, text=True, timeout=120)
+                for limit, inputs in cases:
+                    with self.subTest(instrument=instrument, limit=limit):
+                        outputs = []
+                        for tokens in inputs:
+                            standalone = subprocess.run(
+                                [str(executable), "-s", limit, *tokens],
+                                capture_output=True, text=True,
+                                check=True, timeout=30)
+                            outputs.append(standalone.stdout)
+                            self.assertIn("Solutions found: ", standalone.stdout)
+                            self.assertIn("Nodes visited: ", standalone.stdout)
+                            self.assertIn("Main nodes visited: ", standalone.stdout)
+                            self.assertEqual(
+                                "WORK_COUNTERS v1" in standalone.stdout,
+                                instrument)
+                        stdin_input = "".join(
+                            " ".join(f'"{token}"' for token in tokens) + "\n"
+                            for tokens in inputs)
+                        streamed = subprocess.run(
+                            [str(executable), "-s", limit, "--stdin"],
+                            input=stdin_input, capture_output=True, text=True,
+                            check=True, timeout=60)
+                        delimiter = "--- END_OF_INSTANCE ---\n"
+                        self.assertEqual(streamed.stdout,
+                                         delimiter.join(outputs) + delimiter)
+                        # Grids are actual rows of solver values, not merely
+                        # completion notifications or work counters.
+                        self.assertRegex(outputs[0], r"(?m)^[1-9](?: [1-9]){6,8}$")
+                        if limit == "0":
+                            self.assertIn(
+                                "1 2 3 4 5 6 7\n", outputs[0])
+                        self.assertEqual(outputs[0], outputs[-1]
+                                         if limit == "1" else outputs[1])
+
     @unittest.skipUnless(shutil.which("gcc"), "gcc required for actual work-output test")
     def test_real_instrumented_stdin_comparison_produces_predictions(self):
         """Compile the real instrumented C solver, not a mocked WORK record.
