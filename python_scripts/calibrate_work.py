@@ -173,6 +173,27 @@ def variants(puzzles, perturb, seed=0, c=CALIBRATION_PERTURB,
     return configs
 
 
+def calibration_workload_plan(puzzle_counts, perturb, native_repeats,
+                              instrumented_repeats, section_timing):
+    """Count puzzle-parameter observations separately from exact repeats."""
+    puzzles = sum(puzzle_counts.values())
+    per_puzzle = 2 if perturb else 1
+    observations = puzzles * per_puzzle
+    native = observations * native_repeats
+    instrumented = observations * instrumented_repeats
+    section = observations if section_timing else 0
+    return {
+        "puzzles_by_size": {str(size): count
+                            for size, count in sorted(puzzle_counts.items())},
+        "distinct_puzzles": puzzles,
+        "configurations_per_puzzle": per_puzzle,
+        "puzzle_configuration_evaluations": observations,
+        "native_solver_executions": native,
+        "instrumented_solver_executions": instrumented,
+        "section_timing_solver_executions": section,
+        "total_solver_executions": native + instrumented + section,
+    }
+
 
 def replace_parameter(text, name, factor):
     pattern = re.compile(r"(?m)^(\s*double\s+" + re.escape(name)
@@ -619,7 +640,8 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=1024, dest="puzzles_per_size")
+                        default=6656, dest="puzzles_per_size",
+                        help="Symmetry-distinct puzzles per size (default 6656)")
     parser.add_argument("--native-repeats", type=int, default=2)
     parser.add_argument("--instrumented-repeats", type=int, default=2)
     parser.add_argument("--no-section-timing", action="store_true",
@@ -705,16 +727,42 @@ def main():
         parser.error("max-solutions cannot be negative")
     puzzles = read_puzzles(args.dataset or DEFAULT_DATASETS,
                            args.puzzles_per_size, args.seed)
-    if args.dataset is None:
-        for size in (7, 8, 9):
-            found = sum(p["size"] == size for p in puzzles)
-            if found != args.puzzles_per_size:
-                raise ValueError(f"Only {found} distinct size-{size} puzzles available; "
-                                 f"requested {args.puzzles_per_size}")
-    variants_to_run = variants(puzzles, not args.no_perturb, args.seed,
-                               args.perturb, args.perturb_radius)
     counts = {size: sum(p["size"] == size for p in puzzles)
               for size in (7, 8, 9)}
+    # Fail before generating parameter vectors or compiling the solver if
+    # the datasets cannot supply the requested symmetry-distinct samples.
+    sizes_to_check = (7, 8, 9) if args.dataset is None else (
+        size for size in (7, 8, 9) if counts[size] > 0)
+    for size in sizes_to_check:
+        if counts[size] != args.puzzles_per_size:
+            raise ValueError(
+                f"Only {counts[size]} symmetry-distinct size-{size} puzzles "
+                f"available; requested {args.puzzles_per_size}. "
+                "Use larger datasets or explicitly reduce --puzzles-per-size; "
+                "coverage is never silently reduced.")
+    plan = calibration_workload_plan(
+        counts, not args.no_perturb, args.native_repeats,
+        args.instrumented_repeats, not args.no_section_timing)
+    print(
+        "Calibration workload plan (distinct puzzles vs evaluations):\n"
+        f"  Puzzles by size: {plan['puzzles_by_size']}\n"
+        f"  Distinct puzzles: {plan['distinct_puzzles']:,}\n"
+        f"  Configurations per puzzle: {plan['configurations_per_puzzle']}\n"
+        f"  Distinct puzzle-configuration evaluations: "
+        f"{plan['puzzle_configuration_evaluations']:,}\n"
+        f"  Native executions: {plan['native_solver_executions']:,}\n"
+        f"  Instrumented executions: "
+        f"{plan['instrumented_solver_executions']:,}\n"
+        f"  Section-timing executions: "
+        f"{plan['section_timing_solver_executions']:,}\n"
+        f"  Total solver executions: {plan['total_solver_executions']:,}",
+        flush=True)
+    variants_to_run = variants(puzzles, not args.no_perturb, args.seed,
+                               args.perturb, args.perturb_radius)
+    if all("puzzle_identity" in v for v in variants_to_run):
+        if len(variants_to_run) != plan["puzzle_configuration_evaluations"]:
+            raise ValueError("Generated parameter configurations do not "
+                             "match the preflight evaluation count")
     provenance = {
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                       capture_output=True, text=True).stdout.strip(),
@@ -742,6 +790,7 @@ def main():
             str(size): puzzle_mode({"size": size}, args.max_solutions)
             for size in (7, 8, 9)},
         "puzzles_per_size": counts,
+        "workload_plan": plan,
         "seed": args.seed, "validation_fraction": args.validation_fraction,
         "sampling_strategy": "seeded_symmetry_unique_hash_priority",
         "perturbation_strategy": "one_antithetic_ellipsoid_pair_per_puzzle_all_spsa_parameters",
