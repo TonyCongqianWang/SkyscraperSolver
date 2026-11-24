@@ -38,4 +38,3 @@ int	main(int argc, char **argv)
 	free_solution_storage(&puzzle);
 	return (0);
 }
-
