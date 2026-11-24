@@ -340,6 +340,94 @@ static void bench_constraint_affine(int repeats, int round)
     prepare(7);
 }
 
+/* Measure a genuine successful assignment, excluding only fixture reset cost.
+ * Assignment invokes invalidation and queue operations. These are counted
+ * separately and deliberately NOT subtracted using unrelated time estimates:
+ * the measured assignment cost is inclusive, not a pure exclusive overhead.
+ * Preserve gross and reset times so the overlap is explicit in the record.
+ */
+static void bench_assignment(int repeats, int round)
+{
+    int i, j;
+    double start, reset_seconds, gross_seconds, net_seconds;
+    unsigned long long before_assignment, before_attempts, before_invalids;
+    unsigned long long before_enqueue;
+    t_node_state clean;
+
+    prepare(7);
+    node.domain.num_unset = 49;
+    node.domain.is_invalid = 0;
+    node.domain.is_complete = 0;
+    node.domain.remaining_entropy = compute_max_entropy(7);
+    node.dirty_constrs.count = 0;
+    node.dirty_constrs.in_stack_bmp = 0;
+    for (i = 0; i < 49; i++)
+    {
+        puzzle.grid_constr_map[i][0] = i % 7;
+        puzzle.grid_constr_map[i][1] = 7 + i / 7;
+    }
+    for (i = 0; i < 14; i++)
+    {
+        puzzle.constraint_pairs[i].fwd_val = 0;
+        puzzle.constraint_pairs[i].bwd_val = 0;
+        for (j = 0; j < 7; j++)
+            node.domain.constrs.num_val_positions[i][j] = 7;
+    }
+    /* Exercise the real enqueue path on the assigned row and column. */
+    puzzle.constraint_pairs[0].fwd_val = 1;
+    puzzle.constraint_pairs[7].fwd_val = 1;
+    clean = node;
+
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        node = clean;
+        barrier(&node);
+        sink += (unsigned long long)node.domain.vals[0];
+    }
+    reset_seconds = clock_seconds() - start;
+
+    before_assignment = work_get(WORK_ASSIGNMENT);
+    before_attempts = work_get(WORK_DOMAIN_INVALIDATION_ATTEMPT);
+    before_invalids = work_get(WORK_DOMAIN_INVALIDATION);
+    before_enqueue = work_get(WORK_DIRTY_CONSTRAINT_ENQUEUE);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        node = clean;
+        set_grid_val_internal(&node, 0, 1, 0);
+        barrier(&node);
+        sink += (unsigned long long)node.domain.vals[0];
+    }
+    gross_seconds = clock_seconds() - start;
+    if (node.domain.vals[0] != 1 || node.domain.num_unset != 48
+        || node.domain.is_invalid || node.dirty_constrs.count != 2)
+    {
+        fprintf(stderr, "Assignment microbenchmark invalid final state\n");
+        exit(3);
+    }
+    check_work_units("assignment", WORK_ASSIGNMENT,
+                     before_assignment, (unsigned long long)repeats);
+    check_work_units("assignment_invalidation_attempts",
+                     WORK_DOMAIN_INVALIDATION_ATTEMPT, before_attempts,
+                     18ULL * (unsigned long long)repeats);
+    check_work_units("assignment_domain_invalidations",
+                     WORK_DOMAIN_INVALIDATION, before_invalids,
+                     18ULL * (unsigned long long)repeats);
+    check_work_units("assignment_dirty_enqueues",
+                     WORK_DIRTY_CONSTRAINT_ENQUEUE, before_enqueue,
+                     2ULL * (unsigned long long)repeats);
+    net_seconds = gross_seconds - reset_seconds;
+    printf("WORK_BENCH v1 kind=individual counter=assignment round=%d"
+           " units=%d cpu_seconds=%.12f gross_cpu_seconds=%.12f"
+           " reset_cpu_seconds=%.12f timing_scope=inclusive_assignment"
+           " nested_invalidation_attempts_per_unit=18"
+           " nested_domain_invalidations_per_unit=18"
+           " nested_dirty_enqueues_per_unit=2\n",
+           round, repeats, net_seconds, gross_seconds, reset_seconds);
+    prepare(7);
+}
+
 static void bench_constraint_subtasks(int repeats, int round)
 {
     int i;
@@ -597,6 +685,7 @@ int main(int argc, char **argv)
     bench_compact(repeats, round);
     bench_sort(repeats, round);
     bench_constraint_affine(repeats, round);
+    bench_assignment(repeats, round);
     bench_constraint_subtasks(repeats, round);
     bench_cache_traversals(repeats, round);
     bench_prune_line_scan(repeats, round);

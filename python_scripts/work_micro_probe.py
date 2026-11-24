@@ -251,11 +251,24 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                 if int(fields["round"]) != round_number:
                     raise ValueError("Controlled microbenchmark round mismatch")
                 if fields["kind"] == "individual":
-                    records.append({
+                    record = {
                         "kind": "individual", "counter": fields["counter"],
                         "round": round_number, "units": int(fields["units"]),
                         "cpu_seconds": float(fields["cpu_seconds"]),
-                    })
+                    }
+                    if fields.get("timing_scope") == "inclusive_assignment":
+                        record.update({
+                            "timing_scope": fields["timing_scope"],
+                            "gross_cpu_seconds": float(fields["gross_cpu_seconds"]),
+                            "reset_cpu_seconds": float(fields["reset_cpu_seconds"]),
+                            "nested_invalidation_attempts_per_unit": int(
+                                fields["nested_invalidation_attempts_per_unit"]),
+                            "nested_domain_invalidations_per_unit": int(
+                                fields["nested_domain_invalidations_per_unit"]),
+                            "nested_dirty_enqueues_per_unit": int(
+                                fields["nested_dirty_enqueues_per_unit"]),
+                        })
+                    records.append(record)
                 elif fields["kind"] == "affine":
                     section = fields["section"]
                     if section not in TIMED_SECTIONS:

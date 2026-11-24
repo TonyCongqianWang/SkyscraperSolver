@@ -124,6 +124,16 @@ The controlled microbenchmark uses actual C operations, repeated under
 `-O2 -flto` to amortize timer overhead. The independent section-timing
 check uses SPSA validation puzzles and never changes coefficients.
 Timing disagreements and their source measurements remain visible.
+The controlled harness now also measures real successful `assignment`
+operations. It constructs a consistent, seven-by-seven state and resets
+that state before each operation. The timing subtracts a separately
+measured state-copy baseline, and the instrumented check confirms one
+assignment plus the expected nested invalidation and queue counter
+increments per operation. Both gross and reset timings are retained in
+the raw benchmark records. This is an *inclusive* assignment cost (it
+includes nested invalidation/queue work), **not** an independently
+identified exclusive CPU cost. The report preserves that distinction
+rather than silently asserting that overlapping work has been separated.
 
 ## Output artifacts
 

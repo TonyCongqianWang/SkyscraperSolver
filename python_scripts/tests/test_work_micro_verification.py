@@ -248,7 +248,16 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call",
             "constraint_check_call"})
-        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 25)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 26)
+        assignment = [r for r in report["raw_measurements"]
+                      if r.get("counter") == "assignment"]
+        self.assertEqual(len(assignment), 1)
+        self.assertEqual(assignment[0]["timing_scope"],
+                         "inclusive_assignment")
+        self.assertGreater(assignment[0]["gross_cpu_seconds"],
+                           assignment[0]["reset_cpu_seconds"])
+        self.assertEqual(assignment[0]["nested_invalidation_attempts_per_unit"], 18)
+        self.assertEqual(assignment[0]["nested_dirty_enqueues_per_unit"], 2)
         self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 16)
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]))

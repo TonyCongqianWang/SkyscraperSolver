@@ -219,7 +219,14 @@ class CompactExportTests(unittest.TestCase):
             "max_abs_training_prediction_drift_seconds": None,
         }
         report["warnings"] = ["Unresolved group: unstable micro timing"]
+        allocation["held_out_validation"] = None
+        allocation["held_out_validation_by_size"] = {}
         model = make_compact_model(report)
+        self.assertEqual(model["held_out_score_basis"],
+                         "pooled_merged_regression")
+        self.assertEqual(model["held_out_score"]["mae_seconds"], 0.002)
+        self.assertEqual(model["held_out_score_by_size"]["size7"][
+            "mae_seconds"], 0.002)
         self.assertFalse(model["usable_for_tuning"])
         self.assertEqual(model["status"], "incomplete")
         self.assertIsNone(model["seconds_per_count"]["cache_pair_copy"])

@@ -78,7 +78,9 @@ def make_compact_model(report, source_file=None, created_at=None):
         raise ValueError("Invalid nonnegative intercept")
     if created_at is None:
         created_at = datetime.now(timezone.utc).isoformat()
-    validation = allocation.get("held_out_validation", fit["validation"])
+    allocated_validation = allocation.get("held_out_validation")
+    validation = (allocated_validation if allocated_validation is not None
+                  else fit["validation"])
     score_keys = (
         "samples", "mae_seconds", "r2", "ranking_accuracy",
         "clear_ranking_accuracy", "clear_ranking_coverage",
@@ -87,9 +89,10 @@ def make_compact_model(report, source_file=None, created_at=None):
     )
     score = {name: validation[name] for name in score_keys
              if name in validation}
+    allocated_by_size = allocation.get("held_out_validation_by_size")
     by_size = ({"size" + size: metrics for size, metrics in
-                allocation["held_out_validation_by_size"].items()}
-               if "held_out_validation_by_size" in allocation
+                allocated_by_size.items()}
+               if allocated_by_size is not None and complete
                else report.get("pooled_validation_by_size", {}))
     short_size = {
         name: {metric: metrics.get(metric) for metric in (
@@ -125,6 +128,8 @@ def make_compact_model(report, source_file=None, created_at=None):
             "contrast_weight": model["contrast_weight"],
         },
         "held_out_score": score,
+        "held_out_score_basis": ("allocated_model" if complete
+                                 else "pooled_merged_regression"),
         "held_out_score_by_size": short_size,
         "dropped_counters": sorted(set(names) - seen),
         "coefficient_allocation_method": allocation["method"],
