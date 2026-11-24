@@ -19,6 +19,7 @@
 #include "node_selection_eval.h"
 #include "node_selection_score.h"
 #include "transition_scoring.h"
+#include "solution_storage.h"
 #include "selectivity.h"
 #include "work_instrumentation.h"
 #include <limits.h>
@@ -832,6 +833,94 @@ static void bench_extra_counters(int repeats, int round)
     check_work_units("solution_copy_is_not_instrumented_here",
                      WORK_SOLUTION_COPY, before, 0);
     emit_individual("solution_copy", round, repeats, start);
+
+    /* Actual score-blending operation, with its nontrivial branch active. */
+    prepare(7);
+    cache->items.count = 1;
+    cache->state.lookahead_build_entropy = 100;
+    cache->items.meta[0].cached_br_score = 1.0;
+    cache->items.meta[0].entropy_pos = 30;
+    cache->items.meta[0].entropy_neg = 70;
+    node.domain.remaining_entropy = 100;
+    puzzle.max_entropy = 1000;
+    before = work_get(WORK_LOOKAHEAD_BLEND);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        sink += (unsigned long long)calculate_blended_score(&node, cache, 0);
+        barrier(cache);
+    }
+    check_work_units("lookahead_blend", WORK_LOOKAHEAD_BLEND, before,
+                     (unsigned long long)repeats);
+    emit_individual("lookahead_blend", round, repeats, start);
+
+    /* Provisional rollback is a rare but legitimate event counter. */
+    before = work_get(WORK_PROVISIONAL_SOLUTION_ROLLBACK);
+    start = clock_seconds();
+    for (i = 0; i < repeats; i++)
+    {
+        puzzle.provisional_solution = 1;
+        puzzle.solutions_found = 1;
+        rollback_provisional_solution(&puzzle);
+        barrier(&puzzle);
+    }
+    check_work_units("provisional_solution_rollback",
+                     WORK_PROVISIONAL_SOLUTION_ROLLBACK, before,
+                     (unsigned long long)repeats);
+    emit_individual("provisional_solution_rollback", round, repeats, start);
+
+    /* A successful domain invalidation with real bookkeeping, measured
+     * inclusively. Reset a coherent state so each repetition is comparable.
+     */
+    prepare(7);
+    for (i = 0; i < 49; i++)
+    {
+        puzzle.grid_constr_map[i][0] = i % 7;
+        puzzle.grid_constr_map[i][1] = 7 + i / 7;
+    }
+    for (i = 0; i < 14; i++)
+        for (j = 0; j < 7; j++)
+            node.domain.constrs.num_val_positions[i][j] = 7;
+    {
+        t_node_state clean = node;
+        before = work_get(WORK_DOMAIN_INVALIDATION);
+        start = clock_seconds();
+        for (i = 0; i < repeats; i++)
+        {
+            node = clean;
+            set_value_invalid_internal(&node, 0, 1);
+            barrier(&node);
+            sink += (unsigned long long)node.domain.num_cell_vals[0];
+        }
+        check_work_units("domain_invalidation", WORK_DOMAIN_INVALIDATION,
+                         before, (unsigned long long)repeats);
+        emit_individual("domain_invalidation", round, repeats, start);
+    }
+
+    /* Genuine line scoring. This is an inclusive call-level benchmark:
+     * sorting comparisons also occur, so interpret its estimate carefully.
+     */
+    prepare(7);
+    {
+        t_line_order *order = &puzzle.line_order_stack.orders[0];
+        order->count = 14;
+        for (i = 0; i < 14; i++)
+        {
+            order->entries[i].constr_idx = i;
+            for (j = 0; j < 7; j++)
+                node.domain.constrs.num_val_positions[i][j] = 7;
+        }
+        before = work_get(WORK_LINE_SCORE);
+        start = clock_seconds();
+        for (i = 0; i < repeats; i++)
+        {
+            sort_line_order(&node);
+            barrier(order);
+        }
+        check_work_units("line_score", WORK_LINE_SCORE, before,
+                         14ULL * (unsigned long long)repeats);
+        emit_individual("line_score", round, 14 * repeats, start);
+    }
     prepare(7);
 }
 

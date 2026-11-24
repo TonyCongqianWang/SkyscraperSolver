@@ -284,7 +284,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call",
             "constraint_check_call"})
-        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 33)
+        self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 37)
         assignment = [r for r in report["raw_measurements"]
                       if r.get("counter") == "assignment"]
         self.assertEqual(len(assignment), 1)
@@ -302,7 +302,9 @@ class IndependentMicroVerificationTests(unittest.TestCase):
                     if r["kind"] == "individual"}
         self.assertTrue({"lookahead_scan", "resume_scan", "rescore_scan",
                          "base_score", "rel_entropy_value", "node_copy",
-                         "solution_copy"} <= counters)
+                         "solution_copy", "lookahead_blend",
+                         "provisional_solution_rollback", "domain_invalidation",
+                         "line_score"} <= counters)
         self.assertEqual(report["coverage"]["expected_counters"], 48)
         self.assertNotIn("lookahead_scan", report["coverage"]["not_benchmarked"])
         self.assertTrue(all(r["cpu_seconds"] > 0

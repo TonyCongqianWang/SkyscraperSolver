@@ -125,7 +125,8 @@ ranking and prediction drift only if every split is resolved.
 The controlled microbenchmark covers the previously merged groups plus
 additional genuine operations including `lookahead_scan`, `resume_scan`,
 `rescore_scan`, `base_score`, `rel_entropy_value`, and representative
-node/solution copies. Missing or unidentifiable counters remain visible in
+node/solution copies, score blending, provisional rollback, successful
+domain invalidation, and line scoring. Missing or unidentifiable counters remain visible in
 the 48-counter coverage report instead of being silently assumed timed.
 The `counter_diagnostics` reason distinguishes `not_benchmarked`,
 `insufficient_timing_evidence`, and `unstable`. These are diagnostic
