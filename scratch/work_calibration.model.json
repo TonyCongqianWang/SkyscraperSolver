@@ -1,0 +1,314 @@
+{
+  "coefficient_allocation_method": "post_fit_timing_unmerge_no_regression_refit",
+  "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
+  "counter_schema": "v1",
+  "counter_semantics": "fixed event counts and actual variable volumes",
+  "created_at_utc": "2026-11-24T04:14:03.120717+00:00",
+  "dataset_sha256": {
+    "puzzle_bank/spsa_datasets/le7_train.txt": "70d49362161cc11674c00be325bd3df075f0ccdaa7c169af8ae01215cdf0555a",
+    "puzzle_bank/spsa_datasets/size8_train.txt": "c5d883198516641c6dedea38f755b85762312270fe42b58dcdc76867fd5ff082",
+    "puzzle_bank/spsa_datasets/size9_train.txt": "a4c821694ce5f6b8ee233e2ae0b14ef47694c315804591d15132d180d9fe03ea"
+  },
+  "dropped_counters": [
+    "cache_next_scan",
+    "cache_resume_scan",
+    "domain_scan",
+    "dp_candidate_check",
+    "dp_init_call",
+    "dp_init_write",
+    "dp_prefix_candidate_scan",
+    "dp_prune_value_scan",
+    "dp_suffix_candidate_scan",
+    "next_value_scan",
+    "propagate_dp_update",
+    "provisional_solution_rollback",
+    "resume_scan",
+    "setup_cache_slot"
+  ],
+  "fit": "pooled",
+  "format": "skyscraper-work-model",
+  "format_version": 1,
+  "held_out_score": {
+    "clear_ranking_accuracy": 0.930475279637407,
+    "clear_ranking_coverage": 0.8029180021367521,
+    "clear_ranking_pairs": 24049,
+    "macro_clear_ranking_accuracy": 0.9281823560337419,
+    "mae_seconds": 0.001213482786061276,
+    "r2": 0.99918090892533,
+    "ranking_accuracy": 0.8752003205128205,
+    "samples": 4992,
+    "within_puzzle_mae_seconds": 0.0009046537237294896,
+    "within_puzzle_r2": 0.9906165241277473
+  },
+  "held_out_score_basis": "allocated_model",
+  "held_out_score_by_size": {
+    "size7": {
+      "clear_ranking_accuracy": 0.9833251593918587,
+      "clear_ranking_coverage": 0.8169070512820513,
+      "mae_seconds": 0.0012998396800388693,
+      "r2": 0.9994138725914666,
+      "within_puzzle_r2": 0.9918935669783039
+    },
+    "size8": {
+      "clear_ranking_accuracy": 0.9431552931484278,
+      "clear_ranking_coverage": 0.7294671474358975,
+      "mae_seconds": 0.0003778954301212338,
+      "r2": 0.9955410096227455,
+      "within_puzzle_r2": 0.9868288270932805
+    },
+    "size9": {
+      "clear_ranking_accuracy": 0.8696864111498258,
+      "clear_ranking_coverage": 0.8623798076923077,
+      "mae_seconds": 0.001962713248023725,
+      "r2": 0.9932304558530316,
+      "within_puzzle_r2": 0.9903015804881976
+    }
+  },
+  "hyperparameters": {
+    "contrast_weight": 16,
+    "ridge_alpha": 0
+  },
+  "intercept_seconds": 0.0032585226353100158,
+  "max_solutions_by_size": {
+    "7": 0,
+    "8": 1,
+    "9": 1
+  },
+  "merged_group_allocations": [
+    {
+      "group": "assignment+constraint_check_call+dirty_constraint_enqueue+dirty_constraint_entry",
+      "max_abs_training_prediction_drift_seconds": 0.03528063987047653,
+      "member_cost_ratios": {
+        "assignment": 1,
+        "constraint_check_call": 0.05328385820618139,
+        "dirty_constraint_enqueue": 0.08583920331932764,
+        "dirty_constraint_entry": 0.3172210481520544
+      },
+      "members": [
+        "assignment",
+        "constraint_check_call",
+        "dirty_constraint_enqueue",
+        "dirty_constraint_entry"
+      ],
+      "merged_seconds_per_count": 1.288111480756431e-8,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "assignment": 4.965186338965351e-8,
+        "constraint_check_call": 2.6456428485269866e-9,
+        "dirty_constraint_enqueue": 4.262076396687948e-9,
+        "dirty_constraint_entry": 1.5750616147168504e-8
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "cache_build_candidate+cache_build_cell_scan+setup_cell",
+      "max_abs_training_prediction_drift_seconds": 0,
+      "member_cost_ratios": {
+        "cache_build_candidate": 1,
+        "cache_build_cell_scan": 0.23348255421965933,
+        "setup_cell": 1.3151544062725364
+      },
+      "members": [
+        "cache_build_candidate",
+        "cache_build_cell_scan",
+        "setup_cell"
+      ],
+      "merged_seconds_per_count": 0,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "cache_build_candidate": 0,
+        "cache_build_cell_scan": 0,
+        "setup_cell": 0
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "cache_pair_copy_call+cache_state_copy+line_copy",
+      "max_abs_training_prediction_drift_seconds": 0,
+      "member_cost_ratios": {
+        "cache_pair_copy_call": 1,
+        "cache_state_copy": 2.632323632933373,
+        "line_copy": 4.120485515851219
+      },
+      "members": [
+        "cache_pair_copy_call",
+        "cache_state_copy",
+        "line_copy"
+      ],
+      "merged_seconds_per_count": 0,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "cache_pair_copy_call": 0,
+        "cache_state_copy": 0,
+        "line_copy": 0
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "compact_check+compact_move",
+      "max_abs_training_prediction_drift_seconds": 0.0003511017915050242,
+      "member_cost_ratios": {
+        "compact_check": 1,
+        "compact_move": 0.3035173430626415
+      },
+      "members": [
+        "compact_check",
+        "compact_move"
+      ],
+      "merged_seconds_per_count": 2.5473825973479936e-9,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "compact_check": 3.638950652686522e-9,
+        "compact_move": 1.1044846336394783e-9
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "index_copy_call+index_copy_pair",
+      "max_abs_training_prediction_drift_seconds": 0.00033475834180030084,
+      "member_cost_ratios": {
+        "index_copy_call": 1,
+        "index_copy_pair": 0.37794443944253586
+      },
+      "members": [
+        "index_copy_call",
+        "index_copy_pair"
+      ],
+      "merged_seconds_per_count": 6.0253189170670274e-9,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "index_copy_call": 1.3606033541267108e-8,
+        "index_copy_pair": 5.1423247197905384e-9
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "transition_compare+transition_shift",
+      "max_abs_training_prediction_drift_seconds": 0.00005559744231280195,
+      "member_cost_ratios": {
+        "transition_compare": 1,
+        "transition_shift": 1.0541048752575088
+      },
+      "members": [
+        "transition_compare",
+        "transition_shift"
+      ],
+      "merged_seconds_per_count": 1.440079122784131e-9,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "transition_compare": 1.4037937537848283e-9,
+        "transition_shift": 1.4797458397206264e-9
+      },
+      "status": "resolved"
+    }
+  ],
+  "merged_group_coefficients": {
+    "assignment+constraint_check_call+dirty_constraint_enqueue+dirty_constraint_entry": 1.288111480756431e-8,
+    "base_score": 8.89035207982593e-9,
+    "cache_build_candidate+cache_build_cell_scan+setup_cell": 0,
+    "cache_pair_copy": 1.0845202752941659e-9,
+    "cache_pair_copy_call+cache_state_copy+line_copy": 0,
+    "cell_bound_skip": 0,
+    "compact_check+compact_move": 2.5473825973479936e-9,
+    "constraint_check_cell": 0,
+    "constraint_check_unset_cell": 0,
+    "domain_invalidation": 6.637007077824158e-8,
+    "domain_invalidation_attempt": 1.4100041991963334e-8,
+    "index_copy_call+index_copy_pair": 6.0253189170670274e-9,
+    "line_compare": 0,
+    "line_score": 0,
+    "line_score_value": 0,
+    "line_shift": 3.025618135100449e-8,
+    "lookahead_blend": 2.3670429450217903e-7,
+    "lookahead_scan": 0,
+    "node_copy": 0,
+    "prune_line_scan": 0,
+    "rel_entropy_value": 0,
+    "rescore_scan": 1.3187111855453995e-8,
+    "solution_copy": 4.0728211918369444e-7,
+    "transition_compare+transition_shift": 1.440079122784131e-9
+  },
+  "objective": "predicted_seconds",
+  "regression_held_out_score": {
+    "clear_ranking_accuracy": 0.9303921160963033,
+    "clear_ranking_coverage": 0.8029180021367521,
+    "clear_ranking_pairs": 24049,
+    "macro_clear_ranking_accuracy": 0.9281437793621574,
+    "mae_seconds": 0.0012021065141343084,
+    "minimum_delta_seconds": 0.00005,
+    "noise_excluded_pairs": 5903,
+    "noise_model": "2x median standard errors from native repeated timings",
+    "noise_z": 2,
+    "puzzles_with_clear_comparisons": 384,
+    "r2": 0.9991132019620167,
+    "ranking_accuracy": 0.8751669337606838,
+    "ranking_pairs": 29952,
+    "samples": 4992,
+    "within_puzzle_mae_seconds": 0.0008996756428410702,
+    "within_puzzle_r2": 0.9901596866216654
+  },
+  "seconds_per_count": {
+    "assignment": 4.965186338965351e-8,
+    "base_score": 8.89035207982593e-9,
+    "cache_build_candidate": 0,
+    "cache_build_cell_scan": 0,
+    "cache_next_scan": 0,
+    "cache_pair_copy": 1.0845202752941659e-9,
+    "cache_pair_copy_call": 0,
+    "cache_resume_scan": 0,
+    "cache_state_copy": 0,
+    "cell_bound_skip": 0,
+    "compact_check": 3.638950652686522e-9,
+    "compact_move": 1.1044846336394783e-9,
+    "constraint_check_call": 2.6456428485269866e-9,
+    "constraint_check_cell": 0,
+    "constraint_check_unset_cell": 0,
+    "dirty_constraint_enqueue": 4.262076396687948e-9,
+    "dirty_constraint_entry": 1.5750616147168504e-8,
+    "domain_invalidation": 6.637007077824158e-8,
+    "domain_invalidation_attempt": 1.4100041991963334e-8,
+    "domain_scan": 0,
+    "dp_candidate_check": 0,
+    "dp_init_call": 0,
+    "dp_init_write": 0,
+    "dp_prefix_candidate_scan": 0,
+    "dp_prune_value_scan": 0,
+    "dp_suffix_candidate_scan": 0,
+    "index_copy_call": 1.3606033541267108e-8,
+    "index_copy_pair": 5.1423247197905384e-9,
+    "line_compare": 0,
+    "line_copy": 0,
+    "line_score": 0,
+    "line_score_value": 0,
+    "line_shift": 3.025618135100449e-8,
+    "lookahead_blend": 2.3670429450217903e-7,
+    "lookahead_scan": 0,
+    "next_value_scan": 0,
+    "node_copy": 0,
+    "propagate_dp_update": 0,
+    "provisional_solution_rollback": 0,
+    "prune_line_scan": 0,
+    "rel_entropy_value": 0,
+    "rescore_scan": 1.3187111855453995e-8,
+    "resume_scan": 0,
+    "setup_cache_slot": 0,
+    "setup_cell": 0,
+    "solution_copy": 4.0728211918369444e-7,
+    "transition_compare": 1.4037937537848283e-9,
+    "transition_shift": 1.4797458397206264e-9
+  },
+  "source_calibration_file": "/kaggle/working/SkyscraperSolver/scratch/work_calibration.json",
+  "source_git_commit": "61062436f5fec6e338033c6faff5344a00fac34c",
+  "status": "complete",
+  "training_observations": 14976,
+  "training_sizes": [
+    7,
+    8,
+    9
+  ],
+  "unresolved_counters": [],
+  "unresolved_groups": [],
+  "usable_for_tuning": true,
+  "validation_observations": 4992,
+  "warnings": []
+}
