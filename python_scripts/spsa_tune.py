@@ -622,6 +622,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
         timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
         win_tolerance=args.comparison_win_tolerance,
+        report_work_prediction=getattr(args, 'report_work_prediction', False),
+        work_model_path=getattr(args, 'work_model', DEFAULT_MODEL),
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_train_instances.jsonl'
     )
@@ -636,6 +638,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
         timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
         win_tolerance=args.comparison_win_tolerance,
+        report_work_prediction=getattr(args, 'report_work_prediction', False),
+        work_model_path=getattr(args, 'work_model', DEFAULT_MODEL),
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_val_instances.jsonl'
     )
@@ -850,6 +854,8 @@ def parse_args():
     parser.add_argument("--nodes-time", action="store_const", const=TIME_NODES,
                         dest="objective", help="Tune with measured wall time + search nodes")
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
+    parser.add_argument("--report-work-prediction", action="store_true",
+                        help="Show calibrated work in post-tuning native comparisons")
     parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
                         help="Compact pooled v2 work calibration file")
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")

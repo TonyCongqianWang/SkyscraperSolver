@@ -6,14 +6,27 @@ import subprocess
 import time
 
 
-def parse_output(lines, elapsed):
+def parse_output(lines, elapsed, model=None):
     text = ''.join(lines)
     nodes = re.search(r'^Nodes visited:\s*(\d+)', text, re.M)
     solutions = re.search(r'^(?:Unique )?Solutions found:\s*(\d+)',
                           text, re.M | re.I)
-    return {'seconds': elapsed, 'nodes': int(nodes[1]) if nodes else None,
-            'solutions': int(solutions[1]) if solutions else None,
-            'status': 'ok' if nodes else 'error'}
+    result = {'seconds': elapsed, 'nodes': int(nodes[1]) if nodes else None,
+              'solutions': int(solutions[1]) if solutions else None,
+              'status': 'ok' if nodes else 'error'}
+    if model is not None and result['status'] == 'ok':
+        from tuning_work_runtime import parse_record
+        try:
+            predicted, counter_nodes, counter_solutions = parse_record(
+                text.splitlines(), model)
+            if (counter_nodes != result['nodes']
+                    or counter_solutions != result['solutions']):
+                raise ValueError("Work counters disagree with solver results")
+            result['predicted_seconds'] = predicted
+        except (ValueError, KeyError, TypeError) as exc:
+            result['status'] = 'error'
+            result['prediction_error'] = str(exc)
+    return result
 
 
 def read_instance(proc, timeout):
@@ -40,7 +53,7 @@ def stop_process(proc):
 
 
 def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
-                  warmup=1, timeout=10.0):
+                  warmup=1, timeout=10.0, model=None):
     """Return one record per input, including timeouts and malformed output."""
     if workers < 1 or warmup < 0 or timeout <= 0:
         raise ValueError('workers/timeout must be positive; warmup nonnegative')
@@ -72,7 +85,7 @@ def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
                         text=True, timeout=timeout)
                     lines = result.stdout.splitlines(keepends=True)
                     status = 'ok' if result.returncode == 0 else 'error'
-                row = parse_output(lines, time.perf_counter() - start)
+                row = parse_output(lines, time.perf_counter() - start, model=model)
                 if status != 'ok':
                     row['status'] = status
                 if row['status'] != 'ok':

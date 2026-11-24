@@ -7,16 +7,18 @@ from contextlib import ExitStack
 
 from comparison_measurements import measure_batch
 from param_metadata import PARAMETER_ALIASES, PARAM_METADATA
-from spsa_metrics import get_sgm_shifts
+from spsa_metrics import get_sgm_shifts, shifted_geo_mean
 from comparison_statistics import (DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_PENALTY,
                                    DEFAULT_WIN_TOLERANCE, charged_seconds, summarize,
                                    validate_policy, round_statistics, print_summary)
 from spsa_run_metadata import clue_identity
+from tuning_work_runtime import DEFAULT_MODEL, load_model
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(SCRIPT_DIR)
 
 BIN_BASELINE = os.path.join(ROOT_DIR, "skyscraper_solver_main")
 BIN_TUNABLE = os.path.join(ROOT_DIR, "skyscraper_solver")
+BIN_WORK = os.path.join(ROOT_DIR, "skyscraper_solver_work")
 
 # Paths to datasets
 PATH_S7 = os.path.join(ROOT_DIR, "puzzle_bank", "puzzle_bank7.txt")
@@ -52,7 +54,8 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
                  log_print=print, use_stdin=True, max_workers=4, repeats=2,
                  warmup=1, timeout=DEFAULT_TIMEOUT, size=None, records_file=None,
                  timeout_penalty=DEFAULT_TIMEOUT_PENALTY,
-                 win_tolerance=DEFAULT_WIN_TOLERANCE):
+                 win_tolerance=DEFAULT_WIN_TOLERANCE,
+                 work_model=None, work_binary=BIN_WORK):
     validate_policy(timeout, timeout_penalty, win_tolerance)
     if repeats < 1 or repeats % 2:
         raise ValueError('repeats must be a positive even number for AB/BA balance')
@@ -74,6 +77,54 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
         'Baseline': (baseline_bin, base_env),
         'Optimized': (tunable_bin, tuned_env if tuned_env is not None else base_env),
     }
+    work_report = None
+    if work_model is not None:
+        work_rows = {}
+        for arm, (_, env) in candidates.items():
+            work_rows[arm] = measure_batch(
+                work_binary, opt, clues, env, workers=max_workers,
+                use_stdin=use_stdin, warmup=warmup, timeout=timeout,
+                model=work_model)
+            if records_file:
+                for row in work_rows[arm]:
+                    records_file.write(json.dumps(dict(
+                        row, dataset=label, size=size, options=opt,
+                        arm=arm, measurement="work_prediction",
+                        binary=os.path.basename(work_binary))) + "\n")
+                records_file.flush()
+        pairs = [(a, b) for a, b in zip(
+            work_rows["Baseline"], work_rows["Optimized"])
+            if a["status"] == b["status"] == "ok"
+            and "predicted_seconds" in a and "predicted_seconds" in b]
+        work_report = {
+            "valid_pairs": len(pairs),
+            "total_puzzles": len(clues),
+            "failures": {arm: sum(row["status"] != "ok" for row in values)
+                         for arm, values in work_rows.items()},
+            "model_source": "48-counter pooled work model",
+            "shifted_geo_mean_seconds": None,
+            "change_pct": None,
+        }
+        if pairs:
+            base = shifted_geo_mean([a["predicted_seconds"] for a, _ in pairs],
+                                    shifts[0])
+            tuned = shifted_geo_mean([b["predicted_seconds"] for _, b in pairs],
+                                     shifts[0])
+            work_report["shifted_geo_mean_seconds"] = {
+                "Baseline": base, "Optimized": tuned}
+            work_report["change_pct"] = (
+                (tuned / base - 1.0) * 100 if base > 0 else None)
+        log_print("Predicted work (48-counter model, not wall time):")
+        if work_report["shifted_geo_mean_seconds"] is None:
+            log_print(f"  No valid paired predictions; "
+                      f"{work_report['failures']}")
+        else:
+            change = work_report["change_pct"]
+            change_text = f"{change:+.3f}%" if change is not None else "n/a"
+            log_print(f"  Baseline={base:.8g}s, Optimized={tuned:.8g}s, "
+                      f"change={change_text}; "
+                      f"pairs={len(pairs)}/{len(clues)}; "
+                      f"failures={work_report['failures']}")
     rounds = []
     valid = True
     for repeat in range(repeats):
@@ -89,7 +140,7 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
                     records_file.write(json.dumps(dict(
                         row, dataset=label, size=size, options=opt,
                         repeat=repeat + 1, arm=arm, order=position + 1,
-                        binary=os.path.basename(binary),
+                        binary=os.path.basename(binary), measurement="native",
                         scored_seconds=charged_seconds(row, timeout, timeout_penalty),
                         timeout=timeout, timeout_penalty=timeout_penalty)) + '\n')
                 records_file.flush()
@@ -111,14 +162,15 @@ def evaluate_set(clues, opt, label, baseline_bin, tunable_bin, tuned_env=None,
     if not valid:
         log_print('INVALID comparison: solver errors, missing/misaligned results or mismatched solution counts. '
                   'Performance summary withheld; inspect per-instance records.')
-        return {'label': label, 'valid': False, 'rounds': rounds}
+        return {'label': label, 'valid': False, 'rounds': rounds,
+                'work_prediction': work_report}
     summary, counts = print_summary(rounds, log_print, timeout_penalty, win_tolerance)
     return {'label': label, 'valid': True, 'size': size, 'options': opt,
             'dataset': clue_identity(clues), 'sgm_shifts': shifts,
             'workers': max_workers, 'warmup': warmup, 'summary': summary,
             'timeout': timeout, 'timeout_penalty': timeout_penalty,
             'win_tolerance': win_tolerance, 'counts': counts,
-            'rounds': rounds}
+            'rounds': rounds, 'work_prediction': work_report}
 
 
 def load_tuned_env(winners_path):
@@ -144,7 +196,9 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
                    use_stdin=True, max_workers=4, repeats=2, warmup=1,
                    timeout=DEFAULT_TIMEOUT, size=None, records_path=None,
                    timeout_penalty=DEFAULT_TIMEOUT_PENALTY,
-                   win_tolerance=DEFAULT_WIN_TOLERANCE):
+                   win_tolerance=DEFAULT_WIN_TOLERANCE,
+                   report_work_prediction=False, work_model_path=DEFAULT_MODEL,
+                   work_binary=BIN_WORK):
     """Compare fixed datasets in balanced AB/BA rounds; retain every outcome."""
     validate_policy(timeout, timeout_penalty, win_tolerance)
     if max_workers < 1 or warmup < 0:
@@ -153,6 +207,12 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
         raise ValueError('repeats must be positive and even')
     baseline = resolve_binary_path(baseline_bin)
     tunable = resolve_binary_path(tunable_bin)
+    work_binary = resolve_binary_path(str(work_binary))
+    work_model = load_model(work_model_path)[0] if report_work_prediction else None
+    if report_work_prediction and not os.path.isfile(work_binary):
+        raise FileNotFoundError(
+            f"Instrumented work comparison binary missing: {work_binary}. "
+            "Build with make INSTRUMENT=1 first.")
     if records_path is None:
         records_path = (os.path.splitext(log_path)[0] + '_instances.jsonl'
                         if log_path else os.path.join(ROOT_DIR, 'scratch', 'comparison_instances.jsonl'))
@@ -179,7 +239,8 @@ def run_comparison(validation_tasks, baseline_bin, tunable_bin, tuned_env=None,
                 reports.append(evaluate_set(
                     clues, options, label, baseline, tunable, tuned_env, log_print,
                     use_stdin, max_workers, repeats, warmup, timeout, size, records_file,
-                    timeout_penalty, win_tolerance))
+                    timeout_penalty, win_tolerance,
+                    work_model=work_model, work_binary=work_binary))
         with open(summary_path, 'w') as summary_file:
             json.dump(reports, summary_file, indent=2)
             summary_file.write('\n')
@@ -211,6 +272,12 @@ def main():
     parser.add_argument('--timeout-penalty', type=float, default=DEFAULT_TIMEOUT_PENALTY, help='Timeout runtime multiplier (default: 4, PAR-4)')
     parser.add_argument('--win-tolerance', type=float, default=DEFAULT_WIN_TOLERANCE, help='Relative timing tie/near-best tolerance (default: 0.10)')
     parser.add_argument('--records', default=None, help='Per-instance JSONL output path')
+    parser.add_argument('--report-work-prediction', action='store_true',
+                        help='Also report calibrated work on the matched comparison puzzles')
+    parser.add_argument('--work-model', default=str(DEFAULT_MODEL),
+                        help='48-counter pooled work calibration')
+    parser.add_argument('--work-binary', default=BIN_WORK,
+                        help='Instrumented solver binary')
     args = parser.parse_args()
     if args.max_workers < 1 or args.repeats < 2 or args.repeats % 2 or args.warmup < 0 or args.timeout <= 0:
         parser.error('workers/timeout must be positive, repeats positive and even, warmup nonnegative')
@@ -275,7 +342,9 @@ def main():
         log_path=args.log, use_stdin=not args.no_use_stdin,
         max_workers=args.max_workers, repeats=args.repeats, warmup=args.warmup,
         timeout=args.timeout, size=args.size, records_path=args.records,
-        timeout_penalty=args.timeout_penalty, win_tolerance=args.win_tolerance)
+        timeout_penalty=args.timeout_penalty, win_tolerance=args.win_tolerance,
+        report_work_prediction=args.report_work_prediction,
+        work_model_path=args.work_model, work_binary=args.work_binary)
     if any(not report['valid'] for report in reports):
         sys.exit(1)
 
