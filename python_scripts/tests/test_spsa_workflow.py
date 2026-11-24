@@ -235,7 +235,51 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(records.read_text().splitlines()), 8)
         self.assertTrue((self.directory / 'instances_summary.json').exists())
 
+    def test_optional_work_predictions_are_separate_from_native_timing(self):
+        from unittest.mock import MagicMock
+        from comparison_measurements import parse_output
+        from calibrate_work import COUNTER_NAMES
+        model = {
+            "fit": "pooled", "counter_schema": "v1",
+            "intercept_seconds": 0.001,
+            "seconds_per_count": {name: 1e-9 for name in COUNTER_NAMES}}
+        counters = " ".join(f"{name}={4 if name == 'assignment' else 0}"
+                            for name in COUNTER_NAMES)
+        lines = [
+            f"WORK_COUNTERS v1 solutions=1 nodes=42 {counters}\n",
+            "Solutions found: 1\n", "Nodes visited: 42\n"]
+        parsed = parse_output(lines, 0.02, model=model)
+        self.assertEqual(parsed["status"], "ok")
+        self.assertAlmostEqual(parsed["predicted_seconds"], 0.001000004)
+
+        def batch(binary, options, clues, env, **kwargs):
+            predicted = kwargs.get("model") is not None
+            result = []
+            for i, clue in enumerate(clues):
+                optimized = env.get("EXPERIMENT_ARM") == "optimized"
+                value = 0.9 if optimized else 1.0
+                item = dict(index=i, clue=clue, status="ok",
+                            seconds=value, nodes=42, solutions=1)
+                if predicted:
+                    item["predicted_seconds"] = 0.008 if optimized else 0.01
+                result.append(item)
+            return result
+        with patch.object(comparison, "measure_batch", side_effect=batch), \
+             patch.object(comparison, "default_environment",
+                          return_value={"EXPERIMENT_ARM": "baseline"}), \
+             redirect_stdout(io.StringIO()):
+            report = comparison.evaluate_set(
+                ["a", "b"], "-s 1", "sample", "baseline", "optimized",
+                tuned_env={"EXPERIMENT_ARM": "optimized"},
+                work_model=model, repeats=2, size=9)
+        self.assertTrue(report["valid"])
+        work = report["work_prediction"]
+        self.assertEqual(work["valid_pairs"], 2)
+        self.assertLess(work["change_pct"], 0)
+        self.assertAlmostEqual(report["summary"]["total_time"]["diff_pct"], -10)
+
     def test_comparison_infers_compact_and_delimited_clue_sizes(self):
+
         for clue in ('1' * 28, ' '.join(['1'] * 32), ','.join(['1'] * 36)):
             with self.subTest(clue=clue):
                 row = {'index': 0, 'clue': clue, 'seconds': 1, 'nodes': 100,

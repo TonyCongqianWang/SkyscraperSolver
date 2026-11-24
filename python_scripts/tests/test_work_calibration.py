@@ -92,7 +92,7 @@ class CalibrationModelTests(unittest.TestCase):
                 for i in range(3)]}
 
             def fake_execute(binary, puzzle, mode, timeout,
-                             include_micro=False):
+                             include_micro=False, env=None):
                 return (0.01, 1, 3,
                         counts if str(binary) == "instrumented" else None)
 
@@ -339,25 +339,40 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 8}, None), 1)
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
-    def test_seeded_spsa_perturbations(self):
-        puzzles = [{"size": n} for n in (7, 8, 9)]
+    def test_one_ellipsoid_pair_per_puzzle_perturbs_all_spsa_parameters(self):
+        from param_metadata import PARAM_METADATA, get_active_param_names
+        puzzles = [{"size": size, "identity": f"puzzle-{size}-{i}"}
+                   for size in (7, 8, 9) for i in range(2)]
         configs = calibration.variants(puzzles, True, seed=1234)
-        self.assertEqual(len(configs), 37)
+        self.assertEqual(len(configs), len(puzzles) * 2)
         self.assertEqual(configs, calibration.variants(puzzles, True, seed=1234))
         self.assertNotEqual(configs, calibration.variants(puzzles, True, seed=4321))
-        for n, group in ((7, "le7"), (8, "s8"), (9, "s9")):
-            selected = [c for c in configs
-                        if calibration.applicable(c, {"size": n})]
-            self.assertEqual(len(selected), 13)
-            for pair in range(6):
-                left, right = selected[1 + 2 * pair:3 + 2 * pair]
-                self.assertEqual(set(left["parameters"]),
-                                 set(calibration.PARAMETER_GROUPS[group]))
-                for name in left["parameters"]:
-                    self.assertAlmostEqual(
-                        left["parameters"][name] + right["parameters"][name], 2.0)
-                    self.assertGreater(left["parameters"][name], 0.0)
-                    self.assertGreater(right["parameters"][name], 0.0)
+        for i, puzzle in enumerate(puzzles):
+            left, right = configs[2*i:2*i+2]
+            self.assertEqual(left["puzzle_identity"], puzzle["identity"])
+            self.assertEqual(right["puzzle_identity"], puzzle["identity"])
+            active = get_active_param_names("all", puzzle["size"])
+            self.assertEqual(set(left["parameters"]), active)
+            self.assertEqual(set(right["parameters"]), active)
+            self.assertNotEqual(left["parameters"], right["parameters"])
+            for variant in (left, right):
+                self.assertTrue(calibration.applicable(variant, puzzle))
+                for name, low, high, *_ in PARAM_METADATA:
+                    if name in active:
+                        self.assertGreaterEqual(variant["parameters"][name], low)
+                        self.assertLessEqual(variant["parameters"][name], high)
+            self.assertFalse(calibration.applicable(
+                left, puzzles[(i + 1) % len(puzzles)]))
+        self.assertEqual(len(calibration.variants(puzzles, False, seed=1234)),
+                         len(puzzles))
+
+    def test_runtime_overlay_covers_every_spsa_parameter(self):
+        from param_metadata import PARAM_METADATA, PARAMETER_MAPPING
+        code = calibration.runtime_override_source()
+        self.assertEqual(code.count(" = getenv("), len(PARAM_METADATA))
+        for name, *_ in PARAM_METADATA:
+            self.assertIn(f'getenv("{name}")', code)
+            self.assertIn(PARAMETER_MAPPING[name][1], code)
 
     def test_millisecond_optimizer_retains_second_unit_outputs(self):
         samples = [{"counters": {"setup_cell": i},

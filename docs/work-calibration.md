@@ -35,7 +35,7 @@ code, puzzle selection, splits and parameter variants are reproducible.
 Native runtime measurements and CPU microtimings naturally remain subject
 to machine scheduling and load.
 
-Default sampling draws 512 symmetry-distinct puzzles of each size 7, 8
+Default sampling draws 1,024 symmetry-distinct puzzles of each size 7, 8
 and 9 from the corresponding **active SPSA training datasets**, across
 their entire files:
 
@@ -50,17 +50,31 @@ nested training-only splits select ridge and contrast penalties.
 Independent SPSA validation datasets are used only for the final
 micro-timing verification, not for fitting or regularization selection.
 
-The default configurations consist of a baseline and **six random
-antithetic SPSA-style direction pairs per size**, simultaneously varying
-all six cache/score parameters for that size. Each direction draws signed,
-seeded perturbations of 25% to 75% around the configured defaults.
-There are 13 configurations per size, 19,968 observations in total.
-`--no-perturb` disables parameter perturbations. A fixed `--seed`
-repeats the exact perturbation choices.
+Each distinct puzzle now receives **one independently seeded antithetic
+plus/minus pair**. Every SPSA-active parameter is perturbed, including the
+shared strategy parameters and the math parameters relevant to that size;
+the other-size parameters remain at their defaults. The direction is drawn
+from an ellipsoid in normalized SPSA coordinates and scaled by each
+parameter's SPSA perturbation scale. Its marginal scale is approximately
+`4 * c` (`c=0.03` by default). The high-dimensional sampling includes a
+`sqrt(d)` factor so individual changes do not collapse to zero as the
+number of active parameters grows; legal ranges and linked constraints
+are projected using the same rules as SPSA.
+
+This gives 6,144 unique puzzle–configuration observations by default,
+with exactly two native and two instrumented measurements per observation
+(12,288 native and 12,288 instrumented executions). Timing spreads are
+saved as a simple stability proxy. Native, instrumented and section-timed
+binaries are each compiled only once; a temporary generated runtime
+override constructor applies parameter values through environment variables
+without editing the repository's C source files. The default calibration
+model remains unchanged until a new calibration is run. `--perturb`,
+`--perturb-radius`, `--no-perturb`, and `--seed` configure or reproduce
+these choices.
 
 Size 7 runs full enumeration by default; sizes 8 and 9 run first-solution
-search. `--max-solutions` overrides this. Native time is measured 9
-times per observation by default, instrumentation 3 times, and section
+search. `--max-solutions` overrides this. Native time is measured 2
+times per observation by default, instrumentation 2 times, and section
 timing once. Use `--puzzles-per-size`, `--native-repeats` and
 `--instrumented-repeats` to control the workload.
 
