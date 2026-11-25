@@ -344,19 +344,19 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
     def test_default_workload_doubles_distinct_evaluations(self):
-        sizes = {7: 4000, 8: 4000, 9: 4000}
+        sizes = {7: 3000, 8: 3000, 9: 3000}
         plan = calibration.calibration_workload_plan(
             sizes, perturb=True, native_repeats=2,
             instrumented_repeats=0.5, section_timing=True)
-        self.assertEqual(plan["distinct_puzzles"], 12000)
+        self.assertEqual(plan["distinct_puzzles"], 9000)
         self.assertEqual(plan["configurations_per_puzzle"], 2)
-        self.assertEqual(plan["puzzle_configuration_evaluations"], 24000)
-        self.assertEqual(plan["native_solver_executions"], 48000)
-        self.assertEqual(plan["instrumented_solver_executions"], 12000)
-        self.assertEqual(plan["section_timing_solver_executions"], 24000)
-        self.assertEqual(plan["total_solver_executions"], 84000)
-        for rate, expected in ((0, 0), (0.25, 6000), (1, 24000),
-                               (1.5, 36000), (2, 48000)):
+        self.assertEqual(plan["puzzle_configuration_evaluations"], 18000)
+        self.assertEqual(plan["native_solver_executions"], 36000)
+        self.assertEqual(plan["instrumented_solver_executions"], 9000)
+        self.assertEqual(plan["section_timing_solver_executions"], 18000)
+        self.assertEqual(plan["total_solver_executions"], 63000)
+        for rate, expected in ((0, 0), (0.25, 4500), (1, 18000),
+                               (1.5, 27000), (2, 36000)):
             plan = calibration.calibration_workload_plan(
                 sizes, True, 2, rate, True)
             self.assertEqual(plan["instrumented_solver_executions"], expected)

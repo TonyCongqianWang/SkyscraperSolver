@@ -35,7 +35,7 @@ code, puzzle selection, splits and parameter variants are reproducible.
 Native runtime measurements and CPU microtimings naturally remain subject
 to machine scheduling and load.
 
-Default sampling draws 4,000 symmetry-distinct puzzles of each size 7, 8
+Default sampling draws 3,000 symmetry-distinct puzzles of each size 7, 8
 and 9 from the corresponding **active SPSA training datasets**, across
 their entire files:
 
@@ -61,14 +61,14 @@ parameter's SPSA perturbation scale. Its marginal scale is approximately
 number of active parameters grows; legal ranges and linked constraints
 are projected using the same rules as SPSA.
 
-This gives **24,000 distinct puzzle–configuration observations**
-(12,000 puzzles × two parameter configurations) by default.
+This gives **18,000 distinct puzzle–configuration observations**
+(9,000 puzzles × two parameter configurations) by default.
 Each observation receives two native runtime measurements and one
 section-timed execution, which supplies the authoritative 48 work counters
 and sampled section timings. The plain instrumented binary is used only
 for counter parity checks on a seeded, size-stratified subset by default.
-The default budget is **48,000 native, 24,000 section-timed and 12,000 plain
-instrumented executions** (84,000 solver invocations total, excluding the
+The default budget is **36,000 native, 18,000 section-timed and 9,000 plain
+instrumented executions** (63,000 solver invocations total, excluding the
 independent validation and controlled microbenchmark). Native timing spreads
 are saved as a simple stability proxy. Native solution and node counts must
 agree for every observation; sampled plain runs must match all 48 counters.
