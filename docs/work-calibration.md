@@ -35,7 +35,7 @@ code, puzzle selection, splits and parameter variants are reproducible.
 Native runtime measurements and CPU microtimings naturally remain subject
 to machine scheduling and load.
 
-Default sampling draws 6,656 symmetry-distinct puzzles of each size 7, 8
+Default sampling draws 4,000 symmetry-distinct puzzles of each size 7, 8
 and 9 from the corresponding **active SPSA training datasets**, across
 their entire files:
 
@@ -61,28 +61,38 @@ parameter's SPSA perturbation scale. Its marginal scale is approximately
 number of active parameters grows; legal ranges and linked constraints
 are projected using the same rules as SPSA.
 
-This gives **39,936 distinct puzzle–configuration observations**
-(19,968 puzzles × two parameter configurations) by default—double the
-previous 19,968 observations, not merely double the puzzle count.
-Each observation receives two native and two instrumented measurements:
-**79,872 native and 79,872 instrumented executions**, plus 39,936
-section-timing executions when enabled (199,680 solver invocations total,
-excluding the separately controlled microbenchmark). Timing spreads
-are saved as a simple stability proxy. A preflight log prints this budget
-and fails clearly when any requested puzzle size lacks enough unique
-puzzles rather than silently reducing coverage. Native, instrumented and section-timed
-binaries are each compiled only once; a temporary generated runtime
-override constructor applies parameter values through environment variables
-without editing the repository's C source files. The default calibration
+This gives **24,000 distinct puzzle–configuration observations**
+(12,000 puzzles × two parameter configurations) by default.
+Each observation receives two native runtime measurements and one
+section-timed execution, which supplies the authoritative 48 work counters
+and sampled section timings. The plain instrumented binary is used only
+for counter parity checks on a seeded, size-stratified subset by default.
+The default budget is **48,000 native, 24,000 section-timed and 12,000 plain
+instrumented executions** (84,000 solver invocations total, excluding the
+independent validation and controlled microbenchmark). Native timing spreads
+are saved as a simple stability proxy. Native solution and node counts must
+agree for every observation; sampled plain runs must match all 48 counters.
+A preflight log prints the exact budget and fails clearly when any requested
+puzzle size lacks enough unique puzzles rather than silently reducing
+coverage. Each required binary is compiled only once; a temporary generated
+runtime override constructor applies parameter values through environment
+variables without editing the repository's C source files. The default calibration
 model remains unchanged until a new calibration is run. `--perturb`,
 `--perturb-radius`, `--no-perturb`, and `--seed` configure or reproduce
 these choices.
 
 Size 7 runs full enumeration by default; sizes 8 and 9 run first-solution
-search. `--max-solutions` overrides this. Native time is measured 2
-times per observation by default, instrumentation 2 times, and section
-timing once. Use `--puzzles-per-size`, `--native-repeats` and
-`--instrumented-repeats` to control the workload.
+search. `--max-solutions` overrides this. Use `--puzzles-per-size`,
+`--native-repeats` (minimum 2) and `--instrumented-repeats` (default 0.5)
+to control the workload. With section timing enabled, 0 disables plain
+instrumentation (including its build), 0.5 checks half the observations,
+1 checks every observation, and 2 checks each twice. Other finite
+nonnegative values are supported: the integer part runs for every
+observation; the fractional part selects a deterministic hash-ranked
+subset independently within each size, rounding to the nearest
+observation (half up). Any missing counters or parity mismatch is fatal.
+With `--no-section-timing`, plain instrumentation supplies the counters,
+so rates below 1 are raised to 1 and the fallback is logged.
 
 ## Interruptions, resuming, and timeouts
 
@@ -102,8 +112,12 @@ python3 python_scripts/calibrate_work.py --seed 123456 --resume
 ```
 
 Resume validates puzzle identities, dataset hashes, parameter perturbations,
-run counts and work-counter schemas before reusing records; completed runs
-are not rerun. For a new calibration using the same output file, specify
+the deterministic per-observation parity schedule, run counts and
+work-counter schemas before reusing records; completed runs are not rerun.
+New raw records include the seed, repeat settings, section-timing mode
+and parity-sampling version so changes are rejected. Older journals
+remain supported: pass their original repeat settings explicitly (e.g.
+`--instrumented-repeats 2` for the previous default). For a new calibration using the same output file, specify
 `--fresh` to intentionally discard the existing raw journal. Never use
 `--fresh` when you wish to recover an interrupted run.
 
@@ -204,7 +218,7 @@ For a cheap pipeline check without reliable statistical conclusions:
 ```sh
 python3 python_scripts/calibrate_work.py --seed 42 \
     --puzzles-per-size 4 --native-repeats 3 \
-    --instrumented-repeats 2 --no-perturb --no-micro-verify
+    --instrumented-repeats 0.5 --no-perturb --no-micro-verify
 ```
 
 The standalone microcheck can be invoked with:

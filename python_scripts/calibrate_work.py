@@ -173,6 +173,46 @@ def variants(puzzles, perturb, seed=0, c=CALIBRATION_PERTURB,
     return configs
 
 
+def effective_instrumented_repeats(repeats, section_timing):
+    """Without section timing, every observation still needs counters."""
+    if not math.isfinite(repeats) or repeats < 0:
+        raise ValueError("instrumented-repeats must be finite and nonnegative")
+    return repeats if section_timing else max(1, repeats)
+
+
+def instrumented_repeat_budget(observations, repeats):
+    """Whole repeats plus a nearest-integer (half-up) fractional budget."""
+    whole = int(repeats)
+    return whole * observations + math.floor((repeats - whole) * observations + 0.5)
+
+
+def instrumented_repeat_schedule(puzzles, configurations, repeats,
+                                 section_timing, seed):
+    """Allocate the exact fractional budget per size, independent of run order."""
+    effective = effective_instrumented_repeats(repeats, section_timing)
+    whole = int(effective)
+    by_identity = {}
+    for variant in configurations:
+        by_identity.setdefault(variant.get("puzzle_identity"), []).append(variant)
+    by_size = {}
+    for puzzle in puzzles:
+        selected = (by_identity.get(puzzle["identity"], [])
+                    + by_identity.get(None, []))
+        for variant in selected:
+            key = _raw_run_key(variant["name"], puzzle, "instrumented", 0)[:3]
+            priority = hashlib.sha256(
+                repr((seed, "instrumented-parity-v1", puzzle["identity"],
+                      variant["name"])).encode("utf-8")).digest()
+            by_size.setdefault(puzzle["size"], []).append((priority, key))
+    schedule = {}
+    for observations in by_size.values():
+        extra = instrumented_repeat_budget(len(observations), effective)
+        extra -= whole * len(observations)
+        for index, (_, key) in enumerate(sorted(observations)):
+            schedule[key] = whole + int(index < extra)
+    return schedule
+
+
 def calibration_workload_plan(puzzle_counts, perturb, native_repeats,
                               instrumented_repeats, section_timing):
     """Count puzzle-parameter observations separately from exact repeats."""
@@ -180,7 +220,10 @@ def calibration_workload_plan(puzzle_counts, perturb, native_repeats,
     per_puzzle = 2 if perturb else 1
     observations = puzzles * per_puzzle
     native = observations * native_repeats
-    instrumented = observations * instrumented_repeats
+    effective = effective_instrumented_repeats(
+        instrumented_repeats, section_timing)
+    instrumented = sum(instrumented_repeat_budget(count * per_puzzle, effective)
+                       for count in puzzle_counts.values())
     section = observations if section_timing else 0
     return {
         "puzzles_by_size": {str(size): count
@@ -571,9 +614,18 @@ def _outcome_from_raw(event):
     return result
 
 
+def calibration_run_plan(seed, native_repeats, instrumented_repeats,
+                         section_timing):
+    """Record the schedule inputs in new journal entries."""
+    return {"seed": seed, "native_repeats": native_repeats,
+            "instrumented_repeats": instrumented_repeats,
+            "section_timing": section_timing,
+            "parity_sampling": "seeded_size_stratified_hash_v1"}
+
+
 def load_completed_runs(path, puzzles, configurations, max_solutions,
                         native_repeats, instrumented_repeats,
-                        section_timing):
+                        section_timing, seed=0):
     """Recover completed individual invocations, including partial puzzles.
 
     Fail closed if a journal entry does not belong to this exact sampled
@@ -582,6 +634,10 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
     """
     by_puzzle = {(p["dataset"], p["line"]): p for p in puzzles}
     by_configuration = {v["name"]: v for v in configurations}
+    schedule = instrumented_repeat_schedule(
+        puzzles, configurations, instrumented_repeats, section_timing, seed)
+    run_plan = calibration_run_plan(
+        seed, native_repeats, instrumented_repeats, section_timing)
     completed = {}
     with path.open(encoding="utf-8") as source:
         for line_number, line in enumerate(source, 1):
@@ -593,8 +649,11 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
                 puzzle = by_puzzle[(event["dataset"], event["line"])]
                 kind = event["run_type"]
                 repeat = event["run_index"]
+                key = _raw_run_key(configuration["name"], puzzle, kind, repeat)
+                if "run_plan" in event and event["run_plan"] != run_plan:
+                    raise ValueError("mismatched calibration run plan")
                 limit = {"native": native_repeats,
-                         "instrumented": instrumented_repeats,
+                         "instrumented": schedule.get(key[:3], 0),
                          "micro": 1 if section_timing else 0}[kind]
                 if (type(repeat) is not int or not 0 <= repeat < limit
                         or event["dataset_sha256"] != puzzle["dataset_sha256"]
@@ -623,7 +682,6 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
                         or any(type(event[name]) is not int or event[name] < 0
                                for name in ("solutions", "nodes"))):
                     raise ValueError("invalid solver measurement")
-                key = _raw_run_key(configuration["name"], puzzle, kind, repeat)
                 if key in completed:
                     raise ValueError("duplicate solver invocation")
                 completed[key] = event
@@ -635,6 +693,40 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
     return completed
 
 
+def measure_observation(run_or_reuse, instr, native, micro,
+                        scheduled_repeats, native_repeats):
+    """Use section-timed counters; plain runs only check parity or supply fallback."""
+    micro_sections = []
+    first = None
+    if micro is not None:
+        timed = run_or_reuse("micro", 0, micro, include_micro=True)
+        first, micro_sections = timed[:4], timed[4]
+        if first[3] is None:
+            raise RuntimeError("Section-timed build missing work counters")
+    instrumented = []
+    for repeat in range(scheduled_repeats):
+        result = run_or_reuse("instrumented", repeat, instr)
+        if result[3] is None:
+            raise RuntimeError("Instrumented build missing work counters")
+        if first is None:
+            first = result
+        elif result[1:4] != first[1:4]:
+            raise RuntimeError("Instrumented counter parity mismatch")
+        instrumented.append(result)
+    if first is None:
+        raise RuntimeError("No work counter source for observation")
+    times = []
+    for repeat in range(native_repeats):
+        seconds, native_sols, native_nodes, no_counts = run_or_reuse(
+            "native", repeat, native)
+        if (native_sols, native_nodes) != first[1:3]:
+            raise RuntimeError("Instrumented and native search results differ")
+        if no_counts is not None:
+            raise RuntimeError("Native build contains counter output")
+        times.append(seconds)
+    return first, times, instrumented, micro_sections
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", default=None,
@@ -643,7 +735,10 @@ def main():
                         default=4000, dest="puzzles_per_size",
                         help="Symmetry-distinct puzzles per size (default 4000)")
     parser.add_argument("--native-repeats", type=int, default=2)
-    parser.add_argument("--instrumented-repeats", type=int, default=2)
+    parser.add_argument("--instrumented-repeats", type=float, default=0.5,
+                        help="Plain instrumented repeats per observation "
+                             "(default 0.5); fractional repeats sample a seeded "
+                             "subset, minimum one without section timing")
     parser.add_argument("--no-section-timing", action="store_true",
                         help="Skip sampled CPU section timing and plausibility check")
     parser.add_argument("--no-micro-verify", action="store_true",
@@ -701,9 +796,13 @@ def main():
         parser.error("micro-puzzles-per-size must be >= 1")
     if args.micro_repeats < 1000 or args.micro_rounds < 3:
         parser.error("micro-repeats >= 1000 and micro-rounds >= 3 required")
-    if (args.puzzles_per_size < 1 or args.native_repeats < 2
-            or args.instrumented_repeats < 2):
-        parser.error("puzzles-per-size must be >= 1 and repeats >= 2")
+    if args.puzzles_per_size < 1 or args.native_repeats < 2:
+        parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
+    if not math.isfinite(args.instrumented_repeats) or args.instrumented_repeats < 0:
+        parser.error("instrumented-repeats must be finite and nonnegative")
+    if args.no_section_timing and args.instrumented_repeats < 1:
+        print("Section timing disabled: using one plain instrumented run "
+              "per observation to supply work counters", flush=True)
     if (not math.isfinite(args.ranking_noise_z) or args.ranking_noise_z < 0
             or not math.isfinite(args.ranking_min_delta_seconds)
             or args.ranking_min_delta_seconds < 0):
@@ -763,6 +862,14 @@ def main():
         if len(variants_to_run) != plan["puzzle_configuration_evaluations"]:
             raise ValueError("Generated parameter configurations do not "
                              "match the preflight evaluation count")
+    schedule = instrumented_repeat_schedule(
+        puzzles, variants_to_run, args.instrumented_repeats,
+        not args.no_section_timing, args.seed)
+    if sum(schedule.values()) != plan["instrumented_solver_executions"]:
+        raise ValueError("Generated instrumentation schedule does not match preflight")
+    run_plan = calibration_run_plan(
+        args.seed, args.native_repeats, args.instrumented_repeats,
+        not args.no_section_timing)
     provenance = {
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                       capture_output=True, text=True).stdout.strip(),
@@ -774,6 +881,10 @@ def main():
         "datasets": sorted({(p["dataset"], p["dataset_sha256"]) for p in puzzles}),
         "native_repeats": args.native_repeats,
         "instrumented_repeats": args.instrumented_repeats,
+        "effective_instrumented_repeats": effective_instrumented_repeats(
+            args.instrumented_repeats, not args.no_section_timing),
+        "parity_sampling": run_plan["parity_sampling"],
+        "counter_source": "instrumented" if args.no_section_timing else "micro",
         "section_timing": not args.no_section_timing,
         "micro_verification_enabled": not args.no_micro_verify,
         "solver_timeout_seconds": args.timeout,
@@ -812,7 +923,7 @@ def main():
         completed = load_completed_runs(
             raw_path, puzzles, variants_to_run, args.max_solutions,
             args.native_repeats, args.instrumented_repeats,
-            not args.no_section_timing)
+            not args.no_section_timing, seed=args.seed)
         print(f"Resuming {len(completed)} completed solver runs from "
               f"{raw_path}", flush=True)
     else:
@@ -835,7 +946,9 @@ def main():
         with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
             build_dir = Path(directory)
             fixed = {"name": "calibration", "parameters": {}}
-            instr, instr_cmd = build(build_dir, fixed, True, args.cc, [])
+            instr = None
+            if plan["instrumented_solver_executions"]:
+                instr, instr_cmd = build(build_dir, fixed, True, args.cc, [])
             native, native_cmd = build(build_dir, fixed, False, args.cc, [])
             micro = None
             if not args.no_section_timing:
@@ -861,6 +974,7 @@ def main():
                             "line": p["line"], "identity": p["identity"],
                             "size": p["size"], "max_solutions": mode,
                             "run_type": kind,
+                            "run_plan": run_plan,
                             "instrumented": kind != "native",
                             "run_index": repeat, "elapsed_seconds": elapsed,
                             "solutions": solutions, "nodes": nodes,
@@ -881,30 +995,10 @@ def main():
                         record(kind, repeat, result)
                         return result
 
-                    instrumented = []
-                    for repeat in range(args.instrumented_repeats):
-                        result = run_or_reuse("instrumented", repeat, instr)
-                        if instrumented and instrumented[0][1:] != result[1:]:
-                            raise RuntimeError(
-                                f"Nondeterministic counters: {p['dataset']}:{p['line']}")
-                        instrumented.append(result)
-                    first = instrumented[0]
-                    times = []
-                    for repeat in range(args.native_repeats):
-                        result = run_or_reuse("native", repeat, native)
-                        seconds, native_sols, native_nodes, no_counts = result
-                        if (native_sols, native_nodes) != first[1:3]:
-                            raise RuntimeError("Instrumented and native search results differ")
-                        if no_counts is not None:
-                            raise RuntimeError("Native build contains counter output")
-                        times.append(seconds)
-                    micro_sections = []
-                    if micro is not None:
-                        timed = run_or_reuse("micro", 0, micro, include_micro=True)
-                        if timed[1:4] != first[1:4]:
-                            raise RuntimeError(
-                                "Timed instrumentation changed solver results or counters")
-                        micro_sections = timed[4]
+                    key = _raw_run_key(variant["name"], p, "instrumented", 0)[:3]
+                    first, times, instrumented, micro_sections = measure_observation(
+                        run_or_reuse, instr, native, micro, schedule[key],
+                        args.native_repeats)
                     rows.append({
                         "configuration": variant["name"],
                         "parameters": variant["parameters"],
@@ -915,6 +1009,7 @@ def main():
                         "grid": p["grid"], "max_solutions": mode,
                         "solutions": first[1], "nodes": first[2],
                         "counters": first[3],
+                        "counter_source": "micro" if micro is not None else "instrumented",
                         "native_times_seconds": times,
                         "instrumented_times_seconds": [r[0] for r in instrumented],
                         "micro_sections": micro_sections,

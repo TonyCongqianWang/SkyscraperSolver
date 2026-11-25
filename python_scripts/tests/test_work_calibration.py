@@ -111,7 +111,7 @@ class CalibrationModelTests(unittest.TestCase):
 
             argv = ["calibrate_work.py", "--dataset", "dummy.txt",
                     "--puzzles-per-size", "2", "--native-repeats", "2",
-                    "--instrumented-repeats", "2", "--no-perturb",
+                    "--no-perturb",
                     "--no-section-timing", "--micro-repeats", "1000",
                     "--micro-rounds", "3", "--seed", "1234",
                     "--output", str(output)]
@@ -148,6 +148,10 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertEqual(detail["micro_verification_status"],
                              "completed_with_unresolved_allocation")
             self.assertEqual(len(detail["samples"]), 2)
+            self.assertEqual(detail["provenance"]["instrumented_repeats"], 0.5)
+            self.assertEqual(detail["provenance"]["effective_instrumented_repeats"], 1)
+            self.assertTrue(all(row["counter_source"] == "instrumented"
+                                for row in detail["samples"]))
             self.assertIsNone(detail["samples"][0]["predictions_seconds"][
                 "pooled_allocated"])
             self.assertIn("assignment", detail["warnings"][0])
@@ -155,7 +159,7 @@ class CalibrationModelTests(unittest.TestCase):
             self.assertFalse(model["usable_for_tuning"])
             self.assertIsNone(model["seconds_per_count"]["assignment"])
             self.assertEqual(len(output.with_suffix(".raw.jsonl").
-                                 read_text().splitlines()), 8)
+                                 read_text().splitlines()), 6)
 
     def test_work_counter_names_describe_current_operations(self):
         from tuning_work_runtime import DEFAULT_MODEL
@@ -340,22 +344,140 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
     def test_default_workload_doubles_distinct_evaluations(self):
-        sizes = {7: 6656, 8: 6656, 9: 6656}
+        sizes = {7: 4000, 8: 4000, 9: 4000}
         plan = calibration.calibration_workload_plan(
             sizes, perturb=True, native_repeats=2,
-            instrumented_repeats=2, section_timing=True)
-        self.assertEqual(plan["distinct_puzzles"], 19968)
+            instrumented_repeats=0.5, section_timing=True)
+        self.assertEqual(plan["distinct_puzzles"], 12000)
         self.assertEqual(plan["configurations_per_puzzle"], 2)
-        self.assertEqual(plan["puzzle_configuration_evaluations"], 39936)
-        self.assertEqual(plan["native_solver_executions"], 79872)
-        self.assertEqual(plan["instrumented_solver_executions"], 79872)
-        self.assertEqual(plan["section_timing_solver_executions"], 39936)
-        self.assertEqual(plan["total_solver_executions"], 199680)
-        no_perturb_plan = calibration.calibration_workload_plan(
-            {8: 2}, perturb=False, native_repeats=2,
-            instrumented_repeats=2, section_timing=False)
-        self.assertEqual(no_perturb_plan["puzzle_configuration_evaluations"], 2)
-        self.assertEqual(no_perturb_plan["total_solver_executions"], 8)
+        self.assertEqual(plan["puzzle_configuration_evaluations"], 24000)
+        self.assertEqual(plan["native_solver_executions"], 48000)
+        self.assertEqual(plan["instrumented_solver_executions"], 12000)
+        self.assertEqual(plan["section_timing_solver_executions"], 24000)
+        self.assertEqual(plan["total_solver_executions"], 84000)
+        for rate, expected in ((0, 0), (0.25, 6000), (1, 24000),
+                               (1.5, 36000), (2, 48000)):
+            plan = calibration.calibration_workload_plan(
+                sizes, True, 2, rate, True)
+            self.assertEqual(plan["instrumented_solver_executions"], expected)
+        for rate in (0, 0.5, 1):
+            plan = calibration.calibration_workload_plan(
+                {8: 2}, False, 2, rate, False)
+            self.assertEqual(plan["total_solver_executions"], 6)
+        for rate in (-1, float("nan"), float("inf")):
+            with self.assertRaises(ValueError):
+                calibration.calibration_workload_plan(sizes, True, 2, rate, True)
+
+    def test_fractional_parity_schedule_is_seeded_stratified_and_order_independent(self):
+        puzzles = [{"size": size, "identity": f"{size}-{i}",
+                    "dataset": f"size{size}", "line": i}
+                   for size in (7, 8, 9) for i in range(5)]
+        configs = [{"name": p["identity"], "puzzle_identity": p["identity"]}
+                   for p in puzzles]
+        schedule = calibration.instrumented_repeat_schedule
+        for rate, per_size in ((0, 0), (0.25, 1), (0.5, 3), (1, 5),
+                               (1.5, 8), (2, 10)):
+            chosen = schedule(puzzles, configs, rate, True, 42)
+            self.assertEqual(chosen, schedule(
+                list(reversed(puzzles)), list(reversed(configs)), rate, True, 42))
+            for size in (7, 8, 9):
+                self.assertEqual(sum(n for key, n in chosen.items()
+                                     if key[1] == f"size{size}"), per_size)
+        self.assertNotEqual(schedule(puzzles, configs, 0.5, True, 42),
+                            schedule(puzzles, configs, 0.5, True, 43))
+        self.assertEqual(set(schedule(puzzles, configs, 0, False, 42).values()), {1})
+
+    def test_section_timed_counters_authoritative_and_parity_optional(self):
+        counts = dict.fromkeys(calibration.COUNTER_NAMES, 1)
+        calls = []
+
+        def run(kind, repeat, binary, include_micro=False):
+            calls.append((kind, repeat))
+            if kind == "micro":
+                self.assertTrue(include_micro)
+                return (9.0, 1, 3, counts, ["section"])
+            if kind == "instrumented":
+                return (7.0, 1, 3, dict(counts))
+            return (0.01, 1, 3, None)
+
+        for repeats in (0, 1, 2):
+            calls.clear()
+            first, times, plain, sections = calibration.measure_observation(
+                run, "plain", "native", "timed", repeats, 2)
+            self.assertIs(first[3], counts)
+            self.assertEqual(first[0], 9.0)
+            self.assertEqual(times, [0.01, 0.01])
+            self.assertEqual(len(plain), repeats)
+            self.assertEqual(sections, ["section"])
+            self.assertEqual(calls, [("micro", 0)] +
+                             [("instrumented", i) for i in range(repeats)] +
+                             [("native", 0), ("native", 1)])
+        first, times, plain, sections = calibration.measure_observation(
+            run, "plain", "native", None, 1, 2)
+        self.assertEqual(first[3], counts)
+        self.assertEqual(len(plain), 1)
+        self.assertEqual(sections, [])
+
+        def mismatch(kind, repeat, binary, include_micro=False):
+            if kind == "instrumented":
+                return (7.0, 1, 3, dict(counts, assignment=2))
+            return run(kind, repeat, binary, include_micro)
+
+        with self.assertRaisesRegex(RuntimeError, "parity mismatch"):
+            calibration.measure_observation(
+                mismatch, "plain", "native", "timed", 1, 2)
+
+        def missing(kind, repeat, binary, include_micro=False):
+            return (9.0, 1, 3, None, [])
+
+        with self.assertRaisesRegex(RuntimeError, "missing work counters"):
+            calibration.measure_observation(
+                missing, None, "native", "timed", 0, 2)
+
+    def test_fractional_journal_rejects_unscheduled_runs_and_changed_plan(self):
+        puzzles = [{"size": 8, "identity": f"p{i}", "dataset": "dummy.txt",
+                    "dataset_sha256": "abc", "line": i} for i in range(4)]
+        variants = [{"name": p["identity"], "puzzle_identity": p["identity"],
+                     "parameters": {}} for p in puzzles]
+        schedule = calibration.instrumented_repeat_schedule(
+            puzzles, variants, 0.5, True, 42)
+        run_plan = calibration.calibration_run_plan(42, 2, 0.5, True)
+        counts = dict.fromkeys(calibration.COUNTER_NAMES, 0)
+
+        def event(p, kind):
+            value = {"configuration": p["identity"], "parameters": {},
+                     "dataset": p["dataset"], "dataset_sha256": "abc",
+                     "line": p["line"], "identity": p["identity"], "size": 8,
+                     "max_solutions": 1, "run_type": kind, "run_index": 0,
+                     "elapsed_seconds": 0.01, "solutions": 1, "nodes": 3,
+                     "counters": counts, "run_plan": run_plan}
+            if kind == "micro":
+                value["micro_sections"] = []
+            return value
+
+        chosen = next(p for p in puzzles if schedule[
+            (p["identity"], p["dataset"], p["line"])])
+        skipped = next(p for p in puzzles if not schedule[
+            (p["identity"], p["dataset"], p["line"])])
+        with tempfile.TemporaryDirectory() as temp:
+            journal = Path(temp) / "measurements.raw.jsonl"
+
+            def write(*events):
+                journal.write_text("".join(json.dumps(e) + "\n" for e in events))
+
+            def load(rate=0.5, seed=42):
+                return calibration.load_completed_runs(
+                    journal, puzzles, variants, None, 2, rate, True, seed)
+
+            write(event(chosen, "instrumented"), event(skipped, "micro"))
+            self.assertEqual(len(load()), 2)
+            with self.assertRaisesRegex(ValueError, "run plan"):
+                load(rate=1)
+            with self.assertRaisesRegex(ValueError, "run plan"):
+                load(seed=43)
+            write(event(skipped, "instrumented"))
+            with self.assertRaisesRegex(ValueError, "mismatched"):
+                load()
 
     def test_one_ellipsoid_pair_per_puzzle_perturbs_all_spsa_parameters(self):
         from param_metadata import PARAM_METADATA, get_active_param_names
