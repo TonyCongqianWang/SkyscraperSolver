@@ -640,8 +640,8 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=6656, dest="puzzles_per_size",
-                        help="Symmetry-distinct puzzles per size (default 6656)")
+                        default=4000, dest="puzzles_per_size",
+                        help="Symmetry-distinct puzzles per size (default 4000)")
     parser.add_argument("--native-repeats", type=int, default=2)
     parser.add_argument("--instrumented-repeats", type=int, default=2)
     parser.add_argument("--no-section-timing", action="store_true",
