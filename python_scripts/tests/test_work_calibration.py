@@ -344,22 +344,23 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
     def test_default_workload_doubles_distinct_evaluations(self):
-        sizes = {7: 3000, 8: 3000, 9: 3000}
+        sizes = {7: 2000, 8: 2000, 9: 2000}
         plan = calibration.calibration_workload_plan(
             sizes, perturb=True, native_repeats=2,
             instrumented_repeats=0.5, section_timing=True)
-        self.assertEqual(plan["distinct_puzzles"], 9000)
+        self.assertEqual(plan["distinct_puzzles"], 6000)
         self.assertEqual(plan["configurations_per_puzzle"], 2)
-        self.assertEqual(plan["puzzle_configuration_evaluations"], 18000)
-        self.assertEqual(plan["native_solver_executions"], 36000)
-        self.assertEqual(plan["instrumented_solver_executions"], 9000)
-        self.assertEqual(plan["section_timing_solver_executions"], 18000)
-        self.assertEqual(plan["total_solver_executions"], 63000)
-        for rate, expected in ((0, 0), (0.25, 4500), (1, 18000),
-                               (1.5, 27000), (2, 36000)):
+        self.assertEqual(plan["puzzle_configuration_evaluations"], 12000)
+        self.assertEqual(plan["native_solver_executions"], 24000)
+        self.assertEqual(plan["instrumented_solver_executions"], 6000)
+        self.assertEqual(plan["section_timing_solver_executions"], 6000)
+        self.assertEqual(plan["total_solver_executions"], 36000)
+        for rate, expected in ((0, 6000), (0.25, 6000), (1, 12000),
+                               (1.5, 18000), (2, 24000)):
             plan = calibration.calibration_workload_plan(
                 sizes, True, 2, rate, True)
             self.assertEqual(plan["instrumented_solver_executions"], expected)
+            self.assertEqual(plan["section_timing_solver_executions"], 6000)
         for rate in (0, 0.5, 1):
             plan = calibration.calibration_workload_plan(
                 {8: 2}, False, 2, rate, False)
@@ -368,24 +369,39 @@ class CalibrationModelTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 calibration.calibration_workload_plan(sizes, True, 2, rate, True)
 
-    def test_fractional_parity_schedule_is_seeded_stratified_and_order_independent(self):
+    def test_paired_section_schedule_is_seeded_and_order_independent(self):
         puzzles = [{"size": size, "identity": f"{size}-{i}",
                     "dataset": f"size{size}", "line": i}
                    for size in (7, 8, 9) for i in range(5)]
-        configs = [{"name": p["identity"], "puzzle_identity": p["identity"]}
-                   for p in puzzles]
+        configs = [{"name": p["identity"] + sign, "puzzle_identity": p["identity"]}
+                   for p in puzzles for sign in ("_plus", "_minus")]
+        sections = calibration.section_timing_schedule
         schedule = calibration.instrumented_repeat_schedule
-        for rate, per_size in ((0, 0), (0.25, 1), (0.5, 3), (1, 5),
-                               (1.5, 8), (2, 10)):
+        timed = sections(puzzles, configs, True, 42)
+        self.assertEqual(len(timed), 15)
+        self.assertEqual(timed, sections(
+            list(reversed(puzzles)), list(reversed(configs)), True, 42))
+        self.assertNotEqual(timed, sections(puzzles, configs, True, 43))
+        for p in puzzles:
+            self.assertEqual(sum(key[1:] == (p["dataset"], p["line"])
+                                 for key in timed), 1)
+        for rate, per_size in ((0, 5), (0.25, 5), (0.5, 5), (1, 10),
+                               (1.5, 15), (2, 20)):
             chosen = schedule(puzzles, configs, rate, True, 42)
             self.assertEqual(chosen, schedule(
                 list(reversed(puzzles)), list(reversed(configs)), rate, True, 42))
             for size in (7, 8, 9):
                 self.assertEqual(sum(n for key, n in chosen.items()
                                      if key[1] == f"size{size}"), per_size)
-        self.assertNotEqual(schedule(puzzles, configs, 0.5, True, 42),
-                            schedule(puzzles, configs, 0.5, True, 43))
+            self.assertTrue(all(n or key in timed for key, n in chosen.items()))
+            if rate <= 0.5:
+                self.assertTrue(all(n == int(key not in timed)
+                                    for key, n in chosen.items()))
         self.assertEqual(set(schedule(puzzles, configs, 0, False, 42).values()), {1})
+        self.assertFalse(sections(puzzles, configs, False, 42))
+        singles = configs[::2]
+        self.assertEqual(len(sections(puzzles, singles, True, 42)), 9)
+        self.assertEqual(sum(schedule(puzzles, singles, 0.5, True, 42).values()), 9)
 
     def test_section_timed_counters_authoritative_and_parity_optional(self):
         counts = dict.fromkeys(calibration.COUNTER_NAMES, 1)
@@ -477,6 +493,13 @@ class CalibrationModelTests(unittest.TestCase):
                 load(seed=43)
             write(event(skipped, "instrumented"))
             with self.assertRaisesRegex(ValueError, "mismatched"):
+                load()
+            write(event(chosen, "micro"))
+            with self.assertRaisesRegex(ValueError, "mismatched"):
+                load()
+            old_plan = dict(run_plan, parity_sampling="seeded_size_stratified_hash_v1")
+            write(dict(event(chosen, "instrumented"), run_plan=old_plan))
+            with self.assertRaisesRegex(ValueError, "run plan"):
                 load()
 
     def test_one_ellipsoid_pair_per_puzzle_perturbs_all_spsa_parameters(self):

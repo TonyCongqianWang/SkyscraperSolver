@@ -35,7 +35,7 @@ code, puzzle selection, splits and parameter variants are reproducible.
 Native runtime measurements and CPU microtimings naturally remain subject
 to machine scheduling and load.
 
-Default sampling draws 3,000 symmetry-distinct puzzles of each size 7, 8
+Default sampling draws 2,000 symmetry-distinct puzzles of each size 7, 8
 and 9 from the corresponding **active SPSA training datasets**, across
 their entire files:
 
@@ -61,17 +61,20 @@ parameter's SPSA perturbation scale. Its marginal scale is approximately
 number of active parameters grows; legal ranges and linked constraints
 are projected using the same rules as SPSA.
 
-This gives **18,000 distinct puzzle–configuration observations**
-(9,000 puzzles × two parameter configurations) by default.
-Each observation receives two native runtime measurements and one
-section-timed execution, which supplies the authoritative 48 work counters
-and sampled section timings. The plain instrumented binary is used only
-for counter parity checks on a seeded, size-stratified subset by default.
-The default budget is **36,000 native, 18,000 section-timed and 9,000 plain
-instrumented executions** (63,000 solver invocations total, excluding the
+This gives **12,000 distinct puzzle–configuration observations**
+(6,000 puzzles × two parameter configurations) by default.
+Each observation receives two native runtime measurements and exactly one
+counter-producing execution. For every antithetic pair, a seed-dependent
+hash selects one member for section timing; the other uses plain
+instrumentation. Both supply the full 48 work counters. Section timing
+therefore covers exactly half the observations without sacrificing any
+counter coverage or fitting observations.
+The default budget is **24,000 native, 6,000 section-timed and 6,000 plain
+instrumented executions** (36,000 solver invocations total, excluding the
 independent validation and controlled microbenchmark). Native timing spreads
 are saved as a simple stability proxy. Native solution and node counts must
-agree for every observation; sampled plain runs must match all 48 counters.
+agree for every observation. Extra plain runs on timed observations, if
+requested, must match all 48 counters.
 A preflight log prints the exact budget and fails clearly when any requested
 puzzle size lacks enough unique puzzles rather than silently reducing
 coverage. Each required binary is compiled only once; a temporary generated
@@ -84,15 +87,19 @@ these choices.
 Size 7 runs full enumeration by default; sizes 8 and 9 run first-solution
 search. `--max-solutions` overrides this. Use `--puzzles-per-size`,
 `--native-repeats` (minimum 2) and `--instrumented-repeats` (default 0.5)
-to control the workload. With section timing enabled, 0 disables plain
-instrumentation (including its build), 0.5 checks half the observations,
-1 checks every observation, and 2 checks each twice. Other finite
-nonnegative values are supported: the integer part runs for every
-observation; the fractional part selects a deterministic hash-ranked
-subset independently within each size, rounding to the nearest
-observation (half up). Any missing counters or parity mismatch is fatal.
-With `--no-section-timing`, plain instrumentation supplies the counters,
-so rates below 1 are raised to 1 and the fallback is logged.
+to control the workload. With section timing enabled, rates below 0.5
+are raised to 0.5 to guarantee counter coverage. The default 0.5 uses
+one plain and one section-timed execution per pair. A rate of 1 adds a
+plain parity check to each timed observation; higher rates add repeats.
+Fractional extra runs are hash-ranked independently within each size,
+rounding the total plain budget to the nearest observation (half up).
+With `--no-perturb`, half of each size's single observations are timed
+(rounding up), with the rest covered by plain instrumentation; rounding
+the plain budget may add a parity check. Any missing counters or parity
+mismatch is fatal. With `--no-section-timing`, plain instrumentation
+supplies all counters, so rates below 1 are raised to 1 and logged.
+Section-timing diagnostics use only timed observations; regression and
+ranking diagnostics use all observations.
 
 ## Interruptions, resuming, and timeouts
 
@@ -115,9 +122,10 @@ Resume validates puzzle identities, dataset hashes, parameter perturbations,
 the deterministic per-observation parity schedule, run counts and
 work-counter schemas before reusing records; completed runs are not rerun.
 New raw records include the seed, repeat settings, section-timing mode
-and parity-sampling version so changes are rejected. Older journals
-remain supported: pass their original repeat settings explicitly (e.g.
-`--instrumented-repeats 2` for the previous default). For a new calibration using the same output file, specify
+and sampling versions so changes are rejected. Journals from the prior
+all-observation timing schedule with a recorded run plan cannot be resumed
+under the new schedule. Preserve them and use the original revision to
+resume, or choose a separate `--output` path for a new calibration. For a new calibration using the same output file, specify
 `--fresh` to intentionally discard the existing raw journal. Never use
 `--fresh` when you wish to recover an interrupted run.
 

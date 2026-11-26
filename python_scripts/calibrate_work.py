@@ -174,10 +174,10 @@ def variants(puzzles, perturb, seed=0, c=CALIBRATION_PERTURB,
 
 
 def effective_instrumented_repeats(repeats, section_timing):
-    """Without section timing, every observation still needs counters."""
+    """Ensure the plain-run budget covers observations without section timing."""
     if not math.isfinite(repeats) or repeats < 0:
         raise ValueError("instrumented-repeats must be finite and nonnegative")
-    return repeats if section_timing else max(1, repeats)
+    return max(0.5 if section_timing else 1, repeats)
 
 
 def instrumented_repeat_budget(observations, repeats):
@@ -186,30 +186,62 @@ def instrumented_repeat_budget(observations, repeats):
     return whole * observations + math.floor((repeats - whole) * observations + 0.5)
 
 
-def instrumented_repeat_schedule(puzzles, configurations, repeats,
-                                 section_timing, seed):
-    """Allocate the exact fractional budget per size, independent of run order."""
-    effective = effective_instrumented_repeats(repeats, section_timing)
-    whole = int(effective)
+def _observation_groups(puzzles, configurations):
     by_identity = {}
     for variant in configurations:
         by_identity.setdefault(variant.get("puzzle_identity"), []).append(variant)
-    by_size = {}
     for puzzle in puzzles:
         selected = (by_identity.get(puzzle["identity"], [])
                     + by_identity.get(None, []))
+        yield puzzle, selected
+
+
+def section_timing_schedule(puzzles, configurations, section_timing, seed):
+    """Time one member of each pair; balance unpaired observations by size."""
+    timed = set()
+    if not section_timing:
+        return timed
+    singles = {}
+    for puzzle, selected in _observation_groups(puzzles, configurations):
+        ranked = sorted(
+            (hashlib.sha256(repr((seed, "section-pair-v1", puzzle["identity"],
+                                  variant["name"])).encode("utf-8")).digest(),
+             _raw_run_key(variant["name"], puzzle, "micro", 0)[:3])
+            for variant in selected)
+        if len(ranked) == 1:
+            singles.setdefault(puzzle["size"], []).append(ranked[0])
+        else:
+            timed.update(key for _, key in ranked[:len(ranked) // 2])
+    for observations in singles.values():
+        timed.update(key for _, key in sorted(observations)[:(len(observations) + 1) // 2])
+    return timed
+
+
+def instrumented_repeat_schedule(puzzles, configurations, repeats,
+                                 section_timing, seed):
+    """Cover untimed rows first, then allocate optional repeats deterministically."""
+    effective = effective_instrumented_repeats(repeats, section_timing)
+    timed = section_timing_schedule(puzzles, configurations, section_timing, seed)
+    by_size = {}
+    for puzzle, selected in _observation_groups(puzzles, configurations):
         for variant in selected:
             key = _raw_run_key(variant["name"], puzzle, "instrumented", 0)[:3]
             priority = hashlib.sha256(
-                repr((seed, "instrumented-parity-v1", puzzle["identity"],
+                repr((seed, "instrumented-parity-v2", puzzle["identity"],
                       variant["name"])).encode("utf-8")).digest()
             by_size.setdefault(puzzle["size"], []).append((priority, key))
     schedule = {}
     for observations in by_size.values():
-        extra = instrumented_repeat_budget(len(observations), effective)
-        extra -= whole * len(observations)
-        for index, (_, key) in enumerate(sorted(observations)):
-            schedule[key] = whole + int(index < extra)
+        whole = int(effective)
+        for _, key in observations:
+            schedule[key] = max(whole, int(key not in timed))
+        budget = instrumented_repeat_budget(len(observations), effective)
+        extra = budget - sum(schedule[key] for _, key in observations)
+        # For rates below one, additional runs check timed observations first.
+        eligible = [(priority, key) for priority, key in observations
+                    if whole or key in timed]
+        for _, key in sorted(eligible)[:max(0, extra)]:
+            schedule[key] += 1
     return schedule
 
 
@@ -224,7 +256,8 @@ def calibration_workload_plan(puzzle_counts, perturb, native_repeats,
         instrumented_repeats, section_timing)
     instrumented = sum(instrumented_repeat_budget(count * per_puzzle, effective)
                        for count in puzzle_counts.values())
-    section = observations if section_timing else 0
+    section = (puzzles if perturb else sum((count + 1) // 2
+               for count in puzzle_counts.values())) if section_timing else 0
     return {
         "puzzles_by_size": {str(size): count
                             for size, count in sorted(puzzle_counts.items())},
@@ -620,7 +653,8 @@ def calibration_run_plan(seed, native_repeats, instrumented_repeats,
     return {"seed": seed, "native_repeats": native_repeats,
             "instrumented_repeats": instrumented_repeats,
             "section_timing": section_timing,
-            "parity_sampling": "seeded_size_stratified_hash_v1"}
+            "parity_sampling": "seeded_size_stratified_hash_v2",
+            "section_sampling": "one_per_antithetic_pair_v1"}
 
 
 def load_completed_runs(path, puzzles, configurations, max_solutions,
@@ -636,6 +670,7 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
     by_configuration = {v["name"]: v for v in configurations}
     schedule = instrumented_repeat_schedule(
         puzzles, configurations, instrumented_repeats, section_timing, seed)
+    timed = section_timing_schedule(puzzles, configurations, section_timing, seed)
     run_plan = calibration_run_plan(
         seed, native_repeats, instrumented_repeats, section_timing)
     completed = {}
@@ -654,7 +689,7 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
                     raise ValueError("mismatched calibration run plan")
                 limit = {"native": native_repeats,
                          "instrumented": schedule.get(key[:3], 0),
-                         "micro": 1 if section_timing else 0}[kind]
+                         "micro": int(key[:3] in timed)}[kind]
                 if (type(repeat) is not int or not 0 <= repeat < limit
                         or event["dataset_sha256"] != puzzle["dataset_sha256"]
                         or event["identity"] != puzzle["identity"]
@@ -695,7 +730,7 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
 
 def measure_observation(run_or_reuse, instr, native, micro,
                         scheduled_repeats, native_repeats):
-    """Use section-timed counters; plain runs only check parity or supply fallback."""
+    """Use the assigned counter source; extra plain runs check parity."""
     micro_sections = []
     first = None
     if micro is not None:
@@ -732,13 +767,14 @@ def main():
     parser.add_argument("--dataset", action="append", default=None,
                         help="Repeat for multiple benchmark files; can include size 7/8/9")
     parser.add_argument("--puzzles-per-size", "--limit-per-dataset", type=int,
-                        default=3000, dest="puzzles_per_size",
-                        help="Symmetry-distinct puzzles per size (default 3000)")
+                        default=2000, dest="puzzles_per_size",
+                        help="Symmetry-distinct puzzles per size (default 2000)")
     parser.add_argument("--native-repeats", type=int, default=2)
     parser.add_argument("--instrumented-repeats", type=float, default=0.5,
-                        help="Plain instrumented repeats per observation "
-                             "(default 0.5); fractional repeats sample a seeded "
-                             "subset, minimum one without section timing")
+                        help="Plain instrumented runs per observation "
+                             "(default/minimum 0.5 with paired section timing; "
+                             "minimum one without section timing). Higher rates "
+                             "add deterministic parity checks")
     parser.add_argument("--no-section-timing", action="store_true",
                         help="Skip sampled CPU section timing and plausibility check")
     parser.add_argument("--no-micro-verify", action="store_true",
@@ -800,9 +836,11 @@ def main():
         parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
     if not math.isfinite(args.instrumented_repeats) or args.instrumented_repeats < 0:
         parser.error("instrumented-repeats must be finite and nonnegative")
-    if args.no_section_timing and args.instrumented_repeats < 1:
-        print("Section timing disabled: using one plain instrumented run "
-              "per observation to supply work counters", flush=True)
+    effective_repeats = effective_instrumented_repeats(
+        args.instrumented_repeats, not args.no_section_timing)
+    if args.instrumented_repeats < effective_repeats:
+        print(f"Using {effective_repeats} plain instrumented runs per observation "
+              "to ensure complete counter coverage", flush=True)
     if (not math.isfinite(args.ranking_noise_z) or args.ranking_noise_z < 0
             or not math.isfinite(args.ranking_min_delta_seconds)
             or args.ranking_min_delta_seconds < 0):
@@ -865,7 +903,11 @@ def main():
     schedule = instrumented_repeat_schedule(
         puzzles, variants_to_run, args.instrumented_repeats,
         not args.no_section_timing, args.seed)
-    if sum(schedule.values()) != plan["instrumented_solver_executions"]:
+    timed = section_timing_schedule(
+        puzzles, variants_to_run, not args.no_section_timing, args.seed)
+    if (sum(schedule.values()) != plan["instrumented_solver_executions"]
+            or len(timed) != plan["section_timing_solver_executions"]
+            or any(not count and key not in timed for key, count in schedule.items())):
         raise ValueError("Generated instrumentation schedule does not match preflight")
     run_plan = calibration_run_plan(
         args.seed, args.native_repeats, args.instrumented_repeats,
@@ -884,7 +926,8 @@ def main():
         "effective_instrumented_repeats": effective_instrumented_repeats(
             args.instrumented_repeats, not args.no_section_timing),
         "parity_sampling": run_plan["parity_sampling"],
-        "counter_source": "instrumented" if args.no_section_timing else "micro",
+        "section_sampling": run_plan["section_sampling"],
+        "counter_source": "instrumented" if args.no_section_timing else "paired_micro_and_instrumented",
         "section_timing": not args.no_section_timing,
         "micro_verification_enabled": not args.no_micro_verify,
         "solver_timeout_seconds": args.timeout,
@@ -951,7 +994,7 @@ def main():
                 instr, instr_cmd = build(build_dir, fixed, True, args.cc, [])
             native, native_cmd = build(build_dir, fixed, False, args.cc, [])
             micro = None
-            if not args.no_section_timing:
+            if plan["section_timing_solver_executions"]:
                 micro, micro_cmd = build(
                     build_dir, fixed, True, args.cc, ["-DWORK_MICRO_TIMING"])
             for position, p in enumerate(puzzles, 1):
@@ -996,8 +1039,9 @@ def main():
                         return result
 
                     key = _raw_run_key(variant["name"], p, "instrumented", 0)[:3]
+                    observation_micro = micro if key in timed else None
                     first, times, instrumented, micro_sections = measure_observation(
-                        run_or_reuse, instr, native, micro, schedule[key],
+                        run_or_reuse, instr, native, observation_micro, schedule[key],
                         args.native_repeats)
                     rows.append({
                         "configuration": variant["name"],
@@ -1009,7 +1053,7 @@ def main():
                         "grid": p["grid"], "max_solutions": mode,
                         "solutions": first[1], "nodes": first[2],
                         "counters": first[3],
-                        "counter_source": "micro" if micro is not None else "instrumented",
+                        "counter_source": "micro" if observation_micro is not None else "instrumented",
                         "native_times_seconds": times,
                         "instrumented_times_seconds": [r[0] for r in instrumented],
                         "micro_sections": micro_sections,
@@ -1048,14 +1092,16 @@ def main():
                 args.ranking_noise_z, args.ranking_min_delta_seconds)
     plausibility = None
     if not args.no_section_timing and fits["all"]["status"] == "fitted":
+        timed_train = [row for row in train if row["counter_source"] == "micro"]
+        timed_heldout = [row for row in heldout if row["counter_source"] == "micro"]
         plausibility = {
             "train": summarize_plausibility(
-                train, fits["all"]["coefficients"], COUNTER_NAMES),
+                timed_train, fits["all"]["coefficients"], COUNTER_NAMES),
             "validation": summarize_plausibility(
-                heldout, fits["all"]["coefficients"], COUNTER_NAMES),
+                timed_heldout, fits["all"]["coefficients"], COUNTER_NAMES),
             "validation_by_size": {
                 "size" + str(n): summarize_plausibility(
-                    [row for row in heldout if row["size"] == n],
+                    [row for row in timed_heldout if row["size"] == n],
                     fits["all"]["coefficients"], COUNTER_NAMES)
                 for n in (7, 8, 9)
             },
