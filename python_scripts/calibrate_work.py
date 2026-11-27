@@ -13,6 +13,7 @@ import statistics
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -51,6 +52,8 @@ COUNTER_NAMES = (
 )
 CALIBRATION_PERTURB = 0.03
 CALIBRATION_RADIUS = 4.0
+DEFAULT_CPU_LIMITS = {7: 2.0, 8: 2.0, 9: 5.0}
+DEFAULT_HARD_TIMEOUT = 60.0
 
 
 
@@ -329,7 +332,8 @@ def build(tempdir, variant, instrument, cc, flags):
 
 
 
-def execute(binary, puzzle, max_solutions, timeout, include_micro=False, env=None):
+def execute(binary, puzzle, max_solutions, timeout, include_micro=False, env=None,
+            return_status=False):
     argv = [str(binary), "-s", str(max_solutions), puzzle["clue"]]
     if puzzle["grid"]:
         argv.append(puzzle["grid"])
@@ -357,7 +361,13 @@ def execute(binary, puzzle, max_solutions, timeout, include_micro=False, env=Non
         raise RuntimeError("Unable to parse solver results")
     result = (elapsed, solutions, nodes, counters)
     if include_micro:
-        return result + (parse_micro_lines(p.stdout.splitlines(), COUNTER_NAMES),)
+        result += (parse_micro_lines(p.stdout.splitlines(), COUNTER_NAMES),)
+    if return_status:
+        statuses = re.findall(r"(?m)^SEARCH_STATUS (complete|timeout)$", p.stdout)
+        main_nodes = number("Main nodes visited")
+        if len(statuses) != 1 or main_nodes is None or main_nodes > nodes:
+            raise RuntimeError("Missing or invalid search checkpoint status")
+        result += ({"complete": statuses[0] == "complete", "main_nodes": main_nodes},)
     return result
 
 
@@ -403,6 +413,8 @@ def fit_nonnegative(samples, names, max_iterations=4000, ridge_alpha=0.0,
         # small configuration-to-configuration differences matter.
         groups = {}
         for row, sample, target in zip(x, samples, targets):
+            if not sample.get('complete', True):
+                continue
             key = sample.get("identity",
                              (sample.get("dataset"), sample.get("line"),
                               id(sample)))
@@ -456,7 +468,7 @@ def fit_with_merging(train, correlation_threshold, dependency_tolerance,
     analysis = analyze_and_merge(
         train, COUNTER_NAMES, correlation_threshold, dependency_tolerance)
     groups = analysis["groups"]
-    collapsed = [dict(collapse_row(row, groups),
+    collapsed = [dict(collapse_row(row, groups), complete=row.get('complete', True),
                       identity=row.get("identity", (row.get("dataset"), row.get("line"))))
                  for row in train]
     result = fit_nonnegative(collapsed, [g["name"] for g in groups],
@@ -502,10 +514,15 @@ def diagnostics(rows, model, noise_z=2.0, min_delta_seconds=5e-5):
     mean = statistics.mean(ys)
     ss_tot = sum((y - mean) ** 2 for y in ys)
     r2 = 1.0 - sum(e * e for e in errors) / ss_tot if ss_tot else None
+    complete = [r for r in rows if r.get('complete', True)]
     ranking = ranking_diagnostics(
-        rows, lambda row: predict(row, model),
+        complete, lambda row: predict(row, model),
         noise_z=noise_z, min_delta_seconds=min_delta_seconds)
-    return {"samples": len(rows), "mae_seconds": mae, "r2": r2, **ranking}
+    return {"samples": len(rows), "mae_seconds": mae, "r2": r2,
+            "partial_samples": len(rows) - len(complete),
+            "complete_samples": len(complete),
+            "complete_mae_seconds": (statistics.mean(abs(predict(r, model) - r["runtime_median_seconds"]) for r in complete) if complete else None),
+            "error_basis": "matched complete and partial search prefixes", **ranking}
 
 
 def split(rows, validation_fraction, seed):
@@ -540,7 +557,7 @@ def choose_regularization(train, correlation_threshold,
     analysis = analyze_and_merge(inner_train, COUNTER_NAMES,
                                  correlation_threshold, dependency_tolerance)
     groups = analysis["groups"]
-    reduced = [dict(collapse_row(row, groups),
+    reduced = [dict(collapse_row(row, groups), complete=row.get('complete', True),
                     identity=row.get("identity",
                                      (row.get("dataset"), row.get("line"))))
                for row in inner_train]
@@ -643,23 +660,30 @@ def _outcome_from_raw(event):
     result = (event["elapsed_seconds"], event["solutions"], event["nodes"],
               event["counters"])
     if event["run_type"] == "micro":
-        return result + (event["micro_sections"],)
+        result += (event["micro_sections"],)
+    if "complete" in event:
+        result += ({"complete": event["complete"], "main_nodes": event["main_nodes"]},)
     return result
 
 
 def calibration_run_plan(seed, native_repeats, instrumented_repeats,
-                         section_timing):
+                         section_timing, cpu_limits=None, hard_timeout=None):
     """Record the schedule inputs in new journal entries."""
-    return {"seed": seed, "native_repeats": native_repeats,
+    plan = {"seed": seed, "native_repeats": native_repeats,
             "instrumented_repeats": instrumented_repeats,
             "section_timing": section_timing,
             "parity_sampling": "seeded_size_stratified_hash_v2",
             "section_sampling": "one_per_antithetic_pair_v1"}
+    if cpu_limits is not None:
+        plan.update(checkpoint_policy="outer_main_node_v1",
+                    cpu_limits={str(k): v for k, v in cpu_limits.items()},
+                    hard_timeout=hard_timeout)
+    return plan
 
 
 def load_completed_runs(path, puzzles, configurations, max_solutions,
                         native_repeats, instrumented_repeats,
-                        section_timing, seed=0):
+                        section_timing, seed=0, cpu_limits=None, hard_timeout=None):
     """Recover completed individual invocations, including partial puzzles.
 
     Fail closed if a journal entry does not belong to this exact sampled
@@ -672,7 +696,8 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
         puzzles, configurations, instrumented_repeats, section_timing, seed)
     timed = section_timing_schedule(puzzles, configurations, section_timing, seed)
     run_plan = calibration_run_plan(
-        seed, native_repeats, instrumented_repeats, section_timing)
+        seed, native_repeats, instrumented_repeats, section_timing,
+        cpu_limits, hard_timeout)
     completed = {}
     with path.open(encoding="utf-8") as source:
         for line_number, line in enumerate(source, 1):
@@ -685,7 +710,7 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
                 kind = event["run_type"]
                 repeat = event["run_index"]
                 key = _raw_run_key(configuration["name"], puzzle, kind, repeat)
-                if "run_plan" in event and event["run_plan"] != run_plan:
+                if (cpu_limits is not None or "run_plan" in event) and event.get("run_plan") != run_plan:
                     raise ValueError("mismatched calibration run plan")
                 limit = {"native": native_repeats,
                          "instrumented": schedule.get(key[:3], 0),
@@ -717,6 +742,21 @@ def load_completed_runs(path, puzzles, configurations, max_solutions,
                         or any(type(event[name]) is not int or event[name] < 0
                                for name in ("solutions", "nodes"))):
                     raise ValueError("invalid solver measurement")
+                if cpu_limits is not None:
+                    if (type(event["complete"]) is not bool
+                            or type(event["main_nodes"]) is not int
+                            or not 0 <= event["main_nodes"] <= event["nodes"]
+                            or (not event["complete"] and event["main_nodes"] == 0)):
+                        raise ValueError("invalid search checkpoint")
+                    leader_kind = "micro" if key[:3] in timed else "instrumented"
+                    leader_key = (*key[:3], leader_kind, 0)
+                    if key != leader_key:
+                        leader = completed.get(leader_key)
+                        if leader is None or any(event[field] != leader[field]
+                                for field in ("complete", "main_nodes", "nodes", "solutions")):
+                            raise ValueError("missing or mismatched leader checkpoint")
+                        if kind != "native" and counters != leader["counters"]:
+                            raise ValueError("checkpoint counter parity mismatch")
                 if key in completed:
                     raise ValueError("duplicate solver invocation")
                 completed[key] = event
@@ -762,6 +802,53 @@ def measure_observation(run_or_reuse, instr, native, micro,
     return first, times, instrumented, micro_sections
 
 
+def measure_checkpoint_observation(run_or_reuse, instr, native, micro,
+                                   scheduled_repeats, native_repeats, cpu_limit):
+    """Assigned counter source sets the checkpoint; other runs replay it."""
+    if micro is not None:
+        leader = run_or_reuse("micro", 0, micro, include_micro=True, cpu_limit=cpu_limit)
+        sections = leader[4]
+    else:
+        if scheduled_repeats < 1:
+            raise RuntimeError("No counter source for observation")
+        leader = run_or_reuse("instrumented", 0, instr, cpu_limit=cpu_limit)
+        sections = []
+    status = leader[-1]
+    if leader[3] is None or (not status["complete"] and status["main_nodes"] <= 0):
+        raise RuntimeError("Missing counters or invalid leader checkpoint")
+    checkpoint = None if status["complete"] else status["main_nodes"]
+    plain = [] if micro is not None else [leader]
+    def verify(result, instrumented):
+        if result[-1] != status or result[1:3] != leader[1:3]:
+            raise RuntimeError("Replay search checkpoint mismatch")
+        if instrumented and result[3] != leader[3]:
+            raise RuntimeError("Replay counter parity mismatch")
+        if not instrumented and result[3] is not None:
+            raise RuntimeError("Native build contains counter output")
+    for repeat in range(len(plain), scheduled_repeats):
+        result = run_or_reuse("instrumented", repeat, instr, checkpoint=checkpoint)
+        verify(result, True)
+        plain.append(result)
+    times = []
+    for repeat in range(native_repeats):
+        result = run_or_reuse("native", repeat, native, checkpoint=checkpoint)
+        verify(result, False)
+        times.append(result[0])
+    return leader[:4], times, plain, sections, status
+
+
+def checkpoint_environment(env, cpu_limit=None, checkpoint=None):
+    env = dict(os.environ if env is None else env)
+    for name in ("SOLVER_CPU_TIMEOUT", "SOLVER_MAIN_NODE_LIMIT"):
+        env.pop(name, None)
+    env["SOLVER_SEARCH_STATUS"] = "1"
+    if cpu_limit is not None:
+        env["SOLVER_CPU_TIMEOUT"] = str(cpu_limit)
+    if checkpoint is not None:
+        env["SOLVER_MAIN_NODE_LIMIT"] = str(checkpoint)
+    return env
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dataset", action="append", default=None,
@@ -799,8 +886,11 @@ def main():
                         help="Ellipsoid axis multiplier relative to c (default 4)")
     parser.add_argument("--no-perturb", action="store_true",
                         help="Skip default cache-period/lookahead parameter perturbations")
-    parser.add_argument("--timeout", type=float, default=None,
-                        help="Optional per-solver-run timeout in seconds; default: unlimited")
+    for size, limit in DEFAULT_CPU_LIMITS.items():
+        parser.add_argument(f"--cpu-timeout-size{size}", type=float, default=limit,
+                            help=f"Instrumented CPU budget for size {size} (default {limit:g}s)")
+    parser.add_argument("--timeout", type=float, default=DEFAULT_HARD_TIMEOUT,
+                        help="Emergency per-subprocess wall timeout (default 60s)")
     parser.add_argument("--resume", action="store_true",
                         help="Reuse validated individual runs from the existing raw JSONL journal")
     parser.add_argument("--fresh", action="store_true",
@@ -825,6 +915,9 @@ def main():
     if args.timeout is not None and (not math.isfinite(args.timeout)
                                     or args.timeout <= 0):
         parser.error("--timeout must be a positive number of seconds")
+    cpu_limits = {size: getattr(args, f"cpu_timeout_size{size}") for size in DEFAULT_CPU_LIMITS}
+    if any(not math.isfinite(v) or v <= 0 for v in cpu_limits.values()):
+        parser.error("CPU timeout budgets must be finite and positive")
     if args.seed is None:
         args.seed = random.SystemRandom().getrandbits(64)
     print(f"Calibration seed: {args.seed}", flush=True)
@@ -911,7 +1004,8 @@ def main():
         raise ValueError("Generated instrumentation schedule does not match preflight")
     run_plan = calibration_run_plan(
         args.seed, args.native_repeats, args.instrumented_repeats,
-        not args.no_section_timing)
+        not args.no_section_timing, cpu_limits, args.timeout)
+    print(f"Instrumented CPU budgets: {cpu_limits}; hard timeout: {args.timeout}s", flush=True)
     provenance = {
         "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                                       capture_output=True, text=True).stdout.strip(),
@@ -931,6 +1025,8 @@ def main():
         "section_timing": not args.no_section_timing,
         "micro_verification_enabled": not args.no_micro_verify,
         "solver_timeout_seconds": args.timeout,
+        "cpu_timeout_seconds_by_size": run_plan["cpu_limits"],
+        "checkpoint_policy": run_plan["checkpoint_policy"],
         "resumed_from_raw": args.resume,
         "micro_validation_puzzles_per_size": args.micro_puzzles_per_size,
         "controlled_micro_repeats": args.micro_repeats,
@@ -966,7 +1062,8 @@ def main():
         completed = load_completed_runs(
             raw_path, puzzles, variants_to_run, args.max_solutions,
             args.native_repeats, args.instrumented_repeats,
-            not args.no_section_timing, seed=args.seed)
+            not args.no_section_timing, seed=args.seed,
+            cpu_limits=cpu_limits, hard_timeout=args.timeout)
         print(f"Resuming {len(completed)} completed solver runs from "
               f"{raw_path}", flush=True)
     else:
@@ -985,6 +1082,10 @@ def main():
     defaults = get_physical_params(project_constraints(get_default_theta()))
     default_env = os.environ.copy()
     default_env.update({name: str(value) for name, value in defaults.items()})
+    progress_start = time.monotonic()
+    size_progress = dict.fromkeys(counts, 0)
+    partial_progress = dict.fromkeys(counts, 0)
+    run_seconds = {size: dict.fromkeys(("native", "instrumented", "micro"), 0.0) for size in counts}
     with raw_path.open(raw_mode, encoding="utf-8", buffering=1) as raw_file:
         with tempfile.TemporaryDirectory(prefix="sky_work_") as directory:
             build_dir = Path(directory)
@@ -998,6 +1099,8 @@ def main():
                 micro, micro_cmd = build(
                     build_dir, fixed, True, args.cc, ["-DWORK_MICRO_TIMING"])
             for position, p in enumerate(puzzles, 1):
+                if size_progress[p["size"]] == 0:
+                    print(f"Starting size {p['size']} ({counts[p['size']]} puzzles)", flush=True)
                 selected = by_puzzle.get(p["identity"], []) + by_puzzle.get(None, [])
                 if not selected:
                     raise ValueError("No configurations for selected puzzle")
@@ -1021,28 +1124,44 @@ def main():
                             "instrumented": kind != "native",
                             "run_index": repeat, "elapsed_seconds": elapsed,
                             "solutions": solutions, "nodes": nodes,
-                            "counters": counters,
+                            "counters": counters, **outcome[-1],
                         }
-                        if len(outcome) > 4:
+                        if kind == "micro":
                             event["micro_sections"] = outcome[4]
                         raw_file.write(json.dumps(event, sort_keys=True) + "\n")
                         raw_runs.append(event)
-                    def run_or_reuse(kind, repeat, binary, include_micro=False):
+                    def run_or_reuse(kind, repeat, binary, include_micro=False,
+                                     cpu_limit=None, checkpoint=None):
                         key = _raw_run_key(variant["name"], p, kind, repeat)
                         event = completed.pop(key, None)
                         if event is not None:
                             raw_runs.append(event)
-                            return _outcome_from_raw(event)
-                        result = execute(binary, p, mode, args.timeout,
-                                         include_micro=include_micro, env=env)
-                        record(kind, repeat, result)
+                            result = _outcome_from_raw(event)
+                        else:
+                            run_env = checkpoint_environment(env, cpu_limit, checkpoint)
+                            label = f"size={p['size']} line={p['line']} variant={variant['name']} mode={kind} repeat={repeat}"
+                            timer = threading.Timer(10, lambda: print(f"Slow run (>10s): {label}", flush=True))
+                            timer.daemon = True
+                            timer.start()
+                            try:
+                                result = execute(binary, p, mode, args.timeout,
+                                                 include_micro=include_micro, env=run_env,
+                                                 return_status=True)
+                            except subprocess.TimeoutExpired as exc:
+                                raise RuntimeError(f"Emergency subprocess timeout: {label}; completed journal records preserved") from exc
+                            finally:
+                                timer.cancel()
+                                timer.join()
+                            record(kind, repeat, result)
+                        run_seconds[p["size"]][kind] += result[0]
                         return result
 
                     key = _raw_run_key(variant["name"], p, "instrumented", 0)[:3]
                     observation_micro = micro if key in timed else None
-                    first, times, instrumented, micro_sections = measure_observation(
+                    first, times, instrumented, micro_sections, status = measure_checkpoint_observation(
                         run_or_reuse, instr, native, observation_micro, schedule[key],
-                        args.native_repeats)
+                        args.native_repeats, cpu_limits[p["size"]])
+                    partial_progress[p["size"]] += int(not status["complete"])
                     rows.append({
                         "configuration": variant["name"],
                         "parameters": variant["parameters"],
@@ -1051,7 +1170,7 @@ def main():
                         "line": p["line"], "identity": p["identity"],
                         "size": p["size"], "clue": p["clue"],
                         "grid": p["grid"], "max_solutions": mode,
-                        "solutions": first[1], "nodes": first[2],
+                        "solutions": first[1], "nodes": first[2], **status,
                         "counters": first[3],
                         "counter_source": "micro" if observation_micro is not None else "instrumented",
                         "native_times_seconds": times,
@@ -1064,8 +1183,15 @@ def main():
                             if statistics.mean(times) > 0 else None),
                         "raw_runs": raw_runs,
                     })
-                if position % 64 == 0:
-                    print(f"Completed {position}/{len(puzzles)} distinct puzzles",
+                size = p["size"]
+                size_progress[size] += 1
+                if size_progress[size] % 16 == 0 or size_progress[size] == counts[size]:
+                    totals = run_seconds[size]
+                    print(f"Size {size}: {size_progress[size]}/{counts[size]} puzzles | "
+                          f"overall {position}/{len(puzzles)} | "
+                          f"elapsed {time.monotonic() - progress_start:.1f}s | "
+                          f"native {totals['native']:.1f}s | plain {totals['instrumented']:.1f}s | "
+                          f"section {totals['micro']:.1f}s | partial configurations {partial_progress[size]}",
                           flush=True)
     if completed:
         raise ValueError(f"{len(completed)} unused cached solver runs; "
@@ -1171,6 +1297,7 @@ def main():
         "fits": fits, "agreement": agreement_metrics,
         "sample_counts": {
             "train": len(train), "validation": len(heldout),
+            "partial_by_size": {str(n): partial_progress[n] for n in (7, 8, 9)},
             "train_by_size": {str(n): sum(r["size"] == n for r in train)
                               for n in (7, 8, 9)},
             "validation_by_size": {str(n): sum(r["size"] == n for r in heldout)
@@ -1218,7 +1345,7 @@ def main():
                 model_path, collinearity_path, micro_path,
                 puzzles_per_size=args.micro_puzzles_per_size,
                 seed=args.seed + 1009, cc=args.cc, timeout=args.timeout,
-                controlled_result=controlled, **verification_options)
+                controlled_result=controlled, cpu_limits=cpu_limits, **verification_options)
             print(f"Micro split assessment: {micro_report['split_verification']}")
         except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError,
                 subprocess.TimeoutExpired) as exc:

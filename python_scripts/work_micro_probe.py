@@ -16,6 +16,7 @@ import tempfile
 
 from calibrate_work import (
     COUNTER_NAMES, SCHEMA, ROOT, build, execute, read_puzzles, puzzle_mode,
+    DEFAULT_CPU_LIMITS, checkpoint_environment, DEFAULT_HARD_TIMEOUT,
 )
 from work_model_export import load_compact_model
 from work_section_plausibility import TIMED_SECTIONS, summarize_plausibility, timed_affine_fit
@@ -167,8 +168,9 @@ def verify_all_merged_groups(controlled, collinearity, model,
 
 
 def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
-                 unresolved_groups=()):
+                 unresolved_groups=(), cpu_limits=None):
     validate_model(model)
+    cpu_limits = DEFAULT_CPU_LIMITS if cpu_limits is None else cpu_limits
     if collinearity.get("counter_schema") != model["counter_schema"]:
         raise ValueError("Model and collinearity schemas differ")
     rows = []
@@ -178,12 +180,14 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
                           ["-DWORK_MICRO_TIMING"])
         for puzzle in puzzles:
             mode = puzzle_mode(puzzle, None)
-            elapsed, solutions, nodes, counters, sections = execute(
-                binary, puzzle, mode, timeout, include_micro=True)
+            elapsed, solutions, nodes, counters, sections, status = execute(
+                binary, puzzle, mode, timeout or DEFAULT_HARD_TIMEOUT, include_micro=True,
+                env=checkpoint_environment(None, cpu_limits[puzzle["size"]]),
+                return_status=True)
             rows.append({
                 "size": puzzle["size"], "identity": puzzle["identity"],
                 "dataset": puzzle["dataset"], "line": puzzle["line"],
-                "solutions": solutions, "nodes": nodes,
+                "solutions": solutions, "nodes": nodes, **status,
                 "elapsed_timed_seconds": elapsed,
                 "counters": counters, "micro_sections": sections,
             })
@@ -194,6 +198,7 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
         "model_source_commit": model.get("source_git_commit"),
         "datasets": sorted({p["dataset"] for p in puzzles}),
         "puzzles": len(rows),
+        "partial_puzzles": sum(not r["complete"] for r in rows),
         "measurement": "sampled CPU clock time in independently held-out SPSA validation puzzles",
         "overall": overall,
         "by_size": {
@@ -328,7 +333,7 @@ def run_verification(model_path, collinearity_path, output,
                      puzzles_per_size=32, seed=1072, cc="gcc", timeout=None,
                      datasets=VALIDATION_DATASETS, controlled_repeats=200000,
                      controlled_rounds=3, controlled_result=None,
-                     diagnostic_model=None, unresolved_groups=()):
+                     diagnostic_model=None, unresolved_groups=(), cpu_limits=None):
     model_path = Path(model_path)
     model = (diagnostic_model if diagnostic_model is not None
              else load_compact_model(model_path))
@@ -339,11 +344,8 @@ def run_verification(model_path, collinearity_path, output,
     puzzles = read_puzzles(datasets, puzzles_per_size, seed=seed)
     if not puzzles:
         raise ValueError("No validation puzzles for micro verification")
-    if diagnostic_model is None:
-        report = verify_model(model, collinearity, puzzles, cc, timeout)
-    else:
-        report = verify_model(model, collinearity, puzzles, cc, timeout,
-                              unresolved_groups=unresolved_groups)
+    report = verify_model(model, collinearity, puzzles, cc, timeout,
+                          unresolved_groups=unresolved_groups, cpu_limits=cpu_limits)
     report["status"] = ("completed_with_unresolved_allocation"
                         if unresolved_groups else "complete")
     report["validation_basis"] = ("pooled_merged_regression_projection"

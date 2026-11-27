@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "tree_search.h"
+#include "search_timeout.h"
 #include "node_selection_transition.h"
 #include "solution_info.h"
 #include "solution_storage.h"
@@ -46,9 +47,23 @@ t_sol_info	run_tree_search(t_solver_state *puzzle,
 	init_node_transition(&frames[d].next);
 	frames[d].probe_config = config;
 	frames[d].probe_pass = pass;
-	while (process_search_frame(puzzle, &d, start_d, frames)
-		!= SEARCH_TERMINATE)
-		;
+	while (1)
+	{
+		/* Stop only in the outer DFS, after nested probes return. */
+		if (!config && start_d == 0
+			&& puzzle->cur_node->tree.lookahead_depth == 0
+			&& !solution_limit_reached(puzzle)
+			&& search_timeout_check(puzzle->main_nodes_visited))
+		{
+			frames[start_d].node_sols.exhausted = 0;
+			frames[start_d].node_sols.solutions_registered
+				= puzzle->solutions_found;
+			break ;
+		}
+		if (process_search_frame(puzzle, &d, start_d, frames)
+			== SEARCH_TERMINATE)
+			break ;
+	}
 	return (frames[start_d].node_sols);
 }
 

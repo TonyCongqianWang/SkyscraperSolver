@@ -53,6 +53,64 @@ class CalibrationModelTests(unittest.TestCase):
                 * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
                    + 2 * (puzzles[0]["size"] + 1)))
 
+    def test_checkpoint_compiled_parity(self):
+        puzzles = calibration.read_puzzles(
+            ["puzzle_bank/spsa_datasets/size8_train.txt"], 1)
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            variant = {"name": "checkpoint", "parameters": {}}
+            plain, _ = calibration.build(directory, variant, True, "gcc", [])
+            timed, _ = calibration.build(directory, variant, True, "gcc",
+                                         ["-DWORK_MICRO_TIMING"])
+            native, _ = calibration.build(directory, variant, False, "gcc", [])
+            env = calibration.checkpoint_environment(None, checkpoint=1)
+            a = calibration.execute(plain, puzzles[0], 1, 30, env=env,
+                                    return_status=True)
+            b = calibration.execute(timed, puzzles[0], 1, 30, env=env,
+                                    include_micro=True, return_status=True)
+            n = calibration.execute(native, puzzles[0], 1, 30, env=env,
+                                    return_status=True)
+            self.assertEqual(a[1:4], b[1:4])
+            self.assertEqual(a[-1], b[-1])
+            self.assertEqual(a[-1], n[-1])
+            self.assertEqual(a[1:3], n[1:3])
+            leader = calibration.execute(
+                timed, puzzles[0], 1, 30, include_micro=True,
+                env=calibration.checkpoint_environment(None, cpu_limit=1e-9),
+                return_status=True)
+            if not leader[-1]["complete"]:
+                replay = calibration.execute(
+                    plain, puzzles[0], 1, 30,
+                    env=calibration.checkpoint_environment(
+                        None, checkpoint=leader[-1]["main_nodes"]),
+                    return_status=True)
+                self.assertEqual(leader[1:4], replay[1:4])
+                self.assertEqual(leader[-1], replay[-1])
+
+    def test_checkpoint_replay_uses_leader_limit(self):
+        counts = dict.fromkeys(calibration.COUNTER_NAMES, 1)
+        status = {"complete": False, "main_nodes": 5}
+        calls = []
+        def run(kind, repeat, binary, include_micro=False,
+                cpu_limit=None, checkpoint=None):
+            calls.append((kind, cpu_limit, checkpoint))
+            result = (0.01, 0, 12, None if kind == "native" else counts)
+            return result + (([],) if include_micro else ()) + (status,)
+        _, _, _, _, result = calibration.measure_checkpoint_observation(
+            run, "plain", "native", "timed", 1, 2, 5)
+        self.assertEqual(result, status)
+        self.assertEqual(calls, [("micro", 5, None), ("instrumented", None, 5),
+                                 ("native", None, 5), ("native", None, 5)])
+
+    def test_partial_rows_excluded_from_ranking(self):
+        model = {"intercept_seconds": 0.0, "seconds_per_count": {"setup_cell": 1}}
+        rows = [dict(size=9, dataset="x", line=1, configuration=str(i),
+                     counters={"setup_cell": i}, runtime_median_seconds=i,
+                     complete=i == 1) for i in (1, 2)]
+        result = calibration.diagnostics(rows, model)
+        self.assertEqual(result["partial_samples"], 1)
+        self.assertEqual(result["ranking_pairs"], 0)
+
     def test_unresolved_assignment_saves_all_reports_and_still_validates(self):
         from work_micro_probe import run_verification
         with tempfile.TemporaryDirectory() as directory:
@@ -92,9 +150,10 @@ class CalibrationModelTests(unittest.TestCase):
                 for i in range(3)]}
 
             def fake_execute(binary, puzzle, mode, timeout,
-                             include_micro=False, env=None):
-                return (0.01, 1, 3,
-                        counts if str(binary) == "instrumented" else None)
+                             include_micro=False, env=None, return_status=False):
+                result = (0.01, 1, 3,
+                          counts if str(binary) == "instrumented" else None)
+                return result + ({"complete": True, "main_nodes": 2},) if return_status else result
 
             def fake_verify(model_path, collinearity_path, micro_path, **kwargs):
                 self.assertEqual(kwargs["unresolved_groups"],

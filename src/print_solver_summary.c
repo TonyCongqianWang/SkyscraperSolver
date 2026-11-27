@@ -13,6 +13,7 @@
 #include "print_io.h"
 #include "print_grid.h"
 #include "work_instrumentation.h"
+#include "search_timeout.h"
 #include <stdio.h>
 
 /*
@@ -26,6 +27,7 @@ static void	print_solver_summary(t_solver_state *puzzle)
 	print_value("Nodes visited", puzzle->nodes_visited);
 	print_value("Main nodes visited", puzzle->main_nodes_visited);
 	print_value("Pruning runs", puzzle->prune_runs_count);
+	search_timeout_report();
 	work_report(puzzle->solutions_found, puzzle->nodes_visited);
 	fflush(stdout);
 }

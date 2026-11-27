@@ -103,10 +103,33 @@ ranking diagnostics use all observations.
 
 ## Interruptions, resuming, and timeouts
 
-Solver runs have **no timeout by default**. If you explicitly need one, pass
-`--timeout SECONDS`; that limit applies to each native, instrumented, and
-CPU-section-timing invocation. The controlled benchmark retains its separate
-sanity timeout.
+The assigned counter-producing execution establishes the checkpoint: the
+section-timed build for its half of the pair, otherwise the plain
+instrumented build. Static CPU budgets are **2 seconds for size 7, 2 for
+size 8, and 5 for size 9**; override with `--cpu-timeout-size7`,
+`--cpu-timeout-size8`, or `--cpu-timeout-size9`. The outer DFS checks
+the clock only at main-node advances after nested probes return. A
+checkpoint can overshoot the budget by the work of one main node.
+If interrupted, the solver emits `SEARCH_STATUS timeout`, main and total
+node counts, all counters, and completed section samples. Both native
+repeats and optional plain parity runs replay that exact main-node
+checkpoint with no CPU-clock checks. Completed solves replay without
+a node limit. Ordinary solver usage has no timeout unless explicitly
+configured by environment variables `SOLVER_CPU_TIMEOUT` or
+`SOLVER_MAIN_NODE_LIMIT` (mutually exclusive).
+
+Matched partial prefixes contribute to coefficient fitting and
+collinearity, but only completed solves contribute to configuration
+ranking and within-puzzle contrast terms. Regression error metrics
+include partial prefixes and explicitly report their count; complete-only
+MAE is also reported. Independent section validation uses the same
+size-specific CPU budgets. SPSA's training policy is unchanged.
+The emergency wall-clock subprocess timeout defaults to 60 seconds
+(`--timeout SECONDS`); if exceeded, calibration stops and preserves
+the journal rather than fabricating a partial result. Progress logs
+show per-size cumulative runtime by mode every 16 puzzles and identify
+invocations still running after 10 seconds. These CPU budgets are not
+a strict whole-job wall-clock guarantee.
 
 Every completed solver invocation is appended immediately to
 `scratch/work_calibration.raw.jsonl`, including runs from partially completed
@@ -122,7 +145,10 @@ Resume validates puzzle identities, dataset hashes, parameter perturbations,
 the deterministic per-observation parity schedule, run counts and
 work-counter schemas before reusing records; completed runs are not rerun.
 New raw records include the seed, repeat settings, section-timing mode
-and sampling versions so changes are rejected. Journals from the prior
+and sampling versions, CPU budgets and checkpoint policy so changes are
+rejected. The original leader status and checkpoint are preserved and
+validated against all replays; earlier journals without checkpoint metadata
+require the original revision. Journals from the prior
 all-observation timing schedule with a recorded run plan cannot be resumed
 under the new schedule. Preserve them and use the original revision to
 resume, or choose a separate `--output` path for a new calibration. For a new calibration using the same output file, specify
