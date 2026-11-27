@@ -403,23 +403,23 @@ class CalibrationModelTests(unittest.TestCase):
         self.assertEqual(calibration.puzzle_mode({"size": 9}, None), 1)
 
     def test_default_workload_doubles_distinct_evaluations(self):
-        sizes = {7: 2000, 8: 2000, 9: 2000}
+        sizes = {7: 6000, 8: 6000, 9: 6000}
         plan = calibration.calibration_workload_plan(
             sizes, perturb=True, native_repeats=2,
             instrumented_repeats=0.5, section_timing=True)
-        self.assertEqual(plan["distinct_puzzles"], 6000)
+        self.assertEqual(plan["distinct_puzzles"], 18000)
         self.assertEqual(plan["configurations_per_puzzle"], 2)
-        self.assertEqual(plan["puzzle_configuration_evaluations"], 12000)
-        self.assertEqual(plan["native_solver_executions"], 24000)
-        self.assertEqual(plan["instrumented_solver_executions"], 6000)
-        self.assertEqual(plan["section_timing_solver_executions"], 6000)
-        self.assertEqual(plan["total_solver_executions"], 36000)
-        for rate, expected in ((0, 6000), (0.25, 6000), (1, 12000),
-                               (1.5, 18000), (2, 24000)):
+        self.assertEqual(plan["puzzle_configuration_evaluations"], 36000)
+        self.assertEqual(plan["native_solver_executions"], 72000)
+        self.assertEqual(plan["instrumented_solver_executions"], 18000)
+        self.assertEqual(plan["section_timing_solver_executions"], 18000)
+        self.assertEqual(plan["total_solver_executions"], 108000)
+        for rate, expected in ((0, 18000), (0.25, 18000), (1, 36000),
+                               (1.5, 54000), (2, 72000)):
             plan = calibration.calibration_workload_plan(
                 sizes, True, 2, rate, True)
             self.assertEqual(plan["instrumented_solver_executions"], expected)
-            self.assertEqual(plan["section_timing_solver_executions"], 6000)
+            self.assertEqual(plan["section_timing_solver_executions"], 18000)
         for rate in (0, 0.5, 1):
             plan = calibration.calibration_workload_plan(
                 {8: 2}, False, 2, rate, False)
