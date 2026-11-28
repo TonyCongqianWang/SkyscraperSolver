@@ -1,13 +1,37 @@
 """Paired solver measurements with explicit failures and stable instance IDs."""
 import concurrent.futures
+import os
 import re
 import select
 import subprocess
 import time
 
 
+def unrestricted_environment(env=None):
+    """Do not let calibration-only search limits leak into full solves."""
+    result = dict(os.environ if env is None else env)
+    for name in ("SOLVER_CPU_TIMEOUT", "SOLVER_MAIN_NODE_LIMIT"):
+        result.pop(name, None)
+    return result
+
+
+def search_status(lines):
+    """Recognize optional status output; older unrestricted binaries omit it."""
+    statuses = [line.strip() for line in lines
+                if line.strip().split()[:1] == ["SEARCH_STATUS"]]
+    if not statuses or statuses == ["SEARCH_STATUS complete"]:
+        return "ok"
+    if statuses == ["SEARCH_STATUS timeout"]:
+        return "timeout"
+    return "error"
+
+
 def parse_output(lines, elapsed, model=None):
     text = ''.join(lines)
+    status = search_status(text.splitlines())
+    if status != 'ok':
+        return {'seconds': elapsed, 'nodes': None, 'solutions': None,
+                'status': status}
     nodes = re.search(r'^Nodes visited:\s*(\d+)', text, re.M)
     solutions = re.search(r'^(?:Unique )?Solutions found:\s*(\d+)',
                           text, re.M | re.I)
@@ -66,6 +90,7 @@ def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
     """Return one record per input, including timeouts and malformed output."""
     if workers < 1 or warmup < 0 or timeout <= 0:
         raise ValueError('workers/timeout must be positive; warmup nonnegative')
+    env = unrestricted_environment(env)
     indexed = list(enumerate(clues))
     groups = [indexed[i::workers] for i in range(min(workers, len(indexed)))]
 

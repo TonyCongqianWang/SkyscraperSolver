@@ -445,7 +445,9 @@
     "dp_prune_value_scan": 0.0
   },
   "source_calibration_file": "/kaggle/working/SkyscraperSolver/scratch/work_calibration.json",
-  "source_git_commit": "1a12ea65db0880b5a0bf2aa8df54c7ff34bde120",
+  "source_git_commit": "f1b23453d46a1cc399197ea65bc340256bdb93e7",
+  "original_recorded_source_git_commit": "1a12ea65db0880b5a0bf2aa8df54c7ff34bde120",
+  "source_git_commit_basis": "maintainer_assumption_current_solver_revision",
   "status": "complete",
   "training_observations": 27000,
   "training_sizes": [

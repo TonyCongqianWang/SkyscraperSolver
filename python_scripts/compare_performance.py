@@ -6,7 +6,7 @@ import json
 from collections import Counter
 from contextlib import ExitStack
 
-from comparison_measurements import measure_batch
+from comparison_measurements import measure_batch, unrestricted_environment
 from param_metadata import PARAMETER_ALIASES, PARAM_METADATA
 from spsa_metrics import get_sgm_shifts, shifted_geo_mean
 from comparison_statistics import (DEFAULT_TIMEOUT, DEFAULT_TIMEOUT_PENALTY,
@@ -43,7 +43,7 @@ def resolve_binary_path(path):
 
 def default_environment():
     # A default comparison must not inherit stale tuning overrides.
-    env = os.environ.copy()
+    env = unrestricted_environment()
     for name, *_ in PARAM_METADATA:
         env.pop(name, None)
     for name in PARAMETER_ALIASES:

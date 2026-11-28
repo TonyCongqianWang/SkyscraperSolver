@@ -23,6 +23,7 @@ from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
 from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE, MODE_WEIGHTS,
                               mode_losses, spsa_components)
 from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
+from comparison_measurements import unrestricted_environment, search_status
 from spsa_run_metadata import build_run_metadata, save_run_metadata
 
 # Training timeout scoring matches the default post-tuning PAR-4 policy.
@@ -152,6 +153,7 @@ def read_clues(file_path):
 
 
 def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
+    env = unrestricted_environment(env)
     t_start = time.perf_counter()
     try:
         proc = subprocess.Popen(
@@ -177,8 +179,14 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
                 raise RuntimeError(f"Instrumented solver failed: {stderr[:200]}")
             return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
+        lines = stdout.splitlines()
+        status = search_status(lines)
+        if status == 'timeout':
+            return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
+        if status == 'error':
+            raise ValueError('Malformed solver search status')
         if WORK_MODEL is not None:
-            predicted, measured_nodes, _ = parse_record(stdout.splitlines(), WORK_MODEL)
+            predicted, measured_nodes, _ = parse_record(lines, WORK_MODEL)
             return predicted, measured_nodes
 
         nodes = 100000
@@ -230,6 +238,7 @@ def evaluate_subset_standalone(env, tasks, max_workers):
 
 
 def _run_opt_group_stdin(env, opt, clues_with_indices):
+    env = unrestricted_environment(env)
     proc = subprocess.Popen(
         [BIN_CURR] + opt.split() + ["--stdin"],
         stdin=subprocess.PIPE,
@@ -264,6 +273,12 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
                 group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
                 continue
 
+            status = search_status(lines)
+            if status == 'timeout' or (status == 'error' and WORK_MODEL is None):
+                group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
+                continue
+            if status == 'error':
+                raise ValueError('Malformed solver search status')
             if WORK_MODEL is not None:
                 predicted, node_count, _ = parse_record(lines, WORK_MODEL)
                 elapsed = predicted
@@ -325,7 +340,7 @@ def evaluate_subset(env, tasks, max_workers, use_stdin=False):
 
 
 def get_env_for_theta(theta):
-    env = os.environ.copy()
+    env = unrestricted_environment()
     for val, (name, pmin, pmax, default, ptype, scale) in zip(theta, PARAM_METADATA):
         phys_val = pmin + val * (pmax - pmin)
         if ptype is int:

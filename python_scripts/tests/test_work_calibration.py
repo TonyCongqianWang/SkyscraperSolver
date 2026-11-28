@@ -275,6 +275,25 @@ class CalibrationModelTests(unittest.TestCase):
                 calibration.load_completed_runs(
                     journal, puzzles, [variant], None, 9, 3, True)
 
+    def test_journal_build_identity_bound_and_legacy_migration(self):
+        identity = {"version": 1, "git_commit": "current",
+                    "source_sha256": "abc", "compiler": "gcc"}
+        with tempfile.TemporaryDirectory() as temp:
+            journal = Path(temp) / "measurements.raw.jsonl"
+            journal.write_text("legacy record\n", encoding="utf-8")
+            with self.assertWarnsRegex(RuntimeWarning, "assuming existing measurements"):
+                calibration.bind_journal_build(journal, identity, resume=True)
+            self.assertEqual(journal.read_text(), "legacy record\n")
+            calibration.bind_journal_build(journal, identity, resume=True)
+            for changed in (dict(identity, git_commit="different"),
+                            dict(identity, source_sha256="changed"),
+                            dict(identity, compiler="clang")):
+                with self.assertRaisesRegex(ValueError, "build mismatch"):
+                    calibration.bind_journal_build(journal, changed, resume=True)
+            calibration.bind_journal_build(journal, identity, resume=False)
+            self.assertEqual(json.loads(journal.with_suffix(".build.json").read_text()),
+                             identity)
+
     def test_nonnegative_fit(self):
         samples = []
         for a, b in [(0, 1), (1, 1), (2, 2), (3, 0), (4, 3), (7, 1)]:

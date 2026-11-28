@@ -6,6 +6,7 @@ import warnings
 from pathlib import Path
 
 from calibrate_work import COUNTER_NAMES, SCHEMA
+from comparison_measurements import search_status
 from work_model_export import FORMAT, FORMAT_VERSION, predict_seconds
 
 DEFAULT_MODEL = (Path(__file__).resolve().parents[1] / "calibration"
@@ -41,6 +42,9 @@ def load_model(path=DEFAULT_MODEL):
 
 def parse_record(lines, model):
     """Require exactly one complete WORK_COUNTERS record, or fail closed."""
+    lines = list(lines)
+    if search_status(lines) != "ok":
+        raise ValueError("Incomplete search or invalid search status; work prediction rejected")
     records = [line.strip() for line in lines
                if line.strip().startswith("WORK_COUNTERS ")]
     if len(records) != 1:

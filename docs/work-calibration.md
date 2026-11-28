@@ -142,6 +142,7 @@ python3 python_scripts/calibrate_work.py --seed 123456 --resume
 Resume validates puzzle identities, dataset hashes, parameter perturbations,
 the deterministic per-observation parity schedule, run counts and
 work-counter schemas before reusing records; completed runs are not rerun.
+A companion `.raw.build.json` manifest binds the journal to the source revision, actual C/header and generated override contents, compiler/build settings and machine. Resume rejects a mismatched manifest. For an existing legacy journal without a manifest, resume warns and assumes the measurements were made with the current build, then records that identity for future resumes. Keep the manifest alongside the raw journal; `--fresh` starts a new identity.
 New raw records include the seed, repeat settings, section-timing mode
 and sampling versions, CPU budgets and checkpoint policy so changes are
 rejected. The original leader status and checkpoint are preserved and

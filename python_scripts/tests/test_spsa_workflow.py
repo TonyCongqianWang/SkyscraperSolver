@@ -454,6 +454,10 @@ import sys, time
 def solve(clue, stdin):
     if 'timeout' in clue:
         time.sleep(1)
+    if 'limited' in clue:
+        print('SEARCH_STATUS timeout')
+    elif 'complete' in clue:
+        print('SEARCH_STATUS complete')
     if 'bad' not in clue:
         print('Nodes visited: 123')
         print('Solutions found: 1')
@@ -481,11 +485,24 @@ else:
                 self.assertIsNone(rows[3]['nodes'])
                 self.assertEqual(rows[-1]['nodes'], 123)
 
+    def test_solver_side_timeout_not_counted_as_success(self):
+        binary = self.fake_solver()
+        for stdin in (True, False):
+            with self.subTest(stdin=stdin):
+                rows = measure_batch(binary, '-s 1', ['limited', 'complete'],
+                                     None, workers=1, use_stdin=stdin, warmup=0)
+                self.assertEqual([row['status'] for row in rows], ['timeout', 'ok'])
+                self.assertIsNone(rows[0]['nodes'])
+                self.assertIsNone(rows[0]['solutions'])
+
     def test_baseline_environment_removes_inherited_tuning_overrides(self):
         key = 'WEIGHT_TOTAL_SCALE_S8'
-        with patch.dict('os.environ', {key: '999', 'CUSTOM_SPSA_TEST': 'preserve'}):
+        with patch.dict('os.environ', {key: '999', 'CUSTOM_SPSA_TEST': 'preserve',
+                                       'SOLVER_CPU_TIMEOUT': '1', 'SOLVER_MAIN_NODE_LIMIT': '1'}):
             env = comparison.default_environment()
         self.assertNotIn(key, env)
+        self.assertNotIn('SOLVER_CPU_TIMEOUT', env)
+        self.assertNotIn('SOLVER_MAIN_NODE_LIMIT', env)
         self.assertEqual(env['CUSTOM_SPSA_TEST'], 'preserve')
 
     def test_fetch_preserves_multiple_winners_and_metadata_without_collisions(self):

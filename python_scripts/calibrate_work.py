@@ -6,6 +6,9 @@ import heapq
 import json
 import math
 import os
+import platform
+import shutil
+import warnings
 from pathlib import Path
 import random
 import re
@@ -666,6 +669,48 @@ def _outcome_from_raw(event):
     return result
 
 
+def journal_build_identity(cc, git_commit, compiler):
+    """Fingerprint actual source/overlay inputs, including uncommitted changes."""
+    digest = hashlib.sha256()
+    sources = sorted(p for p in (ROOT / "src").rglob("*")
+                     if p.is_file() and p.suffix in (".c", ".h"))
+    for source in sources:
+        digest.update(str(source.relative_to(ROOT)).encode())
+        digest.update(b"\0")
+        digest.update(hashlib.sha256(source.read_bytes()).digest())
+    digest.update(runtime_override_source().encode())
+    executable = shutil.which(cc)
+    return {
+        "version": 1,
+        "git_commit": git_commit,
+        "source_sha256": digest.hexdigest(),
+        "compiler": compiler,
+        "compiler_path": str(Path(executable).resolve()) if executable else cc,
+        "compile_flags": ["-Wall", "-Wextra", "-Werror", "-O2", "-flto"],
+        "machine": platform.node(),
+        "platform": platform.platform(),
+        "architecture": platform.machine(),
+    }
+
+
+def bind_journal_build(raw_path, identity, resume):
+    """Bind new journals and migrate legacy ones under the current-build assumption."""
+    manifest = raw_path.with_suffix(".build.json")
+    if resume and manifest.exists():
+        if json.loads(manifest.read_text(encoding="utf-8")) != identity:
+            raise ValueError(f"Calibration journal build mismatch: {manifest}; "
+                             "resume with the original build or use a new output path")
+        return
+    if resume:
+        warnings.warn(f"Legacy journal {raw_path} has no build identity; "
+                      "assuming existing measurements use the current build",
+                      RuntimeWarning, stacklevel=2)
+    temporary = manifest.with_suffix(".tmp")
+    temporary.write_text(json.dumps(identity, indent=2, sort_keys=True) + "\n",
+                         encoding="utf-8")
+    temporary.replace(manifest)
+
+
 def calibration_run_plan(seed, native_repeats, instrumented_repeats,
                          section_timing, cpu_limits=None, hard_timeout=None):
     """Record the schedule inputs in new journal entries."""
@@ -1015,11 +1060,15 @@ def main():
         args.seed, args.native_repeats, args.instrumented_repeats,
         not args.no_section_timing, cpu_limits, args.timeout)
     print(f"Instrumented CPU budgets: {cpu_limits}; hard timeout: {args.timeout}s", flush=True)
+    git_commit = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
+                                capture_output=True, text=True, check=True).stdout.strip()
+    compiler = subprocess.run([args.cc, "--version"], capture_output=True,
+                              text=True, check=True).stdout.splitlines()[0]
+    build_identity = journal_build_identity(args.cc, git_commit, compiler)
     provenance = {
-        "git_commit": subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
-                                      capture_output=True, text=True).stdout.strip(),
-        "compiler": subprocess.run([args.cc, "--version"], capture_output=True,
-                                    text=True, check=True).stdout.splitlines()[0],
+        "git_commit": git_commit,
+        "compiler": compiler,
+        "journal_build_identity": build_identity,
         "compile_flags": ["-Wall", "-Wextra", "-Werror", "-O2", "-flto"],
         "schema": SCHEMA,
         "configurations": variants_to_run,
@@ -1083,6 +1132,7 @@ def main():
                 f"Existing calibration journal: {raw_path}. Use --resume "
                 "with its original --seed to preserve completed work, or "
                 "--fresh to explicitly overwrite it.")
+    bind_journal_build(raw_path, build_identity, args.resume)
     rows = []
     raw_mode = "a" if args.resume else ("w" if args.fresh else "x")
     by_puzzle = {}

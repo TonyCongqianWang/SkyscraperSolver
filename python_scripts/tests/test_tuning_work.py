@@ -97,6 +97,45 @@ class WorkTuningTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "Unresolved work calibration"):
                 load_model(target)
 
+    def test_provisional_model_is_usable_with_warning(self):
+        model, _ = self._fixture_model()
+        model.update(status="provisional", usable_for_tuning=True,
+                     provisional_allocation=True, unresolved_groups=["example"])
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "provisional.model.json"
+            target.write_text(json.dumps(model), encoding="utf-8")
+            with self.assertWarnsRegex(RuntimeWarning, "Provisional work calibration"):
+                loaded, _ = load_model(target)
+            self.assertTrue(loaded["usable_for_tuning"])
+
+    def test_incomplete_search_counter_record_is_rejected(self):
+        model, _ = self._fixture_model()
+        for status in ("timeout", "invalid"):
+            with self.assertRaisesRegex(ValueError, "search"):
+                parse_record([example_record(model), f"SEARCH_STATUS {status}"], model)
+        self.assertEqual(parse_record([example_record(model), "SEARCH_STATUS complete"], model)[1], 7)
+
+    def test_search_timeout_penalized_and_environment_sanitized(self):
+        model, _ = self._fixture_model()
+        proc = MagicMock()
+        output = [example_record(model), "Nodes visited: 7",
+                  "SEARCH_STATUS timeout", "--- END_OF_INSTANCE ---"]
+        proc.communicate.return_value = ("\n".join(output), "")
+        proc.returncode = 0
+        env = {"SOLVER_CPU_TIMEOUT": "1", "SOLVER_MAIN_NODE_LIMIT": "1", "KEEP": "yes"}
+        for selected in (None, model):
+            with self.subTest(work=selected is not None), \
+                 patch.object(spsa_tune, "WORK_MODEL", selected), \
+                 patch.object(spsa_tune, "read_with_timeout", return_value=output), \
+                 patch.object(spsa_tune.subprocess, "Popen", return_value=proc) as popen:
+                self.assertEqual(spsa_tune.run_solver_instance(env, "-s 1", "clue"),
+                                 (40.0, 100000))
+                self.assertEqual(spsa_tune._run_opt_group_stdin(env, "-s 1", [(0, "clue")]),
+                                 [(0, 40.0, 100000)])
+                for call in popen.call_args_list:
+                    self.assertEqual(call.kwargs["env"], {"KEEP": "yes"})
+        self.assertIn("SOLVER_CPU_TIMEOUT", env)
+
     def test_calibrated_model_loads_and_schema_is_exact(self):
         model, digest = self._fixture_model()
         self.assertEqual(model["fit"], "pooled")

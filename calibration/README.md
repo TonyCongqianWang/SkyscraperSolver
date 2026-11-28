@@ -7,6 +7,8 @@
 
 Generated reports, raw solver journals, and candidate models belong in ignored `scratch/`. Promote candidates explicitly after review.
 
+For current use, the maintainer assumes the bundled calibrations apply to solver revision `f1b23453d46a1cc399197ea65bc340256bdb93e7`. The active model records this assumption as its source revision, preserving the originally recorded revision separately. The two benchmarked archives retain their original bytes and historical source metadata to keep the archived SHA-256 evidence valid. This is a provenance annotation, not a new calibration or benchmark.
+
 ## November 28, 2026: 36,000-observation calibration and refresh
 
 The new pooled regression was fitted to 27,000 training observations with 9,000 held out (seed `7615041398290283439`), reaching **99.07%** clear-pair ranking accuracy (95.80% all pairs). After a provisional deployment, a fresh Kaggle comparison used the same 3,000 configuration evaluations (500 puzzles per size, two configurations each) from its seeded holdout, with identical counter traces and native timings for both models. Ranking excludes incomplete pairs and the clear-pair filter additionally excludes noise-level deltas.
