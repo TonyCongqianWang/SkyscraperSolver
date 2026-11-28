@@ -348,3 +348,7 @@ See `calibration/evidence/work_calibration.validation.json` for the supplied agg
 ## Tuning watchdog
 
 Work-based SPSA and sweep use a 60-second emergency wall-clock watchdog per solve (`--work-watchdog SECONDS` to adjust). If it expires or the stdin stream fails, tuning aborts rather than assigning a wall-clock-derived work loss; reduce worker contention or raise the watchdog before restarting. Explicit solver-side incomplete-search results still receive the existing penalty. Measured nodes/time tuning and native performance comparison retain their existing PAR-4 timeout policy. The calibration workload deliberately need not include every tuning solve mode: diverse counter observations and independence are the calibration goals, with native end-to-end comparison assessing tuning effectiveness.
+
+## Process CPU clock portability
+
+Search time limits, sampled section timing, and the controlled microbenchmark share a process CPU clock: POSIX `CLOCK_PROCESS_CPUTIME_ID` or Windows `GetProcessTimes` (kernel plus user CPU time, converted from 100 ns units). Windows clock granularity may be coarser than the nominal units; controlled timing still rejects inadequate or unstable measurements. Native, instrumented, and micro-timing Windows executables use the `.exe` suffix, including temporary calibration and microbenchmark binaries.

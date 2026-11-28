@@ -20,16 +20,16 @@
 
 #ifdef _WIN32
 
-static double	filetime_ticks(FILETIME time)
+static unsigned long long	filetime_ticks(FILETIME time)
 {
 	ULARGE_INTEGER	value;
 
 	value.LowPart = time.dwLowDateTime;
 	value.HighPart = time.dwHighDateTime;
-	return ((double)value.QuadPart);
+	return (value.QuadPart);
 }
 
-double	search_timeout_cpu_seconds(void)
+int	search_timeout_cpu_nanoseconds(unsigned long long *ns)
 {
 	FILETIME	creation;
 	FILETIME	exit_time;
@@ -38,19 +38,31 @@ double	search_timeout_cpu_seconds(void)
 
 	if (!GetProcessTimes(GetCurrentProcess(), &creation, &exit_time,
 			&kernel, &user))
-		return (-1.0);
-	return ((filetime_ticks(kernel) + filetime_ticks(user)) / 10000000.0);
+		return (0);
+	*ns = (filetime_ticks(kernel) + filetime_ticks(user)) * 100ULL;
+	return (1);
 }
 
 #else
 
-double	search_timeout_cpu_seconds(void)
+int	search_timeout_cpu_nanoseconds(unsigned long long *ns)
 {
 	struct timespec	now;
 
 	if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now))
-		return (-1.0);
-	return ((double)now.tv_sec + (double)now.tv_nsec / 1e9);
+		return (0);
+	*ns = (unsigned long long)now.tv_sec * 1000000000ULL
+		+ (unsigned long long)now.tv_nsec;
+	return (1);
 }
 
 #endif
+
+double	search_timeout_cpu_seconds(void)
+{
+	unsigned long long	ns;
+
+	if (!search_timeout_cpu_nanoseconds(&ns))
+		return (-1.0);
+	return ((double)ns / 1e9);
+}

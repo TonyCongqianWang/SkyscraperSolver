@@ -10,6 +10,7 @@ It never updates the model or chooses its hyperparameters.
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 from pathlib import Path
 import tempfile
@@ -228,7 +229,8 @@ def controlled_microbench(cc="gcc", repeats=400000, rounds=5,
     source = ROOT / "python_scripts" / "work_micro_controlled.c"
     records = []
     with tempfile.TemporaryDirectory(prefix="sky_controlled_micro_") as temp:
-        binary = Path(temp) / "controlled_micro"
+        suffix = ".exe" if os.name == "nt" else ""
+        binary = Path(temp) / ("controlled_micro" + suffix)
         sources = [str(path) for path in sorted((ROOT / "src").glob("*.c"))
                    if path.name != "main.c"]
         command = ([cc, "-Wall", "-Wextra", "-Werror", "-O2", "-flto",
@@ -239,7 +241,7 @@ def controlled_microbench(cc="gcc", repeats=400000, rounds=5,
         # Check the reported DP scan units against the real counters on
         # every invocation of the controlled benchmark. Keep instrumentation
         # out of the actual CPU timing binary.
-        checked_binary = Path(temp) / "controlled_micro_checked"
+        checked_binary = Path(temp) / ("controlled_micro_checked" + suffix)
         checked_command = (command[:-2] + ["-DWORK_INSTRUMENTED",
                             "-o", str(checked_binary)])
         subprocess.run(checked_command, check=True, cwd=ROOT,

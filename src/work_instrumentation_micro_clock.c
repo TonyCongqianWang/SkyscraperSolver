@@ -10,19 +10,17 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#define _POSIX_C_SOURCE 200809L
 #include "work_instrumentation.h"
+#include "search_timeout.h"
 
 #if defined(WORK_INSTRUMENTED) && defined(WORK_MICRO_TIMING)
-# include <time.h>
 
 unsigned long long	work_micro_now(void)
 {
-	struct timespec	now;
+	unsigned long long	now;
 
-	if (!clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &now))
-		return ((unsigned long long)now.tv_sec * 1000000000ULL
-			+ (unsigned long long)now.tv_nsec);
+	if (search_timeout_cpu_nanoseconds(&now))
+		return (now);
 	return (0);
 }
 

@@ -2,7 +2,6 @@
  * The same optimized solver sources are linked; timers surround many repeated
  * operations. This harness intentionally varies call counts and data lengths.
  */
-#define _POSIX_C_SOURCE 200809L
 #include "node_selection_cache.h"
 #include "prune_check_constr.h"
 #include "grid_availability.h"
@@ -24,7 +23,7 @@
 #include "work_instrumentation.h"
 #include <limits.h>
 #include <stdio.h>
-#include <time.h>
+#include "search_timeout.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -67,10 +66,13 @@ static void check_work_units(const char *label, t_work_counter counter,
 
 static double clock_seconds(void)
 {
-    struct timespec t;
-    if (clock_gettime(CLOCK_PROCESS_CPUTIME_ID, &t) != 0)
-        return -1.0;
-    return (double)t.tv_sec + (double)t.tv_nsec / 1e9;
+    double seconds = search_timeout_cpu_seconds();
+    if (seconds < 0.0)
+    {
+        fprintf(stderr, "Process CPU clock failed\n");
+        exit(3);
+    }
+    return seconds;
 }
 
 static void emit_individual(const char *name, int round, int units,

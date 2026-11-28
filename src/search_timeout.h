@@ -18,5 +18,6 @@ void	search_timeout_init(void);
 int		search_timeout_check(t_node_count main_nodes);
 void	search_timeout_report(void);
 double	search_timeout_cpu_seconds(void);
+int		search_timeout_cpu_nanoseconds(unsigned long long *ns);
 
 #endif

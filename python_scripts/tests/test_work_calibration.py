@@ -5,6 +5,8 @@ from pathlib import Path
 import unittest
 import tempfile
 import sys
+import os
+import subprocess
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "calibrate_work.py"
@@ -52,6 +54,32 @@ class CalibrationModelTests(unittest.TestCase):
                 counts["dp_init_call"]
                 * (4 * (puzzles[0]["size"] + 1) ** 2 + 2
                    + 2 * (puzzles[0]["size"] + 1)))
+
+    def test_shared_cpu_clock_and_micro_clock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            directory = Path(tmp)
+            probe = directory / "clock_probe.c"
+            probe.write_text(
+                '#include "search_timeout.h"\n'
+                'unsigned long long work_micro_now(void);\n'
+                'int main(void) {\n'
+                '    unsigned long long first, last, micro;\n'
+                '    if (!search_timeout_cpu_nanoseconds(&first)) return 1;\n'
+                '    micro = work_micro_now();\n'
+                '    if (!search_timeout_cpu_nanoseconds(&last)) return 2;\n'
+                '    if (micro < first || micro > last) return 3;\n'
+                '    if (search_timeout_cpu_seconds() < 0.0) return 4;\n'
+                '    return 0;\n'
+                '}\n', encoding="utf-8")
+            src = calibration.ROOT / "src"
+            binary = directory / ("clock_probe.exe" if os.name == "nt" else "clock_probe")
+            subprocess.run(
+                ["gcc", "-Wall", "-Wextra", "-Werror", "-O2",
+                 "-DWORK_INSTRUMENTED", "-DWORK_MICRO_TIMING", "-I", str(src),
+                 str(probe), str(src / "search_timeout_clock.c"),
+                 str(src / "work_instrumentation_micro_clock.c"), "-o", str(binary)],
+                check=True, capture_output=True, text=True)
+            subprocess.run([str(binary)], check=True, timeout=10)
 
     def test_checkpoint_compiled_parity(self):
         puzzles = calibration.read_puzzles(

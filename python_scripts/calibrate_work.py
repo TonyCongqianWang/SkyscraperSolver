@@ -319,7 +319,7 @@ def build(tempdir, variant, instrument, cc, flags):
     """Compile once per mode; use env to vary parameters between puzzles."""
     suffix = "_micro" if "-DWORK_MICRO_TIMING" in flags else (
         "_instrumented" if instrument else "_native")
-    binary = tempdir / (variant["name"] + suffix)
+    binary = tempdir / (variant["name"] + suffix + (".exe" if os.name == "nt" else ""))
     overlay = tempdir / "calibration_runtime_overrides.c"
     overlay.write_text(runtime_override_source(), encoding="utf-8")
     sources = sorted((ROOT / "src").glob("*.c"))
