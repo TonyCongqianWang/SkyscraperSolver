@@ -212,7 +212,7 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
     }
 
 
-def controlled_microbench(cc="gcc", repeats=200000, rounds=3,
+def controlled_microbench(cc="gcc", repeats=400000, rounds=5,
                          max_repeats=4000000, required_names=None):
     """Measure every known merged operation, independently of puzzle traces.
 
@@ -350,8 +350,8 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3,
 
 def run_verification(model_path, collinearity_path, output,
                      puzzles_per_size=32, seed=1072, cc="gcc", timeout=None,
-                     datasets=VALIDATION_DATASETS, controlled_repeats=200000,
-                     controlled_rounds=3, controlled_result=None,
+                     datasets=VALIDATION_DATASETS, controlled_repeats=400000,
+                     controlled_rounds=5, controlled_result=None,
                      diagnostic_model=None, unresolved_groups=(), cpu_limits=None):
     model_path = Path(model_path)
     model = (diagnostic_model if diagnostic_model is not None
@@ -405,8 +405,8 @@ def main():
     parser.add_argument("--cc", default="gcc")
     parser.add_argument("--timeout", type=float, default=None,
                         help="Optional per-solver timeout; default: unlimited")
-    parser.add_argument("--controlled-repeats", type=int, default=200000)
-    parser.add_argument("--controlled-rounds", type=int, default=3)
+    parser.add_argument("--controlled-repeats", type=int, default=400000)
+    parser.add_argument("--controlled-rounds", type=int, default=5)
     args = parser.parse_args()
     result = run_verification(
         args.model, args.collinearity, args.output,

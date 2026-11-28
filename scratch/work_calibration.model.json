@@ -1,9 +1,9 @@
 {
-  "coefficient_allocation_method": "post_fit_timing_unmerge_no_regression_refit",
+  "coefficient_allocation_method": "post_fit_timing_unmerge_with_provisional_merged_projection",
   "compiler": "gcc (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0",
   "counter_schema": "v1",
   "counter_semantics": "fixed event counts and actual variable volumes",
-  "created_at_utc": "2026-11-24T04:14:03.120717+00:00",
+  "created_at_utc": "2026-11-27T23:44:15.197426+00:00",
   "dataset_sha256": {
     "puzzle_bank/spsa_datasets/le7_train.txt": "70d49362161cc11674c00be325bd3df075f0ccdaa7c169af8ae01215cdf0555a",
     "puzzle_bank/spsa_datasets/size8_train.txt": "c5d883198516641c6dedea38f755b85762312270fe42b58dcdc76867fd5ff082",
@@ -14,13 +14,8 @@
     "cache_resume_scan",
     "domain_scan",
     "dp_candidate_check",
-    "dp_init_call",
-    "dp_init_write",
-    "dp_prefix_candidate_scan",
     "dp_prune_value_scan",
-    "dp_suffix_candidate_scan",
     "next_value_scan",
-    "propagate_dp_update",
     "provisional_solution_rollback",
     "resume_scan",
     "setup_cache_slot"
@@ -29,46 +24,46 @@
   "format": "skyscraper-work-model",
   "format_version": 1,
   "held_out_score": {
-    "clear_ranking_accuracy": 0.930475279637407,
-    "clear_ranking_coverage": 0.8029180021367521,
-    "clear_ranking_pairs": 24049,
-    "macro_clear_ranking_accuracy": 0.9281823560337419,
-    "mae_seconds": 0.001213482786061276,
-    "r2": 0.99918090892533,
-    "ranking_accuracy": 0.8752003205128205,
-    "samples": 4992,
-    "within_puzzle_mae_seconds": 0.0009046537237294896,
-    "within_puzzle_r2": 0.9906165241277473
+    "clear_ranking_accuracy": 0.9906670326653857,
+    "clear_ranking_coverage": 0.8587930221593588,
+    "clear_ranking_pairs": 3643,
+    "macro_clear_ranking_accuracy": 0.9906670326653857,
+    "mae_seconds": 0.005927876672708054,
+    "r2": 0.9969915823520571,
+    "ranking_accuracy": 0.9580386610089581,
+    "samples": 9000,
+    "within_puzzle_mae_seconds": 0.0019895312367843344,
+    "within_puzzle_r2": 0.9976795069014059
   },
-  "held_out_score_basis": "allocated_model",
+  "held_out_score_basis": "pooled_merged_regression_not_provisional_default",
   "held_out_score_by_size": {
     "size7": {
-      "clear_ranking_accuracy": 0.9833251593918587,
-      "clear_ranking_coverage": 0.8169070512820513,
-      "mae_seconds": 0.0012998396800388693,
-      "r2": 0.9994138725914666,
-      "within_puzzle_r2": 0.9918935669783039
+      "clear_ranking_accuracy": 0.9894991922455574,
+      "clear_ranking_coverage": 0.8712174524982407,
+      "mae_seconds": 0.0057103022688779126,
+      "r2": 0.9965867014620411,
+      "within_puzzle_r2": 0.9953758800777017
     },
     "size8": {
-      "clear_ranking_accuracy": 0.9431552931484278,
-      "clear_ranking_coverage": 0.7294671474358975,
-      "mae_seconds": 0.0003778954301212338,
-      "r2": 0.9955410096227455,
-      "within_puzzle_r2": 0.9868288270932805
+      "clear_ranking_accuracy": 0.9902834008097166,
+      "clear_ranking_coverage": 0.8464701850582591,
+      "mae_seconds": 0.0025289892036094714,
+      "r2": 0.9965331423566794,
+      "within_puzzle_r2": 0.9950748407107118
     },
     "size9": {
-      "clear_ranking_accuracy": 0.8696864111498258,
-      "clear_ranking_coverage": 0.8623798076923077,
-      "mae_seconds": 0.001962713248023725,
-      "r2": 0.9932304558530316,
-      "within_puzzle_r2": 0.9903015804881976
+      "clear_ranking_accuracy": 0.9923076923076923,
+      "clear_ranking_coverage": 0.8590308370044053,
+      "mae_seconds": 0.009544338545636777,
+      "r2": 0.996942613883594,
+      "within_puzzle_r2": 0.9982306433158903
     }
   },
   "hyperparameters": {
-    "contrast_weight": 16,
-    "ridge_alpha": 0
+    "contrast_weight": 4,
+    "ridge_alpha": 0.0001
   },
-  "intercept_seconds": 0.0032585226353100158,
+  "intercept_seconds": 0.006337554506395191,
   "max_solutions_by_size": {
     "7": 0,
     "8": 1,
@@ -76,49 +71,43 @@
   },
   "merged_group_allocations": [
     {
-      "group": "assignment+constraint_check_call+dirty_constraint_enqueue+dirty_constraint_entry",
-      "max_abs_training_prediction_drift_seconds": 0.03528063987047653,
+      "group": "assignment+domain_invalidation_attempt",
+      "max_abs_training_prediction_drift_seconds": 0.17464159606058471,
       "member_cost_ratios": {
         "assignment": 1,
-        "constraint_check_call": 0.05328385820618139,
-        "dirty_constraint_enqueue": 0.08583920331932764,
-        "dirty_constraint_entry": 0.3172210481520544
+        "domain_invalidation_attempt": 0.031738227094596595
       },
       "members": [
         "assignment",
-        "constraint_check_call",
-        "dirty_constraint_enqueue",
-        "dirty_constraint_entry"
+        "domain_invalidation_attempt"
       ],
-      "merged_seconds_per_count": 1.288111480756431e-8,
+      "merged_seconds_per_count": 2.0445702163645267e-8,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "assignment": 4.965186338965351e-8,
-        "constraint_check_call": 2.6456428485269866e-9,
-        "dirty_constraint_enqueue": 4.262076396687948e-9,
-        "dirty_constraint_entry": 1.5750616147168504e-8
+        "assignment": 2.764247015010537e-7,
+        "domain_invalidation_attempt": 8.773229950796519e-9
       },
       "status": "resolved"
     },
     {
       "group": "cache_build_candidate+cache_build_cell_scan+setup_cell",
-      "max_abs_training_prediction_drift_seconds": 0,
+      "max_abs_training_prediction_drift_seconds": 4.3573188320840785e-7,
       "member_cost_ratios": {
         "cache_build_candidate": 1,
-        "cache_build_cell_scan": 0.23348255421965933,
-        "setup_cell": 1.3151544062725364
+        "cache_build_cell_scan": 0.27482404768954743,
+        "setup_cell": 2.1886142634826427
       },
       "members": [
         "cache_build_candidate",
         "cache_build_cell_scan",
         "setup_cell"
       ],
-      "merged_seconds_per_count": 0,
+      "merged_seconds_per_count": 1.477394414125807e-7,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "cache_build_candidate": 0,
-        "cache_build_cell_scan": 0,
-        "setup_cell": 0
+        "cache_build_candidate": 1.4129743673800294e-7,
+        "cache_build_cell_scan": 3.883193349249573e-8,
+        "setup_cell": 3.092455854383296e-7
       },
       "status": "resolved"
     },
@@ -127,8 +116,8 @@
       "max_abs_training_prediction_drift_seconds": 0,
       "member_cost_ratios": {
         "cache_pair_copy_call": 1,
-        "cache_state_copy": 2.632323632933373,
-        "line_copy": 4.120485515851219
+        "cache_state_copy": 2.339646888624561,
+        "line_copy": 3.6909962022943272
       },
       "members": [
         "cache_pair_copy_call",
@@ -146,127 +135,209 @@
     },
     {
       "group": "compact_check+compact_move",
-      "max_abs_training_prediction_drift_seconds": 0.0003511017915050242,
+      "max_abs_training_prediction_drift_seconds": 0.004029623832828122,
       "member_cost_ratios": {
         "compact_check": 1,
-        "compact_move": 0.3035173430626415
+        "compact_move": 0.3680638270843645
       },
       "members": [
         "compact_check",
         "compact_move"
       ],
-      "merged_seconds_per_count": 2.5473825973479936e-9,
+      "merged_seconds_per_count": 7.53164072000717e-10,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "compact_check": 3.638950652686522e-9,
-        "compact_move": 1.1044846336394783e-9
+        "compact_check": 1.0714740996561566e-9,
+        "compact_move": 3.943708577412188e-10
+      },
+      "status": "resolved"
+    },
+    {
+      "counter_reasons": {
+        "constraint_check_call": "insufficient_timing_evidence"
+      },
+      "group": "constraint_check_call+dirty_constraint_entry",
+      "max_abs_training_prediction_drift_seconds": 0,
+      "member_cost_ratios": null,
+      "members": [
+        "constraint_check_call",
+        "dirty_constraint_entry"
+      ],
+      "merged_seconds_per_count": 1.4272684282474895e-8,
+      "missing_or_unstable_counters": [
+        "constraint_check_call"
+      ],
+      "normalization": "exact_merged_prediction_projection",
+      "reason": "Controlled microbenchmark cannot resolve {'constraint_check_call': 'insufficient_timing_evidence'}",
+      "seconds_per_original_count": {
+        "constraint_check_call": 1.4272684282474895e-8,
+        "dirty_constraint_entry": 1.4272684282474895e-8
+      },
+      "status": "provisional_projection"
+    },
+    {
+      "counter_reasons": {
+        "dp_init_call": "not_benchmarked",
+        "dp_init_write": "not_benchmarked",
+        "propagate_dp_update": "not_benchmarked"
+      },
+      "group": "dp_init_call+dp_init_write+dp_prefix_candidate_scan+dp_suffix_candidate_scan+propagate_dp_update",
+      "max_abs_training_prediction_drift_seconds": 0,
+      "member_cost_ratios": null,
+      "members": [
+        "dp_init_call",
+        "dp_init_write",
+        "dp_prefix_candidate_scan",
+        "dp_suffix_candidate_scan",
+        "propagate_dp_update"
+      ],
+      "merged_seconds_per_count": 0,
+      "missing_or_unstable_counters": [
+        "dp_init_call",
+        "dp_init_write",
+        "propagate_dp_update"
+      ],
+      "normalization": "exact_zero_group",
+      "reason": "Controlled microbenchmark cannot resolve {'dp_init_call': 'not_benchmarked', 'dp_init_write': 'not_benchmarked', 'propagate_dp_update': 'not_benchmarked'}",
+      "seconds_per_original_count": {
+        "dp_init_call": 0,
+        "dp_init_write": 0,
+        "dp_prefix_candidate_scan": 0,
+        "dp_suffix_candidate_scan": 0,
+        "propagate_dp_update": 0
       },
       "status": "resolved"
     },
     {
       "group": "index_copy_call+index_copy_pair",
-      "max_abs_training_prediction_drift_seconds": 0.00033475834180030084,
+      "max_abs_training_prediction_drift_seconds": 0.007459051457580079,
       "member_cost_ratios": {
         "index_copy_call": 1,
-        "index_copy_pair": 0.37794443944253586
+        "index_copy_pair": 0.43058590257865376
       },
       "members": [
         "index_copy_call",
         "index_copy_pair"
       ],
-      "merged_seconds_per_count": 6.0253189170670274e-9,
+      "merged_seconds_per_count": 1.3226769669962722e-8,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "index_copy_call": 1.3606033541267108e-8,
-        "index_copy_pair": 5.1423247197905384e-9
+        "index_copy_call": 2.694227267883308e-8,
+        "index_copy_pair": 1.1600962798935545e-8
+      },
+      "status": "resolved"
+    },
+    {
+      "group": "line_compare+line_score+line_score_value",
+      "max_abs_training_prediction_drift_seconds": 0.018566271551082925,
+      "member_cost_ratios": {
+        "line_compare": 1,
+        "line_score": 3.8708279712851397,
+        "line_score_value": 0.3290495614354632
+      },
+      "members": [
+        "line_compare",
+        "line_score",
+        "line_score_value"
+      ],
+      "merged_seconds_per_count": 2.447383646081388e-9,
+      "normalization": "training_total_contribution",
+      "seconds_per_original_count": {
+        "line_compare": 3.311442347107439e-9,
+        "line_score": 1.2818023662481589e-8,
+        "line_score_value": 1.0896286520345238e-9
       },
       "status": "resolved"
     },
     {
       "group": "transition_compare+transition_shift",
-      "max_abs_training_prediction_drift_seconds": 0.00005559744231280195,
+      "max_abs_training_prediction_drift_seconds": 0.016109008609897835,
       "member_cost_ratios": {
         "transition_compare": 1,
-        "transition_shift": 1.0541048752575088
+        "transition_shift": 0.7053588187978431
       },
       "members": [
         "transition_compare",
         "transition_shift"
       ],
-      "merged_seconds_per_count": 1.440079122784131e-9,
+      "merged_seconds_per_count": 1.9146879254871563e-9,
       "normalization": "training_total_contribution",
       "seconds_per_original_count": {
-        "transition_compare": 1.4037937537848283e-9,
-        "transition_shift": 1.4797458397206264e-9
+        "transition_compare": 2.2027343893085037e-9,
+        "transition_shift": 1.5537181269680344e-9
       },
       "status": "resolved"
     }
   ],
   "merged_group_coefficients": {
-    "assignment+constraint_check_call+dirty_constraint_enqueue+dirty_constraint_entry": 1.288111480756431e-8,
-    "base_score": 8.89035207982593e-9,
-    "cache_build_candidate+cache_build_cell_scan+setup_cell": 0,
-    "cache_pair_copy": 1.0845202752941659e-9,
+    "assignment+domain_invalidation_attempt": 2.0445702163645267e-8,
+    "base_score": 1.3779850845667323e-8,
+    "cache_build_candidate+cache_build_cell_scan+setup_cell": 1.477394414125807e-7,
+    "cache_pair_copy": 1.784379430644317e-9,
     "cache_pair_copy_call+cache_state_copy+line_copy": 0,
     "cell_bound_skip": 0,
-    "compact_check+compact_move": 2.5473825973479936e-9,
+    "compact_check+compact_move": 7.53164072000717e-10,
+    "constraint_check_call+dirty_constraint_entry": 1.4272684282474895e-8,
     "constraint_check_cell": 0,
-    "constraint_check_unset_cell": 0,
-    "domain_invalidation": 6.637007077824158e-8,
-    "domain_invalidation_attempt": 1.4100041991963334e-8,
-    "index_copy_call+index_copy_pair": 6.0253189170670274e-9,
-    "line_compare": 0,
-    "line_score": 0,
-    "line_score_value": 0,
-    "line_shift": 3.025618135100449e-8,
-    "lookahead_blend": 2.3670429450217903e-7,
-    "lookahead_scan": 0,
+    "constraint_check_unset_cell": 1.844737723146882e-8,
+    "dirty_constraint_enqueue": 2.2544123137318135e-8,
+    "domain_invalidation": 2.5787048443292407e-8,
+    "dp_init_call+dp_init_write+dp_prefix_candidate_scan+dp_suffix_candidate_scan+propagate_dp_update": 0,
+    "index_copy_call+index_copy_pair": 1.3226769669962722e-8,
+    "line_compare+line_score+line_score_value": 2.447383646081388e-9,
+    "line_shift": 0,
+    "lookahead_blend": 0,
+    "lookahead_scan": 3.460637526423257e-8,
     "node_copy": 0,
-    "prune_line_scan": 0,
-    "rel_entropy_value": 0,
-    "rescore_scan": 1.3187111855453995e-8,
-    "solution_copy": 4.0728211918369444e-7,
-    "transition_compare+transition_shift": 1.440079122784131e-9
+    "prune_line_scan": 1.7662341003527057e-7,
+    "rel_entropy_value": 1.4180174081421179e-9,
+    "rescore_scan": 7.115458434839086e-9,
+    "solution_copy": 6.051944340965641e-8,
+    "transition_compare+transition_shift": 1.9146879254871563e-9
   },
   "objective": "predicted_seconds",
   "regression_held_out_score": {
-    "clear_ranking_accuracy": 0.9303921160963033,
-    "clear_ranking_coverage": 0.8029180021367521,
-    "clear_ranking_pairs": 24049,
-    "macro_clear_ranking_accuracy": 0.9281437793621574,
-    "mae_seconds": 0.0012021065141343084,
+    "clear_ranking_accuracy": 0.9906670326653857,
+    "clear_ranking_coverage": 0.8587930221593588,
+    "clear_ranking_pairs": 3643,
+    "complete_mae_seconds": 0.003306733999600228,
+    "complete_samples": 8737,
+    "error_basis": "matched complete and partial search prefixes",
+    "macro_clear_ranking_accuracy": 0.9906670326653857,
+    "mae_seconds": 0.005927876672708054,
     "minimum_delta_seconds": 0.00005,
-    "noise_excluded_pairs": 5903,
+    "noise_excluded_pairs": 599,
     "noise_model": "2x median standard errors from native repeated timings",
     "noise_z": 2,
-    "puzzles_with_clear_comparisons": 384,
-    "r2": 0.9991132019620167,
-    "ranking_accuracy": 0.8751669337606838,
-    "ranking_pairs": 29952,
-    "samples": 4992,
-    "within_puzzle_mae_seconds": 0.0008996756428410702,
-    "within_puzzle_r2": 0.9901596866216654
+    "partial_samples": 263,
+    "puzzles_with_clear_comparisons": 3643,
+    "r2": 0.9969915823520571,
+    "ranking_accuracy": 0.9580386610089581,
+    "ranking_pairs": 4242,
+    "samples": 9000,
+    "within_puzzle_mae_seconds": 0.0019895312367843344,
+    "within_puzzle_r2": 0.9976795069014059
   },
   "seconds_per_count": {
-    "assignment": 4.965186338965351e-8,
-    "base_score": 8.89035207982593e-9,
-    "cache_build_candidate": 0,
-    "cache_build_cell_scan": 0,
+    "assignment": 2.764247015010537e-7,
+    "base_score": 1.3779850845667323e-8,
+    "cache_build_candidate": 1.4129743673800294e-7,
+    "cache_build_cell_scan": 3.883193349249573e-8,
     "cache_next_scan": 0,
-    "cache_pair_copy": 1.0845202752941659e-9,
+    "cache_pair_copy": 1.784379430644317e-9,
     "cache_pair_copy_call": 0,
     "cache_resume_scan": 0,
     "cache_state_copy": 0,
     "cell_bound_skip": 0,
-    "compact_check": 3.638950652686522e-9,
-    "compact_move": 1.1044846336394783e-9,
-    "constraint_check_call": 2.6456428485269866e-9,
+    "compact_check": 1.0714740996561566e-9,
+    "compact_move": 3.943708577412188e-10,
+    "constraint_check_call": 1.4272684282474895e-8,
     "constraint_check_cell": 0,
-    "constraint_check_unset_cell": 0,
-    "dirty_constraint_enqueue": 4.262076396687948e-9,
-    "dirty_constraint_entry": 1.5750616147168504e-8,
-    "domain_invalidation": 6.637007077824158e-8,
-    "domain_invalidation_attempt": 1.4100041991963334e-8,
+    "constraint_check_unset_cell": 1.844737723146882e-8,
+    "dirty_constraint_enqueue": 2.2544123137318135e-8,
+    "dirty_constraint_entry": 1.4272684282474895e-8,
+    "domain_invalidation": 2.5787048443292407e-8,
+    "domain_invalidation_attempt": 8.773229950796519e-9,
     "domain_scan": 0,
     "dp_candidate_check": 0,
     "dp_init_call": 0,
@@ -274,41 +345,66 @@
     "dp_prefix_candidate_scan": 0,
     "dp_prune_value_scan": 0,
     "dp_suffix_candidate_scan": 0,
-    "index_copy_call": 1.3606033541267108e-8,
-    "index_copy_pair": 5.1423247197905384e-9,
-    "line_compare": 0,
+    "index_copy_call": 2.694227267883308e-8,
+    "index_copy_pair": 1.1600962798935545e-8,
+    "line_compare": 3.311442347107439e-9,
     "line_copy": 0,
-    "line_score": 0,
-    "line_score_value": 0,
-    "line_shift": 3.025618135100449e-8,
-    "lookahead_blend": 2.3670429450217903e-7,
-    "lookahead_scan": 0,
+    "line_score": 1.2818023662481589e-8,
+    "line_score_value": 1.0896286520345238e-9,
+    "line_shift": 0,
+    "lookahead_blend": 0,
+    "lookahead_scan": 3.460637526423257e-8,
     "next_value_scan": 0,
     "node_copy": 0,
     "propagate_dp_update": 0,
     "provisional_solution_rollback": 0,
-    "prune_line_scan": 0,
-    "rel_entropy_value": 0,
-    "rescore_scan": 1.3187111855453995e-8,
+    "prune_line_scan": 1.7662341003527057e-7,
+    "rel_entropy_value": 1.4180174081421179e-9,
+    "rescore_scan": 7.115458434839086e-9,
     "resume_scan": 0,
     "setup_cache_slot": 0,
-    "setup_cell": 0,
-    "solution_copy": 4.0728211918369444e-7,
-    "transition_compare": 1.4037937537848283e-9,
-    "transition_shift": 1.4797458397206264e-9
+    "setup_cell": 3.092455854383296e-7,
+    "solution_copy": 6.051944340965641e-8,
+    "transition_compare": 2.2027343893085037e-9,
+    "transition_shift": 1.5537181269680344e-9
   },
   "source_calibration_file": "/kaggle/working/SkyscraperSolver/scratch/work_calibration.json",
-  "source_git_commit": "61062436f5fec6e338033c6faff5344a00fac34c",
-  "status": "complete",
-  "training_observations": 14976,
+  "source_git_commit": "1a12ea65db0880b5a0bf2aa8df54c7ff34bde120",
+  "status": "provisional",
+  "training_observations": 27000,
   "training_sizes": [
     7,
     8,
     9
   ],
-  "unresolved_counters": [],
-  "unresolved_groups": [],
+  "unresolved_counters": [
+    "constraint_check_call",
+    "dirty_constraint_entry"
+  ],
+  "unresolved_groups": [
+    {
+      "counter_reasons": {
+        "constraint_check_call": "insufficient_timing_evidence"
+      },
+      "group": "constraint_check_call+dirty_constraint_entry",
+      "members": [
+        "constraint_check_call",
+        "dirty_constraint_entry"
+      ],
+      "missing_or_unstable_counters": [
+        "constraint_check_call"
+      ],
+      "reason": "Controlled microbenchmark cannot resolve {'constraint_check_call': 'insufficient_timing_evidence'}"
+    }
+  ],
   "usable_for_tuning": true,
-  "validation_observations": 4992,
-  "warnings": []
+  "validation_observations": 9000,
+  "warnings": [
+    "Provisional default: unresolved positive group uses exact merged-regression projection, not measured per-counter costs. Original training observations unavailable; allocated ranking accuracy unverified."
+  ],
+  "calibration_seed": "7615041398290283439",
+  "calibration_puzzles_per_size": 6000,
+  "calibration_validation_fraction": 0.25,
+  "provisional_allocation": true,
+  "previous_default_path": "scratch/work_calibration.previous.model.json"
 }

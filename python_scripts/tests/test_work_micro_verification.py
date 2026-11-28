@@ -314,7 +314,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         report = controlled_microbench(repeats=1000, rounds=1)
         self.assertEqual(set(report["sections"]), {
             "cache_pair_copy_call", "line_score", "index_copy_call",
-            "constraint_check_call"})
+            "constraint_check_call", "dp_init_call", "dp_suffix_candidate_scan"})
         self.assertEqual(sum(r["kind"] == "individual" for r in report["raw_measurements"]), 37)
         assignment = [r for r in report["raw_measurements"]
                       if r.get("counter") == "assignment"]
@@ -328,7 +328,7 @@ class IndependentMicroVerificationTests(unittest.TestCase):
             assignment[0]["cpu_seconds"], delta=1e-9)
         self.assertEqual(assignment[0]["nested_invalidation_attempts_per_unit"], 18)
         self.assertEqual(assignment[0]["nested_dirty_enqueues_per_unit"], 2)
-        self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 16)
+        self.assertEqual(sum(r["kind"] == "affine" for r in report["raw_measurements"]), 28)
         counters = {r.get("counter") for r in report["raw_measurements"]
                     if r["kind"] == "individual"}
         self.assertTrue({"lookahead_scan", "resume_scan", "rescore_scan",

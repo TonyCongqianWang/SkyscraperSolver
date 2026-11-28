@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import warnings
 from pathlib import Path
 
 from calibrate_work import COUNTER_NAMES, SCHEMA
@@ -33,6 +34,8 @@ def load_model(path=DEFAULT_MODEL):
     for value in [model.get("intercept_seconds"), *coeffs.values()]:
         if not isinstance(value, (int, float)) or not math.isfinite(value) or value < 0:
             raise ValueError("Invalid work model coefficient")
+    if model.get("provisional_allocation"):
+        warnings.warn("Provisional work calibration: allocated ranking accuracy is unverified", RuntimeWarning, stacklevel=2)
     return model, hashlib.sha256(payload).hexdigest()
 
 

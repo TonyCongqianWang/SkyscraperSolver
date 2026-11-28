@@ -868,11 +868,11 @@ def main():
                         help="Skip independent end-of-calibration SPSA-validation micro check")
     parser.add_argument("--micro-puzzles-per-size", type=int, default=32,
                         help="Validation puzzles per size in independent micro check")
-    parser.add_argument("--micro-repeats", type=int, default=200000,
+    parser.add_argument("--micro-repeats", type=int, default=400000,
                         help="Repeated real C operations per controlled micro point")
     parser.add_argument("--micro-max-repeats", type=int, default=4000000,
                         help="Adaptive controlled timing repetition ceiling")
-    parser.add_argument("--micro-rounds", type=int, default=3,
+    parser.add_argument("--micro-rounds", type=int, default=5,
                         help="Independent controlled timing rounds; must be >=3")
     parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
                         help="Comma-separated nonnegative ridge penalties")
@@ -909,7 +909,13 @@ def main():
                         help="Compact pooled model path (default: output.model.json)")
     parser.add_argument("--collinearity-output", type=Path,
                         help="Pooled collinearity path (default: output.collinearity.json)")
+    parser.add_argument("--micro-only", type=Path, metavar="REPORT_OR_MODEL",
+                        help="Refresh timing allocation without regression or native runs")
     args = parser.parse_args()
+    if args.micro_only:
+        from work_calibration_refresh import refresh
+        refresh(args)
+        return
     if args.resume and args.fresh:
         parser.error("--resume and --fresh cannot be combined")
     if args.resume and args.seed is None:
