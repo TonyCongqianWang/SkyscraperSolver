@@ -30,6 +30,22 @@ static int	enter_search_run(t_solver_state *puzzle, t_lookahead_pass pass)
 	return (has_reached_terminal_state(puzzle->cur_node));
 }
 
+/* Stop only in the outer DFS, after nested probes return. */
+static int	stop_search_run(t_solver_state *puzzle, int start_d,
+		t_search_frame *frame, const t_lookahead_config *config)
+{
+	if (!config && start_d == 0
+		&& puzzle->cur_node->tree.lookahead_depth == 0
+		&& !solution_limit_reached(puzzle)
+		&& search_timeout_check(puzzle->main_nodes_visited))
+	{
+		frame->node_sols.exhausted = 0;
+		frame->node_sols.solutions_registered = puzzle->solutions_found;
+		return (1);
+	}
+	return (0);
+}
+
 t_sol_info	run_tree_search(t_solver_state *puzzle,
 			const t_lookahead_config *config, t_lookahead_pass pass)
 {
@@ -49,17 +65,8 @@ t_sol_info	run_tree_search(t_solver_state *puzzle,
 	frames[d].probe_pass = pass;
 	while (1)
 	{
-		/* Stop only in the outer DFS, after nested probes return. */
-		if (!config && start_d == 0
-			&& puzzle->cur_node->tree.lookahead_depth == 0
-			&& !solution_limit_reached(puzzle)
-			&& search_timeout_check(puzzle->main_nodes_visited))
-		{
-			frames[start_d].node_sols.exhausted = 0;
-			frames[start_d].node_sols.solutions_registered
-				= puzzle->solutions_found;
+		if (stop_search_run(puzzle, start_d, &frames[start_d], config))
 			break ;
-		}
 		if (process_search_frame(puzzle, &d, start_d, frames)
 			== SEARCH_TERMINATE)
 			break ;
