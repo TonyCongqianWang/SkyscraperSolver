@@ -2,7 +2,7 @@
 
 The current work-counter schema contains 48 counters. The previously
 bundled 33-counter model has been removed because it lacks the new
-size-dependent work components. The bundled provisional 48-counter model is at
+size-dependent work components. The bundled fully allocated 48-counter model is at
 `calibration/work_calibration.model.json`. The only supported
 work-counter schema is **v1**. Fresh calibration candidates remain in scratch until explicitly promoted.
 
@@ -78,3 +78,5 @@ The previous 33-counter results remain historical, not an estimate of the
 new model's accuracy. Size-8 enumeration and actual SPSA batch objective
 rankings against native runtimes also require validation. The PR remains
 a draft pending these measurements.
+
+See `calibration/README.md` for the November 28 refresh and matched benchmark results. The refreshed default's own native-ranking validation remains outstanding.

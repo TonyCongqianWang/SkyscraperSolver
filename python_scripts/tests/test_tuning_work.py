@@ -43,7 +43,9 @@ class WorkTuningTests(unittest.TestCase):
     def test_bundled_default_calibration_is_ready_for_tuning(self):
         model, sha = load_model(DEFAULT_MODEL)
         self.assertTrue(model["usable_for_tuning"])
-        self.assertIn(model["status"], ("complete", "provisional"))
+        self.assertEqual(model["status"], "complete")
+        self.assertFalse(model.get("provisional_allocation", False))
+        self.assertFalse(model.get("unresolved_groups"))
         self.assertEqual(DEFAULT_MODEL.parent.name, "calibration")
         self.assertEqual(model["fit"], "pooled")
         self.assertEqual(len(model["seconds_per_count"]), 48)

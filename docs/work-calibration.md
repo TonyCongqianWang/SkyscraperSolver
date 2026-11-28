@@ -10,14 +10,12 @@ solver does not emit these counters. The instrumented solver includes no
 wall-clock timers unless explicitly compiled with `WORK_MICRO_TIMING`.
 
 The sole supported compact model schema is `v1`, with format
-`skyscraper-work-model` version 1. A completed, verified 48-counter pooled model is now committed at
+`skyscraper-work-model` version 1. A fully allocated 48-counter pooled model is committed at
 `calibration/work_calibration.model.json`, the default SPSA tuning path.
-It is based on the fully resolved November 24 calibration and is usable
-immediately for tuning on this branch. A new full calibration overwrites
-that file locally when requested; it does not need to be rerun before
-the initial tuning run. The previous 33-counter fit is obsolete. The work tuning objective loads that generated model in **seconds**
-and fails if it is missing. There is no compatibility projection or
-fallback to obsolete fitted coefficients.
+It is based on the November 27 regression and November 28 micro-only refresh.
+Fresh calibrations produce candidates in `scratch/`; promotion is explicit.
+The previous 33-counter fit is obsolete. The work tuning objective uses **seconds**
+and fails if the model is missing or incompatible. No obsolete-model fallback is used.
 The measured **time + nodes** objective remains separately available.
 
 ## Run calibration
@@ -316,8 +314,32 @@ A zero merged coefficient is allocated exactly to all-zero member weights, witho
 
 ### Validate or refresh a fixed regression
 
-Default controlled timing starts at 400000 repetitions and five rounds. `python3 python_scripts/benchmark_work_calibration.py --model calibration/work_calibration.model.json --model calibration/work_calibration.previous.model.json` compares both models on identical fresh native timings and counter traces, using a subset of the original seeded holdout (seed and population read from the first model, or overridden by CLI). Increase `--puzzles-per-size` to 1500 for the entire holdout. This never fits coefficients. `python3 python_scripts/calibrate_work.py --micro-only PATH` refreshes allocation from a detailed report with saved samples, or from the compact model by regenerating training counters only (no native timing or regression). Regenerated CPU-limited prefixes may differ, so compact refresh cannot claim original allocated held-out accuracy. The source is not overwritten. The provisional default preserves the positive unresolved group's exact merged prediction, not a measured cost ratio; the 99.07% score belongs to the original merged regression only. The previous default remains available for comparison.
+Default controlled timing starts at 400000 repetitions and five rounds. `python3 python_scripts/benchmark_work_calibration.py --model calibration/work_calibration.model.json --model calibration/work_calibration.previous.model.json` compares both models on identical fresh native timings and counter traces, using a subset of the original seeded holdout (seed and population read from the first model, or overridden by CLI). Increase `--puzzles-per-size` to 1500 for the entire holdout. This never fits coefficients. `python3 python_scripts/calibrate_work.py --micro-only PATH` refreshes allocation from a detailed report with saved samples, or from the compact model by regenerating training counters only (no native timing or regression). Regenerated CPU-limited prefixes may differ, so compact refresh cannot claim original allocated held-out accuracy. The source is not overwritten. The archived provisional model preserves the formerly unresolved positive group's exact merged prediction; the current default uses the refreshed timing-derived allocation. The 99.07% score belongs to the original merged regression only. See `calibration/README.md` for benchmark results and evidence.
 
 Both validation and compact-model refresh use the saved calibration seed unless `--seed` is explicitly supplied; older models without seed metadata require that option. New compact exports preserve the original seed as decimal text.
 
 The tracked deployment models live in `calibration/`, not `scratch/`. Full calibration and refresh write candidate artifacts and diagnostics to `scratch/` by default; promote a validated candidate explicitly to `calibration/work_calibration.model.json`. `--work-model` selects an alternative model without changing the bundled default.
+
+## November 28, 2026: 36,000-observation calibration and refresh
+
+The new pooled regression was fitted to 27,000 training observations with 9,000 held out (seed `7615041398290283439`), reaching **99.07%** clear-pair ranking accuracy (95.80% all pairs). After a provisional deployment, a fresh Kaggle comparison used the same 3,000 configuration evaluations (500 puzzles per size, two configurations each) from its seeded holdout, with identical counter traces and native timings for both models. Ranking excludes incomplete pairs and the clear-pair filter additionally excludes noise-level deltas.
+
+| Metric | Nov 24 previous | Nov 27 provisional |
+| --- | ---: | ---: |
+| Clear ranking accuracy (1,296 pairs) | 98.38% | 99.38% |
+| Incorrect clear rankings | 21 | 8 |
+| Overall ranking accuracy (1,437 pairs) | 95.20% | 95.89% |
+| MAE (ms) | 13.288 | 7.028 |
+| Complete-search MAE (ms) | 6.967 | 4.374 |
+| Within-puzzle MAE (ms) | 4.599 | 2.217 |
+| Overall R² | 0.98633 | 0.99651 |
+| Within-puzzle R² | 0.98298 | 0.99717 |
+| Size 7 clear ranking | 99.31% | 99.54% |
+| Size 8 clear ranking | 98.40% | 99.08% |
+| Size 9 clear ranking | 97.41% | 99.53% |
+
+The subsequent micro-only refresh resolved **9/9 merged groups** without regression refitting, using regenerated training counter observations. All 45 benchmarked counters were accepted in the initial five-round batch of 400,000 repetitions; no retry or instability remained. The three unbenchmarked counters (`domain_scan`, `dp_candidate_check`, `setup_cache_slot`) were dropped from this regression. The formerly unresolved constraint group now has measured relative cost 11.2111 (dirty entry / check call), allocated weights 2.33765 and 26.20772 ns respectively, and maximum regenerated-training prediction drift 4.44e-16 s. Zero-weight DP and copy groups are resolved algebraically, with no arbitrary timing ratios.
+
+The **fully allocated refreshed model** is now the default at `calibration/work_calibration.model.json`. Its fitted merged coefficients and intercept are unchanged. The prior provisional model is retained byte-for-byte at `calibration/work_calibration.provisional.model.json`; the November 24 model remains at `calibration/work_calibration.previous.model.json`. The two archived model SHA-256 digests match the reported benchmark. The 99.38% benchmark applies to the archived provisional coefficients, not the refreshed default; the default's 99.07% historical score applies to the original merged regression only. Rebenchmark the refreshed default before claiming its allocated-model accuracy. Original native observations are unavailable, and regenerated CPU-limited prefixes can differ.
+
+See `calibration/evidence/work_calibration.validation.json` for the supplied aggregate benchmark scores and `calibration/evidence/work_calibration.refresh.timing.json` for the complete controlled timing report.
