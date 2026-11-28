@@ -339,6 +339,22 @@ static void bench_constraint_affine(int repeats, int round)
         }
         emit_affine("constraint_check_call", round, repeats,
                     repeats * n, start);
+        if (n == 0)
+        {
+            unsigned long long before = work_get(WORK_CONSTRAINT_CHECK_CALL);
+            unsigned long long cells = work_get(WORK_CONSTRAINT_CHECK_CELL);
+            start = clock_seconds();
+            for (i = 0; i < repeats; i++)
+            {
+                sink += (unsigned long long)check_active_constr(&puzzle);
+                barrier(bounds);
+            }
+            emit_individual("constraint_check_call", round, repeats, start);
+            check_work_units("constraint_check_call", WORK_CONSTRAINT_CHECK_CALL,
+                             before, repeats);
+            check_work_units("constraint_check_zero_cells",
+                             WORK_CONSTRAINT_CHECK_CELL, cells, 0);
+        }
     }
     prepare(7);
 }
@@ -618,6 +634,57 @@ static void bench_prune_line_scan(int repeats, int round)
     emit_individual("prune_line_scan", round, 14 * repeats, start);
 }
 
+/* Vary initialization volume and update density independently. The suffix
+ * scan count is fixed at size * (size + 1) * size for every density. */
+static void bench_dp_affine(int repeats, int round)
+{
+    t_dp_tables dp;
+    int domains[9];
+    int n, i, j, density, writes, scans, updates;
+    double start;
+    unsigned long long before_call, before_volume;
+
+    for (n = 0; n <= 9; n += 3)
+    {
+        writes = 4 * (n + 1) * (n + 1) + 2 + 2 * (n + 1);
+        before_call = work_get(WORK_DP_INIT_CALL);
+        before_volume = work_get(WORK_DP_INIT_WRITE);
+        start = clock_seconds();
+        for (i = 0; i < repeats; i++)
+        {
+            init_dp_tables(&dp, n);
+            barrier(&dp);
+        }
+        emit_affine("dp_init_call", round, repeats, writes * repeats, start);
+        check_work_units("dp_init_call", WORK_DP_INIT_CALL, before_call, repeats);
+        check_work_units("dp_init_write", WORK_DP_INIT_WRITE, before_volume,
+                         (unsigned long long)writes * repeats);
+    }
+    n = 7;
+    scans = n * (n + 1) * n;
+    for (density = 0; density <= n; density++)
+    {
+        for (j = 0; j < n; j++)
+            domains[j] = (1 << density) - 1;
+        updates = n * (n + 1) * density;
+        init_dp_tables(&dp, n);
+        before_call = work_get(WORK_DP_SUFFIX_CANDIDATE_SCAN);
+        before_volume = work_get(WORK_PROPAGATE_DP_UPDATE);
+        start = clock_seconds();
+        for (i = 0; i < repeats; i++)
+        {
+            fill_suff_dp(&dp, domains, n);
+            barrier(&dp);
+        }
+        emit_affine("dp_suffix_candidate_scan", round, scans * repeats,
+                    updates * repeats, start);
+        check_work_units("dp_suffix_candidate_scan", WORK_DP_SUFFIX_CANDIDATE_SCAN,
+                         before_call, (unsigned long long)scans * repeats);
+        check_work_units("propagate_dp_update", WORK_PROPAGATE_DP_UPDATE,
+                         before_volume, (unsigned long long)updates * repeats);
+    }
+}
+
 static void bench_dp_scans(int repeats, int round)
 {
     int i, k, m, scanned;
@@ -676,8 +743,8 @@ static void bench_dp_scans(int repeats, int round)
     check_work_units("dp_suffix_candidate_scan",
                      WORK_DP_SUFFIX_CANDIDATE_SCAN, before,
                      7ULL * 8 * 7 * repeats);
-    emit_individual("dp_suffix_candidate_scan", round,
-                    7 * 8 * 7 * repeats, start);
+    /* Suffix scan cost comes from the density-controlled affine experiment. */
+    (void)start;
 
     /* Use complete, mutually consistent tables and valid domains. With
      * clue 1 and these clue-consistent domains, every value is feasible, so
@@ -929,7 +996,7 @@ int main(int argc, char **argv)
     int repeats, round;
     if (argc != 3 || sscanf(argv[1], "%d", &repeats) != 1 ||
         sscanf(argv[2], "%d", &round) != 1 || repeats < 1000 ||
-        repeats > 2000000 || round < 0)
+        repeats > 4000000 || round < 0)
         return 2;
     prepare(7);
     benchmark_affine(repeats, round);
@@ -942,6 +1009,7 @@ int main(int argc, char **argv)
     bench_constraint_subtasks(repeats, round);
     bench_cache_traversals(repeats, round);
     bench_prune_line_scan(repeats, round);
+    bench_dp_affine(repeats, round);
     bench_dp_scans(repeats, round);
     bench_extra_counters(repeats, round);
     if (sink == 0xFFFFFFFFFFFFFFFFULL)

@@ -309,3 +309,7 @@ The new counters are counted in instrumentation without modifying solver
 logic. The controlled microbenchmark must also independently time every
 member of any new collinear group before coefficient allocation can complete;
 calibration fails closed when this is not possible.
+
+### Adaptive controlled timing and zero-weight groups
+
+A zero merged coefficient is allocated exactly to all-zero member weights, without inventing timing ratios; missing timing diagnostics remain recorded. Positive groups still require stable independent evidence. Controlled DP initialization varies actual table size; suffix DP timing varies candidate density at fixed scan volume, with instrumented shadow checks of counts. The constraint checker also has a zero-cell call measurement. `--micro-repeats` starts each independent timing batch and `--micro-max-repeats` (default 4000000) bounds doubling retries for insufficient or unstable evidence in positive merged groups. Accepted estimates retain their first complete independent batch; raw attempts are recorded. The regression is never refitted during allocation.

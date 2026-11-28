@@ -145,6 +145,37 @@ class IndependentMicroVerificationTests(unittest.TestCase):
         sources = {e["source"] for e in allocated["groups"][0]["timing_evidence"]}
         self.assertEqual(sources, {"controlled_micro", "solver_section"})
 
+    def test_zero_weight_group_needs_no_timing(self):
+        from work_micro_constraints import allocate_merged_coefficients
+        model = {"seconds_per_count": {"a+b": 0.0},
+                 "collinearity": {"groups": [{
+                     "name": "a+b", "members": ["a", "b"]}]}}
+        result = allocate_merged_coefficients(
+            model, [{"counters": {"a": 5, "b": 9}}],
+            {"rounds": 0, "raw_measurements": []}, {})
+        self.assertTrue(result["all_merged_groups_resolved"])
+        self.assertEqual(result["seconds_per_count"], {"a": 0.0, "b": 0.0})
+        group = result["groups"][0]
+        self.assertIsNone(group["member_cost_ratios"])
+        self.assertEqual(group["normalization"], "exact_zero_group")
+        self.assertEqual(group["max_abs_training_prediction_drift_seconds"], 0)
+
+    def test_adaptive_batches_keep_first_accepted_independent_estimate(self):
+        from work_micro_constraints import controlled_member_costs
+        def batch(repeats, a, b):
+            return {"rounds": 3, "repeats_per_point": repeats,
+                    "raw_measurements": [
+                        {"kind": "individual", "counter": name, "round": i,
+                         "units": repeats, "cpu_seconds": repeats * value}
+                        for name, values in (("a", a), ("b", b))
+                        for i, value in enumerate(values)]}
+        costs, diagnostics = controlled_member_costs({"attempts": [
+            batch(1000, [1, 1, 1], [1, 0, 1]),
+            batch(2000, [1, 0, 1], [2, 2, 2])]})
+        self.assertEqual(costs, {"a": 1, "b": 2})
+        self.assertEqual(diagnostics["a"]["repeats_per_point"], 1000)
+        self.assertEqual(diagnostics["b"]["repeats_per_point"], 2000)
+
     def test_missing_timing_never_defaults_to_equal_weights(self):
         from work_micro_constraints import allocate_merged_coefficients
         model = {"seconds_per_count": {"a+b": 1.0},
@@ -307,6 +338,8 @@ class IndependentMicroVerificationTests(unittest.TestCase):
                          "line_score"} <= counters)
         self.assertEqual(report["coverage"]["expected_counters"], 48)
         self.assertNotIn("lookahead_scan", report["coverage"]["not_benchmarked"])
+        for name in ("dp_init_call", "dp_init_write", "propagate_dp_update"):
+            self.assertNotIn(name, report["coverage"]["not_benchmarked"])
         self.assertTrue(all(r["cpu_seconds"] > 0
                             for r in report["raw_measurements"]
                             if r.get("counter") != "assignment"))

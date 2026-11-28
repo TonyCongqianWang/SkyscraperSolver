@@ -11,6 +11,12 @@ import statistics
 
 from work_section_plausibility import TIMED_SECTIONS
 
+# Controlled-only affine experiments; do not change WORK_MICRO protocol.
+CONTROLLED_SECTIONS = {**TIMED_SECTIONS,
+    "dp_init_call": "dp_init_write",
+    "dp_suffix_candidate_scan": "propagate_dp_update",
+}
+
 
 def _positive(value):
     return (isinstance(value, (int, float)) and math.isfinite(value)
@@ -47,7 +53,21 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
     Each accepted member must have positive, stable measurements in all
     independent rounds. No equal-weight guesses are ever inserted.
     """
-    from work_section_plausibility import TIMED_SECTIONS, timed_affine_fit
+    from work_section_plausibility import timed_affine_fit
+    # Each retry is a full independent batch. Retain the first accepted
+    # estimate for each counter, never mix rounds across repetition levels.
+    if benchmark.get("attempts"):
+        costs, diagnostics = {}, {}
+        for attempt in benchmark["attempts"]:
+            batch_costs, batch_diagnostics = controlled_member_costs(
+                attempt, minimum_rounds, max_spread, expected_names)
+            for name, diagnostic in batch_diagnostics.items():
+                if name not in costs:
+                    diagnostics[name] = dict(diagnostic,
+                        repeats_per_point=attempt["repeats_per_point"])
+            for name, cost in batch_costs.items():
+                costs.setdefault(name, cost)
+        return costs, diagnostics
     rounds = benchmark.get("rounds", 0)
     measurements = benchmark.get("raw_measurements", [])
     series = {}
@@ -58,8 +78,8 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
             observed.add(record["counter"])
         elif record.get("kind") == "affine":
             section = record.get("section")
-            if section in TIMED_SECTIONS:
-                observed.update((section, TIMED_SECTIONS[section]))
+            if section in CONTROLLED_SECTIONS:
+                observed.update((section, CONTROLLED_SECTIONS[section]))
     for record in measurements:
         if record.get("kind") == "individual":
             name = record["counter"]
@@ -67,7 +87,7 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
                 series.setdefault(name, {}).setdefault(
                     record["round"], []).append(
                         record["cpu_seconds"] / record["units"])
-    for call, volume in TIMED_SECTIONS.items():
+    for call, volume in CONTROLLED_SECTIONS.items():
         for index in range(rounds):
             points = [r for r in measurements if r.get("kind") == "affine"
                       and r.get("section") == call
@@ -89,8 +109,8 @@ def controlled_member_costs(benchmark, minimum_rounds=3,
             expected.add(record["counter"])
         elif record.get("kind") == "affine":
             call = record.get("section")
-            if call in TIMED_SECTIONS:
-                expected.update((call, TIMED_SECTIONS[call]))
+            if call in CONTROLLED_SECTIONS:
+                expected.update((call, CONTROLLED_SECTIONS[call]))
     costs = {}
     for name in sorted(expected):
         by_round = series.get(name, {})
@@ -228,6 +248,23 @@ def allocate_merged_coefficients(model, training_rows, benchmark,
         missing = sorted(set(members) - set(costs))
         missing_reasons = {
             name: cost_diagnostics[name]["reason"] for name in missing}
+        if coefficient == 0.0:
+            assigned = dict.fromkeys(members, 0.0)
+            flattened.update(assigned)
+            errors.extend(0.0 for _ in training_rows)
+            allocations.append({
+                "group": group_name, "members": members,
+                "status": "resolved",
+                "merged_seconds_per_count": coefficient,
+                "member_cost_ratios": None,
+                "seconds_per_original_count": assigned,
+                "normalization": "exact_zero_group",
+                "max_abs_training_prediction_drift_seconds": 0.0,
+                "missing_or_unstable_counters": missing,
+                "counter_reasons": missing_reasons,
+                "timing_evidence": [],
+            })
+            continue
         try:
             if missing:
                 raise ValueError(

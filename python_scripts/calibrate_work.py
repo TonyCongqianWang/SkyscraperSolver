@@ -870,6 +870,8 @@ def main():
                         help="Validation puzzles per size in independent micro check")
     parser.add_argument("--micro-repeats", type=int, default=200000,
                         help="Repeated real C operations per controlled micro point")
+    parser.add_argument("--micro-max-repeats", type=int, default=4000000,
+                        help="Adaptive controlled timing repetition ceiling")
     parser.add_argument("--micro-rounds", type=int, default=3,
                         help="Independent controlled timing rounds; must be >=3")
     parser.add_argument("--ridge-grid", default="0,1e-6,1e-4,1e-2",
@@ -923,8 +925,9 @@ def main():
     print(f"Calibration seed: {args.seed}", flush=True)
     if args.micro_puzzles_per_size < 1:
         parser.error("micro-puzzles-per-size must be >= 1")
-    if args.micro_repeats < 1000 or args.micro_rounds < 3:
-        parser.error("micro-repeats >= 1000 and micro-rounds >= 3 required")
+    if (not 1000 <= args.micro_repeats <= args.micro_max_repeats <= 4000000
+            or args.micro_rounds < 3):
+        parser.error("1000 <= micro-repeats <= micro-max-repeats <= 4000000 and micro-rounds >= 3 required")
     if args.puzzles_per_size < 1 or args.native_repeats < 2:
         parser.error("puzzles-per-size must be >= 1 and native-repeats >= 2")
     if not math.isfinite(args.instrumented_repeats) or args.instrumented_repeats < 0:
@@ -1030,6 +1033,7 @@ def main():
         "resumed_from_raw": args.resume,
         "micro_validation_puzzles_per_size": args.micro_puzzles_per_size,
         "controlled_micro_repeats": args.micro_repeats,
+        "controlled_micro_max_repeats": args.micro_max_repeats,
         "controlled_micro_rounds": args.micro_rounds,
         "section_timer": "sampled process CPU nanoseconds, every 64th section",
         "ridge_grid": ridge_grid,
@@ -1240,9 +1244,15 @@ def main():
 
     from work_micro_probe import controlled_microbench
     from work_micro_constraints import allocate_merged_coefficients
+    pooled_model = fits["all"]["coefficients"]
+    required_names = {name for group in pooled_model["collinearity"]["groups"]
+                      if len(group["members"]) > 1
+                      and pooled_model["seconds_per_count"][group["name"]] > 0
+                      for name in group["members"]}
     try:
         controlled = controlled_microbench(
-            args.cc, args.micro_repeats, args.micro_rounds)
+            args.cc, args.micro_repeats, args.micro_rounds,
+            max_repeats=args.micro_max_repeats, required_names=required_names)
     except (ValueError, RuntimeError, OSError, subprocess.CalledProcessError,
             subprocess.TimeoutExpired) as exc:
         warn(f"Controlled microbenchmark unavailable: {exc}")

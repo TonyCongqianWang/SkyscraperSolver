@@ -123,6 +123,8 @@ def verify_all_merged_groups(controlled, collinearity, model,
                 if name in costs:
                     estimates[name] = costs[name] / costs[ref]
         predicted = model["seconds_per_count"]
+        zero_group = (group["name"] not in unresolved_groups
+                      and all(predicted[name] == 0 for name in members))
         observations = []
         for name in members[1:]:
             modeled_ratio = (predicted[name] / predicted[ref]
@@ -136,9 +138,7 @@ def verify_all_merged_groups(controlled, collinearity, model,
                 verdict = "consistent" if fold <= tolerance else "disagrees"
             else:
                 fold = None
-                verdict = ("zero_fitted_group" if predicted[ref] == 0
-                           and measured_ratio is not None
-                           and group["name"] not in unresolved_groups
+                verdict = ("zero_fitted_group" if zero_group
                            else "unresolved")
             observations.append({
                 "reference": ref, "counter": name,
@@ -212,15 +212,19 @@ def verify_model(model, collinearity, puzzles, cc="gcc", timeout=30,
     }
 
 
-def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
+def controlled_microbench(cc="gcc", repeats=200000, rounds=3,
+                         max_repeats=4000000, required_names=None):
     """Measure every known merged operation, independently of puzzle traces.
 
     Affine call/volume pairs use repeated real operations at different sizes.
     Other counters are isolated with the exact underlying C operation.
     The output retains each independent round for uncertainty diagnostics.
     """
-    if repeats < 1000 or rounds < 1:
-        raise ValueError("Invalid microbenchmark repetition count")
+    if not 1000 <= repeats <= max_repeats <= 4000000 or rounds < 1:
+        raise ValueError("Invalid microbenchmark repetition count or ceiling")
+    from work_micro_constraints import CONTROLLED_SECTIONS, controlled_member_costs
+    attempts = []
+    current_repeats = repeats
     source = ROOT / "python_scripts" / "work_micro_controlled.c"
     records = []
     with tempfile.TemporaryDirectory(prefix="sky_controlled_micro_") as temp:
@@ -242,61 +246,76 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                        capture_output=True, text=True)
         subprocess.run([str(checked_binary), "1000", "0"], check=True,
                        cwd=ROOT, capture_output=True, text=True, timeout=120)
-        for round_number in range(rounds):
-            completed = subprocess.run(
-                [str(binary), str(repeats), str(round_number)], check=True,
-                cwd=ROOT, capture_output=True, text=True, timeout=120)
-            for line in completed.stdout.splitlines():
-                if not line.startswith("WORK_BENCH "):
-                    continue
-                parts = line.split()
-                if parts[:2] != ["WORK_BENCH", "v1"]:
-                    raise ValueError("Unknown controlled microbenchmark version")
-                fields = dict(field.split("=", 1) for field in parts[2:])
-                if int(fields["round"]) != round_number:
-                    raise ValueError("Controlled microbenchmark round mismatch")
-                if fields["kind"] == "individual":
-                    record = {
-                        "kind": "individual", "counter": fields["counter"],
-                        "round": round_number, "units": int(fields["units"]),
-                        "cpu_seconds": float(fields["cpu_seconds"]),
-                    }
-                    if fields.get("timing_scope") == "paired_residual":
-                        record.update({
-                            "timing_scope": fields["timing_scope"],
-                            "gross_cpu_seconds": float(fields["gross_cpu_seconds"]),
-                            "nested_cpu_seconds": float(fields["nested_cpu_seconds"]),
-                            "nested_invalidation_attempts_per_unit": int(
-                                fields["nested_invalidation_attempts_per_unit"]),
-                            "nested_domain_invalidations_per_unit": int(
-                                fields["nested_domain_invalidations_per_unit"]),
-                            "nested_dirty_enqueues_per_unit": int(
-                                fields["nested_dirty_enqueues_per_unit"]),
+        while True:
+            records = []
+            for round_number in range(rounds):
+                completed = subprocess.run(
+                    [str(binary), str(current_repeats), str(round_number)], check=True,
+                    cwd=ROOT, capture_output=True, text=True, timeout=600)
+                for line in completed.stdout.splitlines():
+                    if not line.startswith("WORK_BENCH "):
+                        continue
+                    parts = line.split()
+                    if parts[:2] != ["WORK_BENCH", "v1"]:
+                        raise ValueError("Unknown controlled microbenchmark version")
+                    fields = dict(field.split("=", 1) for field in parts[2:])
+                    if int(fields["round"]) != round_number:
+                        raise ValueError("Controlled microbenchmark round mismatch")
+                    if fields["kind"] == "individual":
+                        record = {
+                            "kind": "individual", "counter": fields["counter"],
+                            "round": round_number, "units": int(fields["units"]),
+                            "cpu_seconds": float(fields["cpu_seconds"]),
+                        }
+                        if fields.get("timing_scope") == "paired_residual":
+                            record.update({
+                                "timing_scope": fields["timing_scope"],
+                                "gross_cpu_seconds": float(fields["gross_cpu_seconds"]),
+                                "nested_cpu_seconds": float(fields["nested_cpu_seconds"]),
+                                "nested_invalidation_attempts_per_unit": int(
+                                    fields["nested_invalidation_attempts_per_unit"]),
+                                "nested_domain_invalidations_per_unit": int(
+                                    fields["nested_domain_invalidations_per_unit"]),
+                                "nested_dirty_enqueues_per_unit": int(
+                                    fields["nested_dirty_enqueues_per_unit"]),
+                            })
+                        records.append(record)
+                    elif fields["kind"] == "affine":
+                        section = fields["section"]
+                        if section not in CONTROLLED_SECTIONS:
+                            raise ValueError("Unexpected affine benchmark section")
+                        records.append({
+                            "kind": "affine", "section": section,
+                            "round": round_number, "calls": int(fields["calls"]),
+                            "volume": int(fields["volume"]),
+                            "cpu_seconds": float(fields["cpu_seconds"]),
                         })
-                    records.append(record)
-                elif fields["kind"] == "affine":
-                    section = fields["section"]
-                    if section not in TIMED_SECTIONS:
-                        raise ValueError("Unexpected affine benchmark section")
-                    records.append({
-                        "kind": "affine", "section": section,
-                        "round": round_number, "calls": int(fields["calls"]),
-                        "volume": int(fields["volume"]),
-                        "cpu_seconds": float(fields["cpu_seconds"]),
-                    })
-                else:
-                    raise ValueError("Unknown controlled microbenchmark kind")
+                    else:
+                        raise ValueError("Unknown controlled microbenchmark kind")
+            attempts.append({"rounds": rounds, "repeats_per_point": current_repeats,
+                             "raw_measurements": records})
+            costs, diagnostics = controlled_member_costs(
+                {"attempts": attempts}, expected_names=COUNTER_NAMES)
+            required = (set(required_names) if required_names is not None
+                        else set(COUNTER_NAMES))
+            retry = any(name in required and info["reason"] in
+                        ("insufficient_timing_evidence", "unstable")
+                        for name, info in diagnostics.items())
+            if rounds < 3 or not retry or current_repeats >= max_repeats:
+                break
+            current_repeats = min(max_repeats, current_repeats * 2)
     # Require a separate benchmark for EVERY original member of the known
     # merged counter groups. A newly merged group requires a new C benchmark.
-    from work_micro_constraints import controlled_member_costs
     costs, diagnostics = controlled_member_costs(
-        {"rounds": rounds, "raw_measurements": records},
-        expected_names=COUNTER_NAMES)
+        {"attempts": attempts}, expected_names=COUNTER_NAMES)
     return {
         "method": "real_C_operations_controlled_independent_repetitions",
         "compile_flags": ["-O2", "-flto"],
-        "repeats_per_point": repeats,
+        "repeats_per_point": current_repeats,
+        "initial_repeats_per_point": repeats,
+        "max_repeats_per_point": max_repeats,
         "rounds": rounds,
+        "attempts": attempts,
         "raw_measurements": records,
         "counter_costs_seconds": costs,
         "counter_diagnostics": diagnostics,
@@ -324,7 +343,7 @@ def controlled_microbench(cc="gcc", repeats=200000, rounds=3):
                     for r in records if r["kind"] == "affine"
                     and r["section"] == name]),
             }
-            for name, volume in TIMED_SECTIONS.items()
+            for name, volume in CONTROLLED_SECTIONS.items()
         },
     }
 
