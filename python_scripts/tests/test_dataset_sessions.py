@@ -56,6 +56,7 @@ class SessionTests(unittest.TestCase):
     def test_successful_session_can_be_reused(self):
         session = self.session(
             "import sys\nfor line in sys.stdin:\n"
+            " print('Solutions found: 1')\n"
             " print('Nodes visited: 123')\n"
             " print('--- END_OF_INSTANCE ---',flush=True)\n")
         for _ in range(3):

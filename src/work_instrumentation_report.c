@@ -15,25 +15,34 @@
 #ifdef WORK_INSTRUMENTED
 # include <stdio.h>
 
-/* Frozen v2 counter names, in the order defined by the public enum. */
+/* Frozen v1 counter names, in the order defined by the public enum. */
 static const char	*g_names[WORK_COUNT] = {
 	"setup_cell", "setup_cache_slot", "cache_state_copy",
-	"cache_pair_copy", "cache_pair_copy_call", "cache_build_check",
+	"cache_pair_copy", "cache_pair_copy_call", "cache_build_candidate",
 	"compact_check",
 	"compact_move", "transition_compare", "transition_shift",
 	"line_copy", "line_score", "line_score_value",
 	"line_compare", "line_shift",
 	"base_score", "lookahead_blend", "propagate_dp_update",
 	"dp_init_call", "dp_init_write", "index_copy_call", "index_copy_pair",
-	"gac_check", "assignment", "domain_invalidation",
-	"node_copy", "lookahead_scan", "solution_copy", "rollback"
+	"dp_candidate_check", "assignment", "domain_invalidation",
+	"node_copy", "lookahead_scan", "solution_copy",
+	"provisional_solution_rollback",
+	"rescore_scan", "resume_scan", "rel_entropy_value", "domain_scan",
+	"constraint_check_call", "constraint_check_cell",
+	"constraint_check_unset_cell", "dirty_constraint_entry",
+	"dirty_constraint_enqueue", "domain_invalidation_attempt",
+	"cell_bound_skip", "cache_build_cell_scan", "cache_next_scan",
+	"cache_resume_scan", "next_value_scan", "prune_line_scan",
+	"dp_prefix_candidate_scan", "dp_suffix_candidate_scan",
+	"dp_prune_value_scan"
 };
 
 void	work_report(unsigned long long solutions, unsigned long long nodes)
 {
 	int	i;
 
-	printf("WORK_COUNTERS v2 solutions=%llu nodes=%llu", solutions, nodes);
+	printf("WORK_COUNTERS v1 solutions=%llu nodes=%llu", solutions, nodes);
 	i = 0;
 	while (i < WORK_COUNT)
 	{
@@ -41,6 +50,7 @@ void	work_report(unsigned long long solutions, unsigned long long nodes)
 		i++;
 	}
 	printf("\n");
+	work_micro_report();
 }
 
 #else

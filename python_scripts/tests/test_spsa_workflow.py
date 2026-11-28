@@ -9,6 +9,8 @@ import io
 import json
 from pathlib import Path
 import random
+import shutil
+import subprocess
 import sys
 import tempfile
 import types
@@ -235,7 +237,191 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(len(records.read_text().splitlines()), 8)
         self.assertTrue((self.directory / 'instances_summary.json').exists())
 
+    def test_optional_work_predictions_are_separate_from_native_timing(self):
+        from unittest.mock import MagicMock
+        from comparison_measurements import parse_output
+        from calibrate_work import COUNTER_NAMES
+        from work_model_export import FORMAT, FORMAT_VERSION
+        model = {
+            "format": FORMAT, "format_version": FORMAT_VERSION,
+            "fit": "pooled", "counter_schema": "v1",
+            "intercept_seconds": 0.001,
+            "seconds_per_count": {name: 1e-9 for name in COUNTER_NAMES}}
+        counters = " ".join(f"{name}={4 if name == 'assignment' else 0}"
+                            for name in COUNTER_NAMES)
+        lines = [
+            f"WORK_COUNTERS v1 solutions=1 nodes=42 {counters}\n",
+            "Solutions found: 1\n", "Nodes visited: 42\n"]
+        parsed = parse_output(lines, 0.02, model=model)
+        self.assertEqual(parsed["status"], "ok")
+        self.assertAlmostEqual(parsed["predicted_seconds"], 0.001000004)
+        # A missing summary field violates the shared standalone/stdin
+        # output contract, even if WORK_COUNTERS contains that value.
+        stdin_lines = [lines[0], lines[2], "--- END_OF_INSTANCE ---\n"]
+        stdin_parsed = parse_output(stdin_lines, 0.02, model=model)
+        self.assertEqual(stdin_parsed["status"], "error")
+        self.assertIn("Missing Solutions found",
+                      stdin_parsed["prediction_error"])
+        invalid_lines = [lines[0], "Solutions found: 2\n", lines[2]]
+        invalid = parse_output(invalid_lines, 0.02, model=model)
+        self.assertEqual(invalid["status"], "error")
+        self.assertIn("solutions disagree", invalid["prediction_error"])
+
+        def batch(binary, options, clues, env, **kwargs):
+            predicted = kwargs.get("model") is not None
+            result = []
+            for i, clue in enumerate(clues):
+                optimized = env.get("EXPERIMENT_ARM") == "optimized"
+                value = 0.9 if optimized else 1.0
+                item = dict(index=i, clue=clue, status="ok",
+                            seconds=value, nodes=42, solutions=1)
+                if predicted:
+                    item["predicted_seconds"] = 0.008 if optimized else 0.01
+                result.append(item)
+            return result
+        with patch.object(comparison, "measure_batch", side_effect=batch), \
+             patch.object(comparison, "default_environment",
+                          return_value={"EXPERIMENT_ARM": "baseline"}), \
+             redirect_stdout(io.StringIO()):
+            report = comparison.evaluate_set(
+                ["a", "b"], "-s 1", "sample", "baseline", "optimized",
+                tuned_env={"EXPERIMENT_ARM": "optimized"},
+                work_model=model, repeats=2, size=9)
+        self.assertTrue(report["valid"])
+        work = report["work_prediction"]
+        self.assertEqual(work["valid_pairs"], 2)
+        self.assertLess(work["change_pct"], 0)
+        self.assertAlmostEqual(report["summary"]["total_time"]["diff_pct"], -10)
+
+    @unittest.skipUnless(shutil.which("gcc"), "gcc required for actual CLI test")
+    def test_stdin_and_standalone_outputs_match_including_solution_grids(self):
+        """Both CLI modes must emit byte-identical per-instance stdout.
+
+        A streaming process can solve multiple puzzles in one invocation.
+        Its sole output addition is the end-of-instance delimiter.
+        """
+        clue_path = ROOT / "puzzle_bank/spsa_datasets/size9_val.txt"
+        clues = [line.strip().strip('"') for line in
+                 clue_path.read_text(encoding="utf-8").splitlines()[:2]]
+        n = 7
+        empty_constraints = " ".join(["0"] * (4 * n))
+        completed_grid = " ".join(
+            str((row + col) % n + 1)
+            for row in range(n) for col in range(n))
+        cases = [
+            ("1", [(clues[0],), (clues[1],), (clues[0],)]),
+            ("0", [(empty_constraints, completed_grid),
+                   (empty_constraints, completed_grid)]),
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            for instrument in (False, True):
+                executable = Path(directory) / (
+                    "solver_work" if instrument else "solver_native")
+                sources = sorted((ROOT / "src").glob("*.c"))
+                flags = ["-DWORK_INSTRUMENTED"] if instrument else []
+                subprocess.run(
+                    ["gcc", "-O0", *flags, "-I", str(ROOT / "src"),
+                     *map(str, sources), "-o", str(executable)],
+                    check=True, capture_output=True, text=True, timeout=120)
+                for limit, inputs in cases:
+                    with self.subTest(instrument=instrument, limit=limit):
+                        outputs = []
+                        for tokens in inputs:
+                            standalone = subprocess.run(
+                                [str(executable), "-s", limit, *tokens],
+                                capture_output=True, text=True,
+                                check=True, timeout=30)
+                            outputs.append(standalone.stdout)
+                            self.assertIn("Solutions found: ", standalone.stdout)
+                            self.assertIn("Nodes visited: ", standalone.stdout)
+                            self.assertIn("Main nodes visited: ", standalone.stdout)
+                            self.assertEqual(
+                                "WORK_COUNTERS v1" in standalone.stdout,
+                                instrument)
+                        stdin_input = "".join(
+                            " ".join(f'"{token}"' for token in tokens) + "\n"
+                            for tokens in inputs)
+                        streamed = subprocess.run(
+                            [str(executable), "-s", limit, "--stdin"],
+                            input=stdin_input, capture_output=True, text=True,
+                            check=True, timeout=60)
+                        delimiter = "--- END_OF_INSTANCE ---\n"
+                        self.assertEqual(streamed.stdout,
+                                         delimiter.join(outputs) + delimiter)
+                        # Grids are actual rows of solver values, not merely
+                        # completion notifications or work counters.
+                        self.assertRegex(outputs[0], r"(?m)^[1-9](?: [1-9]){6,8}$")
+                        if limit == "0":
+                            self.assertIn(
+                                "1 2 3 4 5 6 7\n", outputs[0])
+                        self.assertEqual(outputs[0], outputs[-1]
+                                         if limit == "1" else outputs[1])
+
+    @unittest.skipUnless(shutil.which("gcc"), "gcc required for actual work-output test")
+    def test_real_instrumented_stdin_comparison_produces_predictions(self):
+        """Compile the real instrumented C solver, not a mocked WORK record.
+
+        Catch mode-dependent CLI/stdin output discrepancies before users
+        spend hours tuning and discover all comparisons were discarded.
+        """
+        from tuning_work_runtime import DEFAULT_MODEL, load_model
+        from comparison_measurements import measure_batch
+        model, _ = load_model(DEFAULT_MODEL)
+        clue_path = ROOT / "puzzle_bank/spsa_datasets/size9_val.txt"
+        clue = clue_path.read_text(encoding="utf-8").splitlines()[0].strip('"')
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "real_instrumented_solver"
+            sources = sorted((ROOT / "src").glob("*.c"))
+            subprocess.run(
+                ["gcc", "-O0", "-DWORK_INSTRUMENTED", "-I",
+                 str(ROOT / "src"), *map(str, sources), "-o", str(executable)],
+                check=True, capture_output=True, text=True, timeout=120)
+            fields = ("Max solutions", "Solutions found", "Nodes visited",
+                      "Main nodes visited", "Pruning runs")
+            def field_summary(output):
+                return [line for line in output.splitlines()
+                        if line.startswith(tuple(label + ": " for label in fields))]
+            standalone = subprocess.run(
+                [str(executable), "-s", "1", clue],
+                capture_output=True, text=True, timeout=20.0, check=True)
+            stdin = subprocess.run(
+                [str(executable), "-s", "1", "--stdin"], input=f'"{clue}"\n',
+                capture_output=True, text=True, timeout=20.0, check=True)
+            self.assertEqual(field_summary(standalone.stdout),
+                             field_summary(stdin.stdout))
+            self.assertEqual(len(field_summary(stdin.stdout)), len(fields))
+            self.assertNotIn("--- END_OF_INSTANCE ---", standalone.stdout)
+            self.assertIn("--- END_OF_INSTANCE ---", stdin.stdout)
+            for use_stdin in (True, False):
+                with self.subTest(stdin=use_stdin):
+                    rows = measure_batch(
+                        str(executable), "-s 1", [clue], {},
+                        workers=1, use_stdin=use_stdin, warmup=0,
+                        timeout=20.0, model=model)
+                    self.assertEqual(len(rows), 1)
+                    self.assertEqual(rows[0]["status"], "ok", rows[0])
+                    self.assertGreater(rows[0]["predicted_seconds"], 0)
+                    self.assertIsInstance(rows[0]["solutions"], int)
+                    self.assertIsInstance(rows[0]["nodes"], int)
+            with redirect_stdout(io.StringIO()):
+                reports = comparison.run_comparison(
+                    [("size9", "-s 1", [clue])],
+                    str(executable), str(executable),
+                    max_workers=1, repeats=2, warmup=0, timeout=20.0,
+                    size=9, report_work_prediction=True,
+                    work_model_path=DEFAULT_MODEL,
+                    work_binary=str(executable),
+                    records_path=str(self.directory / "real_work.jsonl"))
+            self.assertEqual(len(reports), 1)
+            self.assertTrue(reports[0]["valid"])
+            predicted = reports[0]["work_prediction"]
+            self.assertEqual(predicted["valid_pairs"], 1, predicted)
+            self.assertEqual(predicted["failures"],
+                             {"Baseline": 0, "Optimized": 0})
+            self.assertIsNotNone(predicted["shifted_geo_mean_seconds"])
+
     def test_comparison_infers_compact_and_delimited_clue_sizes(self):
+
         for clue in ('1' * 28, ' '.join(['1'] * 32), ','.join(['1'] * 36)):
             with self.subTest(clue=clue):
                 row = {'index': 0, 'clue': clue, 'seconds': 1, 'nodes': 100,
@@ -268,6 +454,10 @@ import sys, time
 def solve(clue, stdin):
     if 'timeout' in clue:
         time.sleep(1)
+    if 'limited' in clue:
+        print('SEARCH_STATUS timeout')
+    elif 'complete' in clue:
+        print('SEARCH_STATUS complete')
     if 'bad' not in clue:
         print('Nodes visited: 123')
         print('Solutions found: 1')
@@ -295,11 +485,24 @@ else:
                 self.assertIsNone(rows[3]['nodes'])
                 self.assertEqual(rows[-1]['nodes'], 123)
 
+    def test_solver_side_timeout_not_counted_as_success(self):
+        binary = self.fake_solver()
+        for stdin in (True, False):
+            with self.subTest(stdin=stdin):
+                rows = measure_batch(binary, '-s 1', ['limited', 'complete'],
+                                     None, workers=1, use_stdin=stdin, warmup=0)
+                self.assertEqual([row['status'] for row in rows], ['timeout', 'ok'])
+                self.assertIsNone(rows[0]['nodes'])
+                self.assertIsNone(rows[0]['solutions'])
+
     def test_baseline_environment_removes_inherited_tuning_overrides(self):
         key = 'WEIGHT_TOTAL_SCALE_S8'
-        with patch.dict('os.environ', {key: '999', 'CUSTOM_SPSA_TEST': 'preserve'}):
+        with patch.dict('os.environ', {key: '999', 'CUSTOM_SPSA_TEST': 'preserve',
+                                       'SOLVER_CPU_TIMEOUT': '1', 'SOLVER_MAIN_NODE_LIMIT': '1'}):
             env = comparison.default_environment()
         self.assertNotIn(key, env)
+        self.assertNotIn('SOLVER_CPU_TIMEOUT', env)
+        self.assertNotIn('SOLVER_MAIN_NODE_LIMIT', env)
         self.assertEqual(env['CUSTOM_SPSA_TEST'], 'preserve')
 
     def test_fetch_preserves_multiple_winners_and_metadata_without_collisions(self):

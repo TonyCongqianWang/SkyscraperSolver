@@ -19,5 +19,6 @@ void	print_message(const char *str);
 void	print_value(const char *descr, unsigned long long value);
 void	print_error(const char *str);
 void	put_number(unsigned long long nbr);
+void	print_solver_result(t_solver_state *puzzle);
 
 #endif

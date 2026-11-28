@@ -13,6 +13,7 @@
 #include "node_selection_cache.h"
 #include "node_selection_eval.h"
 #include "grid_availability.h"
+#include "work_instrumentation.h"
 
 int	get_cell_priority_pass(t_node_state *node, int cell_idx, int size)
 {
@@ -50,6 +51,7 @@ static int	get_next_in_pass(t_solver_state *puzzle, t_node_transition *next,
 	cache = node->order_cache;
 	while (*i < cache->items.count)
 	{
+		work_add(WORK_CACHE_NEXT_SCAN, 1);
 		cell_idx = cache->items.entries[*i].cell_idx;
 		if (is_cell_empty(node, cell_idx)
 			&& get_cell_priority_pass(node, cell_idx, puzzle->size) == pass)
@@ -77,10 +79,14 @@ static void	get_resume_pos(t_node_state *node, t_node_transition *next,
 	{
 		*pass_out = get_cell_priority_pass(node, next->cell_idx, node->size);
 		i = 0;
-		while (i < cache->items.count
-			&& (cache->items.entries[i].cell_idx != next->cell_idx
-				|| cache->items.entries[i].cell_val != next->cell_val))
+		while (i < cache->items.count)
+		{
+			work_add(WORK_CACHE_RESUME_SCAN, 1);
+			if (cache->items.entries[i].cell_idx == next->cell_idx
+				&& cache->items.entries[i].cell_val == next->cell_val)
+				break ;
 			i++;
+		}
 		*i_out = i + 1;
 	}
 	else

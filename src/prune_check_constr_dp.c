@@ -82,6 +82,7 @@ void	fill_pref_dp(t_dp_tables *dp, int *cell_domains, int size)
 				x = 1;
 				while (x <= size)
 				{
+					work_add(WORK_DP_PREFIX_CANDIDATE_SCAN, 1);
 					if (cell_domains[k] & (1 << (x - 1)))
 						update_pref_cell(dp, k, m, x);
 					x++;
@@ -133,6 +134,7 @@ void	fill_suff_dp(t_dp_tables *dp, int *cell_domains, int size)
 			x = 1;
 			while (x <= size)
 			{
+				work_add(WORK_DP_SUFFIX_CANDIDATE_SCAN, 1);
 				if (cell_domains[k] & (1 << (x - 1)))
 					update_suff_cell(dp, k, m, x);
 				x++;

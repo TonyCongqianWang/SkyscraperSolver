@@ -34,12 +34,28 @@ static void	add_transition(t_node_order *cache, int cv)
 	cache->items.count++;
 }
 
+static void	collect_cell_entries(t_node_state *state,
+			t_node_order *cache, int cell, int size)
+{
+	int	value;
+
+	value = size;
+	while (value >= 1)
+	{
+		work_micro_begin(WORK_CACHE_BUILD_CANDIDATE);
+		work_add(WORK_CACHE_BUILD_CANDIDATE, 1);
+		if (is_valid_value(state, cell, value))
+			add_transition(cache, (cell << 8) | value);
+		work_micro_end(WORK_CACHE_BUILD_CANDIDATE);
+		value--;
+	}
+}
+
 void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 			t_node_select_config *config)
 {
 	int				i;
 	int				c;
-	int				v;
 	t_node_state	*state;
 
 	(void)config;
@@ -48,18 +64,10 @@ void	collect_cache_entries(t_solver_state *puzzle, t_node_order *cache,
 	i = 0;
 	while (i < puzzle->squared_size)
 	{
+		work_add(WORK_CACHE_BUILD_CELL_SCAN, 1);
 		c = puzzle->cell_distance_order[i];
 		if (is_cell_empty(state, c))
-		{
-			v = puzzle->size;
-			while (v >= 1)
-			{
-				work_add(WORK_CACHE_BUILD_CHECK, 1);
-				if (is_valid_value(state, c, v))
-					add_transition(cache, (c << 8) | v);
-				v--;
-			}
-		}
+			collect_cell_entries(state, cache, c, puzzle->size);
 		i++;
 	}
 }

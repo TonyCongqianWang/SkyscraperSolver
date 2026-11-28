@@ -52,6 +52,7 @@ static int	find_resume_index(t_node_order *cache, t_node_transition *next)
 	i = 0;
 	while (i < cache->items.count)
 	{
+		work_add(WORK_RESUME_SCAN, 1);
 		if (cache->items.entries[i].cell_idx == next->cell_idx
 			&& cache->items.entries[i].cell_val == next->cell_val)
 			return (i);

@@ -13,6 +13,7 @@
 #include "node_selection_eval.h"
 #include "grid_availability.h"
 #include "cell_bounds.h"
+#include "work_instrumentation.h"
 
 int	set_next_valid_val(t_solver_state *puzzle, t_node_transition *next)
 {
@@ -24,6 +25,7 @@ int	set_next_valid_val(t_solver_state *puzzle, t_node_transition *next)
 		cell_val = next->cell_val;
 	while (cell_val <= cell_ub)
 	{
+		work_add(WORK_NEXT_VALUE_SCAN, 1);
 		if (is_valid_value(puzzle->cur_node, next->cell_idx, cell_val))
 		{
 			next->cell_val = cell_val;

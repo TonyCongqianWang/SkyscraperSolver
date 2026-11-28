@@ -23,12 +23,24 @@ static void	update_line_scores(t_node_state *node, t_line_order *order)
 	while (i < order->count)
 	{
 		idx = order->entries[i].constr_idx;
+		work_micro_begin(WORK_LINE_SCORE);
 		work_add(WORK_LINE_SCORE, 1);
 		work_add(WORK_LINE_SCORE_VALUE, node->size);
 		order->entries[i].entropy = compute_constr_entropy(node, idx,
 				node->size);
+		work_micro_end(WORK_LINE_SCORE);
 		i++;
 	}
+}
+
+static int	line_needs_shift(t_line_priority *left, t_line_priority *right)
+{
+	int	result;
+
+	work_micro_begin(WORK_LINE_COMPARE);
+	result = left->entropy > right->entropy;
+	work_micro_end(WORK_LINE_COMPARE);
+	return (result);
 }
 
 void	sort_line_order(t_node_state *node)
@@ -45,10 +57,12 @@ void	sort_line_order(t_node_state *node)
 	{
 		entry = order->entries[i];
 		j = i;
-		while (j > 0 && order->entries[j - 1].entropy > entry.entropy)
+		while (j > 0 && line_needs_shift(&order->entries[j - 1], &entry))
 		{
 			work_sort_shift(WORK_LINE_COMPARE, WORK_LINE_SHIFT);
+			work_micro_begin(WORK_LINE_SHIFT);
 			order->entries[j] = order->entries[j - 1];
+			work_micro_end(WORK_LINE_SHIFT);
 			j--;
 		}
 		work_add(WORK_LINE_COMPARE, j > 0);

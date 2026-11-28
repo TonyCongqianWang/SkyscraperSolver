@@ -16,6 +16,7 @@
 #include "constraint_checking.h"
 #include "prune_check_constr.h"
 #include "math_utils.h"
+#include "work_instrumentation.h"
 
 static void	process_dirty_entry(t_solver_state *puzzle, int entry,
 		t_check_mode mode)
@@ -69,6 +70,7 @@ static void	drain_dirty_constraints_mode(t_solver_state *puzzle,
 		while (local.count > 0 && !puzzle->cur_node->domain.is_invalid)
 		{
 			entry = local.entries[(int)(--local.count)];
+			work_add(WORK_DIRTY_CONSTRAINT_ENTRY, 1);
 			local.in_stack_bmp &= ~(1ULL << entry);
 			process_dirty_entry(puzzle, entry, cur_mode);
 		}

@@ -13,7 +13,7 @@
 #ifndef WORK_INSTRUMENTATION_H
 # define WORK_INSTRUMENTATION_H
 
-/* Version 2: calls and real variable work volumes are distinct units. */
+/* Version 1: add variable rescoring, resumption and domain scans. */
 typedef enum e_work_counter
 {
 	WORK_SETUP_CELL,
@@ -21,7 +21,7 @@ typedef enum e_work_counter
 	WORK_CACHE_STATE_COPY,
 	WORK_CACHE_PAIR_COPY,
 	WORK_CACHE_PAIR_COPY_CALL,
-	WORK_CACHE_BUILD_CHECK,
+	WORK_CACHE_BUILD_CANDIDATE,
 	WORK_COMPACT_CHECK,
 	WORK_COMPACT_MOVE,
 	WORK_TRANSITION_COMPARE,
@@ -38,16 +38,39 @@ typedef enum e_work_counter
 	WORK_DP_INIT_WRITE,
 	WORK_INDEX_COPY_CALL,
 	WORK_INDEX_COPY_PAIR,
-	WORK_GAC_CHECK,
+	WORK_DP_CANDIDATE_CHECK,
 	WORK_ASSIGNMENT,
 	WORK_DOMAIN_INVALIDATION,
 	WORK_NODE_COPY,
 	WORK_LOOKAHEAD_SCAN,
 	WORK_SOLUTION_COPY,
-	WORK_ROLLBACK,
+	WORK_PROVISIONAL_SOLUTION_ROLLBACK,
+	WORK_RESCORE_SCAN,
+	WORK_RESUME_SCAN,
+	WORK_REL_ENTROPY_VALUE,
+	WORK_DOMAIN_SCAN,
+	WORK_CONSTRAINT_CHECK_CALL,
+	WORK_CONSTRAINT_CHECK_CELL,
+	WORK_CONSTRAINT_CHECK_UNSET_CELL,
+	WORK_DIRTY_CONSTRAINT_ENTRY,
+	WORK_DIRTY_CONSTRAINT_ENQUEUE,
+	WORK_DOMAIN_INVALIDATION_ATTEMPT,
+	WORK_CELL_BOUND_SKIP,
+	WORK_CACHE_BUILD_CELL_SCAN,
+	WORK_CACHE_NEXT_SCAN,
+	WORK_CACHE_RESUME_SCAN,
+	WORK_NEXT_VALUE_SCAN,
+	WORK_PRUNE_LINE_SCAN,
+	WORK_DP_PREFIX_CANDIDATE_SCAN,
+	WORK_DP_SUFFIX_CANDIDATE_SCAN,
+	WORK_DP_PRUNE_VALUE_SCAN,
 	WORK_COUNT
 }	t_work_counter;
 
+void				work_micro_begin(t_work_counter counter);
+void				work_micro_end(t_work_counter counter);
+void				work_micro_reset(void);
+void				work_micro_report(void);
 void				work_dp_init(int size);
 void				work_reset(void);
 void				work_add(t_work_counter counter, unsigned long long amount);

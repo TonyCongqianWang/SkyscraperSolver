@@ -20,12 +20,17 @@ if SCRIPT_DIR not in sys.path:
 from symmetry import get_random_symmetry, canonize_clue_str as canonize
 from param_metadata import PARAM_METADATA, PARAM_CONSTRAINTS, get_active_param_names
 from spsa_metrics import get_sgm_shifts, shifted_geo_mean, mean_log_shifted
+from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE, MODE_WEIGHTS,
+                              mode_losses, spsa_components)
+from tuning_work_runtime import load_model, parse_record, DEFAULT_MODEL
+from comparison_measurements import unrestricted_environment, search_status
 from spsa_run_metadata import build_run_metadata, save_run_metadata
 
 # Training timeout scoring matches the default post-tuning PAR-4 policy.
 TRAINING_TIMEOUT = 10.0
 TRAINING_TIMEOUT_PENALTY = 4.0
 TRAINING_TIMEOUT_SECONDS = TRAINING_TIMEOUT * TRAINING_TIMEOUT_PENALTY
+WORK_WATCHDOG_SECONDS = 60.0
 
 # Globals
 LOG_FILE_HANDLE = None
@@ -43,6 +48,28 @@ def resolve_binary_path(path):
 
 
 BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver"))
+BIN_NATIVE = BIN_CURR
+ACTIVE_OBJECTIVE = TIME_NODES  # direct Python callers default to time + nodes
+WORK_MODEL = None
+WORK_MODEL_SHA256 = None
+
+
+def configure_objective(args):
+    """Select the tuner binary and validate its calibration before tuning."""
+    global BIN_CURR, ACTIVE_OBJECTIVE, WORK_MODEL, WORK_MODEL_SHA256, WORK_WATCHDOG_SECONDS
+    WORK_WATCHDOG_SECONDS = getattr(args, "work_watchdog", 60.0)
+    ACTIVE_OBJECTIVE = getattr(args, "objective", TIME_NODES)
+    if ACTIVE_OBJECTIVE == WORK:
+        WORK_MODEL, WORK_MODEL_SHA256 = load_model(
+            getattr(args, "work_model", DEFAULT_MODEL))
+        BIN_CURR = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_work"))
+    elif ACTIVE_OBJECTIVE == TIME_NODES:
+        WORK_MODEL = WORK_MODEL_SHA256 = None
+        BIN_CURR = BIN_NATIVE
+    else:
+        raise ValueError("Unknown tuning objective")
+
+
 BIN_BASELINE = resolve_binary_path(os.path.join(ROOT_DIR, "skyscraper_solver_main"))
 
 SPSA_DATASET_DIR = Path(ROOT_DIR) / 'puzzle_bank' / 'spsa_datasets'
@@ -127,7 +154,10 @@ def read_clues(file_path):
         return [line.strip().strip('"') for line in f if line.strip()]
 
 
-def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
+def run_solver_instance(env, opt, clue, timeout=None):
+    if timeout is None:
+        timeout = WORK_WATCHDOG_SECONDS if WORK_MODEL is not None else TRAINING_TIMEOUT
+    env = unrestricted_environment(env)
     t_start = time.perf_counter()
     try:
         proc = subprocess.Popen(
@@ -145,11 +175,28 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
                 stdout, stderr = proc.communicate(timeout=0.5)
             except Exception:
                 stdout = ""
+            if WORK_MODEL is not None:
+                raise RuntimeError(f"Work tuning watchdog expired after {timeout:g}s; "
+                                   "no wall-clock penalty was scored. "
+                                   "Increase --work-watchdog or reduce worker load.")
             return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
         elapsed = time.perf_counter() - t_start
         if proc.returncode != 0:
+            if WORK_MODEL is not None:
+                raise RuntimeError(f"Instrumented solver failed: {stderr[:200]}")
             return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
+
+        lines = stdout.splitlines()
+        status = search_status(lines)
+        if status == 'timeout':
+            # Solver-reported incomplete searches use a fixed policy, not the watchdog.
+            return TRAINING_TIMEOUT_SECONDS, 100000
+        if status == 'error':
+            raise ValueError('Malformed solver search status')
+        if WORK_MODEL is not None:
+            predicted, measured_nodes, _ = parse_record(lines, WORK_MODEL)
+            return predicted, measured_nodes
 
         nodes = 100000
         for line in stdout.splitlines():
@@ -158,6 +205,8 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
                 break
         return elapsed, nodes
     except Exception:
+        if WORK_MODEL is not None:
+            raise
         return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
 
@@ -198,6 +247,7 @@ def evaluate_subset_standalone(env, tasks, max_workers):
 
 
 def _run_opt_group_stdin(env, opt, clues_with_indices):
+    env = unrestricted_environment(env)
     proc = subprocess.Popen(
         [BIN_CURR] + opt.split() + ["--stdin"],
         stdin=subprocess.PIPE,
@@ -213,10 +263,15 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
             proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
             proc.stdin.flush()
 
-            lines = read_with_timeout(proc, timeout=TRAINING_TIMEOUT)
+            timeout = WORK_WATCHDOG_SECONDS if WORK_MODEL is not None else TRAINING_TIMEOUT
+            lines = read_with_timeout(proc, timeout=timeout)
             elapsed = time.perf_counter() - t0
 
             if lines is None:
+                if WORK_MODEL is not None:
+                    raise RuntimeError(f'Work tuning watchdog/stream failure after a limit of {timeout:g}s; '
+                                       'no wall-clock penalty was scored. '
+                                       'Increase --work-watchdog or reduce worker load.')
                 try:
                     proc.kill()
                 except Exception:
@@ -232,11 +287,21 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
                 group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
                 continue
 
-            node_count = 100000
-            for line in lines:
-                if line.startswith("Nodes visited:"):
-                    node_count = int(line.split(":")[1].strip())
-                    break
+            status = search_status(lines)
+            if status == 'timeout' or (status == 'error' and WORK_MODEL is None):
+                group_results.append((idx, TRAINING_TIMEOUT_SECONDS, 100000))
+                continue
+            if status == 'error':
+                raise ValueError('Malformed solver search status')
+            if WORK_MODEL is not None:
+                predicted, node_count, _ = parse_record(lines, WORK_MODEL)
+                elapsed = predicted
+            else:
+                node_count = 100000
+                for line in lines:
+                    if line.startswith("Nodes visited:"):
+                        node_count = int(line.split(":")[1].strip())
+                        break
             group_results.append((idx, elapsed, node_count))
     finally:
         try:
@@ -289,7 +354,7 @@ def evaluate_subset(env, tasks, max_workers, use_stdin=False):
 
 
 def get_env_for_theta(theta):
-    env = os.environ.copy()
+    env = unrestricted_environment()
     for val, (name, pmin, pmax, default, ptype, scale) in zip(theta, PARAM_METADATA):
         phys_val = pmin + val * (pmax - pmin)
         if ptype is int:
@@ -349,143 +414,93 @@ def load_datasets(size):
     return {}
 
 
-# --- Loss Evaluators ---
+# --- Loss Evaluators (shared numerical policy in tuning_objective.py) ---
 
-def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    s7_train = datasets["s7_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(7)
-    enum_time_shift, enum_node_shift = get_sgm_shifts(7, True)
-    ref_scale_s7_single_time = 0.005
-    ref_scale_s7_single_nodes = 350.0
-    ref_scale_s7_enum_time = 0.01
-    ref_scale_s7_enum_nodes = 2000.0
+def _mode_tasks(bank, count, enumeration):
+    selected = random.sample(bank, min(len(bank), count))
+    option = "-s 0" if enumeration else "-s 1"
+    return [(option, get_random_symmetry(clue)) for clue in selected]
 
-    if enumeration_only:
-        sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
-        tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
 
-        def get_loss(config_theta):
-            env = get_env_for_theta(config_theta)
-            t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+def _evaluate_mode(env, tasks, size, enumeration, max_workers, use_stdin):
+    times, nodes = evaluate_subset(env, tasks, max_workers, use_stdin)
+    return mode_losses(size, enumeration, times, nodes)
 
-            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
 
-            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
-            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
-
-            return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
-        return get_loss
-
-    sampled_single = random.sample(s7_train, min(len(s7_train), batch_size))
-    sampled_enum = random.sample(s7_train, min(len(s7_train), batch_size))
-    tasks_single = [("-s 1", get_random_symmetry(clue)) for clue in sampled_single]
-    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
+def make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=TIME_NODES):
+    bank = datasets["s7_train"]
+    enum_tasks = _mode_tasks(bank, batch_size, True)
+    single_tasks = None if enumeration_only else _mode_tasks(bank, batch_size, False)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
-        t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+        if single_tasks is not None:
+            ts, ns, sgm_ts, sgm_ns = _evaluate_mode(
+                env, single_tasks, 7, False, max_workers, use_stdin)
+        te, ne, sgm_te, sgm_ne = _evaluate_mode(
+            env, enum_tasks, 7, True, max_workers, use_stdin)
+        if single_tasks is None:
+            return (*spsa_components(te, ne, objective),
+                    (sgm_te, sgm_ne, sgm_te, sgm_ne))
+        weights = MODE_WEIGHTS[7]
+        time_loss = weights[0] * ts + weights[1] * te
+        nodes_loss = weights[0] * ns + weights[1] * ne
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_ts, sgm_ns, sgm_te, sgm_ne))
 
-        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
-        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
-
-        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-        loss_time = 1.0 * mean_log_shifted(t_single, single_time_shift, ref_scale_s7_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s7_enum_time)
-        loss_nodes = 1.0 * mean_log_shifted(n_single, single_node_shift, ref_scale_s7_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s7_enum_nodes)
-
-        return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
     return get_loss
 
 
-def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    s8_train = datasets["s8_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(8)
-    enum_time_shift, enum_node_shift = get_sgm_shifts(8, True)
-
-    ref_scale_s8_single_time = 0.10
-    ref_scale_s8_single_nodes = 5000.0
-    ref_scale_s8_enum_time = 1.00
-    ref_scale_s8_enum_nodes = 50000.0
-
-    if enumeration_only:
-        sampled_enum = random.sample(s8_train, min(len(s8_train), batch_size))
-        tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
-
-        def get_loss(config_theta):
-            env = get_env_for_theta(config_theta)
-            t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
-
-            # Shift = 2.0s / 100,000 nodes to strongly bias toward instances taking >= 2.0s
-            sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-            sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-            loss_time = 1.0 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
-            loss_nodes = 1.0 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
-
-            return loss_time, loss_nodes, (sgm_t_e, sgm_n_e, sgm_t_e, sgm_n_e)
-        return get_loss
-
-    sampled_single = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
-    sampled_enum = random.sample(s8_train, min(len(s8_train), max(1, batch_size // 2)))
-
-    tasks_single = [("-s 1", get_random_symmetry(clue)) for clue in sampled_single]
-    tasks_enum = [("-s 0", get_random_symmetry(clue)) for clue in sampled_enum]
+def make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=TIME_NODES):
+    bank = datasets["s8_train"]
+    count = batch_size if enumeration_only else max(1, batch_size // 2)
+    enum_tasks = _mode_tasks(bank, count, True)
+    single_tasks = None if enumeration_only else _mode_tasks(bank, count, False)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_single, n_single = evaluate_subset(env, tasks_single, max_workers=max_workers, use_stdin=use_stdin)
-        t_enum, n_enum = evaluate_subset(env, tasks_enum, max_workers=max_workers, use_stdin=use_stdin)
+        if single_tasks is not None:
+            ts, ns, sgm_ts, sgm_ns = _evaluate_mode(
+                env, single_tasks, 8, False, max_workers, use_stdin)
+        te, ne, sgm_te, sgm_ne = _evaluate_mode(
+            env, enum_tasks, 8, True, max_workers, use_stdin)
+        if single_tasks is None:
+            return (*spsa_components(te, ne, objective),
+                    (sgm_te, sgm_ne, sgm_te, sgm_ne))
+        weights = MODE_WEIGHTS[8]
+        time_loss = weights[0] * ts + weights[1] * te
+        nodes_loss = weights[0] * ns + weights[1] * ne
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_ts, sgm_ns, sgm_te, sgm_ne))
 
-        sgm_t_s = shifted_geo_mean(t_single, single_time_shift)
-        sgm_n_s = shifted_geo_mean(n_single, single_node_shift)
-
-        sgm_t_e = shifted_geo_mean(t_enum, enum_time_shift)
-        sgm_n_e = shifted_geo_mean(n_enum, enum_node_shift)
-
-        loss_time = 0.5 * mean_log_shifted(t_single, single_time_shift, ref_scale_s8_single_time) + 1.5 * mean_log_shifted(t_enum, enum_time_shift, ref_scale_s8_enum_time)
-        loss_nodes = 0.5 * mean_log_shifted(n_single, single_node_shift, ref_scale_s8_single_nodes) + 1.5 * mean_log_shifted(n_enum, enum_node_shift, ref_scale_s8_enum_nodes)
-
-        return loss_time, loss_nodes, (sgm_t_s, sgm_n_s, sgm_t_e, sgm_n_e)
     return get_loss
 
 
-def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    s9_train = datasets["s9_train"]
-    single_time_shift, single_node_shift = get_sgm_shifts(9)
-
-    ref_scale_s9_time = 0.10
-    ref_scale_s9_nodes = 20000.0
-
-    sampled = random.sample(s9_train, min(len(s9_train), batch_size))
-    opt_flag = "-s 0" if enumeration_only else "-s 1"
-    tasks = [(opt_flag, get_random_symmetry(clue)) for clue in sampled]
+def make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective=TIME_NODES):
+    bank = datasets["s9_train"]
+    tasks = _mode_tasks(bank, batch_size, enumeration_only)
 
     def get_loss(config_theta):
         env = get_env_for_theta(config_theta)
-        t_list, n_list = evaluate_subset(env, tasks, max_workers=max_workers, use_stdin=use_stdin)
+        time_loss, nodes_loss, sgm_time, sgm_nodes = _evaluate_mode(
+            env, tasks, 9, enumeration_only, max_workers, use_stdin)
+        return (*spsa_components(time_loss, nodes_loss, objective),
+                (sgm_time, sgm_nodes, sgm_time, sgm_nodes))
 
-        # High shift = 1.0s / 120,000 nodes to strongly bias toward hard instances (>= 0.5s up to 5s)
-        sgm_t = shifted_geo_mean(t_list, single_time_shift)
-        sgm_n = shifted_geo_mean(n_list, single_node_shift)
-
-        loss_time = 1.0 * mean_log_shifted(t_list, single_time_shift, ref_scale_s9_time)
-        loss_nodes = 1.0 * mean_log_shifted(n_list, single_node_shift, ref_scale_s9_nodes)
-
-        return loss_time, loss_nodes, (sgm_t, sgm_n, sgm_t, sgm_n)
     return get_loss
 
 
-def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin, enumeration_only):
-    if size == 7:
-        return make_loss_evaluator_s7(datasets, batch_size, max_workers, use_stdin, enumeration_only)
-    elif size == 8:
-        return make_loss_evaluator_s8(datasets, batch_size, max_workers, use_stdin, enumeration_only)
-    elif size == 9:
-        return make_loss_evaluator_s9(datasets, batch_size, max_workers, use_stdin, enumeration_only)
-    raise ValueError(f"Unsupported size: {size}")
+def build_loss_evaluator(size, datasets, batch_size, max_workers, use_stdin,
+                         enumeration_only, objective=TIME_NODES):
+    factories = {7: make_loss_evaluator_s7, 8: make_loss_evaluator_s8,
+                 9: make_loss_evaluator_s9}
+    if size not in factories:
+        raise ValueError(f"Unsupported size: {size}")
+    return factories[size](datasets, batch_size, max_workers, use_stdin,
+                           enumeration_only, objective)
 
 
 # --- Output Helpers ---
@@ -627,8 +642,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
     import compare_performance
     train_reports = compare_performance.run_comparison(
         validation_tasks=train_tasks,
-        baseline_bin=BIN_CURR,
-        tunable_bin=BIN_CURR,
+        baseline_bin=BIN_NATIVE,
+        tunable_bin=BIN_NATIVE,
         tuned_env=get_env_for_theta(theta_final),
         title="TRAINING SET PERFORMANCE COMPARISON (first 10%)",
         log_path=train_log_path,
@@ -636,13 +651,15 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
         timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
         win_tolerance=args.comparison_win_tolerance,
+        report_work_prediction=getattr(args, 'report_work_prediction', False),
+        work_model_path=getattr(args, 'work_model', DEFAULT_MODEL),
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_train_instances.jsonl'
     )
     val_reports = compare_performance.run_comparison(
         validation_tasks=validation_tasks,
-        baseline_bin=BIN_CURR,
-        tunable_bin=BIN_CURR,
+        baseline_bin=BIN_NATIVE,
+        tunable_bin=BIN_NATIVE,
         tuned_env=get_env_for_theta(theta_final),
         title="VALIDATION SET PERFORMANCE COMPARISON",
         log_path=val_log_path,
@@ -650,6 +667,8 @@ def run_post_tuning_comparison(args, datasets, theta_final):
         repeats=args.comparison_repeats, warmup=args.comparison_warmup, size=args.size,
         timeout=args.comparison_timeout, timeout_penalty=args.comparison_timeout_penalty,
         win_tolerance=args.comparison_win_tolerance,
+        report_work_prediction=getattr(args, 'report_work_prediction', False),
+        work_model_path=getattr(args, 'work_model', DEFAULT_MODEL),
         records_path=os.path.splitext(args.log or os.path.join(
             ROOT_DIR, 'scratch', f'spsa_s{args.size}_{args.seed}.log'))[0] + '_val_instances.jsonl'
     )
@@ -702,6 +721,10 @@ def run_spsa(args, datasets, max_workers):
     RUN_METADATA = build_run_metadata(
         args, datasets, PARAM_METADATA, active_names,
         max_workers, initial_values)
+    RUN_METADATA['objective_mode'] = ACTIVE_OBJECTIVE
+    RUN_METADATA['work_model_sha256'] = WORK_MODEL_SHA256
+    RUN_METADATA['work_model_source'] = (str(getattr(args, 'work_model', DEFAULT_MODEL))
+                                          if WORK_MODEL is not None else None)
     RUN_METADATA['sgm_shifts'] = {
         mode: dict(zip(('time', 'nodes'), get_sgm_shifts(args.size, enumeration)))
         for mode, enumeration in [('single', False), ('enumeration', True)]}
@@ -730,7 +753,8 @@ def run_spsa(args, datasets, max_workers):
             build_loss_evaluator(
                 size=args.size, datasets=datasets, batch_size=part,
                 max_workers=max_workers, use_stdin=args.stdin,
-                enumeration_only=args.enumeration_only)
+                enumeration_only=args.enumeration_only,
+                objective=ACTIVE_OBJECTIVE)
             for part in sizes
         ]
         active_index_set = set(active_indices)
@@ -856,6 +880,15 @@ def run_spsa(args, datasets, max_workers):
 def parse_args():
     parser = argparse.ArgumentParser(description="Run SPSA tuning for a solver size group.")
     parser.add_argument("--size", type=int, choices=[7, 8, 9], required=True, help="Solver size group to optimize (7 uses sizes 5–7)")
+    parser.add_argument("--nodes-time", action="store_const", const=TIME_NODES,
+                        dest="objective", help="Tune with measured wall time + search nodes")
+    parser.set_defaults(objective=DEFAULT_OBJECTIVE)
+    parser.add_argument("--report-work-prediction", action="store_true",
+                        help="Show calibrated work in post-tuning native comparisons")
+    parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
+                        help="Compact pooled v1 work calibration file")
+    parser.add_argument("--work-watchdog", type=float, default=60.0,
+                        help="Emergency wall-clock limit per work solve; aborts tuning without scoring (default: 60s)")
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
@@ -864,7 +897,7 @@ def parse_args():
     parser.add_argument("--perturb", type=float, default=0.03, help="SPSA initial perturbation step size (c)")
     parser.add_argument("--gamma", type=float, default=0.0, help="SPSA perturbation decay exponent (gamma)")
     parser.add_argument("--batch-size", type=int, default=None, help="SPSA batch size (number of sampled instances per iteration)")
-    parser.add_argument("--directions", type=int, default=4, help="Perturbation pairs per iteration (1 retains legacy SPSA behavior)")
+    parser.add_argument("--directions", type=int, default=4, help="Perturbation pairs per iteration (1 uses a single direction)")
     parser.add_argument("--grad-clip", type=float, default=2.5, help="Relative gradient norm clipping threshold (multiple of running gradient norm)")
     parser.add_argument("--mom-clip", type=float, default=1.5, help="Momentum buffer norm ceiling factor")
     parser.add_argument("--beta", type=float, default=0.90, help="Momentum decay coefficient (beta)")
@@ -885,6 +918,8 @@ def parse_args():
         validate_policy(args.comparison_timeout, args.comparison_timeout_penalty, args.comparison_win_tolerance)
     except ValueError as error:
         parser.error(str(error))
+    if not math.isfinite(args.work_watchdog) or args.work_watchdog <= 0:
+        parser.error("work watchdog must be finite and positive")
     if args.max_workers < 1 or args.iterations < 1 or args.directions < 1 or (args.batch_size is not None and args.batch_size < 1):
         parser.error('workers, iterations and batch size must be positive')
     if args.comparison_repeats < 2 or args.comparison_repeats % 2 or args.comparison_warmup < 0:
@@ -892,7 +927,7 @@ def parse_args():
     return args
 
 
-def main():
+def _main_impl():
     args = parse_args()
     if args.seed is None:
         args.seed = random.SystemRandom().getrandbits(64)
@@ -907,7 +942,9 @@ def main():
         LOG_FILE_HANDLE = open(args.log, "w")
 
     log_print(f"SPSA random seed: {args.seed}")
+    configure_objective(args)
     log_print(f"Starting SPSA optimization for size {args.size} (iterations: {args.iterations})")
+    log_print(f"Training objective: {ACTIVE_OBJECTIVE} (binary={BIN_CURR})")
 
     datasets = load_datasets(args.size)
     theta_final = run_spsa(args, datasets, max_workers)
@@ -918,6 +955,14 @@ def main():
 
     if not args.no_compare:
         run_post_tuning_comparison(args, datasets, theta_final)
+
+
+
+def main():
+    try:
+        return _main_impl()
+    finally:
+        configure_objective(argparse.Namespace(objective=TIME_NODES))
 
 
 if __name__ == "__main__":

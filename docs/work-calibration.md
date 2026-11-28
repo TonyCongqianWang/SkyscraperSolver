@@ -1,263 +1,354 @@
-# Deterministic solver work counters (issue #72)
+# Work calibration
 
-Normal builds compile empty `work_*` functions, while `make instrumented`
-builds a separate `skyscraper_solver_work` using `-DWORK_INSTRUMENTED`.
-Only `src/work_instrumentation*.c` contain instrumentation preprocessing
-conditionals; solver code calls the same ordinary ABI in both modes.
-`-flto` can eliminate calls to empty functions in normal builds (inspect
-assembly to confirm for a given toolchain; this is an optimization, not a C
-language guarantee). No counters are stored in puzzle/node structs.
+## Current counter and output schema
 
-Work counters are emitted in a single `WORK_COUNTERS v2` record for each
-successfully parsed solve, including standard input mode. They start before
-solver initialization, and are counted through completion of the solve; printing
-and cleanup are outside the scope. The v2 schema is defined in
-`src/work_instrumentation.h`, with corresponding names in the report source.
+The single supported solver counter schema is `WORK_COUNTERS v1`, with
+48 fixed-count / variable-volume event counters. The counter names in
+`src/work_instrumentation.h`, `src/work_instrumentation_report.c`, and
+`python_scripts/calibrate_work.py` must agree exactly. The normal native
+solver does not emit these counters. The instrumented solver includes no
+wall-clock timers unless explicitly compiled with `WORK_MICRO_TIMING`.
 
-## Calibrate from a fresh clone
+The sole supported compact model schema is `v1`, with format
+`skyscraper-work-model` version 1. A fully allocated 48-counter pooled model is committed at
+`calibration/work_calibration.model.json`, the default SPSA tuning path.
+It is based on the November 27 regression and November 28 micro-only refresh.
+Fresh calibrations produce candidates in `scratch/`; promotion is explicit.
+The previous 33-counter fit is obsolete. The work tuning objective uses **seconds**
+and fails if the model is missing or incompatible. No obsolete-model fallback is used.
+The measured **time + nodes** objective remains separately available.
 
-Requirements: Python 3.9+, GCC (or an LTO-capable C compiler), and `git`.
-No pip packages are required. Default usage:
+## Run calibration
 
 ```sh
-python3 python_scripts/calibrate_work.py --output scratch/work_calibration.json
+python3 python_scripts/calibrate_work.py
+# Reproduce the puzzle choice, train/validation splits, and perturbations:
+python3 python_scripts/calibrate_work.py --seed 123456
 ```
 
-**Default workload:** 512 symmetry-distinct puzzles for **each** size 7, 8,
-and 9, sampled exclusively from the **active SPSA training datasets**:
-`puzzle_bank/spsa_datasets/le7_train.txt`,
-`puzzle_bank/spsa_datasets/size8_train.txt`, and
-`puzzle_bank/spsa_datasets/size9_train.txt`. The le7 file contains mixed
-sizes 5–7; this calibration selects size 7 from it. A deterministic
-seeded hash-priority sample spans each **entire** training file rather than
-taking the first 512 lines (the SPSA datasets may be ordered by difficulty).
-Size 7 runs **full enumeration** (`-s 0`); sizes 8 and 9 find the first
-solution (`-s 1`). These modes are recorded per puzzle. The script fails
-if the default datasets cannot supply 512 distinct puzzles of each size.
+When `--seed` is omitted, the script generates a fresh 64-bit random seed
+and prints it. The seed is stored in the detailed report with the puzzle
+identities and all configurations. With the same seed, dataset files and
+code, puzzle selection, splits and parameter variants are reproducible.
+Native runtime measurements and CPU microtimings naturally remain subject
+to machine scheduling and load.
 
-**Calibration holdout:** the 25% holdout is carved from these sampled
-SPSA **training** puzzles, using symmetry-canonical puzzle identities.
-The separate SPSA `*_val.txt` files are **not** used for coefficient
-fitting, feature grouping, or the calibration holdout; they remain untouched
-for independent SPSA validation. This keeps calibration aligned with the
-actual SPSA training distribution without leaking official validation data.
+Default sampling draws 6,000 symmetry-distinct puzzles of each size 7, 8
+and 9 from the corresponding **active SPSA training datasets**, across
+their entire files:
 
-Parameter perturbations are **enabled by default**: 12 variants per size
-(two perturbations of six cache/score parameters), plus baseline.
-Each variant only runs against its matching size; that makes 13
-configurations per size, **19,968 puzzle/configuration observations** total.
-For every observation there are **three instrumented runs** (cross-checked
-for identical counters, solution counts and nodes) and **nine independent
-native wall-time measurements**. All calibration and held-out instances
-receive the same repeat counts; there are **239,616 raw executions**.
-This is a substantial benchmark, not a quick smoke test.
+- `puzzle_bank/spsa_datasets/le7_train.txt` (size-7 entries)
+- `puzzle_bank/spsa_datasets/size8_train.txt`
+- `puzzle_bank/spsa_datasets/size9_train.txt`
 
-With a fixed, per-size 75%/25% puzzle-identity split, the default is
-4,992 training and 1,664 validation observations **per size** (384 training
-and 128 held-out puzzles, each with 13 configurations): **14,976 training**,
-**4,992 validation** overall. Rotations/reflections of the same clues
-are grouped under a canonical puzzle identity before selection or splitting.
+The sampler uses a seeded hash-priority reservoir to avoid file-order bias.
+A separate seeded, puzzle-identity-level 25% holdout is selected within
+each size. Every configuration of a puzzle stays on the same split, and
+nested training-only splits select ridge and contrast penalties.
+Independent SPSA validation datasets are used only for the final
+micro-timing verification, not for fitting or regularization selection.
 
-Options: `--puzzles-per-size N` for smaller smoke runs; `--no-perturb`
-to omit configuration changes; repeat `--dataset PATH` for custom input.
-The `--max-solutions N` option overrides size-specific defaults (e.g.,
-`--max-solutions 0` for enumeration of all sizes). The `--timeout`,
-`--native-repeats`, `--instrumented-repeats`, `--seed`, and
-`--validation-fraction` options control execution and splitting. For a
-small smoke run use `--puzzles-per-size 4 --native-repeats 3
---instrumented-repeats 2 --no-perturb`.
+Each distinct puzzle now receives **one independently seeded antithetic
+plus/minus pair**. Every SPSA-active parameter is perturbed, including the
+shared strategy parameters and the math parameters relevant to that size;
+the other-size parameters remain at their defaults. The direction is drawn
+from an ellipsoid in normalized SPSA coordinates and scaled by each
+parameter's SPSA perturbation scale. Its marginal scale is approximately
+`4 * c` (`c=0.03` by default). The high-dimensional sampling includes a
+`sqrt(d)` factor so individual changes do not collapse to zero as the
+number of active parameters grows; legal ranges and linked constraints
+are projected using the same rules as SPSA.
 
-The script compiles instrumented and native binaries in a temporary
-directory without modifying tracked source files. For each run it writes
-a **raw execution record immediately** to
-`scratch/work_calibration.raw.jsonl`, including the dataset hash, canonical
-puzzle ID, configuration and parameters, size/mode, repeat index, elapsed
-time, solutions/nodes and unaggregated counters (instrumented runs only).
-This file survives an interrupted run. On successful completion it writes
-`scratch/work_calibration.json`, containing the raw runs, counter vectors,
-all native timings/medians, SHA256 dataset hashes, build provenance, per-fit
-coefficients, work predictions and held-out diagnostics.
+This gives **36,000 distinct puzzle–configuration observations**
+(18,000 puzzles × two parameter configurations) by default.
+Each observation receives two native runtime measurements and exactly one
+counter-producing execution. For every antithetic pair, a seed-dependent
+hash selects one member for section timing; the other uses plain
+instrumentation. Both supply the full 48 work counters. Section timing
+therefore covers exactly half the observations without sacrificing any
+counter coverage or fitting observations.
+The default budget is **72,000 native, 18,000 section-timed and 18,000 plain
+instrumented executions** (108,000 solver invocations total, excluding the
+independent validation and controlled microbenchmark). Native timing spreads
+are saved as a simple stability proxy. Native solution and node counts must
+agree for every observation. Extra plain runs on timed observations, if
+requested, must match all 48 counters.
+A preflight log prints the exact budget and fails clearly when any requested
+puzzle size lacks enough unique puzzles rather than silently reducing
+coverage. Each required binary is compiled only once; a temporary generated
+runtime override constructor applies parameter values through environment
+variables without editing the repository's C source files. The default calibration
+model remains unchanged until a new calibration is run. `--perturb`,
+`--perturb-radius`, `--no-perturb`, and `--seed` configure or reproduce
+these choices.
 
-On successful completion the script **also exports a compact pooled model** to
-`scratch/work_calibration.model.json` (or `--model-output PATH`) and a
-separate pooled collinearity report to
-`scratch/work_calibration.collinearity.json`
-(or `--collinearity-output PATH`). It has
-only a versioned schema, raw-counter weights, intercept, creation timestamp,
-dataset hashes, compiler/commit, selected ridge and contrast penalties, and
-key held-out scores. No raw observations, individual run timings, tuning
-grid, or size-specific coefficients are included. The model's coefficients
-are already expanded onto the original counter names, so consumers need
-only `intercept_seconds + sum(seconds_per_count[key] * counts[key])`.
-Unidentifiable counters receive an explicit zero weight.
+Size 7 runs full enumeration by default; sizes 8 and 9 run first-solution
+search. `--max-solutions` overrides this. Use `--puzzles-per-size`,
+`--native-repeats` (minimum 2) and `--instrumented-repeats` (default 0.5)
+to control the workload. With section timing enabled, rates below 0.5
+are raised to 0.5 to guarantee counter coverage. The default 0.5 uses
+one plain and one section-timed execution per pair. A rate of 1 adds a
+plain parity check to each timed observation; higher rates add repeats.
+Fractional extra runs are hash-ranked independently within each size,
+rounding the total plain budget to the nearest observation (half up).
+With `--no-perturb`, half of each size's single observations are timed
+(rounding up), with the rest covered by plain instrumentation; rounding
+the plain budget may add a parity check. Any missing counters or parity
+mismatch is fatal. With `--no-section-timing`, plain instrumentation
+supplies all counters, so rates below 1 are raised to 1 and logged.
+Section-timing diagnostics use only timed observations; regression and
+ranking diagnostics use all observations.
 
-To export an already generated detailed calibration file without recalibrating:
+## Interruptions, resuming, and timeouts
+
+The assigned counter-producing execution establishes the checkpoint: the
+section-timed build for its half of the pair, otherwise the plain
+instrumented build. Static CPU budgets are **2 seconds for size 7, 2 for
+size 8, and 5 for size 9**; override with `--cpu-timeout-size7`,
+`--cpu-timeout-size8`, or `--cpu-timeout-size9`. The outer DFS checks
+the clock only at main-node advances after nested probes return. A
+checkpoint can overshoot the budget by the work of one main node.
+If interrupted, the solver emits `SEARCH_STATUS timeout`, main and total
+node counts, all counters, and completed section samples. Both native
+repeats and optional plain parity runs replay that exact main-node
+checkpoint with no CPU-clock checks. Completed solves replay without
+a node limit. Ordinary solver usage has no timeout unless explicitly
+configured by environment variables `SOLVER_CPU_TIMEOUT` or
+`SOLVER_MAIN_NODE_LIMIT` (mutually exclusive).
+
+Matched partial prefixes contribute to coefficient fitting and
+collinearity, but only completed solves contribute to configuration
+ranking and within-puzzle contrast terms. Regression error metrics
+include partial prefixes and explicitly report their count; complete-only
+MAE is also reported. Independent section validation uses the same
+size-specific CPU budgets. SPSA's training policy is unchanged.
+The emergency wall-clock subprocess timeout defaults to 60 seconds
+(`--timeout SECONDS`); if exceeded, calibration stops and preserves
+the journal rather than fabricating a partial result. Progress logs
+show per-size cumulative runtime by mode every 16 puzzles and identify
+invocations still running after 10 seconds. These CPU budgets are not
+a strict whole-job wall-clock guarantee.
+
+Every completed solver invocation is appended immediately to
+`scratch/work_calibration.raw.jsonl`, including runs from partially completed
+puzzles. Existing journals are protected from accidental overwriting.
+If calibration stops, preserve the JSONL file and resume using the **original
+seed and all original sampling/benchmark options**:
+
+```sh
+python3 python_scripts/calibrate_work.py --seed 123456 --resume
+```
+
+Resume validates puzzle identities, dataset hashes, parameter perturbations,
+the deterministic per-observation parity schedule, run counts and
+work-counter schemas before reusing records; completed runs are not rerun.
+A companion `.raw.build.json` manifest binds the journal to the source revision, actual C/header and generated override contents, compiler/build settings and machine. Resume rejects a mismatched manifest. For an existing legacy journal without a manifest, resume warns and assumes the measurements were made with the current build, then records that identity for future resumes. Keep the manifest alongside the raw journal; `--fresh` starts a new identity.
+New raw records include the seed, repeat settings, section-timing mode
+and sampling versions, CPU budgets and checkpoint policy so changes are
+rejected. The original leader status and checkpoint are preserved and
+validated against all replays; earlier journals without checkpoint metadata
+require the original revision. Journals from the prior
+all-observation timing schedule with a recorded run plan cannot be resumed
+under the new schedule. Preserve them and use the original revision to
+resume, or choose a separate `--output` path for a new calibration. For a new calibration using the same output file, specify
+`--fresh` to intentionally discard the existing raw journal. Never use
+`--fresh` when you wish to recover an interrupted run.
+
+## Numerical fitting and cost splits
+
+Work features with near-duplicate counter patterns are merged before
+regression. Nonnegative RMS-scaled ridge regression with optional
+within-puzzle contrast weighting fits the merged feature coefficients.
+The target runtimes are converted from seconds to **milliseconds inside
+the numerical optimizer**, improving the scale of its absolute convergence
+threshold. The resulting intercept, per-count coefficients, predictions
+and every exported field remain in **seconds**. This internal conversion
+does not change the units of tuning losses or the meaning of ridge alpha.
+
+Once the pooled regression has been fitted, section timings from the
+initial solver runs and a controlled C microbenchmark of **each original
+counter in the known collinear groups** are combined to estimate
+relative operation costs. Those timing-derived ratios distribute the
+single fitted merged-group coefficient algebraically among its original
+members, preserving total training-set group contribution. No refitting
+occurs. Unmeasured or unstable members are recorded as warnings, not used for
+arbitrary equal-weight fallback, and not a reason to discard any calibration
+results. The detailed report preserves the pooled regression, solver timings
+and counter measurements. The compact model is still written, but an
+unresolved group has `null` per-counter coefficients and is tagged
+`status: incomplete` / `usable_for_tuning: false`; tuning refuses it.
+The collinearity export identifies each unresolved group and missing
+member. Already resolved allocations remain in the report.
+
+Independent SPSA validation *still runs* when timing cost allocation is
+unresolved. The validator uses an in-memory algebraic projection of the
+single fitted **pooled regression**, and records those validation outcomes
+alongside observed CPU timing ratios; it explicitly withholds only
+conclusions about unresolved individual cost ratios. This projected
+predictor is solely for diagnostics, never substituted into the exported
+tuning model. A separate evaluation reports the allocated model's held-out
+ranking and prediction drift only if every split is resolved.
+
+The controlled microbenchmark covers the previously merged groups plus
+additional genuine operations including `lookahead_scan`, `resume_scan`,
+`rescore_scan`, `base_score`, `rel_entropy_value`, and representative
+node/solution copies, score blending, provisional rollback, successful
+domain invalidation, and line scoring. Missing or unidentifiable counters remain visible in
+the 48-counter coverage report instead of being silently assumed timed.
+The `counter_diagnostics` reason distinguishes `not_benchmarked`,
+`insufficient_timing_evidence`, and `unstable`. These are diagnostic
+states, not calibration-fatal errors.
+
+The controlled microbenchmark uses actual C operations, repeated under
+`-O2 -flto` to amortize timer overhead. The independent section-timing
+check uses SPSA validation puzzles and never changes coefficients.
+Timing disagreements and their source measurements remain visible.
+The controlled harness now also measures real successful `assignment`
+operations. It constructs a consistent seven-by-seven state and resets
+that state before each operation. The paired control performs the same
+18 invalidations and two dirty-constraint enqueues, but no assignment;
+the instrumented build checks these exact counter increments for both
+paths. The reported assignment-only cost is the difference between the
+full assignment time and this matched nested-work control. Both gross
+and control times are retained in the raw benchmark records. The
+difference is an approximate residual, not a guarantee of independently
+identifying an instruction-level exclusive cost: near-zero or negative
+estimates remain visible, are flagged as unstable, and never silently
+converted to positive coefficients.
+
+## Output artifacts
+
+```text
+scratch/work_calibration.raw.jsonl
+scratch/work_calibration.json
+scratch/work_calibration.model.json
+scratch/work_calibration.collinearity.json
+scratch/work_calibration.micro.json
+```
+
+The first two are detailed records for analysis. The compact model contains
+the deployable pooled per-counter coefficients, intercept, training
+provenance, holdout scores and hyperparameters. The collinearity file
+contains original merged groups and timing-derived allocations. The micro
+file independently verifies timing ratios on validation puzzles.
+When individual allocations remain unresolved, the micro report is still
+produced with `completed_with_unresolved_allocation`, using independently
+sampled validation puzzles and the pooled predictor. The report preserves
+measured ratios and marks unsupported split comparisons `unresolved`.
+An actual validation execution error produces a warning and a `failed` report,
+without deleting the calibration outputs. Explicit
+`--no-micro-verify` writes a `skipped_by_request` report.
+
+To export the compact files again from the detailed report:
 
 ```sh
 python3 python_scripts/work_model_export.py \
-    --input scratch/work_calibration.json \
-    --output scratch/work_calibration.model.json \
-    --collinearity-output scratch/work_calibration.collinearity.json
+    --input scratch/work_calibration.json
 ```
 
-The collinearity file is intentionally **pooled-only**. It includes
-counter schema and raw names, all merged groups with original member
-names and provisional fitted group weights, pairwise correlations with
-their Pearson coefficients, ordered merge decisions (including
-multivariate dependencies), rank diagnostics before/after merging,
-constant/dropped counters and the original detection thresholds.
-It records the same creation timestamp and source revision as the compact
-model. The goal is to identify operations whose relative physical costs
-need microbenchmarking, **not** to interpret a correlation coefficient as
-a measured runtime cost ratio. No size-specific fits, per-puzzle records
-or full tuning grids appear in this export.
+For a cheap pipeline check without reliable statistical conclusions:
 
-The exporter can also read a previous v1 detailed report, retaining that
-original counter schema; only use models with a matching instrumented solver
-counter schema. For new models this is `v2`. The loader
-`work_model_export.load_compact_model` and predictor
-`work_model_export.predict_seconds` validate the compact format and require
-the complete raw counter set. Treat the compact file as the only
-deployment/tuning artifact; keep the raw JSONL and detailed report for
-reproducibility and diagnostics.
-
-## Pooled model and size-specific diagnostics
-
-The **pooled model is the primary model** and the only one exported for use
-in tuning. The script still fits **size 7**, **size 8**, and **size 9**
-independently for diagnostics, but does not export them as deployable models.
-The detailed report additionally includes
-`pooled_validation_by_size`, showing *the same pooled model* evaluated
-separately on each puzzle size so comparisons do not confuse a size-specific
-fit with a pooled prediction. The pooled fit and diagnostic models each
-retain independent held-out score reports.
-
-The script fits models on **size 7**, **size 8**, **size 9**, and the
-**pooled sizes** separately. All four report independent nonnegative
-coefficients, intercepts, per-puzzle ranking diagnostics, held-out MAE/R²,
-counter feature groups and numerical-rank information.
-The JSON also compares pooled vs size-specific held-out predictions.
-The held-out rows are not used for grouping or fitting.
-
-On *training rows only*, columns with zero variance are excluded from
-coefficient identification (but remain in raw output). A centered
-Pearson correlation of absolute value >=0.995 triggers pairwise grouping;
-approximately multivariate-dependent columns are identified through
-twice-reorthogonalized Gram–Schmidt using a 0.001 relative residual
-threshold. Correlated features are merged as **sums of original raw work
-counts**, and the fitted coefficient is shared across that group.
-The output records all original names, group membership, correlation
-values, merge decisions, constant counters and effective ranks before
-and after grouping. Thresholds can be changed with
-`--correlation-threshold` and `--dependency-tolerance`.
-
-**Important limitation:** summing columns assumes equal provisional cost
-per work unit within a group. It is not a measurement of their relative
-costs, and can be inaccurate for negatively correlated or intrinsically
-different operations. We deliberately retain raw counters so later
-microbenchmarks can establish cost ratios and replace these provisional
-groups. Rank is an approximate numerical diagnostic (Gram–Schmidt), not
-an SVD condition number, and near dependencies can be threshold-sensitive.
-
-## Counter semantics: real work volumes and fixed-size copies
-
-The instrumentation schema has changed from **v1 to v2**. Re-run the
-instrumented calibration to obtain valid coefficients for the new schema.
-The old v1 model must not be combined with v2 raw counters.
-
-For variable-size operations, measure both fixed invocation overhead and
-actual touched work where practical:
-
-| Operation | Calls | Volume |
-| --- | --- | --- |
-| Cache entry pair copy | `cache_pair_copy_call` | `cache_pair_copy` = actual copied entries |
-| Line entropy scoring | `line_score` | `line_score_value` = values scanned in entropy loop |
-| DP table initialization | `dp_init_call` | `dp_init_write` = actual initialized/overwritten table slots |
-| Constraint-index copy | `index_copy_call` | `index_copy_pair` = forward/reverse index pairs copied |
-
-Each call/volume pair lets the pooled regression estimate a fixed term
-plus a variable term. The old `cache_pair_copy` counter already measured
-entries, and now has a separate call counter. Inner loop counters such as
-`gac_check` and `propagate_dp_update` already measure actual work and
-are not multiplied by another polynomial in grid size.
-
-**Crucially,** `t_node_state`, `t_line_order` and `t_order_state`
-are C structs with fixed-maximum arrays (81 grid cells, 18 lines, etc.).
-Assigning one of these copies its entire fixed-size struct, *not only the
-active puzzle cells*. Their `node_copy`, `line_copy`,
-`cache_state_copy` and `solution_copy` counters remain simple counts.
-Do not multiply them by `n*n` or `n`, which would misrepresent actual
-memory traffic. The finite cost of any fixed-size copy is absorbed in
-its count coefficient.
-
-The collinearity analyzer may still merge nearly dependent call/volume
-columns when the training set does not identify separate costs. The
-compact export preserves the exact pooled prediction by expanding the
-merged-group coefficient back onto every original counter. Keep the raw
-v2 counters for later microbenchmarks to determine independent ratios.
-
-## Ranking-focused regularization and timing uncertainty
-
-The original fit was nonnegative least squares (NNLS), solved by coordinate
-descent on normalized counter columns and with an unpenalized intercept.
-The new fit uses **nonnegative ridge** with optional within-puzzle
-configuration-contrast loss:
-
-```text
-min_{b>=0, w>=0}  MSE(t, b + Xw)
-               + contrast_weight * mean_squared_centered_puzzle_error
-               + ridge_alpha * sum(w_scaled**2)
+```sh
+python3 python_scripts/calibrate_work.py --seed 42 \
+    --puzzles-per-size 4 --native-repeats 3 \
+    --instrumented-repeats 0.5 --no-perturb --no-micro-verify
 ```
 
-Each feature is normalized by its training RMS; only coefficients are
-penalized, not the intercept. The contrast term subtracts the mean target
-and prediction of *each puzzle's configurations*, so that small within-puzzle
-runtime changes count even when between-puzzle runtime variance dominates.
+The standalone microcheck can be invoked with:
 
-The ridge grid defaults to `0,1e-6,1e-4,1e-2` and contrast grid to
-`0,1,4,16`. The selected pair is chosen by an **inner 20% puzzle-level
-split within the outer training set**; the final 25% held-out set never
-influences fitting or selection. On inner holdout, prefer ranking accuracy
-for confident configuration pairs; if there are too few confident pairs,
-minimize within-puzzle centered MAE instead. Both the full tuning grid
-and the selected parameters are stored per size and for the pooled fit.
-The output also records the unregularized model's held-out metrics for
-direct comparison.
+```sh
+python3 python_scripts/work_micro_probe.py \
+    --model scratch/work_calibration.model.json \
+    --collinearity scratch/work_calibration.collinearity.json
+```
 
-The original pairwise ranking accuracy (including nearly tied configurations)
-is preserved. Additional diagnostics include:
+The key optimization metric is **clear within-puzzle ranking accuracy**:
+compare configurations of the same puzzle only when their measured
+runtime difference exceeds the maximum of 50 microseconds and twice
+the estimated combined standard error of the native timing medians.
+Absolute R² alone does not measure ranking ability. The primary fit
+is pooled; size-specific fits are diagnostics.
 
-- **Clear-pair ranking accuracy and coverage**: exclude comparisons whose
-  measured time difference is below a noise threshold. The threshold is
-  `max(minimum_delta, noise_z * hypot(SE_median_1, SE_median_2))`, using
-  the standard deviation of repeated native times and a normal-approximation
-  standard error for the median. Defaults: `noise_z=2` and
-  `minimum_delta=0.00005` seconds.
-- **Within-puzzle centered MAE and R²**: remove each puzzle's mean so
-  a good between-puzzle R² cannot hide poor configuration sensitivity.
-- **Macro clear-pair ranking**: average the accuracy across puzzles with
-  clear differences, rather than treating every correlated pair as
-  statistically independent.
+**Scope:** calibration is trained on size-7 enumeration and size-8/9
+first-solution runs. Size-8 enumeration remains an out-of-distribution
+tuning mode until separately validated.
 
-Timing confidence filtering is an approximate noise diagnostic, **not**
-a formal significance test. More repeats reduce measurement uncertainty,
-but tiny runtimes and subprocess startup variability can still make near-tie
-rankings unreliable. Compare results from the regularized and unregularized
-models; there is no guarantee regularization will improve rankings.
+## Work-counter terminology and constraint-checking coverage
 
-The surrogate is **not** automatically used for SPSA tuning. Inspect
-held-out rank accuracy (particularly *clear* pairs), pooled performance per size,
-and periodic uninstrumented comparisons before using coefficients in SPSA.
-Size-8 calibration continues to measure first-solution mode by default;
-the SPSA training objective also evaluates enumeration, which needs
-separate validation before extrapolating the surrogate across modes.
+`dp_candidate_check` counts previous-maximum state iterations in the **current
+prefix/suffix DP candidate-feasibility checker**; it is unrelated to the
+removed generalized arc consistency algorithm. `cache_build_candidate`
+counts candidate values examined during cache construction (the candidate
+may also generate a transition). `provisional_solution_rollback` counts
+a reversal of a speculative solution registration, **not** ordinary search
+backtracking. These label-only changes preserve existing fitted coefficients.
 
+`assignment` counts one event regardless of puzzle size, whereas its
+candidate invalidation attempts and the ordinary clue-bound checks that
+follow are size dependent. Successful domain invalidations are already
+counted separately, but ordinary `check_active_constr` line iterations and
+bounds updates are currently **not counted directly**. Adding those work
+features requires a new regression calibration and cannot be represented by
+simply renaming the existing deployed coefficients.
 
+## Recalibration required after adding work counters
 
-Counters capture distinct work units: cache metadata/pair copies; candidate
-checks and moves; insertion-sort comparisons and shifts; score and blend
-evaluations; propagation updates/GAC checks; assignments and invalidations;
-node copies, lookahead scans, solution copies and rollbacks; plus setup.
-A single action may legitimately touch separate units (e.g. checking and
-moving), but no summary counter duplicates them. This is a cost model, not a
-cycle-accurate profiler; inspect quality on held-out data before tuning.
+The 15 new counters capture clue-bound checking calls and actual per-line
+positions, unset-cell bounds processing, dirty-entry dequeue/enqueue,
+failed-or-successful domain invalidation attempts, cell-bound skips,
+cache-build cell traversal, candidate selection and resumption scans,
+next-valid-value probes, pruning line traversal, and DP prefix/suffix/prune
+candidate loop probes. The existing successful `domain_invalidation` counter
+remains distinct, and `assignment` remains one fixed event.
+
+All previous 33-counter coefficients were fitted without these operations,
+so they must **not** be reused as a tuning cost model. Full recalibration
+produces the replacement model at `scratch/work_calibration.model.json`.
+The new counters are counted in instrumentation without modifying solver
+logic. The controlled microbenchmark must also independently time every
+member of any new collinear group before coefficient allocation can complete;
+calibration fails closed when this is not possible.
+
+### Adaptive controlled timing and zero-weight groups
+
+A zero merged coefficient is allocated exactly to all-zero member weights, without inventing timing ratios; missing timing diagnostics remain recorded. Positive groups still require stable independent evidence. Controlled DP initialization varies actual table size; suffix DP timing varies candidate density at fixed scan volume, with instrumented shadow checks of counts. The constraint checker also has a zero-cell call measurement. `--micro-repeats` starts each independent timing batch and `--micro-max-repeats` (default 4000000) bounds doubling retries for insufficient or unstable evidence in positive merged groups. Accepted estimates retain their first complete independent batch; raw attempts are recorded. The regression is never refitted during allocation.
+
+### Validate or refresh a fixed regression
+
+Default controlled timing starts at 400000 repetitions and five rounds. `python3 python_scripts/benchmark_work_calibration.py --model calibration/work_calibration.model.json --model calibration/work_calibration.previous.model.json` compares both models on identical fresh native timings and counter traces, using a subset of the original seeded holdout (seed and population read from the first model, or overridden by CLI). Increase `--puzzles-per-size` to 1500 for the entire holdout. This never fits coefficients. Per-model training overlap is reconstructed from each model’s saved seed, population, fraction and dataset checksums when available. Reports retain the matched all-puzzle scores, label unknown or overlapping training membership, and additionally provide per-model and common nontraining-subset scores when reconstructable. Legacy artifacts without split metadata are labeled unknown, not assumed independent. `python3 python_scripts/calibrate_work.py --micro-only PATH` refreshes allocation from a detailed report with saved samples, or from the compact model by regenerating training counters only (no native timing or regression). Regenerated CPU-limited prefixes may differ, so compact refresh cannot claim original allocated held-out accuracy. Allocation completeness and allocated validation are separate: `allocated_validation_status` records whether the current coefficients were evaluated on held-out native timings. Complete and explicitly provisional usable models remain selectable without opt-in; the loader warns if the current allocation has not been evaluated. The final native tuning comparison is the acceptance criterion for tuning effectiveness. The source is not overwritten. The archived provisional model preserves the formerly unresolved positive group's exact merged prediction; the current default uses the refreshed timing-derived allocation. The 99.07% score belongs to the original merged regression only. See `calibration/README.md` for benchmark results and evidence.
+
+Both validation and compact-model refresh use the saved calibration seed unless `--seed` is explicitly supplied; older models without seed metadata require that option. New compact exports preserve the original seed as decimal text.
+
+The tracked deployment models live in `calibration/`, not `scratch/`. Full calibration and refresh write candidate artifacts and diagnostics to `scratch/` by default; promote a validated candidate explicitly to `calibration/work_calibration.model.json`. `--work-model` selects an alternative model without changing the bundled default.
+
+## November 28, 2026: 36,000-observation calibration and refresh
+
+The new pooled regression was fitted to 27,000 training observations with 9,000 held out (seed `7615041398290283439`), reaching **99.07%** clear-pair ranking accuracy (95.80% all pairs). After a provisional deployment, a fresh Kaggle comparison used the same 3,000 configuration evaluations (500 puzzles per size, two configurations each) from its seeded holdout, with identical counter traces and native timings for both models. Ranking excludes incomplete pairs and the clear-pair filter additionally excludes noise-level deltas.
+
+| Metric | Nov 24 previous | Nov 27 provisional |
+| --- | ---: | ---: |
+| Clear ranking accuracy (1,296 pairs) | 98.38% | 99.38% |
+| Incorrect clear rankings | 21 | 8 |
+| Overall ranking accuracy (1,437 pairs) | 95.20% | 95.89% |
+| MAE (ms) | 13.288 | 7.028 |
+| Complete-search MAE (ms) | 6.967 | 4.374 |
+| Within-puzzle MAE (ms) | 4.599 | 2.217 |
+| Overall R² | 0.98633 | 0.99651 |
+| Within-puzzle R² | 0.98298 | 0.99717 |
+| Size 7 clear ranking | 99.31% | 99.54% |
+| Size 8 clear ranking | 98.40% | 99.08% |
+| Size 9 clear ranking | 97.41% | 99.53% |
+
+The subsequent micro-only refresh resolved **9/9 merged groups** without regression refitting, using regenerated training counter observations. All 45 benchmarked counters were accepted in the initial five-round batch of 400,000 repetitions; no retry or instability remained. The three unbenchmarked counters (`domain_scan`, `dp_candidate_check`, `setup_cache_slot`) were dropped from this regression. The formerly unresolved constraint group now has measured relative cost 11.2111 (dirty entry / check call), allocated weights 2.33765 and 26.20772 ns respectively, and maximum regenerated-training prediction drift 4.44e-16 s. Zero-weight DP and copy groups are resolved algebraically, with no arbitrary timing ratios.
+
+The **fully allocated refreshed model** is now the default at `calibration/work_calibration.model.json`. Its fitted merged coefficients and intercept are unchanged. The prior provisional model is retained byte-for-byte at `calibration/work_calibration.provisional.model.json`; the November 24 model remains at `calibration/work_calibration.previous.model.json`. The two archived model SHA-256 digests match the reported benchmark. The 99.38% benchmark applies to the archived provisional coefficients, not the refreshed default; the default's 99.07% historical score applies to the original merged regression only. Rebenchmark the refreshed default before claiming its allocated-model accuracy. Original native observations are unavailable, and regenerated CPU-limited prefixes can differ.
+
+See `calibration/evidence/work_calibration.validation.json` for the supplied aggregate benchmark scores and `calibration/evidence/work_calibration.refresh.timing.json` for the complete controlled timing report.
+
+## Tuning watchdog
+
+Work-based SPSA and sweep use a 60-second emergency wall-clock watchdog per solve (`--work-watchdog SECONDS` to adjust). If it expires or the stdin stream fails, tuning aborts rather than assigning a wall-clock-derived work loss; reduce worker contention or raise the watchdog before restarting. Explicit solver-side incomplete-search results still receive the existing penalty. Measured nodes/time tuning and native performance comparison retain their existing PAR-4 timeout policy. The calibration workload deliberately need not include every tuning solve mode: diverse counter observations and independence are the calibration goals, with native end-to-end comparison assessing tuning effectiveness.
+
+## Process CPU clock portability
+
+Search time limits, sampled section timing, and the controlled microbenchmark share a process CPU clock: POSIX `CLOCK_PROCESS_CPUTIME_ID` or Windows `GetProcessTimes` (kernel plus user CPU time, converted from 100 ns units). Windows clock granularity may be coarser than the nominal units; controlled timing still rejects inadequate or unstable measurements. Native, instrumented, and micro-timing Windows executables use the `.exe` suffix, including temporary calibration and microbenchmark binaries.

@@ -33,6 +33,14 @@ def make_compact_model(report, source_file=None, created_at=None):
         raise ValueError("Counter names must be nonempty and unique")
     grouped = model["collinearity"]["groups"]
     coefficients = model["seconds_per_count"]
+    allocation = report.get("pooled_unmerging")
+    if provenance["schema"] != "v1":
+        raise ValueError("Unsupported work counter schema")
+    if not allocation:
+        raise ValueError("Pooled model requires measured post-fit unmerging")
+    allocation_weights = allocation["seconds_per_count"]
+    complete = allocation.get("all_merged_groups_resolved") is True
+    unresolved_counters = []
     weights = dict.fromkeys(names, 0.0)
     seen = set()
     for group in grouped:
@@ -49,15 +57,30 @@ def make_compact_model(report, source_file=None, created_at=None):
             if name not in weights or name in seen:
                 raise ValueError(f"Unknown or repeated raw counter: {name}")
             seen.add(name)
-            weights[name] = weight
+            raw_weight = allocation_weights.get(name)
+            if raw_weight is None and not complete:
+                weights[name] = None
+                unresolved_counters.append(name)
+                continue
+            if not isinstance(raw_weight, (int, float)):
+                raise ValueError(f"Missing independently measured split: {name}")
+            if not math.isfinite(raw_weight) or raw_weight < 0:
+                raise ValueError(f"Invalid allocated counter weight: {name}")
+            weights[name] = raw_weight
     if set(coefficients) != {g["name"] for g in grouped}:
         raise ValueError("Fitted coefficient and group names disagree")
+    if set(allocation_weights) != seen:
+        raise ValueError("Allocated coefficients must cover all fitted counters")
+    if complete and unresolved_counters:
+        raise ValueError("Resolved allocation cannot contain null weights")
     intercept = float(model["intercept_seconds"])
     if not math.isfinite(intercept) or intercept < 0:
         raise ValueError("Invalid nonnegative intercept")
     if created_at is None:
         created_at = datetime.now(timezone.utc).isoformat()
-    validation = fit["validation"]
+    allocated_validation = allocation.get("held_out_validation") if complete else None
+    validation = (allocated_validation if allocated_validation is not None
+                  else fit["validation"])
     score_keys = (
         "samples", "mae_seconds", "r2", "ranking_accuracy",
         "clear_ranking_accuracy", "clear_ranking_coverage",
@@ -66,7 +89,11 @@ def make_compact_model(report, source_file=None, created_at=None):
     )
     score = {name: validation[name] for name in score_keys
              if name in validation}
-    by_size = report.get("pooled_validation_by_size", {})
+    allocated_by_size = allocation.get("held_out_validation_by_size")
+    by_size = ({"size" + size: metrics for size, metrics in
+                (allocated_by_size or {}).items()}
+               if allocated_validation is not None
+               else report.get("pooled_validation_by_size", {}))
     short_size = {
         name: {metric: metrics.get(metric) for metric in (
             "mae_seconds", "r2", "clear_ranking_accuracy",
@@ -75,6 +102,11 @@ def make_compact_model(report, source_file=None, created_at=None):
     }
     result = {
         "format": FORMAT,
+        "status": "complete" if complete else "incomplete",
+        "usable_for_tuning": complete,
+        "unresolved_counters": sorted(unresolved_counters),
+        "unresolved_groups": allocation.get("unresolved_groups", []),
+        "warnings": report.get("warnings", []),
         "format_version": FORMAT_VERSION,
         "created_at_utc": created_at,
         "source_calibration_file": str(source_file) if source_file else None,
@@ -96,15 +128,61 @@ def make_compact_model(report, source_file=None, created_at=None):
             "contrast_weight": model["contrast_weight"],
         },
         "held_out_score": score,
+        "held_out_score_basis": ("allocated_model" if allocated_validation is not None
+                                 else "pooled_merged_regression"),
+        "allocated_validation_status": ("evaluated" if allocated_validation is not None
+                                        else "not_evaluated"),
         "held_out_score_by_size": short_size,
         "dropped_counters": sorted(set(names) - seen),
+        "coefficient_allocation_method": allocation["method"],
+        "merged_group_coefficients": dict(coefficients),
+        "merged_group_allocations": [
+            {key: val for key, val in group.items()
+             if key != "timing_evidence"} for group in allocation["groups"]],
+        "regression_held_out_score": fit["validation"],
         "counter_semantics": "fixed event counts and actual variable volumes",
         "objective": "predicted_seconds",
     }
+    if provenance.get("seed") is not None:
+        # Store as decimal text to preserve all 64 bits in JSON consumers.
+        result["calibration_seed"] = str(provenance["seed"])
+    counts = {n for n in provenance["puzzles_per_size"].values() if n}
+    if len(counts) == 1:
+        result["calibration_puzzles_per_size"] = next(iter(counts))
+    if provenance.get("validation_fraction") is not None:
+        result["calibration_validation_fraction"] = provenance["validation_fraction"]
     # Guard against serialization of NaN/Infinity in a deployment artifact.
     json.dumps(result, allow_nan=False)
     return result
 
+
+
+def pooled_validation_projection(report):
+    """In-memory representation of the *fitted pooled* predictor for validation.
+
+    Each merged sum-of-counts feature is expanded algebraically. These
+    projected coefficients are NOT individually calibrated and must never
+    be exported as tuning coefficients.
+    """
+    fit = report["fits"]["all"]
+    if fit["status"] != "fitted":
+        raise ValueError("Pooled regression is not available for validation")
+    coefficients = fit["coefficients"]
+    names = report["provenance"]["counter_schema"]
+    weights = dict.fromkeys(names, 0.0)
+    for group in coefficients["collinearity"]["groups"]:
+        for member in group["members"]:
+            if member not in weights:
+                raise ValueError(f"Unknown fitted counter: {member}")
+            weights[member] = coefficients["seconds_per_count"][group["name"]]
+    return {
+        "fit": "pooled",
+        "counter_schema": report["provenance"]["schema"],
+        "source_git_commit": report["provenance"].get("git_commit"),
+        "intercept_seconds": coefficients["intercept_seconds"],
+        "seconds_per_count": weights,
+        "diagnostic_projection": True,
+    }
 
 
 def make_collinearity_export(report, source_file=None, created_at=None):
@@ -124,19 +202,42 @@ def make_collinearity_export(report, source_file=None, created_at=None):
 
     # Also validates raw-counter membership, groups and coefficients.
     compact = make_compact_model(report, source_file, created_at)
+    allocated_groups = {
+        group["group"]: group
+        for group in report.get("pooled_unmerging", {}).get("groups", [])}
     groups = []
     for group in analysis["groups"]:
         if len(group["members"]) < 2:
             continue
+        allocated = allocated_groups.get(group["name"])
         groups.append({
             "name": group["name"],
             "members": list(group["members"]),
+            "status": (allocated.get("status", "resolved")
+                       if allocated else "unresolved"),
+            "reason": allocated.get("reason") if allocated else "Not allocated",
+            "missing_or_unstable_counters": (
+                allocated.get("missing_or_unstable_counters", [])
+                if allocated else list(group["members"])),
             "aggregation": group["aggregation"],
             "seconds_per_merged_count":
                 coefficients["seconds_per_count"][group["name"]],
+            "allocated_member_seconds_per_count": (
+                allocated["seconds_per_original_count"] if allocated else None),
+            "measured_cost_ratios": (
+                allocated["member_cost_ratios"] if allocated else None),
+            "timing_evidence": (
+                allocated["timing_evidence"] if allocated else None),
+            "max_abs_training_prediction_drift_seconds": (
+                allocated["max_abs_training_prediction_drift_seconds"]
+                if allocated else None),
         })
     output = {
         "format": "skyscraper-work-collinearity",
+        "status": compact["status"],
+        "usable_for_tuning": compact["usable_for_tuning"],
+        "unresolved_groups": compact["unresolved_groups"],
+        "warnings": compact["warnings"],
         "format_version": 1,
         "created_at_utc": created_at,
         "source_calibration_file": str(source_file) if source_file else None,
@@ -155,6 +256,11 @@ def make_collinearity_export(report, source_file=None, created_at=None):
         "rank_before": analysis["rank_before"],
         "rank_after": analysis["rank_after"],
         "dropped_counters": compact["dropped_counters"],
+        "allocation_method": compact["coefficient_allocation_method"],
+        "controlled_counter_costs_seconds": report.get(
+            "pooled_unmerging", {}).get("controlled_counter_costs_seconds"),
+        "controlled_counter_diagnostics": report.get(
+            "pooled_unmerging", {}).get("controlled_counter_diagnostics"),
         "assumption": analysis["cost_assumption"],
         "purpose": "Design microbenchmarks to identify independent relative costs",
         "interpretation": (
@@ -179,6 +285,8 @@ def predict_seconds(model, counters):
     """Predict runtime using a v1 compact artifact and original raw counts."""
     if model.get("format") != FORMAT or model.get("format_version") != FORMAT_VERSION:
         raise ValueError("Unsupported compact model format")
+    if model.get("usable_for_tuning") is False:
+        raise ValueError("Unresolved calibration: incomplete model is not usable for tuning")
     weights = model["seconds_per_count"]
     if set(counters) != set(weights):
         raise ValueError("Counter schema mismatch: provide all counters")

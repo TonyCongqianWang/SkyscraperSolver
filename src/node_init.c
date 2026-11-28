@@ -72,11 +72,13 @@ static void	init_node_grid(t_node_state *node, int size)
 	idx = 0;
 	while (idx < size * size)
 	{
+		work_micro_begin(WORK_SETUP_CELL);
 		node->domain.vals[idx] = 0;
 		node->domain.valid_val_bmps[idx] = 0xffff;
 		update_cell_bounds(node, idx);
 		node->domain.num_cell_vals[idx] = size;
 		work_add(WORK_SETUP_CELL, 1);
+		work_micro_end(WORK_SETUP_CELL);
 		idx++;
 	}
 }

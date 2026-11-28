@@ -1,0 +1,5699 @@
+{
+  "method": "real_C_operations_controlled_independent_repetitions",
+  "compile_flags": [
+    "-O2",
+    "-flto"
+  ],
+  "repeats_per_point": 400000,
+  "initial_repeats_per_point": 400000,
+  "max_repeats_per_point": 4000000,
+  "rounds": 5,
+  "attempts": [
+    {
+      "rounds": 5,
+      "repeats_per_point": 400000,
+      "raw_measurements": [
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000890748
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_pair_copy_call",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000976337
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 1600000,
+          "cpu_seconds": 0.003443322
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 6400000,
+          "cpu_seconds": 0.007285204
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 25600000,
+          "cpu_seconds": 0.019588273
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 102400000,
+          "cpu_seconds": 0.06574227
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000965203
+        },
+        {
+          "kind": "individual",
+          "counter": "index_copy_call",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000970473
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.001234753
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.002177154
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.003370745
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 0,
+          "calls": 400000,
+          "volume": 2800000,
+          "cpu_seconds": 0.005811443
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 0,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.006532385
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 0,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.007334949
+        },
+        {
+          "kind": "individual",
+          "counter": "setup_cell",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.002708151
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_candidate",
+          "round": 0,
+          "units": 399938,
+          "cpu_seconds": 0.001248759
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_state_copy",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.00411756
+        },
+        {
+          "kind": "individual",
+          "counter": "line_copy",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.007116056
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_check",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.003224007
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_move",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000937189
+        },
+        {
+          "kind": "individual",
+          "counter": "line_compare",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.002735083
+        },
+        {
+          "kind": "individual",
+          "counter": "line_shift",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.001558692
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_compare",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.001062752
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_shift",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000756405
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001076525
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_call",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.001074654
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.008114791
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.016229045
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.02420297
+        },
+        {
+          "kind": "individual",
+          "counter": "assignment",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.034959897,
+          "timing_scope": "paired_residual",
+          "gross_cpu_seconds": 0.259335713,
+          "nested_cpu_seconds": 0.224375816,
+          "nested_invalidation_attempts_per_unit": 18,
+          "nested_domain_invalidations_per_unit": 18,
+          "nested_dirty_enqueues_per_unit": 2
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_unset_cell",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.001353192
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_enqueue",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.00257186
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_entry",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.010931012
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation_attempt",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000911059
+        },
+        {
+          "kind": "individual",
+          "counter": "cell_bound_skip",
+          "round": 0,
+          "units": 3200000,
+          "cpu_seconds": 0.004985622
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_cell_scan",
+          "round": 0,
+          "units": 19600000,
+          "cpu_seconds": 0.016236745
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_next_scan",
+          "round": 0,
+          "units": 6400000,
+          "cpu_seconds": 0.007534925
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_resume_scan",
+          "round": 0,
+          "units": 6400000,
+          "cpu_seconds": 0.00804989
+        },
+        {
+          "kind": "individual",
+          "counter": "next_value_scan",
+          "round": 0,
+          "units": 3600000,
+          "cpu_seconds": 0.004277091
+        },
+        {
+          "kind": "individual",
+          "counter": "prune_line_scan",
+          "round": 0,
+          "units": 5600000,
+          "cpu_seconds": 0.110332221
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.013786953
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 29600000,
+          "cpu_seconds": 0.029489235
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 84800000,
+          "cpu_seconds": 0.055884211
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 0,
+          "calls": 400000,
+          "volume": 168800000,
+          "cpu_seconds": 0.07470034
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 0,
+          "cpu_seconds": 0.183568596
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 22400000,
+          "cpu_seconds": 0.234320796
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 44800000,
+          "cpu_seconds": 0.26709491
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 67200000,
+          "cpu_seconds": 0.301794319
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 89600000,
+          "cpu_seconds": 0.353842509
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 112000000,
+          "cpu_seconds": 0.390051703
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 134400000,
+          "cpu_seconds": 0.433259698
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 0,
+          "calls": 156800000,
+          "volume": 156800000,
+          "cpu_seconds": 0.481277279
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prefix_candidate_scan",
+          "round": 0,
+          "units": 19600000,
+          "cpu_seconds": 0.078312068
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prune_value_scan",
+          "round": 0,
+          "units": 19600000,
+          "cpu_seconds": 0.157151056
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_scan",
+          "round": 0,
+          "units": 6400000,
+          "cpu_seconds": 0.013800635
+        },
+        {
+          "kind": "individual",
+          "counter": "resume_scan",
+          "round": 0,
+          "units": 6400000,
+          "cpu_seconds": 0.007960363
+        },
+        {
+          "kind": "individual",
+          "counter": "rescore_scan",
+          "round": 0,
+          "units": 6400000,
+          "cpu_seconds": 0.016735567
+        },
+        {
+          "kind": "individual",
+          "counter": "base_score",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.001826985
+        },
+        {
+          "kind": "individual",
+          "counter": "rel_entropy_value",
+          "round": 0,
+          "units": 2800000,
+          "cpu_seconds": 0.005600685
+        },
+        {
+          "kind": "individual",
+          "counter": "node_copy",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.009670656
+        },
+        {
+          "kind": "individual",
+          "counter": "solution_copy",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.009208125
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_blend",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.003752637
+        },
+        {
+          "kind": "individual",
+          "counter": "provisional_solution_rollback",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.000303279
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation",
+          "round": 0,
+          "units": 400000,
+          "cpu_seconds": 0.020120425
+        },
+        {
+          "kind": "individual",
+          "counter": "line_score",
+          "round": 0,
+          "units": 5600000,
+          "cpu_seconds": 0.090553111
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000817287
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_pair_copy_call",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000880182
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 1600000,
+          "cpu_seconds": 0.003452542
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 6400000,
+          "cpu_seconds": 0.007168436
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 25600000,
+          "cpu_seconds": 0.019764651
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 102400000,
+          "cpu_seconds": 0.063412351
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000789862
+        },
+        {
+          "kind": "individual",
+          "counter": "index_copy_call",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000793209
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.001177336
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.002147971
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.003259569
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 1,
+          "calls": 400000,
+          "volume": 2800000,
+          "cpu_seconds": 0.005642907
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 1,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.006511146
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 1,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.007262446
+        },
+        {
+          "kind": "individual",
+          "counter": "setup_cell",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.00284751
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_candidate",
+          "round": 1,
+          "units": 399938,
+          "cpu_seconds": 0.00124259
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_state_copy",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.004094353
+        },
+        {
+          "kind": "individual",
+          "counter": "line_copy",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.006985476
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_check",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.003152801
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_move",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000901437
+        },
+        {
+          "kind": "individual",
+          "counter": "line_compare",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.002697426
+        },
+        {
+          "kind": "individual",
+          "counter": "line_shift",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.001515475
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_compare",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.001059043
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_shift",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000719512
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001087181
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_call",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.001051533
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.008308152
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.016250327
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.024069894
+        },
+        {
+          "kind": "individual",
+          "counter": "assignment",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.037367924,
+          "timing_scope": "paired_residual",
+          "gross_cpu_seconds": 0.264589262,
+          "nested_cpu_seconds": 0.227221338,
+          "nested_invalidation_attempts_per_unit": 18,
+          "nested_domain_invalidations_per_unit": 18,
+          "nested_dirty_enqueues_per_unit": 2
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_unset_cell",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.001387677
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_enqueue",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.003229597
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_entry",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.010737984
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation_attempt",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000923484
+        },
+        {
+          "kind": "individual",
+          "counter": "cell_bound_skip",
+          "round": 1,
+          "units": 3200000,
+          "cpu_seconds": 0.004860734
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_cell_scan",
+          "round": 1,
+          "units": 19600000,
+          "cpu_seconds": 0.016107438
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_next_scan",
+          "round": 1,
+          "units": 6400000,
+          "cpu_seconds": 0.007540763
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_resume_scan",
+          "round": 1,
+          "units": 6400000,
+          "cpu_seconds": 0.007383255
+        },
+        {
+          "kind": "individual",
+          "counter": "next_value_scan",
+          "round": 1,
+          "units": 3600000,
+          "cpu_seconds": 0.004079323
+        },
+        {
+          "kind": "individual",
+          "counter": "prune_line_scan",
+          "round": 1,
+          "units": 5600000,
+          "cpu_seconds": 0.109545969
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.014018559
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 29600000,
+          "cpu_seconds": 0.029856041
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 84800000,
+          "cpu_seconds": 0.05666725
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 1,
+          "calls": 400000,
+          "volume": 168800000,
+          "cpu_seconds": 0.073861717
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 0,
+          "cpu_seconds": 0.185930196
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 22400000,
+          "cpu_seconds": 0.239519287
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 44800000,
+          "cpu_seconds": 0.276010726
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 67200000,
+          "cpu_seconds": 0.30660068
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 89600000,
+          "cpu_seconds": 0.358145739
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 112000000,
+          "cpu_seconds": 0.403379198
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 134400000,
+          "cpu_seconds": 0.451491057
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 1,
+          "calls": 156800000,
+          "volume": 156800000,
+          "cpu_seconds": 0.493758768
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prefix_candidate_scan",
+          "round": 1,
+          "units": 19600000,
+          "cpu_seconds": 0.076482645
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prune_value_scan",
+          "round": 1,
+          "units": 19600000,
+          "cpu_seconds": 0.139575115
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_scan",
+          "round": 1,
+          "units": 6400000,
+          "cpu_seconds": 0.013001772
+        },
+        {
+          "kind": "individual",
+          "counter": "resume_scan",
+          "round": 1,
+          "units": 6400000,
+          "cpu_seconds": 0.007910406
+        },
+        {
+          "kind": "individual",
+          "counter": "rescore_scan",
+          "round": 1,
+          "units": 6400000,
+          "cpu_seconds": 0.017430551
+        },
+        {
+          "kind": "individual",
+          "counter": "base_score",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.002052195
+        },
+        {
+          "kind": "individual",
+          "counter": "rel_entropy_value",
+          "round": 1,
+          "units": 2800000,
+          "cpu_seconds": 0.005681042
+        },
+        {
+          "kind": "individual",
+          "counter": "node_copy",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.009307861
+        },
+        {
+          "kind": "individual",
+          "counter": "solution_copy",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.009243982
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_blend",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.003892692
+        },
+        {
+          "kind": "individual",
+          "counter": "provisional_solution_rollback",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.000310127
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation",
+          "round": 1,
+          "units": 400000,
+          "cpu_seconds": 0.022556069
+        },
+        {
+          "kind": "individual",
+          "counter": "line_score",
+          "round": 1,
+          "units": 5600000,
+          "cpu_seconds": 0.092111002
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000773691
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_pair_copy_call",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000839876
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 1600000,
+          "cpu_seconds": 0.003460636
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 6400000,
+          "cpu_seconds": 0.006960384
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 25600000,
+          "cpu_seconds": 0.018998654
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 102400000,
+          "cpu_seconds": 0.063961925
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000797057
+        },
+        {
+          "kind": "individual",
+          "counter": "index_copy_call",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000800152
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.001211314
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.002207538
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.003286893
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 2,
+          "calls": 400000,
+          "volume": 2800000,
+          "cpu_seconds": 0.005918078
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 2,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.006504002
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 2,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.007237801
+        },
+        {
+          "kind": "individual",
+          "counter": "setup_cell",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.002705983
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_candidate",
+          "round": 2,
+          "units": 399938,
+          "cpu_seconds": 0.001226933
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_state_copy",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.004060725
+        },
+        {
+          "kind": "individual",
+          "counter": "line_copy",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.006948886
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_check",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.003298244
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_move",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000950247
+        },
+        {
+          "kind": "individual",
+          "counter": "line_compare",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.00275073
+        },
+        {
+          "kind": "individual",
+          "counter": "line_shift",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.001536204
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_compare",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.001057212
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_shift",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000710197
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001147494
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_call",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.001147548
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.008106748
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.016275683
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.023636321
+        },
+        {
+          "kind": "individual",
+          "counter": "assignment",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.034695203,
+          "timing_scope": "paired_residual",
+          "gross_cpu_seconds": 0.258940933,
+          "nested_cpu_seconds": 0.22424573,
+          "nested_invalidation_attempts_per_unit": 18,
+          "nested_domain_invalidations_per_unit": 18,
+          "nested_dirty_enqueues_per_unit": 2
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_unset_cell",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.001388173
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_enqueue",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.002570895
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_entry",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.010563474
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation_attempt",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000917868
+        },
+        {
+          "kind": "individual",
+          "counter": "cell_bound_skip",
+          "round": 2,
+          "units": 3200000,
+          "cpu_seconds": 0.004737774
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_cell_scan",
+          "round": 2,
+          "units": 19600000,
+          "cpu_seconds": 0.016527533
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_next_scan",
+          "round": 2,
+          "units": 6400000,
+          "cpu_seconds": 0.007486415
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_resume_scan",
+          "round": 2,
+          "units": 6400000,
+          "cpu_seconds": 0.00778988
+        },
+        {
+          "kind": "individual",
+          "counter": "next_value_scan",
+          "round": 2,
+          "units": 3600000,
+          "cpu_seconds": 0.004167424
+        },
+        {
+          "kind": "individual",
+          "counter": "prune_line_scan",
+          "round": 2,
+          "units": 5600000,
+          "cpu_seconds": 0.110457808
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.013858547
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 29600000,
+          "cpu_seconds": 0.03071143
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 84800000,
+          "cpu_seconds": 0.056923743
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 2,
+          "calls": 400000,
+          "volume": 168800000,
+          "cpu_seconds": 0.07380226
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 0,
+          "cpu_seconds": 0.185944317
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 22400000,
+          "cpu_seconds": 0.237447673
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 44800000,
+          "cpu_seconds": 0.267457339
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 67200000,
+          "cpu_seconds": 0.301670401
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 89600000,
+          "cpu_seconds": 0.356008687
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 112000000,
+          "cpu_seconds": 0.386844995
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 134400000,
+          "cpu_seconds": 0.432514953
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 2,
+          "calls": 156800000,
+          "volume": 156800000,
+          "cpu_seconds": 0.486195429
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prefix_candidate_scan",
+          "round": 2,
+          "units": 19600000,
+          "cpu_seconds": 0.076226824
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prune_value_scan",
+          "round": 2,
+          "units": 19600000,
+          "cpu_seconds": 0.135890335
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_scan",
+          "round": 2,
+          "units": 6400000,
+          "cpu_seconds": 0.012741123
+        },
+        {
+          "kind": "individual",
+          "counter": "resume_scan",
+          "round": 2,
+          "units": 6400000,
+          "cpu_seconds": 0.008036968
+        },
+        {
+          "kind": "individual",
+          "counter": "rescore_scan",
+          "round": 2,
+          "units": 6400000,
+          "cpu_seconds": 0.018622369
+        },
+        {
+          "kind": "individual",
+          "counter": "base_score",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.001831677
+        },
+        {
+          "kind": "individual",
+          "counter": "rel_entropy_value",
+          "round": 2,
+          "units": 2800000,
+          "cpu_seconds": 0.005717038
+        },
+        {
+          "kind": "individual",
+          "counter": "node_copy",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.009439006
+        },
+        {
+          "kind": "individual",
+          "counter": "solution_copy",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.009686528
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_blend",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.003786302
+        },
+        {
+          "kind": "individual",
+          "counter": "provisional_solution_rollback",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.000298833
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation",
+          "round": 2,
+          "units": 400000,
+          "cpu_seconds": 0.021089246
+        },
+        {
+          "kind": "individual",
+          "counter": "line_score",
+          "round": 2,
+          "units": 5600000,
+          "cpu_seconds": 0.088899094
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000825407
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_pair_copy_call",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.000911794
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 1600000,
+          "cpu_seconds": 0.003451063
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 6400000,
+          "cpu_seconds": 0.006899298
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 25600000,
+          "cpu_seconds": 0.019196928
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 102400000,
+          "cpu_seconds": 0.063861528
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001018307
+        },
+        {
+          "kind": "individual",
+          "counter": "index_copy_call",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001033301
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.001321158
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.002348921
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.003250776
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 3,
+          "calls": 400000,
+          "volume": 2800000,
+          "cpu_seconds": 0.005346638
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 3,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.006795014
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 3,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.007299994
+        },
+        {
+          "kind": "individual",
+          "counter": "setup_cell",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.003039799
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_candidate",
+          "round": 3,
+          "units": 399938,
+          "cpu_seconds": 0.001222751
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_state_copy",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.004165222
+        },
+        {
+          "kind": "individual",
+          "counter": "line_copy",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.00735485
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_check",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.003433073
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_move",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.000918012
+        },
+        {
+          "kind": "individual",
+          "counter": "line_compare",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.00273161
+        },
+        {
+          "kind": "individual",
+          "counter": "line_shift",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001516557
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_compare",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001067865
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_shift",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.000707834
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001057077
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_call",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001053414
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.008240906
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.016360994
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.02409881
+        },
+        {
+          "kind": "individual",
+          "counter": "assignment",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.051017341,
+          "timing_scope": "paired_residual",
+          "gross_cpu_seconds": 0.296350329,
+          "nested_cpu_seconds": 0.245332988,
+          "nested_invalidation_attempts_per_unit": 18,
+          "nested_domain_invalidations_per_unit": 18,
+          "nested_dirty_enqueues_per_unit": 2
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_unset_cell",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001500633
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_enqueue",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.003068949
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_entry",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.012184001
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation_attempt",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.000917193
+        },
+        {
+          "kind": "individual",
+          "counter": "cell_bound_skip",
+          "round": 3,
+          "units": 3200000,
+          "cpu_seconds": 0.005294278
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_cell_scan",
+          "round": 3,
+          "units": 19600000,
+          "cpu_seconds": 0.017563728
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_next_scan",
+          "round": 3,
+          "units": 6400000,
+          "cpu_seconds": 0.007738185
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_resume_scan",
+          "round": 3,
+          "units": 6400000,
+          "cpu_seconds": 0.008276094
+        },
+        {
+          "kind": "individual",
+          "counter": "next_value_scan",
+          "round": 3,
+          "units": 3600000,
+          "cpu_seconds": 0.004110992
+        },
+        {
+          "kind": "individual",
+          "counter": "prune_line_scan",
+          "round": 3,
+          "units": 5600000,
+          "cpu_seconds": 0.116279349
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.014551318
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 29600000,
+          "cpu_seconds": 0.030628365
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 84800000,
+          "cpu_seconds": 0.057474725
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 3,
+          "calls": 400000,
+          "volume": 168800000,
+          "cpu_seconds": 0.074379649
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 0,
+          "cpu_seconds": 0.188823817
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 22400000,
+          "cpu_seconds": 0.24314871
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 44800000,
+          "cpu_seconds": 0.272917877
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 67200000,
+          "cpu_seconds": 0.303622405
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 89600000,
+          "cpu_seconds": 0.361700319
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 112000000,
+          "cpu_seconds": 0.397254993
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 134400000,
+          "cpu_seconds": 0.434385468
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 3,
+          "calls": 156800000,
+          "volume": 156800000,
+          "cpu_seconds": 0.488106811
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prefix_candidate_scan",
+          "round": 3,
+          "units": 19600000,
+          "cpu_seconds": 0.07570534
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prune_value_scan",
+          "round": 3,
+          "units": 19600000,
+          "cpu_seconds": 0.135954501
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_scan",
+          "round": 3,
+          "units": 6400000,
+          "cpu_seconds": 0.012672394
+        },
+        {
+          "kind": "individual",
+          "counter": "resume_scan",
+          "round": 3,
+          "units": 6400000,
+          "cpu_seconds": 0.007817347
+        },
+        {
+          "kind": "individual",
+          "counter": "rescore_scan",
+          "round": 3,
+          "units": 6400000,
+          "cpu_seconds": 0.017876169
+        },
+        {
+          "kind": "individual",
+          "counter": "base_score",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.001802047
+        },
+        {
+          "kind": "individual",
+          "counter": "rel_entropy_value",
+          "round": 3,
+          "units": 2800000,
+          "cpu_seconds": 0.005513045
+        },
+        {
+          "kind": "individual",
+          "counter": "node_copy",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.009232468
+        },
+        {
+          "kind": "individual",
+          "counter": "solution_copy",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.009115917
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_blend",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.003945838
+        },
+        {
+          "kind": "individual",
+          "counter": "provisional_solution_rollback",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.000323417
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation",
+          "round": 3,
+          "units": 400000,
+          "cpu_seconds": 0.024255691
+        },
+        {
+          "kind": "individual",
+          "counter": "line_score",
+          "round": 3,
+          "units": 5600000,
+          "cpu_seconds": 0.088356065
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000779767
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_pair_copy_call",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000837875
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 1600000,
+          "cpu_seconds": 0.003270961
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 6400000,
+          "cpu_seconds": 0.006918807
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 25600000,
+          "cpu_seconds": 0.01941156
+        },
+        {
+          "kind": "affine",
+          "section": "cache_pair_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 102400000,
+          "cpu_seconds": 0.065258372
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.000799901
+        },
+        {
+          "kind": "individual",
+          "counter": "index_copy_call",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000803479
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.00121198
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.002165032
+        },
+        {
+          "kind": "affine",
+          "section": "index_copy_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.003235591
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 4,
+          "calls": 400000,
+          "volume": 2800000,
+          "cpu_seconds": 0.005315058
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 4,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.006431805
+        },
+        {
+          "kind": "affine",
+          "section": "line_score",
+          "round": 4,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.00727236
+        },
+        {
+          "kind": "individual",
+          "counter": "setup_cell",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.002693151
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_candidate",
+          "round": 4,
+          "units": 399938,
+          "cpu_seconds": 0.001237858
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_state_copy",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.004095916
+        },
+        {
+          "kind": "individual",
+          "counter": "line_copy",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.007132403
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_check",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.003172486
+        },
+        {
+          "kind": "individual",
+          "counter": "compact_move",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000968335
+        },
+        {
+          "kind": "individual",
+          "counter": "line_compare",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.00280238
+        },
+        {
+          "kind": "individual",
+          "counter": "line_shift",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.001603851
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_compare",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.001098402
+        },
+        {
+          "kind": "individual",
+          "counter": "transition_shift",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000696303
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 0,
+          "cpu_seconds": 0.001071126
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_call",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.001068304
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 1200000,
+          "cpu_seconds": 0.008231973
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 2400000,
+          "cpu_seconds": 0.016509353
+        },
+        {
+          "kind": "affine",
+          "section": "constraint_check_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 3600000,
+          "cpu_seconds": 0.023708782
+        },
+        {
+          "kind": "individual",
+          "counter": "assignment",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.032767643,
+          "timing_scope": "paired_residual",
+          "gross_cpu_seconds": 0.259110551,
+          "nested_cpu_seconds": 0.226342908,
+          "nested_invalidation_attempts_per_unit": 18,
+          "nested_domain_invalidations_per_unit": 18,
+          "nested_dirty_enqueues_per_unit": 2
+        },
+        {
+          "kind": "individual",
+          "counter": "constraint_check_unset_cell",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.001407674
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_enqueue",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.002749907
+        },
+        {
+          "kind": "individual",
+          "counter": "dirty_constraint_entry",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.010913322
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation_attempt",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000903527
+        },
+        {
+          "kind": "individual",
+          "counter": "cell_bound_skip",
+          "round": 4,
+          "units": 3200000,
+          "cpu_seconds": 0.005089307
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_build_cell_scan",
+          "round": 4,
+          "units": 19600000,
+          "cpu_seconds": 0.016873752
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_next_scan",
+          "round": 4,
+          "units": 6400000,
+          "cpu_seconds": 0.007514578
+        },
+        {
+          "kind": "individual",
+          "counter": "cache_resume_scan",
+          "round": 4,
+          "units": 6400000,
+          "cpu_seconds": 0.008000773
+        },
+        {
+          "kind": "individual",
+          "counter": "next_value_scan",
+          "round": 4,
+          "units": 3600000,
+          "cpu_seconds": 0.004656395
+        },
+        {
+          "kind": "individual",
+          "counter": "prune_line_scan",
+          "round": 4,
+          "units": 5600000,
+          "cpu_seconds": 0.113668954
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 3200000,
+          "cpu_seconds": 0.013841867
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 29600000,
+          "cpu_seconds": 0.030757046
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 84800000,
+          "cpu_seconds": 0.055918614
+        },
+        {
+          "kind": "affine",
+          "section": "dp_init_call",
+          "round": 4,
+          "calls": 400000,
+          "volume": 168800000,
+          "cpu_seconds": 0.073101812
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 0,
+          "cpu_seconds": 0.186263627
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 22400000,
+          "cpu_seconds": 0.237127608
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 44800000,
+          "cpu_seconds": 0.267762579
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 67200000,
+          "cpu_seconds": 0.301689828
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 89600000,
+          "cpu_seconds": 0.349763233
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 112000000,
+          "cpu_seconds": 0.388344924
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 134400000,
+          "cpu_seconds": 0.433843249
+        },
+        {
+          "kind": "affine",
+          "section": "dp_suffix_candidate_scan",
+          "round": 4,
+          "calls": 156800000,
+          "volume": 156800000,
+          "cpu_seconds": 0.479642988
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prefix_candidate_scan",
+          "round": 4,
+          "units": 19600000,
+          "cpu_seconds": 0.075244322
+        },
+        {
+          "kind": "individual",
+          "counter": "dp_prune_value_scan",
+          "round": 4,
+          "units": 19600000,
+          "cpu_seconds": 0.134641641
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_scan",
+          "round": 4,
+          "units": 6400000,
+          "cpu_seconds": 0.013127762
+        },
+        {
+          "kind": "individual",
+          "counter": "resume_scan",
+          "round": 4,
+          "units": 6400000,
+          "cpu_seconds": 0.007916922
+        },
+        {
+          "kind": "individual",
+          "counter": "rescore_scan",
+          "round": 4,
+          "units": 6400000,
+          "cpu_seconds": 0.017774888
+        },
+        {
+          "kind": "individual",
+          "counter": "base_score",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.002003234
+        },
+        {
+          "kind": "individual",
+          "counter": "rel_entropy_value",
+          "round": 4,
+          "units": 2800000,
+          "cpu_seconds": 0.005903522
+        },
+        {
+          "kind": "individual",
+          "counter": "node_copy",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.010044727
+        },
+        {
+          "kind": "individual",
+          "counter": "solution_copy",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.009572099
+        },
+        {
+          "kind": "individual",
+          "counter": "lookahead_blend",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.00381741
+        },
+        {
+          "kind": "individual",
+          "counter": "provisional_solution_rollback",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.000301001
+        },
+        {
+          "kind": "individual",
+          "counter": "domain_invalidation",
+          "round": 4,
+          "units": 400000,
+          "cpu_seconds": 0.021210611
+        },
+        {
+          "kind": "individual",
+          "counter": "line_score",
+          "round": 4,
+          "units": 5600000,
+          "cpu_seconds": 0.089613245
+        }
+      ]
+    }
+  ],
+  "raw_measurements": [
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000890748
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_pair_copy_call",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000976337
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 1600000,
+      "cpu_seconds": 0.003443322
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 6400000,
+      "cpu_seconds": 0.007285204
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 25600000,
+      "cpu_seconds": 0.019588273
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 102400000,
+      "cpu_seconds": 0.06574227
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000965203
+    },
+    {
+      "kind": "individual",
+      "counter": "index_copy_call",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000970473
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.001234753
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.002177154
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.003370745
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 0,
+      "calls": 400000,
+      "volume": 2800000,
+      "cpu_seconds": 0.005811443
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 0,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.006532385
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 0,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.007334949
+    },
+    {
+      "kind": "individual",
+      "counter": "setup_cell",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.002708151
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_candidate",
+      "round": 0,
+      "units": 399938,
+      "cpu_seconds": 0.001248759
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_state_copy",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.00411756
+    },
+    {
+      "kind": "individual",
+      "counter": "line_copy",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.007116056
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_check",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.003224007
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_move",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000937189
+    },
+    {
+      "kind": "individual",
+      "counter": "line_compare",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.002735083
+    },
+    {
+      "kind": "individual",
+      "counter": "line_shift",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.001558692
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_compare",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.001062752
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_shift",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000756405
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001076525
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_call",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.001074654
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.008114791
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.016229045
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.02420297
+    },
+    {
+      "kind": "individual",
+      "counter": "assignment",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.034959897,
+      "timing_scope": "paired_residual",
+      "gross_cpu_seconds": 0.259335713,
+      "nested_cpu_seconds": 0.224375816,
+      "nested_invalidation_attempts_per_unit": 18,
+      "nested_domain_invalidations_per_unit": 18,
+      "nested_dirty_enqueues_per_unit": 2
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_unset_cell",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.001353192
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_enqueue",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.00257186
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_entry",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.010931012
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation_attempt",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000911059
+    },
+    {
+      "kind": "individual",
+      "counter": "cell_bound_skip",
+      "round": 0,
+      "units": 3200000,
+      "cpu_seconds": 0.004985622
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_cell_scan",
+      "round": 0,
+      "units": 19600000,
+      "cpu_seconds": 0.016236745
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_next_scan",
+      "round": 0,
+      "units": 6400000,
+      "cpu_seconds": 0.007534925
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_resume_scan",
+      "round": 0,
+      "units": 6400000,
+      "cpu_seconds": 0.00804989
+    },
+    {
+      "kind": "individual",
+      "counter": "next_value_scan",
+      "round": 0,
+      "units": 3600000,
+      "cpu_seconds": 0.004277091
+    },
+    {
+      "kind": "individual",
+      "counter": "prune_line_scan",
+      "round": 0,
+      "units": 5600000,
+      "cpu_seconds": 0.110332221
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.013786953
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 29600000,
+      "cpu_seconds": 0.029489235
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 84800000,
+      "cpu_seconds": 0.055884211
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 0,
+      "calls": 400000,
+      "volume": 168800000,
+      "cpu_seconds": 0.07470034
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 0,
+      "cpu_seconds": 0.183568596
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 22400000,
+      "cpu_seconds": 0.234320796
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 44800000,
+      "cpu_seconds": 0.26709491
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 67200000,
+      "cpu_seconds": 0.301794319
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 89600000,
+      "cpu_seconds": 0.353842509
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 112000000,
+      "cpu_seconds": 0.390051703
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 134400000,
+      "cpu_seconds": 0.433259698
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 0,
+      "calls": 156800000,
+      "volume": 156800000,
+      "cpu_seconds": 0.481277279
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prefix_candidate_scan",
+      "round": 0,
+      "units": 19600000,
+      "cpu_seconds": 0.078312068
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prune_value_scan",
+      "round": 0,
+      "units": 19600000,
+      "cpu_seconds": 0.157151056
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_scan",
+      "round": 0,
+      "units": 6400000,
+      "cpu_seconds": 0.013800635
+    },
+    {
+      "kind": "individual",
+      "counter": "resume_scan",
+      "round": 0,
+      "units": 6400000,
+      "cpu_seconds": 0.007960363
+    },
+    {
+      "kind": "individual",
+      "counter": "rescore_scan",
+      "round": 0,
+      "units": 6400000,
+      "cpu_seconds": 0.016735567
+    },
+    {
+      "kind": "individual",
+      "counter": "base_score",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.001826985
+    },
+    {
+      "kind": "individual",
+      "counter": "rel_entropy_value",
+      "round": 0,
+      "units": 2800000,
+      "cpu_seconds": 0.005600685
+    },
+    {
+      "kind": "individual",
+      "counter": "node_copy",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.009670656
+    },
+    {
+      "kind": "individual",
+      "counter": "solution_copy",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.009208125
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_blend",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.003752637
+    },
+    {
+      "kind": "individual",
+      "counter": "provisional_solution_rollback",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.000303279
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation",
+      "round": 0,
+      "units": 400000,
+      "cpu_seconds": 0.020120425
+    },
+    {
+      "kind": "individual",
+      "counter": "line_score",
+      "round": 0,
+      "units": 5600000,
+      "cpu_seconds": 0.090553111
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000817287
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_pair_copy_call",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000880182
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 1600000,
+      "cpu_seconds": 0.003452542
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 6400000,
+      "cpu_seconds": 0.007168436
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 25600000,
+      "cpu_seconds": 0.019764651
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 102400000,
+      "cpu_seconds": 0.063412351
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000789862
+    },
+    {
+      "kind": "individual",
+      "counter": "index_copy_call",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000793209
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.001177336
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.002147971
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.003259569
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 1,
+      "calls": 400000,
+      "volume": 2800000,
+      "cpu_seconds": 0.005642907
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 1,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.006511146
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 1,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.007262446
+    },
+    {
+      "kind": "individual",
+      "counter": "setup_cell",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.00284751
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_candidate",
+      "round": 1,
+      "units": 399938,
+      "cpu_seconds": 0.00124259
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_state_copy",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.004094353
+    },
+    {
+      "kind": "individual",
+      "counter": "line_copy",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.006985476
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_check",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.003152801
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_move",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000901437
+    },
+    {
+      "kind": "individual",
+      "counter": "line_compare",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.002697426
+    },
+    {
+      "kind": "individual",
+      "counter": "line_shift",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.001515475
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_compare",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.001059043
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_shift",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000719512
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001087181
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_call",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.001051533
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.008308152
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.016250327
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.024069894
+    },
+    {
+      "kind": "individual",
+      "counter": "assignment",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.037367924,
+      "timing_scope": "paired_residual",
+      "gross_cpu_seconds": 0.264589262,
+      "nested_cpu_seconds": 0.227221338,
+      "nested_invalidation_attempts_per_unit": 18,
+      "nested_domain_invalidations_per_unit": 18,
+      "nested_dirty_enqueues_per_unit": 2
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_unset_cell",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.001387677
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_enqueue",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.003229597
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_entry",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.010737984
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation_attempt",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000923484
+    },
+    {
+      "kind": "individual",
+      "counter": "cell_bound_skip",
+      "round": 1,
+      "units": 3200000,
+      "cpu_seconds": 0.004860734
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_cell_scan",
+      "round": 1,
+      "units": 19600000,
+      "cpu_seconds": 0.016107438
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_next_scan",
+      "round": 1,
+      "units": 6400000,
+      "cpu_seconds": 0.007540763
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_resume_scan",
+      "round": 1,
+      "units": 6400000,
+      "cpu_seconds": 0.007383255
+    },
+    {
+      "kind": "individual",
+      "counter": "next_value_scan",
+      "round": 1,
+      "units": 3600000,
+      "cpu_seconds": 0.004079323
+    },
+    {
+      "kind": "individual",
+      "counter": "prune_line_scan",
+      "round": 1,
+      "units": 5600000,
+      "cpu_seconds": 0.109545969
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.014018559
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 29600000,
+      "cpu_seconds": 0.029856041
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 84800000,
+      "cpu_seconds": 0.05666725
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 1,
+      "calls": 400000,
+      "volume": 168800000,
+      "cpu_seconds": 0.073861717
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 0,
+      "cpu_seconds": 0.185930196
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 22400000,
+      "cpu_seconds": 0.239519287
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 44800000,
+      "cpu_seconds": 0.276010726
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 67200000,
+      "cpu_seconds": 0.30660068
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 89600000,
+      "cpu_seconds": 0.358145739
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 112000000,
+      "cpu_seconds": 0.403379198
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 134400000,
+      "cpu_seconds": 0.451491057
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 1,
+      "calls": 156800000,
+      "volume": 156800000,
+      "cpu_seconds": 0.493758768
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prefix_candidate_scan",
+      "round": 1,
+      "units": 19600000,
+      "cpu_seconds": 0.076482645
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prune_value_scan",
+      "round": 1,
+      "units": 19600000,
+      "cpu_seconds": 0.139575115
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_scan",
+      "round": 1,
+      "units": 6400000,
+      "cpu_seconds": 0.013001772
+    },
+    {
+      "kind": "individual",
+      "counter": "resume_scan",
+      "round": 1,
+      "units": 6400000,
+      "cpu_seconds": 0.007910406
+    },
+    {
+      "kind": "individual",
+      "counter": "rescore_scan",
+      "round": 1,
+      "units": 6400000,
+      "cpu_seconds": 0.017430551
+    },
+    {
+      "kind": "individual",
+      "counter": "base_score",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.002052195
+    },
+    {
+      "kind": "individual",
+      "counter": "rel_entropy_value",
+      "round": 1,
+      "units": 2800000,
+      "cpu_seconds": 0.005681042
+    },
+    {
+      "kind": "individual",
+      "counter": "node_copy",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.009307861
+    },
+    {
+      "kind": "individual",
+      "counter": "solution_copy",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.009243982
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_blend",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.003892692
+    },
+    {
+      "kind": "individual",
+      "counter": "provisional_solution_rollback",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.000310127
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation",
+      "round": 1,
+      "units": 400000,
+      "cpu_seconds": 0.022556069
+    },
+    {
+      "kind": "individual",
+      "counter": "line_score",
+      "round": 1,
+      "units": 5600000,
+      "cpu_seconds": 0.092111002
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000773691
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_pair_copy_call",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000839876
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 1600000,
+      "cpu_seconds": 0.003460636
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 6400000,
+      "cpu_seconds": 0.006960384
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 25600000,
+      "cpu_seconds": 0.018998654
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 102400000,
+      "cpu_seconds": 0.063961925
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000797057
+    },
+    {
+      "kind": "individual",
+      "counter": "index_copy_call",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000800152
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.001211314
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.002207538
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.003286893
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 2,
+      "calls": 400000,
+      "volume": 2800000,
+      "cpu_seconds": 0.005918078
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 2,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.006504002
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 2,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.007237801
+    },
+    {
+      "kind": "individual",
+      "counter": "setup_cell",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.002705983
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_candidate",
+      "round": 2,
+      "units": 399938,
+      "cpu_seconds": 0.001226933
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_state_copy",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.004060725
+    },
+    {
+      "kind": "individual",
+      "counter": "line_copy",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.006948886
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_check",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.003298244
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_move",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000950247
+    },
+    {
+      "kind": "individual",
+      "counter": "line_compare",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.00275073
+    },
+    {
+      "kind": "individual",
+      "counter": "line_shift",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.001536204
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_compare",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.001057212
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_shift",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000710197
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001147494
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_call",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.001147548
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.008106748
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.016275683
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.023636321
+    },
+    {
+      "kind": "individual",
+      "counter": "assignment",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.034695203,
+      "timing_scope": "paired_residual",
+      "gross_cpu_seconds": 0.258940933,
+      "nested_cpu_seconds": 0.22424573,
+      "nested_invalidation_attempts_per_unit": 18,
+      "nested_domain_invalidations_per_unit": 18,
+      "nested_dirty_enqueues_per_unit": 2
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_unset_cell",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.001388173
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_enqueue",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.002570895
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_entry",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.010563474
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation_attempt",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000917868
+    },
+    {
+      "kind": "individual",
+      "counter": "cell_bound_skip",
+      "round": 2,
+      "units": 3200000,
+      "cpu_seconds": 0.004737774
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_cell_scan",
+      "round": 2,
+      "units": 19600000,
+      "cpu_seconds": 0.016527533
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_next_scan",
+      "round": 2,
+      "units": 6400000,
+      "cpu_seconds": 0.007486415
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_resume_scan",
+      "round": 2,
+      "units": 6400000,
+      "cpu_seconds": 0.00778988
+    },
+    {
+      "kind": "individual",
+      "counter": "next_value_scan",
+      "round": 2,
+      "units": 3600000,
+      "cpu_seconds": 0.004167424
+    },
+    {
+      "kind": "individual",
+      "counter": "prune_line_scan",
+      "round": 2,
+      "units": 5600000,
+      "cpu_seconds": 0.110457808
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.013858547
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 29600000,
+      "cpu_seconds": 0.03071143
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 84800000,
+      "cpu_seconds": 0.056923743
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 2,
+      "calls": 400000,
+      "volume": 168800000,
+      "cpu_seconds": 0.07380226
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 0,
+      "cpu_seconds": 0.185944317
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 22400000,
+      "cpu_seconds": 0.237447673
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 44800000,
+      "cpu_seconds": 0.267457339
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 67200000,
+      "cpu_seconds": 0.301670401
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 89600000,
+      "cpu_seconds": 0.356008687
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 112000000,
+      "cpu_seconds": 0.386844995
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 134400000,
+      "cpu_seconds": 0.432514953
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 2,
+      "calls": 156800000,
+      "volume": 156800000,
+      "cpu_seconds": 0.486195429
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prefix_candidate_scan",
+      "round": 2,
+      "units": 19600000,
+      "cpu_seconds": 0.076226824
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prune_value_scan",
+      "round": 2,
+      "units": 19600000,
+      "cpu_seconds": 0.135890335
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_scan",
+      "round": 2,
+      "units": 6400000,
+      "cpu_seconds": 0.012741123
+    },
+    {
+      "kind": "individual",
+      "counter": "resume_scan",
+      "round": 2,
+      "units": 6400000,
+      "cpu_seconds": 0.008036968
+    },
+    {
+      "kind": "individual",
+      "counter": "rescore_scan",
+      "round": 2,
+      "units": 6400000,
+      "cpu_seconds": 0.018622369
+    },
+    {
+      "kind": "individual",
+      "counter": "base_score",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.001831677
+    },
+    {
+      "kind": "individual",
+      "counter": "rel_entropy_value",
+      "round": 2,
+      "units": 2800000,
+      "cpu_seconds": 0.005717038
+    },
+    {
+      "kind": "individual",
+      "counter": "node_copy",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.009439006
+    },
+    {
+      "kind": "individual",
+      "counter": "solution_copy",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.009686528
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_blend",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.003786302
+    },
+    {
+      "kind": "individual",
+      "counter": "provisional_solution_rollback",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.000298833
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation",
+      "round": 2,
+      "units": 400000,
+      "cpu_seconds": 0.021089246
+    },
+    {
+      "kind": "individual",
+      "counter": "line_score",
+      "round": 2,
+      "units": 5600000,
+      "cpu_seconds": 0.088899094
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000825407
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_pair_copy_call",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.000911794
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 1600000,
+      "cpu_seconds": 0.003451063
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 6400000,
+      "cpu_seconds": 0.006899298
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 25600000,
+      "cpu_seconds": 0.019196928
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 102400000,
+      "cpu_seconds": 0.063861528
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001018307
+    },
+    {
+      "kind": "individual",
+      "counter": "index_copy_call",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001033301
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.001321158
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.002348921
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.003250776
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 3,
+      "calls": 400000,
+      "volume": 2800000,
+      "cpu_seconds": 0.005346638
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 3,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.006795014
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 3,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.007299994
+    },
+    {
+      "kind": "individual",
+      "counter": "setup_cell",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.003039799
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_candidate",
+      "round": 3,
+      "units": 399938,
+      "cpu_seconds": 0.001222751
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_state_copy",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.004165222
+    },
+    {
+      "kind": "individual",
+      "counter": "line_copy",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.00735485
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_check",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.003433073
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_move",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.000918012
+    },
+    {
+      "kind": "individual",
+      "counter": "line_compare",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.00273161
+    },
+    {
+      "kind": "individual",
+      "counter": "line_shift",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001516557
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_compare",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001067865
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_shift",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.000707834
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001057077
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_call",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001053414
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.008240906
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.016360994
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.02409881
+    },
+    {
+      "kind": "individual",
+      "counter": "assignment",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.051017341,
+      "timing_scope": "paired_residual",
+      "gross_cpu_seconds": 0.296350329,
+      "nested_cpu_seconds": 0.245332988,
+      "nested_invalidation_attempts_per_unit": 18,
+      "nested_domain_invalidations_per_unit": 18,
+      "nested_dirty_enqueues_per_unit": 2
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_unset_cell",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001500633
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_enqueue",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.003068949
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_entry",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.012184001
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation_attempt",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.000917193
+    },
+    {
+      "kind": "individual",
+      "counter": "cell_bound_skip",
+      "round": 3,
+      "units": 3200000,
+      "cpu_seconds": 0.005294278
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_cell_scan",
+      "round": 3,
+      "units": 19600000,
+      "cpu_seconds": 0.017563728
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_next_scan",
+      "round": 3,
+      "units": 6400000,
+      "cpu_seconds": 0.007738185
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_resume_scan",
+      "round": 3,
+      "units": 6400000,
+      "cpu_seconds": 0.008276094
+    },
+    {
+      "kind": "individual",
+      "counter": "next_value_scan",
+      "round": 3,
+      "units": 3600000,
+      "cpu_seconds": 0.004110992
+    },
+    {
+      "kind": "individual",
+      "counter": "prune_line_scan",
+      "round": 3,
+      "units": 5600000,
+      "cpu_seconds": 0.116279349
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.014551318
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 29600000,
+      "cpu_seconds": 0.030628365
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 84800000,
+      "cpu_seconds": 0.057474725
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 3,
+      "calls": 400000,
+      "volume": 168800000,
+      "cpu_seconds": 0.074379649
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 0,
+      "cpu_seconds": 0.188823817
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 22400000,
+      "cpu_seconds": 0.24314871
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 44800000,
+      "cpu_seconds": 0.272917877
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 67200000,
+      "cpu_seconds": 0.303622405
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 89600000,
+      "cpu_seconds": 0.361700319
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 112000000,
+      "cpu_seconds": 0.397254993
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 134400000,
+      "cpu_seconds": 0.434385468
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 3,
+      "calls": 156800000,
+      "volume": 156800000,
+      "cpu_seconds": 0.488106811
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prefix_candidate_scan",
+      "round": 3,
+      "units": 19600000,
+      "cpu_seconds": 0.07570534
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prune_value_scan",
+      "round": 3,
+      "units": 19600000,
+      "cpu_seconds": 0.135954501
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_scan",
+      "round": 3,
+      "units": 6400000,
+      "cpu_seconds": 0.012672394
+    },
+    {
+      "kind": "individual",
+      "counter": "resume_scan",
+      "round": 3,
+      "units": 6400000,
+      "cpu_seconds": 0.007817347
+    },
+    {
+      "kind": "individual",
+      "counter": "rescore_scan",
+      "round": 3,
+      "units": 6400000,
+      "cpu_seconds": 0.017876169
+    },
+    {
+      "kind": "individual",
+      "counter": "base_score",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.001802047
+    },
+    {
+      "kind": "individual",
+      "counter": "rel_entropy_value",
+      "round": 3,
+      "units": 2800000,
+      "cpu_seconds": 0.005513045
+    },
+    {
+      "kind": "individual",
+      "counter": "node_copy",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.009232468
+    },
+    {
+      "kind": "individual",
+      "counter": "solution_copy",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.009115917
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_blend",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.003945838
+    },
+    {
+      "kind": "individual",
+      "counter": "provisional_solution_rollback",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.000323417
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation",
+      "round": 3,
+      "units": 400000,
+      "cpu_seconds": 0.024255691
+    },
+    {
+      "kind": "individual",
+      "counter": "line_score",
+      "round": 3,
+      "units": 5600000,
+      "cpu_seconds": 0.088356065
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000779767
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_pair_copy_call",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000837875
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 1600000,
+      "cpu_seconds": 0.003270961
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 6400000,
+      "cpu_seconds": 0.006918807
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 25600000,
+      "cpu_seconds": 0.01941156
+    },
+    {
+      "kind": "affine",
+      "section": "cache_pair_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 102400000,
+      "cpu_seconds": 0.065258372
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.000799901
+    },
+    {
+      "kind": "individual",
+      "counter": "index_copy_call",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000803479
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.00121198
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.002165032
+    },
+    {
+      "kind": "affine",
+      "section": "index_copy_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.003235591
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 4,
+      "calls": 400000,
+      "volume": 2800000,
+      "cpu_seconds": 0.005315058
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 4,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.006431805
+    },
+    {
+      "kind": "affine",
+      "section": "line_score",
+      "round": 4,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.00727236
+    },
+    {
+      "kind": "individual",
+      "counter": "setup_cell",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.002693151
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_candidate",
+      "round": 4,
+      "units": 399938,
+      "cpu_seconds": 0.001237858
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_state_copy",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.004095916
+    },
+    {
+      "kind": "individual",
+      "counter": "line_copy",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.007132403
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_check",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.003172486
+    },
+    {
+      "kind": "individual",
+      "counter": "compact_move",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000968335
+    },
+    {
+      "kind": "individual",
+      "counter": "line_compare",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.00280238
+    },
+    {
+      "kind": "individual",
+      "counter": "line_shift",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.001603851
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_compare",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.001098402
+    },
+    {
+      "kind": "individual",
+      "counter": "transition_shift",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000696303
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 0,
+      "cpu_seconds": 0.001071126
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_call",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.001068304
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 1200000,
+      "cpu_seconds": 0.008231973
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 2400000,
+      "cpu_seconds": 0.016509353
+    },
+    {
+      "kind": "affine",
+      "section": "constraint_check_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 3600000,
+      "cpu_seconds": 0.023708782
+    },
+    {
+      "kind": "individual",
+      "counter": "assignment",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.032767643,
+      "timing_scope": "paired_residual",
+      "gross_cpu_seconds": 0.259110551,
+      "nested_cpu_seconds": 0.226342908,
+      "nested_invalidation_attempts_per_unit": 18,
+      "nested_domain_invalidations_per_unit": 18,
+      "nested_dirty_enqueues_per_unit": 2
+    },
+    {
+      "kind": "individual",
+      "counter": "constraint_check_unset_cell",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.001407674
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_enqueue",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.002749907
+    },
+    {
+      "kind": "individual",
+      "counter": "dirty_constraint_entry",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.010913322
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation_attempt",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000903527
+    },
+    {
+      "kind": "individual",
+      "counter": "cell_bound_skip",
+      "round": 4,
+      "units": 3200000,
+      "cpu_seconds": 0.005089307
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_build_cell_scan",
+      "round": 4,
+      "units": 19600000,
+      "cpu_seconds": 0.016873752
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_next_scan",
+      "round": 4,
+      "units": 6400000,
+      "cpu_seconds": 0.007514578
+    },
+    {
+      "kind": "individual",
+      "counter": "cache_resume_scan",
+      "round": 4,
+      "units": 6400000,
+      "cpu_seconds": 0.008000773
+    },
+    {
+      "kind": "individual",
+      "counter": "next_value_scan",
+      "round": 4,
+      "units": 3600000,
+      "cpu_seconds": 0.004656395
+    },
+    {
+      "kind": "individual",
+      "counter": "prune_line_scan",
+      "round": 4,
+      "units": 5600000,
+      "cpu_seconds": 0.113668954
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 3200000,
+      "cpu_seconds": 0.013841867
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 29600000,
+      "cpu_seconds": 0.030757046
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 84800000,
+      "cpu_seconds": 0.055918614
+    },
+    {
+      "kind": "affine",
+      "section": "dp_init_call",
+      "round": 4,
+      "calls": 400000,
+      "volume": 168800000,
+      "cpu_seconds": 0.073101812
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 0,
+      "cpu_seconds": 0.186263627
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 22400000,
+      "cpu_seconds": 0.237127608
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 44800000,
+      "cpu_seconds": 0.267762579
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 67200000,
+      "cpu_seconds": 0.301689828
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 89600000,
+      "cpu_seconds": 0.349763233
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 112000000,
+      "cpu_seconds": 0.388344924
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 134400000,
+      "cpu_seconds": 0.433843249
+    },
+    {
+      "kind": "affine",
+      "section": "dp_suffix_candidate_scan",
+      "round": 4,
+      "calls": 156800000,
+      "volume": 156800000,
+      "cpu_seconds": 0.479642988
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prefix_candidate_scan",
+      "round": 4,
+      "units": 19600000,
+      "cpu_seconds": 0.075244322
+    },
+    {
+      "kind": "individual",
+      "counter": "dp_prune_value_scan",
+      "round": 4,
+      "units": 19600000,
+      "cpu_seconds": 0.134641641
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_scan",
+      "round": 4,
+      "units": 6400000,
+      "cpu_seconds": 0.013127762
+    },
+    {
+      "kind": "individual",
+      "counter": "resume_scan",
+      "round": 4,
+      "units": 6400000,
+      "cpu_seconds": 0.007916922
+    },
+    {
+      "kind": "individual",
+      "counter": "rescore_scan",
+      "round": 4,
+      "units": 6400000,
+      "cpu_seconds": 0.017774888
+    },
+    {
+      "kind": "individual",
+      "counter": "base_score",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.002003234
+    },
+    {
+      "kind": "individual",
+      "counter": "rel_entropy_value",
+      "round": 4,
+      "units": 2800000,
+      "cpu_seconds": 0.005903522
+    },
+    {
+      "kind": "individual",
+      "counter": "node_copy",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.010044727
+    },
+    {
+      "kind": "individual",
+      "counter": "solution_copy",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.009572099
+    },
+    {
+      "kind": "individual",
+      "counter": "lookahead_blend",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.00381741
+    },
+    {
+      "kind": "individual",
+      "counter": "provisional_solution_rollback",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.000301001
+    },
+    {
+      "kind": "individual",
+      "counter": "domain_invalidation",
+      "round": 4,
+      "units": 400000,
+      "cpu_seconds": 0.021210611
+    },
+    {
+      "kind": "individual",
+      "counter": "line_score",
+      "round": 4,
+      "units": 5600000,
+      "cpu_seconds": 0.089613245
+    }
+  ],
+  "counter_costs_seconds": {
+    "assignment": 8.73997425e-08,
+    "base_score": 4.5791925e-09,
+    "cache_build_candidate": 3.0951247443353723e-09,
+    "cache_build_cell_scan": 8.432414795918368e-10,
+    "cache_next_scan": 1.17733203125e-09,
+    "cache_pair_copy": 6.045237487175103e-10,
+    "cache_pair_copy_call": 4.17972955377907e-09,
+    "cache_resume_scan": 1.25012078125e-09,
+    "cache_state_copy": 1.023979e-08,
+    "cell_bound_skip": 1.5580068750000001e-09,
+    "compact_check": 8.0600175e-09,
+    "compact_move": 2.3429724999999998e-09,
+    "constraint_check_call": 2.4335929999999874e-09,
+    "constraint_check_cell": 6.407526166666672e-09,
+    "constraint_check_unset_cell": 3.4704325e-09,
+    "dirty_constraint_enqueue": 6.8747675e-09,
+    "dirty_constraint_entry": 2.7283304999999998e-08,
+    "domain_invalidation": 5.30265275e-08,
+    "domain_invalidation_attempt": 2.2929825e-09,
+    "dp_init_call": 4.605799184668937e-08,
+    "dp_init_write": 3.552315378122386e-10,
+    "dp_prefix_candidate_scan": 3.889123673469388e-09,
+    "dp_prune_value_scan": 6.9364541326530614e-09,
+    "dp_suffix_candidate_scan": 1.1921396513605465e-09,
+    "index_copy_call": 1.7719833749999993e-09,
+    "index_copy_pair": 6.883435000000003e-10,
+    "line_compare": 6.8377075e-09,
+    "line_copy": 1.779014e-08,
+    "line_score": 1.577786875e-08,
+    "line_score_value": 1.9859676030927836e-09,
+    "line_shift": 3.84051e-09,
+    "lookahead_blend": 9.543525e-09,
+    "lookahead_scan": 2.031526875e-09,
+    "next_value_scan": 1.1576177777777779e-09,
+    "node_copy": 2.3597514999999998e-08,
+    "propagate_dp_update": 1.854589412202382e-09,
+    "provisional_solution_rollback": 7.581975e-10,
+    "prune_line_scan": 1.9724608571428573e-08,
+    "rel_entropy_value": 2.0289435714285713e-09,
+    "rescore_scan": 2.77732625e-09,
+    "resume_scan": 1.2370190625e-09,
+    "setup_cell": 6.770377499999999e-09,
+    "solution_copy": 2.3109955e-08,
+    "transition_compare": 2.6568799999999996e-09,
+    "transition_shift": 1.7754925e-09
+  },
+  "counter_diagnostics": {
+    "assignment": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        8.73997425e-08,
+        9.341981e-08,
+        8.67380075e-08,
+        1.275433525e-07,
+        8.19191075e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.5569426522377579,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "base_score": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        4.5674625e-09,
+        5.1304875e-09,
+        4.5791925e-09,
+        4.5051175e-09,
+        5.008085e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1388132495989285,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_build_candidate": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        3.1223814691277143e-09,
+        3.106956578269632e-09,
+        3.067808010241587e-09,
+        3.0573513894653673e-09,
+        3.0951247443353723e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0212700705213078,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_build_cell_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        8.284053571428572e-10,
+        8.218080612244899e-10,
+        8.432414795918368e-10,
+        8.961085714285715e-10,
+        8.609057142857143e-10
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0904110262600422,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_next_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.17733203125e-09,
+        1.17824421875e-09,
+        1.16975234375e-09,
+        1.20909140625e-09,
+        1.1741528125e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.033630248924218,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_pair_copy": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.210146411166211e-10,
+        5.981300502308482e-10,
+        6.045237487175103e-10,
+        6.034873219476744e-10,
+        6.182019532318742e-10
+      ],
+      "round_count": 5,
+      "max_over_min": 1.038260225977512,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_pair_copy_call": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        4.3433777020348825e-09,
+        4.417622542151159e-09,
+        4.034860043604652e-09,
+        4.17972955377907e-09,
+        3.938344090116274e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.121695423525255,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_resume_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.2577953125e-09,
+        1.15363359375e-09,
+        1.21716875e-09,
+        1.2931396874999998e-09,
+        1.25012078125e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.120927558373644,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cache_state_copy": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.02939e-08,
+        1.02358825e-08,
+        1.01518125e-08,
+        1.0413055e-08,
+        1.023979e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0257335820573912,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "cell_bound_skip": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.5580068750000001e-09,
+        1.518979375e-09,
+        1.480554375e-09,
+        1.654461875e-09,
+        1.5904084375000002e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1174610692700835,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "compact_check": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        8.0600175e-09,
+        7.8820025e-09,
+        8.24561e-09,
+        8.5826825e-09,
+        7.931215e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.088896191037747,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "compact_move": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.3429724999999998e-09,
+        2.2535925000000002e-09,
+        2.3756175e-09,
+        2.2950299999999997e-09,
+        2.4208374999999997e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0742126182972296,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "constraint_check_call": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.3205605000000027e-09,
+        2.4335929999999874e-09,
+        2.617246374999995e-09,
+        2.3825846249999922e-09,
+        2.5250753749999966e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1278509545430908,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "constraint_check_cell": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.4577990833333325e-09,
+        6.407526166666672e-09,
+        6.302951333333337e-09,
+        6.437107250000001e-09,
+        6.3491956666666676e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0245674989081828,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "constraint_check_unset_cell": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        3.3829800000000002e-09,
+        3.4691924999999996e-09,
+        3.4704325e-09,
+        3.7515824999999995e-09,
+        3.519185e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1089579305819128,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dirty_constraint_enqueue": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.4296500000000004e-09,
+        8.0739925e-09,
+        6.427237500000001e-09,
+        7.6723725e-09,
+        6.8747675e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.2562150535124925,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dirty_constraint_entry": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.732753e-08,
+        2.684496e-08,
+        2.6408685e-08,
+        3.04600025e-08,
+        2.7283304999999998e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1534085282928703,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "domain_invalidation": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        5.03010625e-08,
+        5.63901725e-08,
+        5.2723114999999995e-08,
+        6.06392275e-08,
+        5.30265275e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.2055257779097608,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "domain_invalidation_attempt": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.2776475e-09,
+        2.30871e-09,
+        2.29467e-09,
+        2.2929825e-09,
+        2.2588175e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0220878844793793,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "domain_scan": {
+      "status": "unresolved",
+      "round_unit_seconds": [],
+      "round_count": 0,
+      "max_over_min": null,
+      "reason": "not_benchmarked",
+      "repeats_per_point": 400000
+    },
+    "dp_candidate_check": {
+      "status": "unresolved",
+      "round_unit_seconds": [],
+      "round_count": 0,
+      "max_over_min": null,
+      "reason": "not_benchmarked",
+      "repeats_per_point": 400000
+    },
+    "dp_init_call": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        4.384747376807699e-08,
+        4.532801851006931e-08,
+        4.619080247878577e-08,
+        4.705984035660932e-08,
+        4.605799184668937e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0732622956917324,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dp_init_write": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        3.620976989213578e-10,
+        3.5572184840743393e-10,
+        3.5401779341460463e-10,
+        3.552315378122386e-10,
+        3.489055588173779e-10
+      ],
+      "round_count": 5,
+      "max_over_min": 1.037810059973521,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dp_prefix_candidate_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        3.995513673469387e-09,
+        3.9021757653061225e-09,
+        3.889123673469388e-09,
+        3.862517346938775e-09,
+        3.838996020408164e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.040770465045854,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dp_prune_value_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        8.017911020408164e-09,
+        7.121179336734694e-09,
+        6.933180357142857e-09,
+        6.9364541326530614e-09,
+        6.869471479591837e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1671801890768698,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "dp_suffix_candidate_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.1787987802933669e-09,
+        1.194780406037417e-09,
+        1.1885246449829926e-09,
+        1.2190761027848645e-09,
+        1.1921396513605465e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0341681066903325,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "index_copy_call": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.104478375e-09,
+        1.7249126249999996e-09,
+        1.7574908749999993e-09,
+        2.3241450000000006e-09,
+        1.7719833749999993e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.347398683455054,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "index_copy_pair": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.799189166666666e-10,
+        6.983130000000002e-10,
+        7.054776666666671e-10,
+        6.437641666666665e-10,
+        6.883435000000003e-10
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0958635214500143,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "line_compare": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.8377075e-09,
+        6.743565e-09,
+        6.876825e-09,
+        6.829025000000001e-09,
+        7.005950000000001e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0389089450461293,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "line_copy": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.779014e-08,
+        1.746369e-08,
+        1.7372214999999997e-08,
+        1.8387124999999998e-08,
+        1.78310075e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0584214505749554,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "line_score": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        8.66705961309531e-09,
+        1.6448393214285713e-08,
+        9.530421190476073e-09,
+        1.577786875e-08,
+        1.6002365178571427e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.8978054782770113,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "line_score_value": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.9043824999999652e-09,
+        2.022571275773196e-09,
+        1.6496537500000353e-09,
+        2.029465515463918e-09,
+        1.9859676030927836e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.2302372637069292,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "line_shift": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        3.89673e-09,
+        3.7886875000000005e-09,
+        3.84051e-09,
+        3.7913925e-09,
+        4.0096275e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0583157095960012,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "lookahead_blend": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        9.3815925e-09,
+        9.73173e-09,
+        9.465755e-09,
+        9.864595000000001e-09,
+        9.543525e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0514840630735134,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "lookahead_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.15634921875e-09,
+        2.031526875e-09,
+        1.99080046875e-09,
+        1.9800615625e-09,
+        2.0512128125e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.089031401643604,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "next_value_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.1880808333333334e-09,
+        1.1331452777777779e-09,
+        1.1576177777777779e-09,
+        1.1419422222222222e-09,
+        1.2934430555555555e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1414626887843888,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "node_copy": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.417664e-08,
+        2.3269652500000003e-08,
+        2.3597514999999998e-08,
+        2.308117e-08,
+        2.51118175e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.087978534017123,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "propagate_dp_update": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.859892570153061e-09,
+        1.938939906994046e-09,
+        1.854589412202382e-09,
+        1.8506877178996583e-09,
+        1.8319803210033975e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0583846806455135,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "provisional_solution_rollback": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        7.581975e-10,
+        7.753175e-10,
+        7.470824999999999e-10,
+        8.085425e-10,
+        7.525025e-10
+      ],
+      "round_count": 5,
+      "max_over_min": 1.08226668406769,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "prune_line_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.970218232142857e-08,
+        1.956178017857143e-08,
+        1.9724608571428573e-08,
+        2.0764169464285715e-08,
+        2.02980275e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0614662507572505,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "rel_entropy_value": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.0002446428571427e-09,
+        2.0289435714285713e-09,
+        2.0417992857142855e-09,
+        1.968944642857143e-09,
+        2.108400714285714e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0708278274528866,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "rescore_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.61493234375e-09,
+        2.72352359375e-09,
+        2.90974515625e-09,
+        2.79315140625e-09,
+        2.77732625e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1127420421429401,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "resume_scan": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.24380671875e-09,
+        1.2360009375e-09,
+        1.25577625e-09,
+        1.22146046875e-09,
+        1.2370190625e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0280940579969138,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "setup_cache_slot": {
+      "status": "unresolved",
+      "round_unit_seconds": [],
+      "round_count": 0,
+      "max_over_min": null,
+      "reason": "not_benchmarked",
+      "repeats_per_point": 400000
+    },
+    "setup_cell": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        6.770377499999999e-09,
+        7.118775e-09,
+        6.764957499999999e-09,
+        7.5994975e-09,
+        6.7328775e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.1287146543212765,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "solution_copy": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.30203125e-08,
+        2.3109955e-08,
+        2.421632e-08,
+        2.27897925e-08,
+        2.39302475e-08
+      ],
+      "round_count": 5,
+      "max_over_min": 1.062595019239425,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "transition_compare": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        2.6568799999999996e-09,
+        2.6476074999999997e-09,
+        2.64303e-09,
+        2.6696625e-09,
+        2.746005e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.038960965255786,
+      "reason": null,
+      "repeats_per_point": 400000
+    },
+    "transition_shift": {
+      "status": "accepted",
+      "round_unit_seconds": [
+        1.8910125e-09,
+        1.7987799999999999e-09,
+        1.7754925e-09,
+        1.769585e-09,
+        1.7407575e-09
+      ],
+      "round_count": 5,
+      "max_over_min": 1.0863158711078367,
+      "reason": null,
+      "repeats_per_point": 400000
+    }
+  },
+  "coverage": {
+    "expected_counters": 48,
+    "accepted_counters": 45,
+    "not_benchmarked": [
+      "domain_scan",
+      "dp_candidate_check",
+      "setup_cache_slot"
+    ],
+    "insufficient_timing_evidence": [],
+    "unstable": []
+  },
+  "sections": {
+    "cache_pair_copy_call": {
+      "volume_counter": "cache_pair_copy",
+      "observations": 25,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 6.14254157267444e-09,
+        "sampled_volume_seconds": 6.090715430489054e-10,
+        "seconds_per_volume_relative_to_call": 0.09915627527185264,
+        "normalized_determinant": 0.6692607003891052,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    },
+    "line_score": {
+      "volume_counter": "line_score_value",
+      "observations": 15,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 0.0,
+        "sampled_volume_seconds": 2.026035139175257e-09,
+        "seconds_per_volume_relative_to_call": null,
+        "normalized_determinant": 0.010309278350515186,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    },
+    "index_copy_call": {
+      "volume_counter": "index_copy_pair",
+      "observations": 20,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 1.6728970999999973e-09,
+        "sampled_volume_seconds": 6.831634500000004e-10,
+        "seconds_per_volume_relative_to_call": 0.40837147126383416,
+        "normalized_determinant": 0.35714285714285693,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    },
+    "constraint_check_call": {
+      "volume_counter": "constraint_check_cell",
+      "observations": 20,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 2.2138974499999967e-09,
+        "sampled_volume_seconds": 6.390915900000003e-09,
+        "seconds_per_volume_relative_to_call": 2.8867262573521697,
+        "normalized_determinant": 0.35714285714285693,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    },
+    "dp_init_call": {
+      "volume_counter": "dp_init_write",
+      "observations": 20,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 4.569682539204614e-08,
+        "sampled_volume_seconds": 3.5519488747460235e-10,
+        "seconds_per_volume_relative_to_call": 0.007772856963854355,
+        "normalized_determinant": 0.4392740891113366,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    },
+    "dp_suffix_candidate_scan": {
+      "volume_counter": "propagate_dp_update",
+      "observations": 40,
+      "timed_affine_fit": {
+        "identifiable": true,
+        "sampled_call_seconds": 1.1946639170918362e-09,
+        "sampled_volume_seconds": 1.867217985650511e-09,
+        "seconds_per_volume_relative_to_call": 1.562965080753313,
+        "normalized_determinant": 0.2999999999999999,
+        "note": "Observational CPU timings include clock overhead, not fitted regression targets"
+      }
+    }
+  }
+}

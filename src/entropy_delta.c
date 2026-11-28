@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "entropy.h"
+#include "work_instrumentation.h"
 
 int	entropy_delta_cell(int old_count, int size)
 {
@@ -46,6 +47,7 @@ double	get_relative_constr_entropy(t_node_state *node, int idx, int size)
 {
 	int	current_entropy;
 
+	work_add(WORK_REL_ENTROPY_VALUE, size);
 	current_entropy = compute_constr_entropy(node, idx, size);
 	if (node->solver->constr_max_entropy <= 0)
 		return (0.0);

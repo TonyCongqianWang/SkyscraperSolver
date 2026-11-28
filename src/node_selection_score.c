@@ -81,6 +81,7 @@ void	recalculate_cache_scores(t_node_state *node, t_node_order *cache)
 	i = 0;
 	while (i < cache->items.count)
 	{
+		work_add(WORK_RESCORE_SCAN, 1);
 		score = calculate_blended_score(node, cache, i);
 		if (score != cache->items.entries[i].score)
 			cache->state.order_dirty = 1;

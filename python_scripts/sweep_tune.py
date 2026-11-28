@@ -14,19 +14,18 @@ from comparison_statistics import validate_policy
 from param_metadata import (PARAM_METADATA, PARAM_CONSTRAINTS, PARAMETER_ALIASES,
                             MATH_PARAM_GROUPS, STRATEGY_PARAM_NAMES,
                             STRATEGY_PARAM_GROUPS)
-from spsa_metrics import get_sgm_shifts, mean_log_shifted
+from tuning_objective import (WORK, TIME_NODES, DEFAULT_OBJECTIVE,
+                              SWEEP_MODE_WEIGHTS, MODE_WEIGHTS as WORK_MODE_WEIGHTS,
+                              SWEEP_TIME_WEIGHTS, REFERENCES,
+                              mode_losses, sweep_score)
 from spsa_run_metadata import build_run_metadata, clue_identity, save_run_metadata
 from symmetry import get_symmetries_from_clue_str
 
 ROOT = Path(__file__).resolve().parent.parent
 PARAMETERS = {row[0]: row for row in PARAM_METADATA}
 MULTIPLIERS = (-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4)
-TIME_WEIGHTS = {7: 0.7, 8: 0.64, 9: 0.66}
-# Mode means use explicit weights regardless of sampled panel sizes.
-MODE_WEIGHTS = {7: (0.5, 1.5), 8: (0.5, 1.5), 9: (1.0, 0.0)}
-REFERENCES = {7: ((0.005, 350.0), (0.01, 2000.0)),
-              8: ((0.1, 5000.0), (1.0, 50000.0)),
-              9: ((0.1, 20000.0), (0.1, 20000.0))}
+TIME_WEIGHTS = SWEEP_TIME_WEIGHTS
+MODE_WEIGHTS = SWEEP_MODE_WEIGHTS  # public sweep weighting
 
 
 SWEEP_MODES = ('math7', 'math8', 'math9', 'strategy', *STRATEGY_PARAM_GROUPS)
@@ -106,10 +105,11 @@ def environment(values):
 
 
 class PanelObjective:
-    def __init__(self, panels, workers, use_stdin):
+    def __init__(self, panels, workers, use_stdin, objective=TIME_NODES):
         self.panels = panels
         self.workers = workers
         self.use_stdin = use_stdin
+        self.objective = objective
 
     def __call__(self, values, sizes):
         env = environment(values)
@@ -122,14 +122,14 @@ class PanelObjective:
             times, nodes = spsa.evaluate_subset(env, tasks, self.workers, self.use_stdin)
             if len(times) != len(tasks) or len(nodes) != len(tasks):
                 raise RuntimeError('Incomplete training evaluation')
-            time_shift, node_shift = get_sgm_shifts(size, enum)
-            weight = MODE_WEIGHTS[size][enum]
-            time_ref, node_ref = REFERENCES[size][enum]
-            results[size]['time'] += weight * mean_log_shifted(times, time_shift, time_ref)
-            results[size]['nodes'] += weight * mean_log_shifted(nodes, node_shift, node_ref)
+            weight = (WORK_MODE_WEIGHTS if self.objective == WORK
+                      else MODE_WEIGHTS)[size][int(enum)]
+            time_loss, node_loss, _, _ = mode_losses(size, enum, times, nodes)
+            results[size]['time'] += weight * time_loss
+            results[size]['nodes'] += weight * node_loss
         for size, result in results.items():
-            result['score'] = (TIME_WEIGHTS[size] * result['time']
-                               + (1.0 - TIME_WEIGHTS[size]) * result['nodes'])
+            result['score'] = sweep_score(
+                size, result['time'], result['nodes'], self.objective)
             if not all(math.isfinite(x) for x in result.values()):
                 raise RuntimeError('Nonfinite training objective')
         return results
@@ -199,6 +199,13 @@ def save_checkpoint(path, values, names, metadata, label):
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--mode', choices=SWEEP_MODES, required=True)
+    parser.add_argument('--nodes-time', action='store_const', dest='objective',
+                        const=TIME_NODES, help='Tune with measured wall time + search nodes instead of calibrated work')
+    parser.set_defaults(objective=DEFAULT_OBJECTIVE)
+    parser.add_argument('--work-model', type=Path, default=spsa.DEFAULT_MODEL,
+                        help='Pooled v1 work model used by default')
+    parser.add_argument('--work-watchdog', type=float, default=60.0,
+                        help='Emergency wall-clock limit per work solve; aborts tuning without scoring (default: 60s)')
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')
@@ -220,6 +227,8 @@ def parse_args(argv=None):
     if min(args.max_workers, args.s7_single, args.s7_enumeration,
            args.s8_single, args.s8_enumeration, args.s9_single) < 1:
         parser.error('Workers and panel sizes must be positive')
+    if not math.isfinite(args.work_watchdog) or args.work_watchdog <= 0:
+        parser.error('work watchdog must be finite and positive')
     if not math.isfinite(args.perturb) or args.perturb <= 0:
         parser.error('Perturbation fraction must be finite and positive')
     try:
@@ -234,8 +243,9 @@ def parse_args(argv=None):
     return args
 
 
-def main(argv=None):
+def _main_impl(argv=None):
     args = parse_args(argv)
+    spsa.configure_objective(args)
     sizes = mode_sizes(args.mode)
     workers = min(args.max_workers, os.cpu_count() or 1)
     rng = random.Random(args.seed)
@@ -255,17 +265,21 @@ def main(argv=None):
         args.log = str(path.with_suffix('.log'))
     log_path = Path(args.log)
     log_path.parent.mkdir(parents=True, exist_ok=True)
-    metadata_args = SimpleNamespace(**vars(args), size=sizes[0], tune_mode=args.mode, batch_size=None)
+    metadata_args = SimpleNamespace(
+        **{name: str(value) if isinstance(value, Path) else value
+           for name, value in vars(args).items()},
+        size=sizes[0], tune_mode=args.mode, batch_size=None)
     metadata = build_run_metadata(metadata_args, datasets, PARAM_METADATA, names, workers, values)
     metadata.update(optimizer='coordinate_sweep', mode=args.mode,
                     size=sizes[0] if len(sizes) == 1 else None, sizes=sizes,
                     batch_size=None, panels=panels, multipliers=MULTIPLIERS,
-                    objective=dict(time_weights=TIME_WEIGHTS, size_weights={s: 1/len(sizes) for s in sizes},
+                    objective=dict(kind=args.objective, work_model_sha256=spsa.WORK_MODEL_SHA256,
+                                    time_weights=TIME_WEIGHTS, size_weights={s: 1/len(sizes) for s in sizes},
                                    s8_mode_weights=dict(single=0.5, enumeration=1.5),
                                    mode_weights={s: dict(single=MODE_WEIGHTS[s][0],
                                                         enumeration=MODE_WEIGHTS[s][1]) for s in sizes}),
                     comparison_status='skipped' if args.no_compare else 'pending')
-    objective = PanelObjective(panels, workers, args.stdin)
+    objective = PanelObjective(panels, workers, args.stdin, args.objective)
     with log_path.open('w') as handle:
         def log(message):
             print(message, flush=True)
@@ -299,6 +313,14 @@ def main(argv=None):
             raise
         metadata['comparison_status'] = 'complete'
         save_checkpoint(path, final, names, metadata, 'Final')
+
+
+
+def main(argv=None):
+    try:
+        return _main_impl(argv)
+    finally:
+        spsa.configure_objective(SimpleNamespace(objective=TIME_NODES))
 
 
 if __name__ == '__main__':

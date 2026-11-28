@@ -26,6 +26,7 @@ static int	get_cell_domain(t_node_state *state, int cell_idx, int size)
 	v = 1;
 	while (v <= size)
 	{
+		work_add(WORK_DOMAIN_SCAN, 1);
 		if (is_valid_value(state, cell_idx, v))
 			domain_mask |= (1 << (v - 1));
 		v++;
@@ -63,7 +64,7 @@ static int	check_candidate(t_prune_args *args, int i, int v)
 	m = 0;
 	while (m <= args->size)
 	{
-		work_add(WORK_GAC_CHECK, 1);
+		work_add(WORK_DP_CANDIDATE_CHECK, 1);
 		if (args->dp->pref_max[i][m] != -1)
 		{
 			vis_add = (v > m);
@@ -92,6 +93,7 @@ static void	collect_cell_prunes(t_prune_args *args, int i,
 	v = 1;
 	while (v <= args->size)
 	{
+		work_add(WORK_DP_PRUNE_VALUE_SCAN, 1);
 		if (is_valid_value(args->state, cell, v)
 			&& !check_candidate(args, i, v))
 		{

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "puzzle_solver.h"
+#include "search_timeout.h"
 #include "tree_search.h"
 #include "search_context.h"
 #include "grid_interface.h"
@@ -71,6 +72,7 @@ static int	insert_initial_grid(t_solver_state *puzzle)
 
 int	solve_puzzle(t_solver_state *puzzle, int max_depth)
 {
+	search_timeout_init();
 	if (!insert_initial_grid(puzzle))
 		return (0);
 	if (max_depth >= 0)

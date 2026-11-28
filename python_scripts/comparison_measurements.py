@@ -1,19 +1,65 @@
 """Paired solver measurements with explicit failures and stable instance IDs."""
 import concurrent.futures
+import os
 import re
 import select
 import subprocess
 import time
 
 
-def parse_output(lines, elapsed):
+def unrestricted_environment(env=None):
+    """Do not let calibration-only search limits leak into full solves."""
+    result = dict(os.environ if env is None else env)
+    for name in ("SOLVER_CPU_TIMEOUT", "SOLVER_MAIN_NODE_LIMIT"):
+        result.pop(name, None)
+    return result
+
+
+def search_status(lines):
+    """Recognize optional status output; older unrestricted binaries omit it."""
+    statuses = [line.strip() for line in lines
+                if line.strip().split()[:1] == ["SEARCH_STATUS"]]
+    if not statuses or statuses == ["SEARCH_STATUS complete"]:
+        return "ok"
+    if statuses == ["SEARCH_STATUS timeout"]:
+        return "timeout"
+    return "error"
+
+
+def parse_output(lines, elapsed, model=None):
     text = ''.join(lines)
+    status = search_status(text.splitlines())
+    if status != 'ok':
+        return {'seconds': elapsed, 'nodes': None, 'solutions': None,
+                'status': status}
     nodes = re.search(r'^Nodes visited:\s*(\d+)', text, re.M)
     solutions = re.search(r'^(?:Unique )?Solutions found:\s*(\d+)',
                           text, re.M | re.I)
-    return {'seconds': elapsed, 'nodes': int(nodes[1]) if nodes else None,
-            'solutions': int(solutions[1]) if solutions else None,
-            'status': 'ok' if nodes else 'error'}
+    result = {'seconds': elapsed, 'nodes': int(nodes[1]) if nodes else None,
+              'solutions': int(solutions[1]) if solutions else None,
+              'status': 'ok' if nodes and solutions else 'error'}
+    if model is not None:
+        from tuning_work_runtime import parse_record
+        try:
+            # Both CLI modes must emit the same labeled result fields.
+            # WORK_COUNTERS is an independent, instrumented cross-check.
+            if result['status'] != 'ok':
+                raise ValueError(
+                    "Missing Solutions found or Nodes visited in solver output; "
+                    "rebuild the unified solver CLI")
+            predicted, counter_nodes, counter_solutions = parse_record(
+                text.splitlines(), model)
+            if counter_nodes != result['nodes']:
+                raise ValueError(
+                    "WORK_COUNTERS nodes disagree with Nodes visited")
+            if counter_solutions != result['solutions']:
+                raise ValueError(
+                    "WORK_COUNTERS solutions disagree with Solutions found")
+            result['predicted_seconds'] = predicted
+        except (ValueError, KeyError, TypeError) as exc:
+            result['status'] = 'error'
+            result['prediction_error'] = str(exc)
+    return result
 
 
 def read_instance(proc, timeout):
@@ -40,10 +86,11 @@ def stop_process(proc):
 
 
 def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
-                  warmup=1, timeout=10.0):
+                  warmup=1, timeout=10.0, model=None):
     """Return one record per input, including timeouts and malformed output."""
     if workers < 1 or warmup < 0 or timeout <= 0:
         raise ValueError('workers/timeout must be positive; warmup nonnegative')
+    env = unrestricted_environment(env)
     indexed = list(enumerate(clues))
     groups = [indexed[i::workers] for i in range(min(workers, len(indexed)))]
 
@@ -72,7 +119,7 @@ def measure_batch(binary, options, clues, env, workers=4, use_stdin=True,
                         text=True, timeout=timeout)
                     lines = result.stdout.splitlines(keepends=True)
                     status = 'ok' if result.returncode == 0 else 'error'
-                row = parse_output(lines, time.perf_counter() - start)
+                row = parse_output(lines, time.perf_counter() - start, model=model)
                 if status != 'ok':
                     row['status'] = status
                 if row['status'] != 'ok':

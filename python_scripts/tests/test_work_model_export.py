@@ -9,12 +9,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from work_model_export import export_compact_model, make_compact_model
 from work_model_export import export_collinearity, make_collinearity_export
 from work_model_export import load_compact_model, predict_seconds
+from work_model_export import pooled_validation_projection
 
 
 def sample_report():
     return {
         "provenance": {
-            "git_commit": "123abc", "schema": "v2",
+            "git_commit": "123abc", "schema": "v1",
             "counter_schema": [
                 "node_copy", "cache_pair_copy_call", "cache_pair_copy",
                 "line_score", "line_score_value", "unused",
@@ -70,6 +71,30 @@ def sample_report():
                 },
             },
         },
+        "pooled_unmerging": {
+            "method": "post_fit_timing_unmerge_no_regression_refit",
+            "all_merged_groups_resolved": True,
+            "seconds_per_count": {
+                "cache_pair_copy": 0.005,
+                "cache_pair_copy_call": 0.015,
+                "line_score": 0.3,
+            },
+            "groups": [{
+                "group": "cache_pair_copy+cache_pair_copy_call",
+                "members": ["cache_pair_copy", "cache_pair_copy_call"],
+                "merged_seconds_per_count": 0.01,
+                "member_cost_ratios": {
+                    "cache_pair_copy": 1.0,
+                    "cache_pair_copy_call": 3.0,
+                },
+                "seconds_per_original_count": {
+                    "cache_pair_copy": 0.005,
+                    "cache_pair_copy_call": 0.015,
+                },
+                "timing_evidence": [{"source": "controlled_micro", "ratio": 3.0}],
+                "max_abs_training_prediction_drift_seconds": 0.001,
+            }],
+        },
         "pooled_validation_by_size": {
             "size7": {"mae_seconds": 0.002, "r2": 0.98,
                       "clear_ranking_accuracy": 0.9,
@@ -80,12 +105,12 @@ def sample_report():
 
 
 class CompactExportTests(unittest.TestCase):
-    def test_flattened_merged_model_exact_prediction(self):
+    def test_export_uses_timing_allocated_coefficients(self):
         report = sample_report()
         model = make_compact_model(
             report, "calibration.json", "2026-11-22T12:00:00+00:00")
         self.assertEqual(model["fit"], "pooled")
-        self.assertEqual(model["counter_schema"], "v2")
+        self.assertEqual(model["counter_schema"], "v1")
         self.assertEqual(model["created_at_utc"], "2026-11-22T12:00:00+00:00")
         self.assertEqual(model["dropped_counters"],
                          ["line_score_value", "node_copy", "unused"])
@@ -96,17 +121,28 @@ class CompactExportTests(unittest.TestCase):
         }
         self.assertAlmostEqual(
             predict_seconds(model, counters),
-            0.2 + 0.01 * (20 + 3) + 0.3 * 2)
+            0.2 + 0.005 * 20 + 0.015 * 3 + 0.3 * 2)
         self.assertLess(len(json.dumps(model)), 3000)
         self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.9)
+        self.assertEqual(model["held_out_score_basis"], "pooled_merged_regression")
+        self.assertEqual(model["allocated_validation_status"], "not_evaluated")
         self.assertEqual(model["hyperparameters"]["contrast_weight"], 4.0)
+
+    def test_evaluated_allocation_uses_its_own_score(self):
+        report = sample_report()
+        report["pooled_unmerging"]["held_out_validation"] = {
+            "samples": 3, "clear_ranking_accuracy": 0.8}
+        model = make_compact_model(report)
+        self.assertEqual(model["held_out_score_basis"], "allocated_model")
+        self.assertEqual(model["allocated_validation_status"], "evaluated")
+        self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.8)
 
     def test_pooled_collinearity_export_for_microbenchmarks(self):
         report = sample_report()
         timestamp = "2026-11-22T12:00:00+00:00"
         artifact = make_collinearity_export(report, "detailed.json", timestamp)
         self.assertEqual(artifact["fit"], "pooled")
-        self.assertEqual(artifact["counter_schema"], "v2")
+        self.assertEqual(artifact["counter_schema"], "v1")
         self.assertEqual(artifact["created_at_utc"], timestamp)
         self.assertEqual(len(artifact["merged_groups"]), 1)
         self.assertEqual(artifact["merged_groups"][0]["members"],
@@ -124,6 +160,109 @@ class CompactExportTests(unittest.TestCase):
             export_collinearity(report, path, "detailed.json", timestamp)
             self.assertEqual(json.loads(path.read_text()), artifact)
             self.assertTrue(path.read_text().endswith("\n"))
+
+    def test_v1_requires_measured_allocation_and_preserves_model(self):
+        report = sample_report()
+        report.pop("pooled_unmerging")
+        with self.assertRaisesRegex(ValueError, "requires measured"):
+            make_compact_model(report)
+        report["pooled_unmerging"] = {
+            "method": "post_fit_timing_unmerge_no_regression_refit",
+            "all_merged_groups_resolved": True,
+            "seconds_per_count": {
+                "cache_pair_copy": 0.005,
+                "cache_pair_copy_call": 0.015,
+                "line_score": 0.3,
+            },
+            "groups": [{
+                "group": "cache_pair_copy+cache_pair_copy_call",
+                "members": ["cache_pair_copy", "cache_pair_copy_call"],
+                "merged_seconds_per_count": 0.01,
+                "member_cost_ratios": {
+                    "cache_pair_copy": 1.0,
+                    "cache_pair_copy_call": 3.0,
+                },
+                "seconds_per_original_count": {
+                    "cache_pair_copy": 0.005,
+                    "cache_pair_copy_call": 0.015,
+                },
+                "timing_evidence": [{
+                    "source": "controlled_micro", "ratio": 3.0,
+                }],
+                "max_abs_training_prediction_drift_seconds": 0.001,
+            }],
+        }
+        model = make_compact_model(report)
+        self.assertEqual(model["counter_schema"], "v1")
+        self.assertEqual(model["seconds_per_count"]["cache_pair_copy"], 0.005)
+        self.assertEqual(model["seconds_per_count"]["cache_pair_copy_call"], 0.015)
+        self.assertEqual(model["merged_group_coefficients"][
+            "cache_pair_copy+cache_pair_copy_call"], 0.01)
+        collinearity = make_collinearity_export(report)
+        group = collinearity["merged_groups"][0]
+        self.assertEqual(group["allocated_member_seconds_per_count"][
+            "cache_pair_copy_call"], 0.015)
+        self.assertEqual(group["timing_evidence"][0]["source"],
+                         "controlled_micro")
+
+    def test_incomplete_allocation_saves_diagnostics_without_fake_weights(self):
+        report = sample_report()
+        allocation = report["pooled_unmerging"]
+        allocation["all_merged_groups_resolved"] = False
+        allocation["seconds_per_count"]["cache_pair_copy"] = None
+        allocation["seconds_per_count"]["cache_pair_copy_call"] = None
+        allocation["unresolved_groups"] = [{
+            "group": "cache_pair_copy+cache_pair_copy_call",
+            "members": ["cache_pair_copy", "cache_pair_copy_call"],
+            "missing_or_unstable_counters": ["cache_pair_copy_call"],
+            "reason": "unstable micro timing",
+        }]
+        allocation["groups"][0] = {
+            "group": "cache_pair_copy+cache_pair_copy_call",
+            "status": "unresolved",
+            "members": ["cache_pair_copy", "cache_pair_copy_call"],
+            "reason": "unstable micro timing",
+            "missing_or_unstable_counters": ["cache_pair_copy_call"],
+            "merged_seconds_per_count": 0.01,
+            "member_cost_ratios": None,
+            "seconds_per_original_count": None,
+            "timing_evidence": [],
+            "max_abs_training_prediction_drift_seconds": None,
+        }
+        report["warnings"] = ["Unresolved group: unstable micro timing"]
+        allocation["held_out_validation"] = None
+        allocation["held_out_validation_by_size"] = {}
+        model = make_compact_model(report)
+        self.assertEqual(model["held_out_score_basis"],
+                         "pooled_merged_regression")
+        self.assertEqual(model["held_out_score"]["mae_seconds"], 0.002)
+        self.assertEqual(model["held_out_score_by_size"]["size7"][
+            "mae_seconds"], 0.002)
+        self.assertFalse(model["usable_for_tuning"])
+        self.assertEqual(model["status"], "incomplete")
+        self.assertIsNone(model["seconds_per_count"]["cache_pair_copy"])
+        self.assertEqual(model["seconds_per_count"]["line_score"], 0.3)
+        with self.assertRaisesRegex(ValueError, "Unresolved calibration"):
+            predict_seconds(model, {
+                name: 0 for name in report["provenance"]["counter_schema"]})
+        collinearity = make_collinearity_export(report)
+        self.assertEqual(collinearity["merged_groups"][0]["status"], "unresolved")
+        self.assertEqual(collinearity["merged_groups"][0]["reason"],
+                         "unstable micro timing")
+        projected = pooled_validation_projection(report)
+        self.assertEqual(projected["seconds_per_count"]["cache_pair_copy"], 0.01)
+        self.assertEqual(projected["seconds_per_count"]["cache_pair_copy_call"],
+                         0.01)
+        self.assertTrue(projected["diagnostic_projection"])
+        with tempfile.TemporaryDirectory() as directory:
+            model_path = Path(directory) / "model.json"
+            col_path = Path(directory) / "collinearity.json"
+            export_compact_model(report, model_path)
+            export_collinearity(report, col_path)
+            self.assertIsNone(json.loads(model_path.read_text())[
+                "seconds_per_count"]["cache_pair_copy"])
+            self.assertFalse(json.loads(col_path.read_text())[
+                "usable_for_tuning"])
 
     def test_persist_and_reload(self):
         with tempfile.TemporaryDirectory() as directory:

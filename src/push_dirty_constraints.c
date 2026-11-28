@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "push_dirty_constraints.h"
+#include "work_instrumentation.h"
 
 static void	push_entry(t_dirty_constr_stack *stack, int entry)
 {
@@ -19,6 +20,7 @@ static void	push_entry(t_dirty_constr_stack *stack, int entry)
 	mask = 1ULL << entry;
 	if (stack->in_stack_bmp & mask)
 		return ;
+	work_add(WORK_DIRTY_CONSTRAINT_ENQUEUE, 1);
 	stack->in_stack_bmp |= mask;
 	stack->entries[(int)stack->count] = entry;
 	stack->count++;
