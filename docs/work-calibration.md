@@ -11,7 +11,7 @@ wall-clock timers unless explicitly compiled with `WORK_MICRO_TIMING`.
 
 The sole supported compact model schema is `v1`, with format
 `skyscraper-work-model` version 1. A completed, verified 48-counter pooled model is now committed at
-`scratch/work_calibration.model.json`, the default SPSA tuning path.
+`calibration/work_calibration.model.json`, the default SPSA tuning path.
 It is based on the fully resolved November 24 calibration and is usable
 immediately for tuning on this branch. A new full calibration overwrites
 that file locally when requested; it does not need to be rerun before
@@ -316,4 +316,8 @@ A zero merged coefficient is allocated exactly to all-zero member weights, witho
 
 ### Validate or refresh a fixed regression
 
-Default controlled timing starts at 400000 repetitions and five rounds. `python3 python_scripts/benchmark_work_calibration.py --model scratch/work_calibration.model.json --model scratch/work_calibration.previous.model.json` compares both models on identical fresh native timings and counter traces, using a subset of the original seeded holdout (seed 7615041398290283439, population 6000 per size). Increase `--puzzles-per-size` to 1500 for the entire holdout. This never fits coefficients. `python3 python_scripts/calibrate_work.py --micro-only PATH` refreshes allocation from a detailed report with saved samples, or from the compact model by regenerating training counters only (no native timing or regression). Regenerated CPU-limited prefixes may differ, so compact refresh cannot claim original allocated held-out accuracy. The source is not overwritten. The provisional default preserves the positive unresolved group's exact merged prediction, not a measured cost ratio; the 99.07% score belongs to the original merged regression only. The previous default remains available for comparison.
+Default controlled timing starts at 400000 repetitions and five rounds. `python3 python_scripts/benchmark_work_calibration.py --model calibration/work_calibration.model.json --model calibration/work_calibration.previous.model.json` compares both models on identical fresh native timings and counter traces, using a subset of the original seeded holdout (seed and population read from the first model, or overridden by CLI). Increase `--puzzles-per-size` to 1500 for the entire holdout. This never fits coefficients. `python3 python_scripts/calibrate_work.py --micro-only PATH` refreshes allocation from a detailed report with saved samples, or from the compact model by regenerating training counters only (no native timing or regression). Regenerated CPU-limited prefixes may differ, so compact refresh cannot claim original allocated held-out accuracy. The source is not overwritten. The provisional default preserves the positive unresolved group's exact merged prediction, not a measured cost ratio; the 99.07% score belongs to the original merged regression only. The previous default remains available for comparison.
+
+Both validation and compact-model refresh use the saved calibration seed unless `--seed` is explicitly supplied; older models without seed metadata require that option. New compact exports preserve the original seed as decimal text.
+
+The tracked deployment models live in `calibration/`, not `scratch/`. Full calibration and refresh write candidate artifacts and diagnostics to `scratch/` by default; promote a validated candidate explicitly to `calibration/work_calibration.model.json`. `--work-model` selects an alternative model without changing the bundled default.

@@ -8,7 +8,7 @@ from pathlib import Path
 from calibrate_work import COUNTER_NAMES, SCHEMA
 from work_model_export import FORMAT, FORMAT_VERSION, predict_seconds
 
-DEFAULT_MODEL = (Path(__file__).resolve().parents[1] / "scratch"
+DEFAULT_MODEL = (Path(__file__).resolve().parents[1] / "calibration"
                  / "work_calibration.model.json")
 
 
@@ -17,7 +17,7 @@ def load_model(path=DEFAULT_MODEL):
     if not source.is_file():
         raise FileNotFoundError(
             f"Current 48-counter work model missing at {source}. "
-            "Run python3 python_scripts/calibrate_work.py first.")
+            "Generate a candidate with python3 python_scripts/calibrate_work.py, then promote it explicitly.")
     payload = source.read_bytes()
     model = json.loads(payload)
     if (model.get("format") != FORMAT

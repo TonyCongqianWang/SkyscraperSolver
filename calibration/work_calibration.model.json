@@ -406,5 +406,5 @@
   "calibration_puzzles_per_size": 6000,
   "calibration_validation_fraction": 0.25,
   "provisional_allocation": true,
-  "previous_default_path": "scratch/work_calibration.previous.model.json"
+  "previous_default_path": "calibration/work_calibration.previous.model.json"
 }

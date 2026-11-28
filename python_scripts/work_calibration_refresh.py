@@ -12,11 +12,12 @@ def refresh(args):
     source = json.loads(args.micro_only.read_text())
     compact = source.get("format") == "skyscraper-work-model"
     if compact:
-        from benchmark_work_calibration import original_split, collect
-        seed = args.seed if args.seed is not None else int(source["calibration_seed"])
+        from benchmark_work_calibration import original_split, collect, resolve_seed
+        seed = resolve_seed(source, args.seed)
         count = source.get("calibration_puzzles_per_size", args.puzzles_per_size)
         fraction = source.get("calibration_validation_fraction", args.validation_fraction)
-        train, _ = original_split(seed, count, fraction)
+        train, _ = original_split(seed, count, fraction, tuple(source["dataset_sha256"]))
+        print(f"Refresh seed: {seed}", flush=True)
         for puzzle in train:
             if source["dataset_sha256"].get(puzzle["dataset"]) != puzzle["dataset_sha256"]:
                 raise ValueError("Dataset checksum differs from compact model")
@@ -48,7 +49,7 @@ def refresh(args):
                                    max_repeats=args.micro_max_repeats, required_names=required)
     allocation = allocate_merged_coefficients(pooled, rows, timing, section)
     complete = allocation["all_merged_groups_resolved"]
-    target = args.model_output or args.micro_only.with_name(args.micro_only.stem + ".refreshed.model.json")
+    target = args.model_output or cal.ROOT / "scratch" / "work_calibration.refreshed.model.json"
     if target.resolve() == args.micro_only.resolve():
         raise ValueError("Refusing to overwrite source calibration")
     weights = {n: allocation["seconds_per_count"].get(n, 0.0) for n in cal.COUNTER_NAMES}

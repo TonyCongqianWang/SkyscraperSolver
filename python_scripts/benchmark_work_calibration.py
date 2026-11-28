@@ -54,13 +54,21 @@ def original_split(seed, count, fraction, datasets=cal.DEFAULT_DATASETS):
     return cal.split(puzzles, fraction, seed)
 
 
+def resolve_seed(model, override=None):
+    """Use an explicit CLI override or the reference model's saved seed."""
+    value = override if override is not None else model.get("calibration_seed")
+    if value is None:
+        raise ValueError("Calibration seed missing; supply --seed explicitly")
+    return int(value)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, action="append")
-    parser.add_argument("--seed", type=int, default=7615041398290283439)
-    parser.add_argument("--population-per-size", type=int, default=6000)
+    parser.add_argument("--seed", type=int, help="Override the first model\'s calibration seed")
+    parser.add_argument("--population-per-size", type=int)
     parser.add_argument("--puzzles-per-size", type=int, default=100)
-    parser.add_argument("--validation-fraction", type=float, default=.25)
+    parser.add_argument("--validation-fraction", type=float)
     parser.add_argument("--native-repeats", type=int, default=3)
     parser.add_argument("--cc", default=os.environ.get("CC", "gcc"))
     parser.add_argument("--output", type=Path, default=cal.ROOT / "scratch/work_validation.json")
@@ -68,7 +76,21 @@ def main():
     if args.puzzles_per_size < 1 or args.native_repeats < 2:
         parser.error("Positive puzzle count and at least two native repeats required")
     models = {str(p): load_model(p) for p in (args.model or [DEFAULT_MODEL])}
-    _, holdout = original_split(args.seed, args.population_per_size, args.validation_fraction)
+    reference = next(iter(models.values()))[0]
+    try:
+        args.seed = resolve_seed(reference, args.seed)
+    except ValueError as exc:
+        parser.error(str(exc))
+    args.population_per_size = (args.population_per_size if args.population_per_size is not None
+                                else reference.get("calibration_puzzles_per_size", 6000))
+    args.validation_fraction = (args.validation_fraction if args.validation_fraction is not None
+                                else reference.get("calibration_validation_fraction", .25))
+    train, holdout = original_split(args.seed, args.population_per_size, args.validation_fraction,
+                                    tuple(reference.get("dataset_sha256") or cal.DEFAULT_DATASETS))
+    for puzzle in train + holdout:
+        if reference.get("dataset_sha256") and reference["dataset_sha256"].get(puzzle["dataset"]) != puzzle["dataset_sha256"]:
+            raise ValueError("Dataset checksum differs from reference model")
+    print(f"Validation seed: {args.seed}", flush=True)
     puzzles = [p for n in (7, 8, 9) for p in
                sorted((p for p in holdout if p["size"] == n), key=lambda p:
                       hashlib.sha256(f"{args.seed}:{p['identity']}".encode()).hexdigest())

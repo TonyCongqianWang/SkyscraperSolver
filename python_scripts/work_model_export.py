@@ -141,6 +141,14 @@ def make_compact_model(report, source_file=None, created_at=None):
         "counter_semantics": "fixed event counts and actual variable volumes",
         "objective": "predicted_seconds",
     }
+    if provenance.get("seed") is not None:
+        # Store as decimal text to preserve all 64 bits in JSON consumers.
+        result["calibration_seed"] = str(provenance["seed"])
+    counts = {n for n in provenance["puzzles_per_size"].values() if n}
+    if len(counts) == 1:
+        result["calibration_puzzles_per_size"] = next(iter(counts))
+    if provenance.get("validation_fraction") is not None:
+        result["calibration_validation_fraction"] = provenance["validation_fraction"]
     # Guard against serialization of NaN/Infinity in a deployment artifact.
     json.dumps(result, allow_nan=False)
     return result
