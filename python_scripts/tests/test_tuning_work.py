@@ -1,5 +1,6 @@
 """Strict work-tuning parser, objective, time + nodes opt-in, and runner smoke tests."""
 import json
+import subprocess
 import tempfile
 import math
 from pathlib import Path
@@ -126,6 +127,7 @@ class WorkTuningTests(unittest.TestCase):
         for selected in (None, model):
             with self.subTest(work=selected is not None), \
                  patch.object(spsa_tune, "WORK_MODEL", selected), \
+                 patch.object(spsa_tune, "WORK_WATCHDOG_SECONDS", 2), \
                  patch.object(spsa_tune, "read_with_timeout", return_value=output), \
                  patch.object(spsa_tune.subprocess, "Popen", return_value=proc) as popen:
                 self.assertEqual(spsa_tune.run_solver_instance(env, "-s 1", "clue"),
@@ -135,6 +137,36 @@ class WorkTuningTests(unittest.TestCase):
                 for call in popen.call_args_list:
                     self.assertEqual(call.kwargs["env"], {"KEEP": "yes"})
         self.assertIn("SOLVER_CPU_TIMEOUT", env)
+
+    def test_unvalidated_complete_model_warns_but_remains_usable(self):
+        model, _ = self._fixture_model()
+        model.update(status="complete", usable_for_tuning=True,
+                     allocated_validation_status="not_evaluated")
+        with tempfile.TemporaryDirectory() as directory:
+            target = Path(directory) / "candidate.model.json"
+            target.write_text(json.dumps(model), encoding="utf-8")
+            with self.assertWarnsRegex(RuntimeWarning, "not been evaluated"):
+                loaded, _ = load_model(target)
+            self.assertTrue(loaded["usable_for_tuning"])
+
+    def test_work_watchdog_aborts_without_scoring(self):
+        model, _ = self._fixture_model()
+        proc = MagicMock()
+        proc.communicate.side_effect = [subprocess.TimeoutExpired("solver", 2), ("", "")]
+        with patch.object(spsa_tune, "WORK_MODEL", model), \
+             patch.object(spsa_tune, "WORK_WATCHDOG_SECONDS", 2), \
+             patch.object(spsa_tune.subprocess, "Popen", return_value=proc):
+            with self.assertRaisesRegex(RuntimeError, "no wall-clock penalty"):
+                spsa_tune.run_solver_instance({}, "-s 1", "clue")
+            proc.kill.assert_called()
+            proc.communicate.assert_any_call(timeout=2)
+        with patch.object(spsa_tune, "WORK_MODEL", model), \
+             patch.object(spsa_tune, "WORK_WATCHDOG_SECONDS", 2), \
+             patch.object(spsa_tune, "read_with_timeout", return_value=None) as read, \
+             patch.object(spsa_tune.subprocess, "Popen", return_value=proc):
+            with self.assertRaisesRegex(RuntimeError, "no wall-clock penalty"):
+                spsa_tune._run_opt_group_stdin({}, "-s 1", [(0, "clue")])
+            read.assert_called_once_with(proc, timeout=2)
 
     def test_calibrated_model_loads_and_schema_is_exact(self):
         model, digest = self._fixture_model()

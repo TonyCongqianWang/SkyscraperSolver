@@ -204,6 +204,8 @@ def parse_args(argv=None):
     parser.set_defaults(objective=DEFAULT_OBJECTIVE)
     parser.add_argument('--work-model', type=Path, default=spsa.DEFAULT_MODEL,
                         help='Pooled v1 work model used by default')
+    parser.add_argument('--work-watchdog', type=float, default=60.0,
+                        help='Emergency wall-clock limit per work solve; aborts tuning without scoring (default: 60s)')
     parser.add_argument('--no-compare', action='store_true')
     parser.add_argument('--seed', type=int)
     parser.add_argument('--log', help='Progress log; defaults beside the unique winner file')
@@ -225,6 +227,8 @@ def parse_args(argv=None):
     if min(args.max_workers, args.s7_single, args.s7_enumeration,
            args.s8_single, args.s8_enumeration, args.s9_single) < 1:
         parser.error('Workers and panel sizes must be positive')
+    if not math.isfinite(args.work_watchdog) or args.work_watchdog <= 0:
+        parser.error('work watchdog must be finite and positive')
     if not math.isfinite(args.perturb) or args.perturb <= 0:
         parser.error('Perturbation fraction must be finite and positive')
     try:

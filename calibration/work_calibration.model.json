@@ -46,6 +46,7 @@
     "within_puzzle_r2": 0.9976795069014059
   },
   "held_out_score_basis": "original_pooled_regression_not_refreshed_model",
+  "allocated_validation_status": "not_evaluated",
   "hyperparameters": {
     "contrast_weight": 4,
     "ridge_alpha": 0.0001

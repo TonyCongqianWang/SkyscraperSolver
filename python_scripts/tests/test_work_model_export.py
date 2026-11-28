@@ -124,7 +124,18 @@ class CompactExportTests(unittest.TestCase):
             0.2 + 0.005 * 20 + 0.015 * 3 + 0.3 * 2)
         self.assertLess(len(json.dumps(model)), 3000)
         self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.9)
+        self.assertEqual(model["held_out_score_basis"], "pooled_merged_regression")
+        self.assertEqual(model["allocated_validation_status"], "not_evaluated")
         self.assertEqual(model["hyperparameters"]["contrast_weight"], 4.0)
+
+    def test_evaluated_allocation_uses_its_own_score(self):
+        report = sample_report()
+        report["pooled_unmerging"]["held_out_validation"] = {
+            "samples": 3, "clear_ranking_accuracy": 0.8}
+        model = make_compact_model(report)
+        self.assertEqual(model["held_out_score_basis"], "allocated_model")
+        self.assertEqual(model["allocated_validation_status"], "evaluated")
+        self.assertEqual(model["held_out_score"]["clear_ranking_accuracy"], 0.8)
 
     def test_pooled_collinearity_export_for_microbenchmarks(self):
         report = sample_report()

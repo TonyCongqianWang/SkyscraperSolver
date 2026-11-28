@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import statistics
 import tempfile
+import warnings
 
 import calibrate_work as cal
 from tuning_work_runtime import DEFAULT_MODEL, load_model
@@ -62,6 +63,36 @@ def resolve_seed(model, override=None):
     return int(value)
 
 
+def training_overlap(model, puzzles):
+    """Report exact puzzle overlap when the original training split is reconstructable."""
+    required = ("calibration_seed", "calibration_puzzles_per_size",
+                "calibration_validation_fraction", "dataset_sha256")
+    missing = [key for key in required if model.get(key) is None]
+    if missing:
+        return {"status": "unknown", "reason": "missing metadata: " + ", ".join(missing),
+                "training_puzzles": None, "nontraining_puzzles": None}, None
+    try:
+        seed = int(model["calibration_seed"])
+        count = int(model["calibration_puzzles_per_size"])
+        fraction = float(model["calibration_validation_fraction"])
+        if not 0 < fraction < 1:
+            raise ValueError("invalid calibration validation fraction")
+        train, holdout = original_split(seed, count, fraction, tuple(model["dataset_sha256"]))
+        if any(model["dataset_sha256"].get(p["dataset"]) != p["dataset_sha256"]
+               for p in train + holdout):
+            raise ValueError("dataset checksum mismatch")
+    except (ValueError, TypeError, OSError, KeyError) as exc:
+        return {"status": "unknown", "reason": str(exc),
+                "training_puzzles": None, "nontraining_puzzles": None}, None
+    trained = {(p["size"], p["identity"]) for p in train}
+    selected = {(p["size"], p["identity"]) for p in puzzles}
+    overlap = selected & trained
+    return {"status": "overlap" if overlap else "disjoint",
+            "training_puzzles": len(overlap),
+            "nontraining_puzzles": len(selected - overlap),
+            "training_puzzle_ids": sorted(identity for _, identity in overlap)}, selected - overlap
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--model", type=Path, action="append")
@@ -95,6 +126,15 @@ def main():
                sorted((p for p in holdout if p["size"] == n), key=lambda p:
                       hashlib.sha256(f"{args.seed}:{p['identity']}".encode()).hexdigest())
                [:args.puzzles_per_size]]
+    overlaps = {name: training_overlap(model, puzzles)
+                for name, (model, _) in models.items()}
+    for name, (overlap, _) in overlaps.items():
+        if overlap["status"] != "disjoint":
+            detail = (overlap.get("reason") or
+                      f"{overlap['training_puzzles']} training puzzles overlap")
+            warnings.warn(f"{name}: benchmark training overlap {overlap['status']} ({detail}); "
+                          "all-puzzle scores are not an independent holdout estimate",
+                          RuntimeWarning)
     configs = cal.variants(puzzles, True, args.seed)
     rows = collect(puzzles, configs, args.cc, cal.DEFAULT_HARD_TIMEOUT,
                    cal.DEFAULT_CPU_LIMITS, {"7": 0, "8": 1, "9": 1}, args.native_repeats)
@@ -102,9 +142,24 @@ def main():
               "by_size": {str(n): cal.diagnostics([r for r in rows if r["size"] == n], model)
                           for n in (7, 8, 9)}}
               for name, (model, digest) in models.items()}
+    for name, (overlap, independent) in overlaps.items():
+        scores[name]["training_overlap"] = overlap
+        scores[name]["nontraining"] = (None if independent is None else cal.diagnostics(
+            [r for r in rows if (r["size"], r["identity"]) in independent], models[name][0]))
+    common = None
+    if all(ids is not None for _, ids in overlaps.values()):
+        common = set.intersection(*(ids for _, ids in overlaps.values()))
+    common_rows = [] if common is None else [
+        r for r in rows if (r["size"], r["identity"]) in common]
     report = {"seed": str(args.seed), "population_per_size": args.population_per_size,
               "validation_fraction": args.validation_fraction,
-              "basis": "fresh_native_timings_on_seeded_calibration_holdout",
+              "basis": "fresh_native_timings_on_reference_split",
+              "benchmark_puzzles": [{k: p[k] for k in ("size", "identity", "dataset", "dataset_sha256")}
+                                    for p in puzzles],
+              "common_nontraining_puzzles": None if common is None else len(common),
+              "common_nontraining_scores": (None if common is None else
+                  {name: cal.diagnostics(common_rows, model)
+                   for name, (model, _) in models.items()}),
               "scores": scores, "samples": rows}
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2, allow_nan=False) + "\n")

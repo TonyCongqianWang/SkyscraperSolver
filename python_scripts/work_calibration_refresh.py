@@ -62,9 +62,11 @@ def refresh(args):
                        "merged_group_allocations": allocation["groups"],
                        "coefficient_allocation_method": allocation["method"],
                        "held_out_score_basis": "original_pooled_regression_not_refreshed_model",
+                       "allocated_validation_status": "not_evaluated",
                        "allocation_training_basis": "regenerated_counter_observations",
                        "held_out_score": source["regression_held_out_score"]})
         source.pop("held_out_score_by_size", None)
+        source.pop("allocated_validation_evidence", None)
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_text(json.dumps(source, indent=2, allow_nan=False) + "\n")
     else:

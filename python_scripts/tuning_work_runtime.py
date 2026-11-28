@@ -37,6 +37,13 @@ def load_model(path=DEFAULT_MODEL):
             raise ValueError("Invalid work model coefficient")
     if model.get("provisional_allocation"):
         warnings.warn("Provisional work calibration: allocated ranking accuracy is unverified", RuntimeWarning, stacklevel=2)
+    elif (model.get("allocated_validation_status") == "not_evaluated"
+          or ("held_out_score_basis" in model
+              and model["held_out_score_basis"] != "allocated_model"
+              and model.get("allocated_validation_status") != "evaluated")):
+        warnings.warn("Work calibration allocation has not been evaluated against native held-out timings; "
+                      "historical regression scores do not validate the current coefficients",
+                      RuntimeWarning, stacklevel=2)
     return model, hashlib.sha256(payload).hexdigest()
 
 

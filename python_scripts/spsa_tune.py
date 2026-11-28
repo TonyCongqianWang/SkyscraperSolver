@@ -30,6 +30,7 @@ from spsa_run_metadata import build_run_metadata, save_run_metadata
 TRAINING_TIMEOUT = 10.0
 TRAINING_TIMEOUT_PENALTY = 4.0
 TRAINING_TIMEOUT_SECONDS = TRAINING_TIMEOUT * TRAINING_TIMEOUT_PENALTY
+WORK_WATCHDOG_SECONDS = 60.0
 
 # Globals
 LOG_FILE_HANDLE = None
@@ -55,7 +56,8 @@ WORK_MODEL_SHA256 = None
 
 def configure_objective(args):
     """Select the tuner binary and validate its calibration before tuning."""
-    global BIN_CURR, ACTIVE_OBJECTIVE, WORK_MODEL, WORK_MODEL_SHA256
+    global BIN_CURR, ACTIVE_OBJECTIVE, WORK_MODEL, WORK_MODEL_SHA256, WORK_WATCHDOG_SECONDS
+    WORK_WATCHDOG_SECONDS = getattr(args, "work_watchdog", 60.0)
     ACTIVE_OBJECTIVE = getattr(args, "objective", TIME_NODES)
     if ACTIVE_OBJECTIVE == WORK:
         WORK_MODEL, WORK_MODEL_SHA256 = load_model(
@@ -152,7 +154,9 @@ def read_clues(file_path):
         return [line.strip().strip('"') for line in f if line.strip()]
 
 
-def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
+def run_solver_instance(env, opt, clue, timeout=None):
+    if timeout is None:
+        timeout = WORK_WATCHDOG_SECONDS if WORK_MODEL is not None else TRAINING_TIMEOUT
     env = unrestricted_environment(env)
     t_start = time.perf_counter()
     try:
@@ -171,6 +175,10 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
                 stdout, stderr = proc.communicate(timeout=0.5)
             except Exception:
                 stdout = ""
+            if WORK_MODEL is not None:
+                raise RuntimeError(f"Work tuning watchdog expired after {timeout:g}s; "
+                                   "no wall-clock penalty was scored. "
+                                   "Increase --work-watchdog or reduce worker load.")
             return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
 
         elapsed = time.perf_counter() - t_start
@@ -182,7 +190,8 @@ def run_solver_instance(env, opt, clue, timeout=TRAINING_TIMEOUT):
         lines = stdout.splitlines()
         status = search_status(lines)
         if status == 'timeout':
-            return float(timeout) * TRAINING_TIMEOUT_PENALTY, 100000
+            # Solver-reported incomplete searches use a fixed policy, not the watchdog.
+            return TRAINING_TIMEOUT_SECONDS, 100000
         if status == 'error':
             raise ValueError('Malformed solver search status')
         if WORK_MODEL is not None:
@@ -254,10 +263,15 @@ def _run_opt_group_stdin(env, opt, clues_with_indices):
             proc.stdin.write((f'"{clue}"\n').encode('utf-8'))
             proc.stdin.flush()
 
-            lines = read_with_timeout(proc, timeout=TRAINING_TIMEOUT)
+            timeout = WORK_WATCHDOG_SECONDS if WORK_MODEL is not None else TRAINING_TIMEOUT
+            lines = read_with_timeout(proc, timeout=timeout)
             elapsed = time.perf_counter() - t0
 
             if lines is None:
+                if WORK_MODEL is not None:
+                    raise RuntimeError(f'Work tuning watchdog/stream failure after a limit of {timeout:g}s; '
+                                       'no wall-clock penalty was scored. '
+                                       'Increase --work-watchdog or reduce worker load.')
                 try:
                     proc.kill()
                 except Exception:
@@ -872,7 +886,9 @@ def parse_args():
     parser.add_argument("--report-work-prediction", action="store_true",
                         help="Show calibrated work in post-tuning native comparisons")
     parser.add_argument("--work-model", type=Path, default=DEFAULT_MODEL,
-                        help="Compact pooled v2 work calibration file")
+                        help="Compact pooled v1 work calibration file")
+    parser.add_argument("--work-watchdog", type=float, default=60.0,
+                        help="Emergency wall-clock limit per work solve; aborts tuning without scoring (default: 60s)")
     parser.add_argument("--iterations", type=int, default=1000, help="Number of SPSA tuning iterations")
     parser.add_argument("--log", default=None, help="Optional file path to log terminal outputs")
     parser.add_argument("--no-compare", action="store_true", help="Deactivate calling the compare solvers routine at the end of SPSA automatically")
@@ -902,6 +918,8 @@ def parse_args():
         validate_policy(args.comparison_timeout, args.comparison_timeout_penalty, args.comparison_win_tolerance)
     except ValueError as error:
         parser.error(str(error))
+    if not math.isfinite(args.work_watchdog) or args.work_watchdog <= 0:
+        parser.error("work watchdog must be finite and positive")
     if args.max_workers < 1 or args.iterations < 1 or args.directions < 1 or (args.batch_size is not None and args.batch_size < 1):
         parser.error('workers, iterations and batch size must be positive')
     if args.comparison_repeats < 2 or args.comparison_repeats % 2 or args.comparison_warmup < 0:
